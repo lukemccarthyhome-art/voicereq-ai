@@ -151,14 +151,15 @@
 
         <div class="card">
             <h2>🔧 Account Actions</h2>
+            <div style="margin-bottom: 24px;">
+                <h3 style="margin-bottom: 8px;">Two-Factor Authentication (2FA)</h3>
+                <p style="margin-bottom: 16px; color: #666; font-size: 14px;">Add an extra layer of security to your account by requiring a 6-digit code from an authenticator app whenever you log in.</p>
+                <a href="/profile/mfa/setup" class="btn" style="background: #4a5568;">🔐 Setup 2FA Now</a>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 24px;">
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                 <a href="<%= user.role === 'admin' ? '/admin' : '/dashboard' %>" class="btn">🏠 Back to Dashboard</a>
                 <a href="/logout" class="btn btn-secondary">🚪 Sign Out</a>
-            </div>
-            <div class="profile-card">
-                <h3>Two-Factor Authentication</h3>
-                <p style="margin-bottom: 16px; color: #718096; font-size: 14px;">Add an extra layer of security to your account by requiring a 6-digit code from an authenticator app.</p>
-                <a href="/profile/mfa/setup" class="btn btn-primary" style="display: inline-block; text-decoration: none;">Setup 2FA</a>
             </div>
         </div>
     </main>
