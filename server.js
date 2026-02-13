@@ -11,7 +11,7 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 // Import database and authentication
-const db = require('./database');
+const db = require('./database-adapter');
 const auth = require('./auth');
 
 const app = express();
@@ -46,12 +46,12 @@ const upload = multer({
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 // API auth middleware (checks cookie token for API routes)
-const apiAuth = (req, res, next) => {
+const apiAuth = async (req, res, next) => {
   const token = req.cookies.authToken;
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const decoded = require('jsonwebtoken').verify(token, auth.JWT_SECRET);
-    req.user = db.getUserById(decoded.id);
+    req.user = await db.getUserById(decoded.id);
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     next();
   } catch { res.status(401).json({ error: 'Unauthorized' }); }
@@ -78,7 +78,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 
 // === AUTHENTICATION ROUTES ===
 
-app.get('/login', (req, res) => {
+app.get('/login', async (req, res) => {
   if (req.cookies.authToken) {
     try {
       auth.authenticate(req, res, () => {
@@ -93,7 +93,7 @@ app.get('/login', (req, res) => {
 app.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = db.getUser(email);
+    const user = await db.getUser(email);
     
     if (!user || !auth.verifyPassword(password, user.password_hash)) {
       return res.render('login', { error: 'Invalid email or password', email });
@@ -114,17 +114,17 @@ app.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
-app.get('/logout', (req, res) => {
+app.get('/logout', async (req, res) => {
   res.clearCookie('authToken');
   res.redirect('/login');
 });
 
 // === ADMIN ROUTES ===
 
-app.get('/admin', auth.authenticate, auth.requireAdmin, (req, res) => {
-  const stats = db.getStats();
-  const recentCustomers = db.getAllUsers().slice(0, 8);
-  const recentProjects = db.getAllProjects().slice(0, 8);
+app.get('/admin', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const stats = await db.getStats();
+  const recentCustomers = (await db.getAllUsers()).slice(0, 8);
+  const recentProjects = (await db.getAllProjects()).slice(0, 8);
   
   res.render('admin/dashboard', {
     user: req.user,
@@ -137,8 +137,8 @@ app.get('/admin', auth.authenticate, auth.requireAdmin, (req, res) => {
   });
 });
 
-app.get('/admin/customers', auth.authenticate, auth.requireAdmin, (req, res) => {
-  const customers = db.getAllUsers();
+app.get('/admin/customers', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const customers = await db.getAllUsers();
   res.render('admin/customers', {
     user: req.user,
     customers,
@@ -151,12 +151,12 @@ app.get('/admin/customers', auth.authenticate, auth.requireAdmin, (req, res) => 
   });
 });
 
-app.post('/admin/customers', auth.authenticate, auth.requireAdmin, (req, res) => {
+app.post('/admin/customers', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
     const { name, email, company, password } = req.body;
     const finalPassword = password || Math.random().toString(36).slice(-8);
     
-    db.createUser(email, name, company, 'customer', finalPassword);
+    await db.createUser(email, name, company, 'customer', finalPassword);
     res.redirect('/admin/customers?message=Customer created successfully');
   } catch (e) {
     console.error('Create customer error:', e);
@@ -164,10 +164,10 @@ app.post('/admin/customers', auth.authenticate, auth.requireAdmin, (req, res) =>
   }
 });
 
-app.post('/admin/customers/:id', auth.authenticate, auth.requireAdmin, (req, res) => {
+app.post('/admin/customers/:id', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
     const { name, email, company } = req.body;
-    db.updateUser(req.params.id, email, name, company);
+    await db.updateUser(req.params.id, email, name, company);
     res.redirect('/admin/customers?message=Customer updated successfully');
   } catch (e) {
     console.error('Update customer error:', e);
@@ -175,9 +175,9 @@ app.post('/admin/customers/:id', auth.authenticate, auth.requireAdmin, (req, res
   }
 });
 
-app.post('/admin/customers/:id/delete', auth.authenticate, auth.requireAdmin, (req, res) => {
+app.post('/admin/customers/:id/delete', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
-    db.deleteUser(req.params.id);
+    await db.deleteUser(req.params.id);
     res.redirect('/admin/customers?message=Customer deleted successfully');
   } catch (e) {
     console.error('Delete customer error:', e);
@@ -186,15 +186,15 @@ app.post('/admin/customers/:id/delete', auth.authenticate, auth.requireAdmin, (r
 });
 
 // Delete project (admin)
-app.post('/admin/projects/:id/delete', auth.authenticate, auth.requireAdmin, (req, res) => {
+app.post('/admin/projects/:id/delete', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
     // Delete uploaded files from disk
-    const files = db.getFilesByProject(req.params.id);
+    const files = await db.getFilesByProject(req.params.id);
     files.forEach(f => {
       const fp = path.join(uploadsDir, f.filename || f.original_name);
       if (fs.existsSync(fp)) fs.unlinkSync(fp);
     });
-    db.deleteProject(req.params.id);
+    await db.deleteProject(req.params.id);
     res.redirect('/admin/projects?message=Project deleted successfully');
   } catch (e) {
     console.error('Delete project error:', e);
@@ -203,15 +203,15 @@ app.post('/admin/projects/:id/delete', auth.authenticate, auth.requireAdmin, (re
 });
 
 // Delete file (API - works from portal and session)
-app.delete('/api/files/:id', apiAuth, (req, res) => {
+app.delete('/api/files/:id', apiAuth, async (req, res) => {
   try {
-    const file = db.getFile(req.params.id);
+    const file = await db.getFile(req.params.id);
     if (!file) return res.status(404).json({ error: 'File not found' });
     // Delete from disk
     const fp = path.join(uploadsDir, file.filename || file.original_name);
     if (fs.existsSync(fp)) fs.unlinkSync(fp);
     // Delete from DB
-    db.deleteFile(req.params.id);
+    await db.deleteFile(req.params.id);
     res.json({ success: true });
   } catch (e) {
     console.error('Delete file error:', e);
@@ -220,16 +220,16 @@ app.delete('/api/files/:id', apiAuth, (req, res) => {
 });
 
 // Delete project (customer)
-app.post('/projects/:id/delete', auth.authenticate, auth.requireCustomer, (req, res) => {
+app.post('/projects/:id/delete', auth.authenticate, auth.requireCustomer, async (req, res) => {
   try {
-    const project = db.getProject(req.params.id);
+    const project = await db.getProject(req.params.id);
     if (!project || project.user_id !== req.user.id) return res.status(403).send('Forbidden');
-    const files = db.getFilesByProject(req.params.id);
+    const files = await db.getFilesByProject(req.params.id);
     files.forEach(f => {
       const fp = path.join(uploadsDir, f.filename || f.original_name);
       if (fs.existsSync(fp)) fs.unlinkSync(fp);
     });
-    db.deleteProject(req.params.id);
+    await db.deleteProject(req.params.id);
     res.redirect('/projects?message=Project deleted successfully');
   } catch (e) {
     console.error('Delete project error:', e);
@@ -237,8 +237,8 @@ app.post('/projects/:id/delete', auth.authenticate, auth.requireCustomer, (req, 
   }
 });
 
-app.get('/admin/projects', auth.authenticate, auth.requireAdmin, (req, res) => {
-  const projects = db.getAllProjects();
+app.get('/admin/projects', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const projects = await db.getAllProjects();
   res.render('admin/projects', {
     user: req.user,
     projects,
@@ -251,14 +251,14 @@ app.get('/admin/projects', auth.authenticate, auth.requireAdmin, (req, res) => {
   });
 });
 
-app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, (req, res) => {
-  const project = db.getProject(req.params.id);
+app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const project = await db.getProject(req.params.id);
   if (!project) {
     return res.status(404).send('Project not found');
   }
   
-  const sessions = db.getSessionsByProject(req.params.id);
-  const files = db.getFilesByProject(req.params.id);
+  const sessions = await db.getSessionsByProject(req.params.id);
+  const files = await db.getFilesByProject(req.params.id);
   
   res.render('admin/project-detail', {
     user: req.user,
@@ -276,7 +276,7 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, (req, res) 
 });
 
 // Admin: Reset customer password
-app.post('/admin/customers/:id/password', auth.authenticate, auth.requireAdmin, (req, res) => {
+app.post('/admin/customers/:id/password', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
     const { password } = req.body;
     if (!password || password.length < 6) {
@@ -284,7 +284,7 @@ app.post('/admin/customers/:id/password', auth.authenticate, auth.requireAdmin, 
     }
     
     const hashedPassword = auth.hashPassword(password);
-    db.updateUserPassword(req.params.id, hashedPassword);
+    await db.updateUserPassword(req.params.id, hashedPassword);
     res.redirect('/admin/customers?message=Customer password updated successfully');
   } catch (e) {
     console.error('Update customer password error:', e);
@@ -304,7 +304,7 @@ app.get('/profile', auth.authenticate, (req, res) => {
   });
 });
 
-app.post('/profile/password', auth.authenticate, (req, res) => {
+app.post('/profile/password', auth.authenticate, async (req, res) => {
   try {
     const { currentPassword, newPassword, confirmPassword } = req.body;
     
@@ -322,14 +322,14 @@ app.post('/profile/password', auth.authenticate, (req, res) => {
     }
     
     // Verify current password
-    const user = db.getUserById(req.user.id);
+    const user = await db.getUserById(req.user.id);
     if (!auth.verifyPassword(currentPassword, user.password_hash)) {
       return res.redirect('/profile?error=Current password is incorrect');
     }
     
     // Update password
     const hashedPassword = auth.hashPassword(newPassword);
-    db.updateUserPassword(req.user.id, hashedPassword);
+    await db.updateUserPassword(req.user.id, hashedPassword);
     
     res.redirect('/profile?message=Password updated successfully');
   } catch (e) {
@@ -340,8 +340,8 @@ app.post('/profile/password', auth.authenticate, (req, res) => {
 
 // === CUSTOMER ROUTES ===
 
-app.get('/dashboard', auth.authenticate, auth.requireCustomer, (req, res) => {
-  const projects = db.getProjectsByUser(req.user.id);
+app.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  const projects = await db.getProjectsByUser(req.user.id);
   res.render('customer/dashboard', {
     user: req.user,
     projects,
@@ -351,8 +351,8 @@ app.get('/dashboard', auth.authenticate, auth.requireCustomer, (req, res) => {
   });
 });
 
-app.get('/projects', auth.authenticate, auth.requireCustomer, (req, res) => {
-  const projects = db.getProjectsByUser(req.user.id);
+app.get('/projects', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  const projects = await db.getProjectsByUser(req.user.id);
   const isNewProject = req.query.new === 'true';
   
   res.render('customer/projects', {
@@ -368,14 +368,14 @@ app.get('/projects', auth.authenticate, auth.requireCustomer, (req, res) => {
   });
 });
 
-app.get('/projects/new', auth.authenticate, auth.requireCustomer, (req, res) => {
+app.get('/projects/new', auth.authenticate, auth.requireCustomer, async (req, res) => {
   res.redirect('/projects?new=true');
 });
 
-app.post('/projects', auth.authenticate, auth.requireCustomer, (req, res) => {
+app.post('/projects', auth.authenticate, auth.requireCustomer, async (req, res) => {
   try {
     const { name, description } = req.body;
-    const result = db.createProject(req.user.id, name, description);
+    const result = await db.createProject(req.user.id, name, description);
     res.redirect(`/projects/${result.lastInsertRowid}?message=Project created successfully`);
   } catch (e) {
     console.error('Create project error:', e);
@@ -383,15 +383,15 @@ app.post('/projects', auth.authenticate, auth.requireCustomer, (req, res) => {
   }
 });
 
-app.get('/projects/:id', auth.authenticate, auth.requireCustomer, (req, res) => {
-  const project = db.getProject(req.params.id);
+app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  const project = await db.getProject(req.params.id);
   if (!project || project.user_id !== req.user.id) {
     return res.status(404).send('Project not found');
   }
   
-  const sessions = db.getSessionsByProject(req.params.id);
-  const files = db.getFilesByProject(req.params.id);
-  const activeSession = db.getLatestSessionForProject(req.params.id);
+  const sessions = await db.getSessionsByProject(req.params.id);
+  const files = await db.getFilesByProject(req.params.id);
+  const activeSession = await db.getLatestSessionForProject(req.params.id);
   
   res.render('customer/project', {
     user: req.user,
@@ -409,17 +409,17 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, (req, res) => 
   });
 });
 
-app.get('/projects/:id/session', auth.authenticate, auth.requireCustomer, (req, res) => {
-  const project = db.getProject(req.params.id);
+app.get('/projects/:id/session', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  const project = await db.getProject(req.params.id);
   if (!project || project.user_id !== req.user.id) {
     return res.status(404).send('Project not found');
   }
   
   // Check for existing active session
-  let activeSession = db.getLatestSessionForProject(req.params.id);
+  let activeSession = await db.getLatestSessionForProject(req.params.id);
   if (!activeSession || activeSession.status === 'completed') {
     // Create new session
-    const result = db.createSession(req.params.id);
+    const result = await db.createSession(req.params.id);
     activeSession = { id: result.lastInsertRowid };
   }
   
@@ -492,7 +492,7 @@ app.post('/api/upload', apiAuth, upload.single('file'), async (req, res) => {
     let description = '';
     
     if (projectId) {
-      const result = db.createFile(
+      const result = await db.createFile(
         projectId,
         sessionId || null,
         file.originalname,
@@ -532,7 +532,7 @@ app.post('/api/upload', apiAuth, upload.single('file'), async (req, res) => {
               const data = await response.json();
               description = data.choices[0].message.content.trim();
               // Update file with description
-              db.updateFileDescription(fileId, description);
+              await db.updateFileDescription(fileId, description);
             }
           }
         } catch (e) {
@@ -615,12 +615,12 @@ Only include actual requirements, specifications, or important project facts. Do
 });
 
 // Update file description
-app.put('/api/files/:id/description', apiAuth, express.json(), (req, res) => {
+app.put('/api/files/:id/description', apiAuth, express.json(), async (req, res) => {
   try {
     const { description } = req.body;
     const fileId = req.params.id;
     
-    db.updateFileDescription(fileId, description);
+    await db.updateFileDescription(fileId, description);
     res.json({ success: true });
   } catch (e) {
     console.error('Update file description error:', e);
@@ -656,7 +656,7 @@ app.post('/api/analyze-session', apiAuth, express.json({ limit: '20mb' }), async
     // Load files from DB for descriptions and as fallback for content
     let dbFiles = [];
     if (sessionId) {
-      dbFiles = db.getFilesBySession(sessionId) || [];
+      dbFiles = await db.getFilesBySession(sessionId) || [];
     }
     
     // If no fileContents provided, use DB extracted text as fallback
@@ -861,15 +861,15 @@ app.post('/api/chat', apiAuth, express.json({ limit: '10mb' }), async (req, res)
 });
 
 // Session management API
-app.get('/api/sessions/:id', apiAuth, (req, res) => {
+app.get('/api/sessions/:id', apiAuth, async (req, res) => {
   try {
-    const session = db.getSession(req.params.id);
+    const session = await db.getSession(req.params.id);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
     
     // Also get associated files
-    const files = db.getFilesBySession(req.params.id);
+    const files = await db.getFilesBySession(req.params.id);
     session.files = files;
     
     res.json(session);
@@ -879,10 +879,10 @@ app.get('/api/sessions/:id', apiAuth, (req, res) => {
   }
 });
 
-app.put('/api/sessions/:id', apiAuth, express.json({ limit: '10mb' }), (req, res) => {
+app.put('/api/sessions/:id', apiAuth, express.json({ limit: '10mb' }), async (req, res) => {
   try {
     const { transcript, requirements, context, status } = req.body;
-    db.updateSession(req.params.id, transcript, requirements, context, status || 'active');
+    await db.updateSession(req.params.id, transcript, requirements, context, status || 'active');
     res.json({ success: true });
   } catch (e) {
     console.error('Update session error:', e);

@@ -102,11 +102,11 @@ const createSeedUser = () => {
 
 // User operations
 const getUser = (email) => {
-  return db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  return Promise.resolve(db.prepare('SELECT * FROM users WHERE email = ?').get(email));
 };
 
 const getUserById = (id) => {
-  return db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+  return Promise.resolve(db.prepare('SELECT * FROM users WHERE id = ?').get(id));
 };
 
 const createUser = (email, name, company, role, plainPassword) => {
@@ -115,21 +115,21 @@ const createUser = (email, name, company, role, plainPassword) => {
     INSERT INTO users (email, password_hash, name, company, role)
     VALUES (?, ?, ?, ?, ?)
   `);
-  return stmt.run(email, hashedPassword, name, company, role);
+  return Promise.resolve(stmt.run(email, hashedPassword, name, company, role));
 };
 
 const getAllUsers = () => {
-  return db.prepare(`SELECT id, email, name, company, role, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC`).all();
+  return Promise.resolve(db.prepare(`SELECT id, email, name, company, role, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC`).all());
 };
 
 const updateUser = (id, email, name, company) => {
   const stmt = db.prepare('UPDATE users SET email = ?, name = ?, company = ? WHERE id = ?');
-  return stmt.run(email, name, company, id);
+  return Promise.resolve(stmt.run(email, name, company, id));
 };
 
 const updateUserPassword = (id, hashedPassword) => {
   const stmt = db.prepare('UPDATE users SET password_hash = ? WHERE id = ?');
-  return stmt.run(hashedPassword, id);
+  return Promise.resolve(stmt.run(hashedPassword, id));
 };
 
 const deleteUser = (id) => {
@@ -138,7 +138,7 @@ const deleteUser = (id) => {
   for (const project of projects) {
     deleteProject(project.id);
   }
-  return db.prepare('DELETE FROM users WHERE id = ?').run(id);
+  return Promise.resolve(db.prepare('DELETE FROM users WHERE id = ?').run(id));
 };
 
 // Project operations
@@ -147,11 +147,11 @@ const createProject = (userId, name, description) => {
     INSERT INTO projects (user_id, name, description)
     VALUES (?, ?, ?)
   `);
-  return stmt.run(userId, name, description || '');
+  return Promise.resolve(stmt.run(userId, name, description || ''));
 };
 
 const getProjectsByUser = (userId) => {
-  return db.prepare(`
+  return Promise.resolve(db.prepare(`
     SELECT p.*, COUNT(s.id) as session_count, COUNT(f.id) as file_count
     FROM projects p
     LEFT JOIN sessions s ON s.project_id = p.id
@@ -159,11 +159,11 @@ const getProjectsByUser = (userId) => {
     WHERE p.user_id = ?
     GROUP BY p.id
     ORDER BY p.updated_at DESC
-  `).all(userId);
+  `).all(userId));
 };
 
 const getAllProjects = () => {
-  return db.prepare(`
+  return Promise.resolve(db.prepare(`
     SELECT p.*, u.name as user_name, u.company, u.email,
            COUNT(s.id) as session_count, COUNT(f.id) as file_count
     FROM projects p
@@ -172,16 +172,16 @@ const getAllProjects = () => {
     LEFT JOIN files f ON f.project_id = p.id
     GROUP BY p.id
     ORDER BY p.updated_at DESC
-  `).all();
+  `).all());
 };
 
 const getProject = (id) => {
-  return db.prepare(`
+  return Promise.resolve(db.prepare(`
     SELECT p.*, u.name as user_name, u.company, u.email
     FROM projects p
     JOIN users u ON u.id = p.user_id
     WHERE p.id = ?
-  `).get(id);
+  `).get(id));
 };
 
 const updateProject = (id, name, description, status) => {
@@ -190,14 +190,14 @@ const updateProject = (id, name, description, status) => {
     SET name = ?, description = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
     WHERE id = ?
   `);
-  return stmt.run(name, description, status, id);
+  return Promise.resolve(stmt.run(name, description, status, id));
 };
 
 const deleteProject = (id) => {
   // Delete sessions and files first
   db.prepare('DELETE FROM files WHERE project_id = ?').run(id);
   db.prepare('DELETE FROM sessions WHERE project_id = ?').run(id);
-  return db.prepare('DELETE FROM projects WHERE id = ?').run(id);
+  return Promise.resolve(db.prepare('DELETE FROM projects WHERE id = ?').run(id));
 };
 
 // Session operations
@@ -206,22 +206,22 @@ const createSession = (projectId) => {
     INSERT INTO sessions (project_id, transcript, requirements, context)
     VALUES (?, ?, ?, ?)
   `);
-  return stmt.run(projectId, '[]', '{}', '{}');
+  return Promise.resolve(stmt.run(projectId, '[]', '{}', '{}'));
 };
 
 const getSessionsByProject = (projectId) => {
-  return db.prepare(`
+  return Promise.resolve(db.prepare(`
     SELECT s.*, COUNT(f.id) as file_count
     FROM sessions s
     LEFT JOIN files f ON f.session_id = s.id
     WHERE s.project_id = ?
     GROUP BY s.id
     ORDER BY s.created_at DESC
-  `).all(projectId);
+  `).all(projectId));
 };
 
 const getSession = (id) => {
-  return db.prepare('SELECT * FROM sessions WHERE id = ?').get(id);
+  return Promise.resolve(db.prepare('SELECT * FROM sessions WHERE id = ?').get(id));
 };
 
 const updateSession = (id, transcript, requirements, context, status) => {
@@ -230,22 +230,22 @@ const updateSession = (id, transcript, requirements, context, status) => {
     SET transcript = ?, requirements = ?, context = ?, status = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `);
-  return stmt.run(
+  return Promise.resolve(stmt.run(
     JSON.stringify(transcript), 
     JSON.stringify(requirements), 
     JSON.stringify(context), 
     status, 
     id
-  );
+  ));
 };
 
 const getLatestSessionForProject = (projectId) => {
-  return db.prepare(`
+  return Promise.resolve(db.prepare(`
     SELECT * FROM sessions 
     WHERE project_id = ? AND status != 'completed'
     ORDER BY updated_at DESC 
     LIMIT 1
-  `).get(projectId);
+  `).get(projectId));
 };
 
 // File operations
@@ -254,34 +254,34 @@ const createFile = (projectId, sessionId, filename, originalName, mimeType, size
     INSERT INTO files (project_id, session_id, filename, original_name, mime_type, size, extracted_text, analysis)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  return stmt.run(projectId, sessionId, filename, originalName, mimeType, size, extractedText, analysis ? JSON.stringify(analysis) : null);
+  return Promise.resolve(stmt.run(projectId, sessionId, filename, originalName, mimeType, size, extractedText, analysis ? JSON.stringify(analysis) : null));
 };
 
 const getFilesByProject = (projectId) => {
-  return db.prepare(`
+  return Promise.resolve(db.prepare(`
     SELECT f.*, s.status as session_status
     FROM files f
     LEFT JOIN sessions s ON s.id = f.session_id
     WHERE f.project_id = ?
     ORDER BY f.created_at DESC
-  `).all(projectId);
+  `).all(projectId));
 };
 
 const getFilesBySession = (sessionId) => {
-  return db.prepare('SELECT * FROM files WHERE session_id = ? ORDER BY created_at DESC').all(sessionId);
+  return Promise.resolve(db.prepare('SELECT * FROM files WHERE session_id = ? ORDER BY created_at DESC').all(sessionId));
 };
 
 const getFile = (fileId) => {
-  return db.prepare('SELECT * FROM files WHERE id = ?').get(fileId);
+  return Promise.resolve(db.prepare('SELECT * FROM files WHERE id = ?').get(fileId));
 };
 
 const deleteFile = (fileId) => {
-  return db.prepare('DELETE FROM files WHERE id = ?').run(fileId);
+  return Promise.resolve(db.prepare('DELETE FROM files WHERE id = ?').run(fileId));
 };
 
 const updateFileDescription = (fileId, description) => {
   const stmt = db.prepare('UPDATE files SET description = ? WHERE id = ?');
-  return stmt.run(description, fileId);
+  return Promise.resolve(stmt.run(description, fileId));
 };
 
 // Stats for admin dashboard
@@ -291,12 +291,12 @@ const getStats = () => {
   const totalSessions = db.prepare('SELECT COUNT(*) as count FROM sessions').get().count;
   const companies = db.prepare(`SELECT DISTINCT company FROM users WHERE role = 'customer'`).all().length;
   
-  return {
+  return Promise.resolve({
     totalUsers,
     totalProjects,
     totalSessions,
     totalCompanies: companies
-  };
+  });
 };
 
 // Initialize database on startup

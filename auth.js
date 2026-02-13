@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { getUser } = require('./database');
+const { getUser } = require('./database-adapter');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'voicereq-default-secret-change-in-production';
 
