@@ -4,5 +4,11 @@ if (process.env.DATABASE_URL) {
   module.exports = require('./database-pg');
 } else {
   console.log('📄 Using SQLite database');
-  module.exports = require('./database');
+  try {
+    module.exports = require('./database');
+  } catch (e) {
+    console.error('❌ SQLite failed to load:', e.message);
+    console.log('💡 Set DATABASE_URL for PostgreSQL');
+    process.exit(1);
+  }
 }
