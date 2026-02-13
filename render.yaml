@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: voicereq-ai
+    name: morti-projects
     runtime: node
     buildCommand: npm install
     startCommand: node server.js

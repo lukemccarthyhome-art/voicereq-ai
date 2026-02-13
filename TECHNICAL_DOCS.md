@@ -2,8 +2,8 @@
 
 > AI-powered voice and text requirements gathering platform with portal, auth, and persistent storage.
 
-**Live URL:** https://voicereq-ai.onrender.com  
-**Repository:** https://github.com/lukemccarthyhome-art/voicereq-ai (private)  
+**Live URL:** https://morti-projects.onrender.com  
+**Repository:** https://github.com/lukemccarthyhome-art/morti-projects (private)  
 **Local Dev:** https://localhost:3443 or http://localhost:3000
 
 ---
@@ -281,7 +281,7 @@ Vapi.ai provides a fully managed voice AI pipeline:
 User's Mic → WebRTC → Vapi Cloud → STT → LLM (GPT-4o) → TTS → WebRTC → User's Speaker
 ```
 
-The VoiceReq server **never touches audio**. All voice processing happens on Vapi's infrastructure. The client loads Vapi's HTML Script Tag SDK which establishes a WebRTC connection directly to Vapi.
+The Morti Projects server **never touches audio**. All voice processing happens on Vapi's infrastructure. The client loads Vapi's HTML Script Tag SDK which establishes a WebRTC connection directly to Vapi.
 
 ### Configuration
 
@@ -619,7 +619,7 @@ All API routes require `apiAuth` (JWT cookie). All request/response bodies are J
 ```yaml
 services:
   - type: web
-    name: voicereq-ai
+    name: morti-projects
     runtime: node
     buildCommand: npm install
     startCommand: node server.js

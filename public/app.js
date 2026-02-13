@@ -1,4 +1,4 @@
-class VoiceReqAI {
+class Morti ProjectsAI {
   constructor() {
     this.ws = null;
     this.audioContext = null;
@@ -501,7 +501,7 @@ The conversation covered project requirements gathering through natural dialogue
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-  window.voiceReqAI = new VoiceReqAI();
+  window.voiceReqAI = new Morti ProjectsAI();
 });
 
 // Legacy function support for HTML onclick handlers
