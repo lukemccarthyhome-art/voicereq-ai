@@ -1,5 +1,39 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+
+// Encryption config
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'morti-default-32-char-key-replace-in-prod';
+const IV_LENGTH = 16;
+
+function encrypt(text) {
+  if (!text) return text;
+  try {
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+    let encrypted = cipher.update(text);
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    return iv.toString('hex') + ':' + encrypted.toString('hex');
+  } catch (e) {
+    console.error('Encryption failed:', e);
+    return text;
+  }
+}
+
+function decrypt(text) {
+  if (!text || !text.includes(':')) return text;
+  try {
+    const textParts = text.split(':');
+    const iv = Buffer.from(textParts.shift(), 'hex');
+    const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+  } catch (e) {
+    return text; // Fallback for unencrypted data
+  }
+}
 
 // PostgreSQL connection pool using DATABASE_URL
 // Render internal PG doesn't need SSL; external does
@@ -266,7 +300,12 @@ const getSessionsByProject = async (projectId) => {
 
 const getSession = async (id) => {
   const result = await pool.query('SELECT * FROM sessions WHERE id = $1', [id]);
-  return result.rows[0];
+  const session = result.rows[0];
+  if (session) {
+    session.transcript = decrypt(session.transcript);
+    session.requirements = decrypt(session.requirements);
+  }
+  return session;
 };
 
 const updateSession = async (id, transcript, requirements, context, status) => {
@@ -275,8 +314,8 @@ const updateSession = async (id, transcript, requirements, context, status) => {
     SET transcript = $1, requirements = $2, context = $3, status = $4, updated_at = NOW()
     WHERE id = $5
   `, [
-    JSON.stringify(transcript), 
-    JSON.stringify(requirements), 
+    encrypt(JSON.stringify(transcript)), 
+    encrypt(JSON.stringify(requirements)), 
     JSON.stringify(context), 
     status, 
     id
@@ -300,7 +339,7 @@ const createFile = async (projectId, sessionId, filename, originalName, mimeType
     INSERT INTO files (project_id, session_id, filename, original_name, mime_type, size, extracted_text, analysis)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
-  `, [projectId, sessionId, filename, originalName, mimeType, size, extractedText, analysis ? JSON.stringify(analysis) : null]);
+  `, [projectId, sessionId, filename, originalName, mimeType, size, encrypt(extractedText), encrypt(analysis ? JSON.stringify(analysis) : null)]);
   return { lastInsertRowid: result.rows[0].id, changes: 1 };
 };
 
@@ -312,17 +351,30 @@ const getFilesByProject = async (projectId) => {
     WHERE f.project_id = $1
     ORDER BY f.created_at DESC
   `, [projectId]);
-  return result.rows;
+  return result.rows.map(f => ({
+    ...f,
+    extracted_text: decrypt(f.extracted_text),
+    analysis: decrypt(f.analysis)
+  }));
 };
 
 const getFilesBySession = async (sessionId) => {
   const result = await pool.query('SELECT * FROM files WHERE session_id = $1 ORDER BY created_at DESC', [sessionId]);
-  return result.rows;
+  return result.rows.map(f => ({
+    ...f,
+    extracted_text: decrypt(f.extracted_text),
+    analysis: decrypt(f.analysis)
+  }));
 };
 
 const getFile = async (fileId) => {
   const result = await pool.query('SELECT * FROM files WHERE id = $1', [fileId]);
-  return result.rows[0];
+  const file = result.rows[0];
+  if (file) {
+    file.extracted_text = decrypt(file.extracted_text);
+    file.analysis = decrypt(file.analysis);
+  }
+  return file;
 };
 
 const deleteFile = async (fileId) => {

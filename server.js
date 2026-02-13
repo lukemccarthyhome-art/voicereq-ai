@@ -39,6 +39,13 @@ app.use(helmet({
 }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, message: 'Too many requests' }));
 
+// Stricter rate limit for file uploads
+const uploadLimiter = rateLimit({ 
+  windowMs: 60 * 60 * 1000, 
+  max: 20, 
+  message: 'File upload limit reached (20 files per hour). Please try again later.' 
+});
+
 // Stricter rate limit on login
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'Too many login attempts' });
 
@@ -479,7 +486,7 @@ app.get('/voice-session', auth.authenticate, (req, res) => {
 // === API ROUTES ===
 
 // File upload and text extraction endpoint
-app.post('/api/upload', apiAuth, upload.single('file'), async (req, res) => {
+app.post('/api/upload', apiAuth, uploadLimiter, upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded' });
