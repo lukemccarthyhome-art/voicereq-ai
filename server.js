@@ -191,6 +191,11 @@ app.post('/login/mfa', async (req, res) => {
 app.get('/profile/mfa/setup', auth.authenticate, async (req, res) => {
   try {
     const user = await db.getUserById(req.user.id);
+    if (!user) {
+      console.error('MFA Setup: User not found in database', req.user.id);
+      return res.redirect('/profile?error=User account not found');
+    }
+
     if (user.mfa_secret) return res.redirect('/profile?message=MFA is already enabled');
 
     const secret = authenticator.generateSecret();
@@ -206,7 +211,7 @@ app.get('/profile/mfa/setup', auth.authenticate, async (req, res) => {
     });
   } catch (err) {
     console.error('MFA Setup Error:', err);
-    res.redirect('/profile?error=Failed to initialize 2FA setup');
+    res.redirect(`/profile?error=Failed to initialize 2FA setup: ${err.message}`);
   }
 });
 
