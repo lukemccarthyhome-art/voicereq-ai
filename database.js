@@ -95,7 +95,7 @@ const createSeedUser = () => {
       INSERT INTO users (email, password_hash, name, company, role)
       VALUES (?, ?, ?, ?, ?)
     `);
-    stmt.run('luke@voicereq.ai', hashedPassword, 'Luke McCarthy', 'VoiceReq AI', 'admin');
+    stmt.run('luke@voicereq.ai', hashedPassword, 'Luke McCarthy', 'Morti Projects', 'admin');
     console.log('✅ Seed admin user created: luke@voicereq.ai / admin123');
   }
 };

@@ -1,5 +1,5 @@
 {
-  "name": "voicereq-ai",
+  "name": "morti-projects",
   "version": "1.0.0",
   "description": "AI-powered voice requirements gathering app using OpenAI Realtime API",
   "main": "server.js",
@@ -37,6 +37,6 @@
     "realtime",
     "websocket"
   ],
-  "author": "VoiceReq AI",
+  "author": "Morti Projects",
   "license": "MIT"
 }

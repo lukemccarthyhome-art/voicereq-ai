@@ -106,7 +106,7 @@ const createSeedUser = async () => {
       INSERT INTO users (email, password_hash, name, company, role)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
-    `, ['luke@voicereq.ai', hashedPassword, 'Luke McCarthy', 'VoiceReq AI', 'admin']);
+    `, ['luke@voicereq.ai', hashedPassword, 'Luke McCarthy', 'Morti Projects', 'admin']);
     console.log('✅ Seed admin user created: luke@voicereq.ai / admin123');
   }
 };

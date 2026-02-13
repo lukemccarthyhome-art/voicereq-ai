@@ -969,7 +969,7 @@ app.use((err, req, res, next) => {
 db.ready.then(() => {
   // HTTP
   app.listen(PORT, () => {
-    console.log(`🎙️  VoiceReq AI running on http://localhost:${PORT}`);
+    console.log(`🎙️  Morti Projects running on http://localhost:${PORT}`);
     console.log(`📊 Dashboard: http://localhost:${PORT}/admin (luke@voicereq.ai / admin123)`);
   });
 

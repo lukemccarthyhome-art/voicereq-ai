@@ -1,4 +1,4 @@
-# VoiceReq AI - Voice-Powered Requirements Gathering
+# Morti Projects - Voice-Powered Requirements Gathering
 
 An AI-powered web application that gathers software requirements through natural voice conversations.
 
