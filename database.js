@@ -3,8 +3,8 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure data directory exists
-const dataDir = path.join(__dirname, 'data');
+// Use persistent storage path if available (Render disk), fallback to local
+const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
 fs.mkdirSync(dataDir, { recursive: true });
 
 const db = new Database(path.join(dataDir, 'voicereq.db'));
@@ -66,11 +66,20 @@ const initDB = () => {
       size INTEGER,
       extracted_text TEXT,
       analysis TEXT,
+      description TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (project_id) REFERENCES projects (id),
       FOREIGN KEY (session_id) REFERENCES sessions (id)
     )
   `);
+
+  // Add description column if it doesn't exist (for existing databases)
+  try {
+    db.exec(`ALTER TABLE files ADD COLUMN description TEXT`);
+    console.log('✅ Added description column to files table');
+  } catch (e) {
+    // Column already exists, ignore error
+  }
 
   // Create seed admin user
   createSeedUser();
@@ -116,6 +125,11 @@ const getAllUsers = () => {
 const updateUser = (id, email, name, company) => {
   const stmt = db.prepare('UPDATE users SET email = ?, name = ?, company = ? WHERE id = ?');
   return stmt.run(email, name, company, id);
+};
+
+const updateUserPassword = (id, hashedPassword) => {
+  const stmt = db.prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+  return stmt.run(hashedPassword, id);
 };
 
 const deleteUser = (id) => {
@@ -257,6 +271,19 @@ const getFilesBySession = (sessionId) => {
   return db.prepare('SELECT * FROM files WHERE session_id = ? ORDER BY created_at DESC').all(sessionId);
 };
 
+const getFile = (fileId) => {
+  return db.prepare('SELECT * FROM files WHERE id = ?').get(fileId);
+};
+
+const deleteFile = (fileId) => {
+  return db.prepare('DELETE FROM files WHERE id = ?').run(fileId);
+};
+
+const updateFileDescription = (fileId, description) => {
+  const stmt = db.prepare('UPDATE files SET description = ? WHERE id = ?');
+  return stmt.run(description, fileId);
+};
+
 // Stats for admin dashboard
 const getStats = () => {
   const totalUsers = db.prepare(`SELECT COUNT(*) as count FROM users WHERE role = 'customer'`).get().count;
@@ -283,6 +310,7 @@ module.exports = {
   createUser,
   getAllUsers,
   updateUser,
+  updateUserPassword,
   deleteUser,
   // Projects
   createProject,
@@ -301,6 +329,9 @@ module.exports = {
   createFile,
   getFilesByProject,
   getFilesBySession,
+  getFile,
+  deleteFile,
+  updateFileDescription,
   // Stats
   getStats
 };

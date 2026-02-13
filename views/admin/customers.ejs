@@ -1,13 +1,77 @@
-<% 
-const title = 'Customer Management';
-const currentPage = 'admin-customers';
-const breadcrumbs = [
-    { name: 'Dashboard', url: '/admin' },
-    { name: 'Customers' }
-];
-%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Management - VoiceReq AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
+        
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
+        .nav { display: flex; gap: 20px; align-items: center; }
+        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.3); }
+        .user-name { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 6px; font-weight: 500; }
+        
+        .main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 200px); }
+        
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card h2 { margin-bottom: 16px; color: #333; font-size: 24px; }
+        .card h3 { margin-bottom: 12px; color: #555; font-size: 18px; }
+        
+        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #545b62; }
+        
+        .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid #e0e0e0; }
+        .table th { background: #f8f9fa; font-weight: 600; color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .table tbody tr:hover { background: #f8f9ff; }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: border-color 0.2s; }
+        .form-control:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
+        .empty-state h3 { margin-bottom: 8px; color: #666; }
+        
+        @media (max-width: 768px) {
+            .header-container { flex-direction: column; gap: 12px; text-align: center; }
+            .nav { flex-wrap: wrap; justify-content: center; }
+            .main { padding: 16px; }
+            .card { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-container">
+            <a href="/admin" class="logo">🎙️ VoiceReq AI</a>
+            <nav class="nav">
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/customers" class="active">Customers</a>
+                <a href="/admin/projects">Projects</a>
+                <a href="/profile">Profile</a>
+                <div class="user-name">👤 <%= user.name %></div>
+                <a href="/logout">🚪 Logout</a>
+            </nav>
+        </div>
+    </div>
 
-<div class="card">
+    <main class="main">
+        <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>👥 Customer Management</h2>
         <button onclick="showCreateForm()" class="btn btn-success">➕ Add Customer</button>
@@ -75,6 +139,8 @@ const breadcrumbs = [
                             <div style="display: flex; gap: 8px;">
                                 <button onclick="editCustomer(<%= customer.id %>, '<%= customer.name %>', '<%= customer.email %>', '<%= customer.company %>')" 
                                         class="btn btn-sm">✏️ Edit</button>
+                                <button onclick="changePassword(<%= customer.id %>, '<%= customer.name %>')" 
+                                        class="btn btn-sm btn-secondary">🔑 Password</button>
                                 <button onclick="deleteCustomer(<%= customer.id %>, '<%= customer.name %>')" 
                                         class="btn btn-sm btn-danger">🗑️ Delete</button>
                             </div>
@@ -118,6 +184,29 @@ const breadcrumbs = [
     </div>
 </div>
 
+<!-- Change Password Modal (hidden by default) -->
+<div id="passwordModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 500px;">
+        <h3>🔑 Change Customer Password</h3>
+        <p style="color: #666; margin-bottom: 16px;">Set a new password for <strong id="passwordCustomerName"></strong></p>
+        <form id="passwordForm" method="POST">
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPasswordField" name="password" class="form-control" required>
+                <small style="color: #666;">Minimum 6 characters</small>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPasswordField" class="form-control" required>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button type="submit" class="btn btn-success">🔒 Update Password</button>
+                <button type="button" onclick="hidePasswordModal()" class="btn btn-secondary">❌ Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function showCreateForm() {
     document.getElementById('createForm').style.display = 'block';
@@ -138,6 +227,18 @@ function editCustomer(id, name, email, company) {
 
 function hideEditModal() {
     document.getElementById('editModal').style.display = 'none';
+}
+
+function changePassword(id, name) {
+    document.getElementById('passwordCustomerName').textContent = name;
+    document.getElementById('passwordForm').action = '/admin/customers/' + id + '/password';
+    document.getElementById('newPasswordField').value = '';
+    document.getElementById('confirmPasswordField').value = '';
+    document.getElementById('passwordModal').style.display = 'block';
+}
+
+function hidePasswordModal() {
+    document.getElementById('passwordModal').style.display = 'none';
 }
 
 function deleteCustomer(id, name) {
@@ -168,4 +269,25 @@ document.addEventListener('DOMContentLoaded', function() {
 if (window.location.search.includes('action=create')) {
     showCreateForm();
 }
+
+// Password form validation
+document.getElementById('passwordForm').addEventListener('submit', function(e) {
+    const newPassword = document.getElementById('newPasswordField').value;
+    const confirmPassword = document.getElementById('confirmPasswordField').value;
+    
+    if (newPassword !== confirmPassword) {
+        e.preventDefault();
+        alert('Passwords do not match!');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        e.preventDefault();
+        alert('Password must be at least 6 characters long!');
+        return;
+    }
+});
 </script>
+    </main>
+</body>
+</html>

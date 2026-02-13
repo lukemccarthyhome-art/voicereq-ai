@@ -9,6 +9,7 @@ class VoiceSession {
         this.inCall = false;
         this.isMuted = false;
         this.micMuted = false;
+        this.aiHeld = false;
         this.requirements = {};
         this.sessionContext = {
             projectName: '',
@@ -54,9 +55,24 @@ class VoiceSession {
                 this.sessionContext = { ...this.sessionContext, ...JSON.parse(sessionData.context) };
             }
             
+            // Restore files if available
+            if (sessionData.files && sessionData.files.length > 0) {
+                this.uploadedFiles = sessionData.files;
+                window.fileContents = {};
+                
+                sessionData.files.forEach(file => {
+                    if (file.extracted_text) {
+                        window.fileContents[file.original_name] = file.extracted_text;
+                    }
+                });
+                
+                this.renderFileChips();
+            }
+            
             console.log('✅ Session data loaded', { 
                 messages: this.messages.length, 
-                requirements: Object.keys(this.requirements).length 
+                requirements: Object.keys(this.requirements).length,
+                files: sessionData.files ? sessionData.files.length : 0
             });
             
         } catch (e) {
@@ -139,6 +155,7 @@ class VoiceSession {
             this.inCall = false; 
             this.isMuted = false; 
             this.micMuted = false;
+            this.aiHeld = false;
             this.setStatus('', 'Session Paused', 'Tap Start to resume where you left off');
             document.getElementById('callBtn').classList.remove('active');
             document.getElementById('callBtn').innerHTML = '📞 Resume';
@@ -148,10 +165,18 @@ class VoiceSession {
             this.saveSession(); // Save on call end
         });
 
-        this.vapi.on('speech-start', () => this.setStatus('speaking', 'AI Speaking', 'Press "Let Me Speak" to interrupt'));
+        this.vapi.on('speech-start', () => {
+            if (this.aiHeld) {
+                // AI tried to speak while on hold — interrupt it immediately
+                try { this.vapi.say(' ', false, false); } catch(e) {}
+                this._muteRemoteAudio(true);
+                return;
+            }
+            this.setStatus('speaking', 'AI Speaking', 'Press "Hold AI" to pause');
+        });
         this.vapi.on('speech-end', () => {
-            if (this.isMuted) this.setStatus('muted', 'Your Turn', 'AI paused — tap Resume when done');
-            else this.setStatus('listening', 'Listening', 'Your turn');
+            if (this.aiHeld) return;
+            this.setStatus('listening', 'Listening', 'Your turn');
         });
 
         this.vapi.on('volume-level', (level) => {
@@ -161,6 +186,8 @@ class VoiceSession {
         this.vapi.on('message', (msg) => {
             if (msg.type === 'transcript' && msg.transcriptType === 'final') {
                 const role = msg.role === 'assistant' ? 'ai' : 'user';
+                // While AI is held, suppress AI messages from transcript display
+                if (this.aiHeld && role === 'ai') return;
                 this.messages.push({ role, text: msg.transcript });
                 this.addTranscriptMsg(role, msg.transcript);
                 
@@ -204,6 +231,16 @@ class VoiceSession {
         }
     }
 
+    buildFileContext() {
+        const fc = window.fileContents || {};
+        if (Object.keys(fc).length === 0) return '';
+        let ctx = 'UPLOADED DOCUMENTS:\n';
+        for (const [name, content] of Object.entries(fc)) {
+            ctx += '\n--- ' + name + ' ---\n' + content.substring(0, 4000) + '\n';
+        }
+        return ctx;
+    }
+
     buildContextSummary() {
         let summary = '';
         
@@ -223,9 +260,10 @@ class VoiceSession {
         }
 
         // Files uploaded with contents
-        if (Object.keys(fileContents || {}).length > 0) {
+        const fc = window.fileContents || {};
+        if (Object.keys(fc).length > 0) {
             summary += '\nFILES UPLOADED AND THEIR CONTENTS:\n';
-            for (const [name, content] of Object.entries(fileContents)) {
+            for (const [name, content] of Object.entries(fc)) {
                 summary += '\n--- ' + name + ' ---\n' + content.substring(0, 3000) + '\n';
             }
         }
@@ -269,7 +307,23 @@ class VoiceSession {
                     }
                 });
             } else {
-                await this.vapi.start('55bd93be-541f-4870-ae3e-0c97763c12b3');
+                // Fresh call — but include file context if files were uploaded before starting
+                const fileCtx = this.buildFileContext();
+                if (fileCtx) {
+                    await this.vapi.start('55bd93be-541f-4870-ae3e-0c97763c12b3', {
+                        model: {
+                            provider: "openai",
+                            model: "gpt-3.5-turbo",
+                            temperature: 0.7,
+                            messages: [{
+                                role: "system",
+                                content: "You are an expert business analyst conducting a requirements gathering session through natural voice conversation.\n\nYour approach:\n- Ask one focused question at a time, 1-2 sentences max\n- Listen carefully and probe for specifics\n- Be warm and conversational but efficient\n\nThe client has uploaded documents before starting. Use this information as background knowledge:\n\n" + fileCtx + "\n\nIncorporate this knowledge naturally. Reference specific details when relevant but don't just read the documents aloud. Start by greeting the client and asking about their project."
+                            }]
+                        }
+                    });
+                } else {
+                    await this.vapi.start('55bd93be-541f-4870-ae3e-0c97763c12b3');
+                }
             }
         } catch (e) { 
             this.showError('Failed: ' + e.message); 
@@ -279,18 +333,40 @@ class VoiceSession {
 
     toggleMute() {
         if (!this.vapi || !this.inCall) return;
-        this.isMuted = !this.isMuted;
-        this.vapi.setMuted(this.isMuted || this.micMuted);
         const btn = document.getElementById('muteBtn');
-        if (this.isMuted) {
+        
+        if (!this.aiHeld) {
+            // HOLD AI: interrupt AI speech, mute AI audio output, keep mic live
+            this.aiHeld = true;
+            
+            // Interrupt any current AI speech
+            try { this.vapi.say(' ', false, false); } catch(e) {}
+            
+            // Mute all remote audio elements (AI voice output)
+            this._muteRemoteAudio(true);
+            
             btn.classList.add('active');
-            btn.innerHTML = '🎤 Resume AI';
-            this.setStatus('muted', 'Your Turn', 'AI paused — speak freely');
+            btn.innerHTML = '▶️ Resume AI';
+            this.setStatus('muted', 'AI On Hold', 'Keep talking — AI is listening but won\'t interrupt');
         } else {
+            // RESUME AI: unmute AI audio, let it respond
+            this.aiHeld = false;
+            this._muteRemoteAudio(false);
             btn.classList.remove('active');
-            btn.innerHTML = '✋ Let Me Speak';
-            this.setStatus('listening', 'Listening', 'AI listening again');
+            btn.innerHTML = '✋ Hold AI';
+            this.setStatus('listening', 'Listening', 'AI resumed');
         }
+    }
+    
+    _muteRemoteAudio(mute) {
+        // Mute/unmute all audio elements (Vapi injects audio elements for the call)
+        document.querySelectorAll('audio').forEach(a => { a.muted = mute; });
+        // Also try to mute via iframe if Vapi uses one
+        document.querySelectorAll('iframe').forEach(iframe => {
+            try {
+                iframe.contentDocument.querySelectorAll('audio').forEach(a => { a.muted = mute; });
+            } catch(e) {} // cross-origin will fail silently
+        });
     }
 
     toggleMic() {
@@ -314,15 +390,52 @@ class VoiceSession {
         document.getElementById('micBtn').innerHTML = '🎤 Mute';
     }
 
-    sendText() {
+    async sendText() {
         const input = document.getElementById('textInput');
         const text = input.value.trim();
         if (!text) return;
         
-        if (this.vapi && this.inCall) {
-            this.vapi.send({ type: 'add-message', message: { role: 'user', content: text } });
+        // Use text chat API (works with or without voice call)
+        {
             this.messages.push({ role: 'user', text });
             this.addTranscriptMsg('user', text);
+            
+            // Show thinking state
+            const thinkingMsg = this.addTranscriptMsg('ai', '💭 Thinking...');
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: text,
+                        transcript: this.messages,
+                        fileContents: window.fileContents || {},
+                        sessionId: this.sessionId
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Chat request failed');
+                }
+                
+                const data = await response.json();
+                
+                // Remove thinking message and add AI response
+                thinkingMsg.remove();
+                this.messages.push({ role: 'ai', text: data.response });
+                this.addTranscriptMsg('ai', data.response);
+                
+                // Save the conversation
+                this.saveSession();
+                
+            } catch (error) {
+                console.error('Chat error:', error);
+                thinkingMsg.textContent = '❌ Sorry, I encountered an error. Please try again.';
+                setTimeout(() => thinkingMsg.remove(), 3000);
+            }
         }
         input.value = '';
     }
@@ -336,6 +449,7 @@ class VoiceSession {
         div.innerHTML = '<div class="t-role">' + (role === 'ai' ? 'AI' : 'You') + '</div>' + text;
         el.appendChild(div);
         el.scrollTop = el.scrollHeight;
+        return div;
     }
 
     renderTranscript() {
@@ -352,7 +466,18 @@ class VoiceSession {
     }
 
     async refreshRequirements() {
-        if (this.messages.length === 0 && Object.keys(window.fileContents || {}).length === 0) {
+        // Check if we have files from uploaded files if window.fileContents is empty
+        let filesToAnalyze = window.fileContents || {};
+        if (Object.keys(filesToAnalyze).length === 0 && this.uploadedFiles && this.uploadedFiles.length > 0) {
+            filesToAnalyze = {};
+            this.uploadedFiles.forEach(file => {
+                if (file.extracted_text) {
+                    filesToAnalyze[file.original_name] = file.extracted_text;
+                }
+            });
+        }
+        
+        if (this.messages.length === 0 && Object.keys(filesToAnalyze).length === 0) {
             this.showError('No conversation or files to analyze yet');
             return;
         }
@@ -369,9 +494,10 @@ class VoiceSession {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     transcript: this.messages,
-                    fileContents: window.fileContents || {},
+                    fileContents: filesToAnalyze,
                     sessionId: this.sessionId,
-                    projectId: this.projectId
+                    projectId: this.projectId,
+                    existingRequirements: this.requirements
                 })
             });
             
@@ -381,9 +507,22 @@ class VoiceSession {
             }
             
             const analysis = await response.json();
+            const newReqs = analysis.requirements || {};
             
-            // Replace requirements with AI analysis
-            this.requirements = analysis.requirements || {};
+            // Merge: keep existing requirements unchanged, append new ones
+            for (const [cat, items] of Object.entries(newReqs)) {
+                if (!Array.isArray(items) || items.length === 0) continue;
+                if (!this.requirements[cat]) {
+                    this.requirements[cat] = items;
+                } else {
+                    // Only add items that aren't already captured
+                    const existing = new Set(this.requirements[cat].map(r => r.toLowerCase().trim()));
+                    const additions = items.filter(r => !existing.has(r.toLowerCase().trim()));
+                    if (additions.length > 0) {
+                        this.requirements[cat] = [...this.requirements[cat], ...additions];
+                    }
+                }
+            }
             this.renderRequirements();
             
             console.log('✅ Requirements refreshed', { 
@@ -419,20 +558,75 @@ class VoiceSession {
         
         container.innerHTML = '';
         const order = ['Project Overview', 'Stakeholders', 'Functional Requirements', 'Non-Functional Requirements', 'Constraints', 'Success Criteria', 'Business Rules'];
+        const rendered = new Set();
         
         for (const cat of [...order, ...Object.keys(this.requirements)]) {
+            if (rendered.has(cat)) continue;
             if (!this.requirements[cat] || !Array.isArray(this.requirements[cat]) || this.requirements[cat].length === 0) continue;
+            rendered.add(cat);
             
             const section = document.createElement('div');
             section.className = 'section';
             section.innerHTML = '<h3>' + this.getCatIcon(cat) + ' ' + cat + '</h3>';
             
-            this.requirements[cat].forEach(r => {
+            this.requirements[cat].forEach((r, idx) => {
                 const item = document.createElement('div');
                 item.className = 'req-item';
-                item.textContent = r;
+                item.style.cssText = 'display:flex;gap:8px;align-items:flex-start;';
+                
+                const text = document.createElement('div');
+                text.contentEditable = 'true';
+                text.style.cssText = 'flex:1;outline:none;min-height:1.4em;border-bottom:1px dashed transparent;';
+                text.textContent = r;
+                text.addEventListener('focus', () => { text.style.borderBottomColor = '#667eea'; });
+                text.addEventListener('blur', () => {
+                    text.style.borderBottomColor = 'transparent';
+                    const newText = text.textContent.trim();
+                    if (newText && newText !== r) {
+                        this.requirements[cat][idx] = newText;
+                        this.saveSession();
+                    } else if (!newText) {
+                        // Empty — remove it
+                        this.requirements[cat].splice(idx, 1);
+                        this.saveSession();
+                        this.renderRequirements();
+                    }
+                });
+                
+                const del = document.createElement('span');
+                del.textContent = '✕';
+                del.style.cssText = 'cursor:pointer;color:#ccc;font-size:11px;padding:2px 4px;flex-shrink:0;';
+                del.title = 'Remove';
+                del.addEventListener('mouseenter', () => { del.style.color = '#f44336'; });
+                del.addEventListener('mouseleave', () => { del.style.color = '#ccc'; });
+                del.addEventListener('click', () => {
+                    this.requirements[cat].splice(idx, 1);
+                    if (this.requirements[cat].length === 0) delete this.requirements[cat];
+                    this.saveSession();
+                    this.renderRequirements();
+                });
+                
+                item.appendChild(text);
+                item.appendChild(del);
                 section.appendChild(item);
             });
+            
+            // Add requirement button
+            const addBtn = document.createElement('div');
+            addBtn.style.cssText = 'font-size:12px;color:#667eea;cursor:pointer;padding:6px 0;opacity:0.6;';
+            addBtn.textContent = '+ Add requirement';
+            addBtn.addEventListener('mouseenter', () => { addBtn.style.opacity = '1'; });
+            addBtn.addEventListener('mouseleave', () => { addBtn.style.opacity = '0.6'; });
+            addBtn.addEventListener('click', () => {
+                this.requirements[cat].push('New requirement');
+                this.saveSession();
+                this.renderRequirements();
+                // Focus the new item
+                const items = container.querySelectorAll('.section:last-child [contenteditable]');
+                const last = items[items.length - 1];
+                if (last) { last.focus(); document.execCommand('selectAll'); }
+            });
+            section.appendChild(addBtn);
             
             container.appendChild(section);
         }
@@ -479,18 +673,81 @@ class VoiceSession {
         document.getElementById('fileInput').value = '';
     }
 
-    renderFileChip(file) {
+    renderFileChips() {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '';
+        
+        this.uploadedFiles.forEach(file => {
+            this.renderFileCard(file);
+        });
+    }
+    
+    renderFileCard(file) {
         const div = document.createElement('div');
-        div.className = 'file-chip';
-        div.id = 'file-' + file.name.replace(/[^a-z0-9]/gi, '_');
-        div.innerHTML = '📄 ' + file.name + ' <span class="x" onclick="voiceSession.removeFile(this,\'' + file.name + '\')">✕</span>';
+        div.className = 'file-card';
+        div.id = 'file-' + (file.name || file.original_name || '').replace(/[^a-z0-9]/gi, '_');
+        
+        const fileName = file.name || file.original_name || 'Unknown';
+        const description = file.description || '';
+        const fileId = file.id;
+        
+        div.innerHTML = `
+            <div class="file-card-header">
+                <div class="file-icon">📄</div>
+                <div class="file-name">${fileName}</div>
+                <div class="file-actions">
+                    ${file.analysis ? '<span class="analyzed-badge">✅ Analyzed</span>' : ''}
+                    <span class="file-remove" onclick="voiceSession.removeFile(this,'${fileName}')">✕</span>
+                </div>
+            </div>
+            <div class="file-description">
+                <textarea placeholder="Describe how this document relates to the project..." onblur="voiceSession.updateFileDescription(${fileId}, this.value)" onchange="voiceSession.updateFileDescription(${fileId}, this.value)">${description}</textarea>
+            </div>
+        `;
+        
         document.getElementById('fileList').appendChild(div);
+    }
+    
+    renderFileChip(file) {
+        // For backward compatibility, delegate to renderFileCard
+        this.renderFileCard(file);
     }
 
     removeFile(el, name) {
-        this.uploadedFiles = this.uploadedFiles.filter(f => f.name !== name);
+        if (!confirm('Delete this file?')) return;
+        // Find the file to get its DB id
+        const file = this.uploadedFiles.find(f => (f.name || f.original_name) === name);
+        if (file && file.id) {
+            fetch('/api/files/' + file.id, { method: 'DELETE' }).catch(e => console.error('Delete file error:', e));
+        }
+        this.uploadedFiles = this.uploadedFiles.filter(f => (f.name || f.original_name) !== name);
         delete (window.fileContents || {})[name];
-        el.parentElement.remove();
+        el.closest('.file-card').remove();
+    }
+    
+    async updateFileDescription(fileId, description) {
+        if (!fileId) return;
+        
+        try {
+            const response = await fetch(`/api/files/${fileId}/description`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ description })
+            });
+            
+            if (response.ok) {
+                console.log('✅ File description updated');
+                // Update local file object
+                const file = this.uploadedFiles.find(f => f.id === fileId);
+                if (file) {
+                    file.description = description;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to update file description:', error);
+        }
     }
 
     async processFile(file) {
@@ -534,24 +791,36 @@ class VoiceSession {
             if (analyzeRes.ok) {
                 const analysis = await analyzeRes.json();
 
-                // Silently inject the summary + extracted content as background context for the AI
-                if (this.vapi && this.inCall) {
-                    const contextMsg = '[SYSTEM CONTEXT — DO NOT READ ALOUD OR DISCUSS UNLESS THE USER ASKS ABOUT IT] A file called "' + file.name + '" has been uploaded and analyzed. Summary: ' + (analysis.summary || 'No summary available') + '\n\nKey extracted content:\n' + content.substring(0, 4000) + '\n\nUse this information as background knowledge when asking follow-up questions. Reference specific details from the file naturally when relevant, but do not announce that you are reading from a file. Simply incorporate the knowledge.';
-                    this.vapi.send({ type: 'add-message', message: { role: 'system', content: contextMsg } });
+                // Update the file card with AI description
+                if (uploadData.description || analysis.summary) {
+                    const desc = uploadData.description || analysis.summary;
+                    const fileId = uploadData.fileId || uploadData.id;
+                    const cardId = 'file-' + file.name.replace(/[^a-z0-9]/gi, '_');
+                    const card = document.getElementById(cardId);
+                    if (card) {
+                        const textarea = card.querySelector('textarea');
+                        if (textarea && !textarea.value) textarea.value = desc;
+                    }
+                    // Also update the uploaded file entry
+                    const uf = this.uploadedFiles.find(f => (f.name || f.original_name) === file.name);
+                    if (uf) { uf.description = desc; uf.id = fileId; }
                 }
 
-                // Update file chip to show it's been analyzed
-                const chipId = 'file-' + file.name.replace(/[^a-z0-9]/gi, '_');
-                const chip = document.getElementById(chipId);
-                if (chip) chip.innerHTML = '✅ ' + file.name + ' (analyzed) <span class="x" onclick="voiceSession.removeFile(this,\'' + file.name + '\')">✕</span>';
+                // If in a voice call, restart it so AI gets the new file context
+                if (this.vapi && this.inCall) {
+                    if (proc) proc.textContent = '🔄 Updating voice AI with new document...';
+                    try {
+                        this.vapi.stop();
+                        // Wait for call to end, then restart
+                        await new Promise(r => setTimeout(r, 1500));
+                        await this.startCall();
+                    } catch (e) {
+                        console.error('Failed to restart call with file context:', e);
+                    }
+                }
 
                 if (proc) proc.textContent = '✅ ' + file.name + ' analyzed and ready for requirements extraction';
             } else {
-                // Analysis failed but upload worked — still inject raw content
-                if (this.vapi && this.inCall) {
-                    const contextMsg = '[SYSTEM CONTEXT] File "' + file.name + '" uploaded. Content:\n' + content.substring(0, 4000);
-                    this.vapi.send({ type: 'add-message', message: { role: 'system', content: contextMsg } });
-                }
                 if (proc) proc.textContent = '✅ ' + file.name + ' uploaded';
             }
 

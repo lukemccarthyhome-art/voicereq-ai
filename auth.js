@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { getUser } = require('./database');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'voicereq-super-secret-key-' + Math.random();
+const JWT_SECRET = process.env.JWT_SECRET || 'voicereq-default-secret-change-in-production';
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -19,6 +19,10 @@ const generateToken = (user) => {
 
 const verifyPassword = (plainPassword, hashedPassword) => {
   return bcrypt.compareSync(plainPassword, hashedPassword);
+};
+
+const hashPassword = (plainPassword) => {
+  return bcrypt.hashSync(plainPassword, 10);
 };
 
 const authenticate = (req, res, next) => {
@@ -61,6 +65,7 @@ const requireCustomer = (req, res, next) => {
 module.exports = {
   generateToken,
   verifyPassword,
+  hashPassword,
   authenticate,
   requireAdmin,
   requireCustomer,

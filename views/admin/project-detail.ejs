@@ -1,14 +1,72 @@
-<% 
-const title = project.name + ' - Project Detail';
-const currentPage = 'admin-projects';
-const breadcrumbs = [
-    { name: 'Dashboard', url: '/admin' },
-    { name: 'Projects', url: '/admin/projects' },
-    { name: project.name }
-];
-%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= project.name %> - Project Detail - VoiceReq AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
+        
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
+        .nav { display: flex; gap: 20px; align-items: center; }
+        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.3); }
+        .user-name { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 6px; font-weight: 500; }
+        
+        .main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 200px); }
+        
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card h2 { margin-bottom: 16px; color: #333; font-size: 24px; }
+        .card h3 { margin-bottom: 12px; color: #555; font-size: 18px; }
+        
+        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #545b62; }
+        
+        .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid #e0e0e0; }
+        .table th { background: #f8f9fa; font-weight: 600; color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .table tbody tr:hover { background: #f8f9ff; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
+        .empty-state h3 { margin-bottom: 8px; color: #666; }
+        
+        @media (max-width: 768px) {
+            .header-container { flex-direction: column; gap: 12px; text-align: center; }
+            .nav { flex-wrap: wrap; justify-content: center; }
+            .main { padding: 16px; }
+            .card { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-container">
+            <a href="/admin" class="logo">🎙️ VoiceReq AI</a>
+            <nav class="nav">
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/customers">Customers</a>
+                <a href="/admin/projects" class="active">Projects</a>
+                <a href="/profile">Profile</a>
+                <div class="user-name">👤 <%= user.name %></div>
+                <a href="/logout">🚪 Logout</a>
+            </nav>
+        </div>
+    </div>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+    <main class="main">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
     <div class="card">
         <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 16px;">
             <div>
@@ -74,6 +132,9 @@ const breadcrumbs = [
 
         <div style="margin-top: 20px;">
             <button onclick="exportProject()" class="btn btn-sm" style="width: 100%;">📦 Export Project</button>
+            <form method="POST" action="/admin/projects/<%= project.id %>/delete" onsubmit="return confirm('Delete this project and all its sessions/files? This cannot be undone.')" style="margin-top: 8px;">
+                <button type="submit" class="btn btn-sm" style="width: 100%; background: #dc3545; color: white;">🗑️ Delete Project</button>
+            </form>
         </div>
     </div>
 </div>
@@ -138,6 +199,11 @@ const breadcrumbs = [
                         <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
                             <%= (file.size / 1024).toFixed(1) %> KB • <%= new Date(file.created_at).toLocaleDateString() %>
                         </div>
+                        <% if (file.description) { %>
+                            <div style="font-size: 13px; color: #333; margin-bottom: 8px; padding: 8px; background: #f0f8ff; border-left: 3px solid #667eea; border-radius: 4px;">
+                                <%= file.description %>
+                            </div>
+                        <% } %>
                         
                         <% if (file.analysis) { %>
                             <% 
@@ -154,6 +220,7 @@ const breadcrumbs = [
                         <% } %>
                         
                         <button onclick="viewFile('<%= file.filename %>')" class="btn btn-sm" style="font-size: 11px;">👁️ View</button>
+                        <button onclick="deleteFile(<%= file.id %>, this)" class="btn btn-sm" style="font-size: 11px; background: #dc3545; color: white;">🗑️</button>
                     </div>
                 <% }) %>
             </div>
@@ -180,7 +247,7 @@ const breadcrumbs = [
 
 <script>
 function viewSession(sessionId) {
-    const session = <%= JSON.stringify(sessions) %>.find(s => s.id === sessionId);
+    const session = <%- JSON.stringify(sessions) %>.find(s => s.id === sessionId);
     if (!session) return;
     
     let transcript = [];
@@ -242,10 +309,24 @@ function viewFile(filename) {
     window.open('/uploads/' + filename, '_blank');
 }
 
+async function deleteFile(fileId, btn) {
+    if (!confirm('Delete this file? This cannot be undone.')) return;
+    try {
+        const res = await fetch('/api/files/' + fileId, { method: 'DELETE' });
+        if (res.ok) {
+            btn.closest('div').remove();
+        } else {
+            alert('Failed to delete file');
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
 async function exportProject() {
     try {
         // Build requirements document
-        const sessions = <%= JSON.stringify(sessions) %>;
+        const sessions = <%- JSON.stringify(sessions) %>;
         let allRequirements = {};
         let allTranscript = [];
         
@@ -285,7 +366,7 @@ async function exportProject() {
             }
         }
         
-        const files = <%= JSON.stringify(files) %>;
+        const files = <%- JSON.stringify(files) %>;
         if (files.length > 0) {
             doc += '## Project Assets\\n\\n';
             files.forEach(f => doc += '- ' + f.original_name + ' (' + (f.size/1024).toFixed(1) + ' KB)\\n');
@@ -328,3 +409,6 @@ document.addEventListener('click', function(e) {
     }
 });
 </script>
+    </main>
+</body>
+</html>

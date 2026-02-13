@@ -5,6 +5,8 @@ const https = require('https');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const archiver = require('archiver');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 require('dotenv').config();
 
@@ -13,8 +15,15 @@ const db = require('./database');
 const auth = require('./auth');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const HTTPS_PORT = 3443;
+
+// Security middleware
+app.use(helmet({ contentSecurityPolicy: false })); // CSP disabled for inline scripts in EJS
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, message: 'Too many requests' }));
+
+// Stricter rate limit on login
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'Too many login attempts' });
 
 // Middleware
 app.use(express.json({ limit: '20mb' }));
@@ -23,14 +32,27 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// File upload setup
+// File upload setup — use persistent storage if available
+const uploadsDir = process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'uploads') : path.join(__dirname, 'uploads');
 const upload = multer({ 
-  dest: path.join(__dirname, 'uploads/'),
+  dest: uploadsDir,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
 // Ensure directories exist
-fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
+fs.mkdirSync(uploadsDir, { recursive: true });
+
+// API auth middleware (checks cookie token for API routes)
+const apiAuth = (req, res, next) => {
+  const token = req.cookies.authToken;
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const decoded = require('jsonwebtoken').verify(token, auth.JWT_SECRET);
+    req.user = db.getUserById(decoded.userId);
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    next();
+  } catch { res.status(401).json({ error: 'Unauthorized' }); }
+};
 
 // Serve uploaded files (behind auth)
 app.use('/uploads', (req, res, next) => {
@@ -40,7 +62,7 @@ app.use('/uploads', (req, res, next) => {
     require('jsonwebtoken').verify(token, require('./auth').JWT_SECRET);
     next();
   } catch { res.status(401).send('Unauthorized'); }
-}, express.static(path.join(__dirname, 'uploads')));
+}, express.static(uploadsDir));
 fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
 
 // Serve static files with no-cache
@@ -65,7 +87,7 @@ app.get('/login', (req, res) => {
   res.render('login', { error: null, email: '' });
 });
 
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = db.getUser(email);
@@ -159,6 +181,58 @@ app.post('/admin/customers/:id/delete', auth.authenticate, auth.requireAdmin, (r
   }
 });
 
+// Delete project (admin)
+app.post('/admin/projects/:id/delete', auth.authenticate, auth.requireAdmin, (req, res) => {
+  try {
+    // Delete uploaded files from disk
+    const files = db.getFilesByProject(req.params.id);
+    files.forEach(f => {
+      const fp = path.join(uploadsDir, f.filename || f.original_name);
+      if (fs.existsSync(fp)) fs.unlinkSync(fp);
+    });
+    db.deleteProject(req.params.id);
+    res.redirect('/admin/projects?message=Project deleted successfully');
+  } catch (e) {
+    console.error('Delete project error:', e);
+    res.redirect('/admin/projects?error=Failed to delete project');
+  }
+});
+
+// Delete file (API - works from portal and session)
+app.delete('/api/files/:id', apiAuth, (req, res) => {
+  try {
+    const file = db.getFile(req.params.id);
+    if (!file) return res.status(404).json({ error: 'File not found' });
+    // Delete from disk
+    const fp = path.join(uploadsDir, file.filename || file.original_name);
+    if (fs.existsSync(fp)) fs.unlinkSync(fp);
+    // Delete from DB
+    db.deleteFile(req.params.id);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Delete file error:', e);
+    res.status(500).json({ error: 'Failed to delete file' });
+  }
+});
+
+// Delete project (customer)
+app.post('/projects/:id/delete', auth.authenticate, auth.requireCustomer, (req, res) => {
+  try {
+    const project = db.getProject(req.params.id);
+    if (!project || project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+    const files = db.getFilesByProject(req.params.id);
+    files.forEach(f => {
+      const fp = path.join(uploadsDir, f.filename || f.original_name);
+      if (fs.existsSync(fp)) fs.unlinkSync(fp);
+    });
+    db.deleteProject(req.params.id);
+    res.redirect('/projects?message=Project deleted successfully');
+  } catch (e) {
+    console.error('Delete project error:', e);
+    res.redirect('/projects?error=Failed to delete project');
+  }
+});
+
 app.get('/admin/projects', auth.authenticate, auth.requireAdmin, (req, res) => {
   const projects = db.getAllProjects();
   res.render('admin/projects', {
@@ -195,6 +269,69 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, (req, res) 
       { name: project.name }
     ]
   });
+});
+
+// Admin: Reset customer password
+app.post('/admin/customers/:id/password', auth.authenticate, auth.requireAdmin, (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 6) {
+      return res.redirect(`/admin/customers?error=Password must be at least 6 characters`);
+    }
+    
+    const hashedPassword = auth.hashPassword(password);
+    db.updateUserPassword(req.params.id, hashedPassword);
+    res.redirect('/admin/customers?message=Customer password updated successfully');
+  } catch (e) {
+    console.error('Update customer password error:', e);
+    res.redirect('/admin/customers?error=Failed to update customer password');
+  }
+});
+
+// === PROFILE ROUTES (for both admin and customer) ===
+
+app.get('/profile', auth.authenticate, (req, res) => {
+  res.render('profile', {
+    user: req.user,
+    title: 'Profile Settings',
+    currentPage: req.user.role === 'admin' ? 'admin-profile' : 'customer-profile',
+    message: req.query.message,
+    error: req.query.error
+  });
+});
+
+app.post('/profile/password', auth.authenticate, (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    
+    // Validate inputs
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.redirect('/profile?error=All password fields are required');
+    }
+    
+    if (newPassword !== confirmPassword) {
+      return res.redirect('/profile?error=New passwords do not match');
+    }
+    
+    if (newPassword.length < 6) {
+      return res.redirect('/profile?error=New password must be at least 6 characters');
+    }
+    
+    // Verify current password
+    const user = db.getUserById(req.user.id);
+    if (!auth.verifyPassword(currentPassword, user.password_hash)) {
+      return res.redirect('/profile?error=Current password is incorrect');
+    }
+    
+    // Update password
+    const hashedPassword = auth.hashPassword(newPassword);
+    db.updateUserPassword(req.user.id, hashedPassword);
+    
+    res.redirect('/profile?message=Password updated successfully');
+  } catch (e) {
+    console.error('Update password error:', e);
+    res.redirect('/profile?error=Failed to update password');
+  }
 });
 
 // === CUSTOMER ROUTES ===
@@ -292,7 +429,7 @@ app.get('/voice-session', auth.authenticate, (req, res) => {
 // === API ROUTES ===
 
 // File upload and text extraction endpoint
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post('/api/upload', apiAuth, upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded' });
@@ -315,20 +452,29 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       }
     } else if (ext === '.pdf') {
       try {
-        const pdfParse = require('pdf-parse');
-        const dataBuffer = fs.readFileSync(filePath);
-        const data = await pdfParse(dataBuffer);
-        content = data.text;
+        const { PDFParse } = require('pdf-parse');
+        const dataBuffer = new Uint8Array(fs.readFileSync(filePath));
+        const parser = new PDFParse(dataBuffer);
+        await parser.load();
+        const result = await parser.getText();
+        // result is { pages: [{ text: "..." }, ...] }
+        if (result && result.pages) {
+          content = result.pages.map(p => p.text).join('\n\n');
+        } else if (typeof result === 'string') {
+          content = result;
+        } else {
+          content = JSON.stringify(result);
+        }
       } catch (e) {
-        console.log('pdf-parse not available');
-        content = '[PDF: ' + file.originalname + ' — install pdf-parse for extraction: npm install pdf-parse]';
+        console.log('pdf-parse error:', e.message);
+        content = '[PDF: ' + file.originalname + ' — failed to extract text: ' + e.message + ']';
       }
     } else {
       content = '[File: ' + file.originalname + ' (' + ext + ') — unsupported format for text extraction]';
     }
 
     // Keep the file — rename to original name
-    const savedPath = path.join(__dirname, 'uploads', file.originalname);
+    const savedPath = path.join(uploadsDir, file.originalname);
     fs.renameSync(filePath, savedPath);
 
     // Truncate if very long
@@ -338,8 +484,11 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 
     // Save to database if project/session provided
     const { projectId, sessionId } = req.body;
+    let fileId = null;
+    let description = '';
+    
     if (projectId) {
-      db.createFile(
+      const result = db.createFile(
         projectId,
         sessionId || null,
         file.originalname,
@@ -349,14 +498,53 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
         content,
         null
       );
+      fileId = result.lastInsertRowid;
+      
+      // Generate AI description for the document
+      if (content && content.length > 50) {
+        try {
+          const OPENAI_KEY = process.env.OPENAI_API_KEY;
+          if (OPENAI_KEY) {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + OPENAI_KEY
+              },
+              body: JSON.stringify({
+                model: 'gpt-3.5-turbo',
+                temperature: 0.3,
+                messages: [{
+                  role: 'system',
+                  content: 'Analyze this document and write a concise 2-3 sentence description that covers: (1) what type of document it is, (2) its key content/purpose, and (3) how it could be utilised in the project — e.g. informing requirements, defining constraints, identifying stakeholders, shaping business rules, etc. Be specific about what project-relevant information can be extracted from it.'
+                }, {
+                  role: 'user',
+                  content: `Document: ${file.originalname}\n\nContent: ${content.substring(0, 2000)}${content.length > 2000 ? '...' : ''}`
+                }]
+              })
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              description = data.choices[0].message.content.trim();
+              // Update file with description
+              db.updateFileDescription(fileId, description);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to generate file description:', e);
+        }
+      }
     }
 
-    console.log('📄 Processed file:', file.originalname, '— extracted', content.length, 'chars');
+    console.log('📄 Processed file:', file.originalname, '— extracted', content.length, 'chars', description ? '— generated description' : '');
     
     res.json({ 
       filename: file.originalname,
       content: content,
-      charCount: content.length
+      charCount: content.length,
+      description: description,
+      fileId: fileId
     });
   } catch (e) {
     console.error('File processing error:', e);
@@ -365,7 +553,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 });
 
 // Analyze file content and extract requirements using OpenAI
-app.post('/api/analyze', express.json({ limit: '10mb' }), async (req, res) => {
+app.post('/api/analyze', apiAuth, express.json({ limit: '10mb' }), async (req, res) => {
   try {
     const { filename, content } = req.body;
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
@@ -390,6 +578,7 @@ app.post('/api/analyze', express.json({ limit: '10mb' }), async (req, res) => {
 Return a JSON object with this exact structure:
 {
   "summary": "Brief 2-3 sentence summary of the document",
+  "description": "Concise 1-2 sentence description of what type of document this is",
   "requirements": [
     {"category": "Project Overview|Stakeholders|Functional Requirements|Non-Functional Requirements|Constraints|Success Criteria", "text": "Clear requirement statement"}
   ]
@@ -421,10 +610,24 @@ Only include actual requirements, specifications, or important project facts. Do
   }
 });
 
-// Analyze full session (conversation + files) for comprehensive requirements extraction
-app.post('/api/analyze-session', express.json({ limit: '20mb' }), async (req, res) => {
+// Update file description
+app.put('/api/files/:id/description', apiAuth, express.json(), (req, res) => {
   try {
-    const { transcript, fileContents, sessionId, projectId } = req.body;
+    const { description } = req.body;
+    const fileId = req.params.id;
+    
+    db.updateFileDescription(fileId, description);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Update file description error:', e);
+    res.status(500).json({ error: 'Failed to update file description' });
+  }
+});
+
+// Analyze full session (conversation + files) for comprehensive requirements extraction
+app.post('/api/analyze-session', apiAuth, express.json({ limit: '20mb' }), async (req, res) => {
+  try {
+    const { transcript, fileContents, sessionId, projectId, existingRequirements } = req.body;
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
     
     if (!OPENAI_KEY) {
@@ -444,13 +647,49 @@ app.post('/api/analyze-session', express.json({ limit: '20mb' }), async (req, re
     }
     
     // Add uploaded files content
-    if (fileContents && Object.keys(fileContents).length > 0) {
+    let filesToAnalyze = fileContents;
+    
+    // Load files from DB for descriptions and as fallback for content
+    let dbFiles = [];
+    if (sessionId) {
+      dbFiles = db.getFilesBySession(sessionId) || [];
+    }
+    
+    // If no fileContents provided, use DB extracted text as fallback
+    if ((!fileContents || Object.keys(fileContents).length === 0) && dbFiles.length > 0) {
+      filesToAnalyze = {};
+      dbFiles.forEach(file => {
+        if (file.extracted_text) {
+          filesToAnalyze[file.original_name] = file.extracted_text;
+        }
+      });
+    }
+    
+    if (filesToAnalyze && Object.keys(filesToAnalyze).length > 0) {
       analysisContent += '## UPLOADED DOCUMENTS\n\n';
-      for (const [filename, content] of Object.entries(fileContents)) {
-        analysisContent += `### ${filename}\n\n${content}\n\n---\n\n`;
+      for (const [filename, content] of Object.entries(filesToAnalyze)) {
+        // Include the AI-generated description for additional context
+        const dbFile = dbFiles.find(f => f.original_name === filename);
+        if (dbFile && dbFile.description) {
+          analysisContent += `### ${filename}\n**Document Context:** ${dbFile.description}\n\n${content}\n\n---\n\n`;
+        } else {
+          analysisContent += `### ${filename}\n\n${content}\n\n---\n\n`;
+        }
       }
     }
     
+    // Add existing requirements so AI knows what's already captured
+    if (existingRequirements && Object.keys(existingRequirements).length > 0) {
+      analysisContent += '## ALREADY CAPTURED REQUIREMENTS (DO NOT REPEAT THESE)\n\n';
+      for (const [cat, items] of Object.entries(existingRequirements)) {
+        if (Array.isArray(items) && items.length > 0) {
+          analysisContent += `### ${cat}\n`;
+          items.forEach(r => { analysisContent += `- ${r}\n`; });
+          analysisContent += '\n';
+        }
+      }
+    }
+
     if (!analysisContent.trim()) {
       return res.status(400).json({ error: 'No content to analyze' });
     }
@@ -467,9 +706,11 @@ app.post('/api/analyze-session', express.json({ limit: '20mb' }), async (req, re
         max_tokens: 4000,
         messages: [{
           role: 'system',
-          content: `You are an expert business analyst conducting requirements analysis. Analyze the provided conversation transcript and uploaded documents to extract comprehensive, structured requirements.
+          content: `You are an expert business analyst conducting requirements analysis. Analyze the provided conversation transcript and uploaded documents to extract NEW requirements not already captured.
 
-IMPORTANT: Focus on extracting clear, actionable requirements - not just restating what was said. Convert conversational statements into formal requirements.
+CRITICAL: A section titled "ALREADY CAPTURED REQUIREMENTS" lists requirements that have already been identified. DO NOT repeat or rephrase any of these. ONLY return genuinely NEW requirements, additional details, or refinements discovered in the latest conversation or documents. If nothing new is found for a category, omit that category entirely.
+
+Focus on extracting clear, actionable requirements - not just restating what was said. Convert conversational statements into formal requirements.
 
 Return a JSON object with this exact structure:
 {
@@ -533,13 +774,100 @@ Return valid JSON only.`
   }
 });
 
+// Text chat API - for standalone chat when not in voice call
+app.post('/api/chat', apiAuth, express.json({ limit: '10mb' }), async (req, res) => {
+  try {
+    const { message, transcript, fileContents, sessionId } = req.body;
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    
+    if (!OPENAI_KEY) {
+      return res.status(500).json({ error: 'OpenAI API key not configured' });
+    }
+
+    // Build context from transcript and files
+    let contextContent = '';
+    
+    // Add file contents if available
+    if (fileContents && Object.keys(fileContents).length > 0) {
+      contextContent += '\n\n=== UPLOADED DOCUMENTS ===\n';
+      Object.entries(fileContents).forEach(([filename, content]) => {
+        contextContent += `\n--- ${filename} ---\n${content}\n`;
+      });
+    }
+    
+    // Add conversation history if available
+    if (transcript && Array.isArray(transcript) && transcript.length > 0) {
+      contextContent += '\n\n=== CONVERSATION HISTORY ===\n';
+      transcript.forEach(msg => {
+        if (msg.role && msg.text) {
+          contextContent += `${msg.role.toUpperCase()}: ${msg.text}\n`;
+        }
+      });
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + OPENAI_KEY
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        temperature: 0.7,
+        messages: [{
+          role: 'system',
+          content: `You are an expert business analyst helping with requirements gathering and project analysis. You have access to uploaded documents and conversation history for context.
+          
+          Your role:
+          - Help clarify and refine business requirements
+          - Ask insightful follow-up questions
+          - Identify gaps or inconsistencies in requirements
+          - Suggest best practices and considerations
+          - Be conversational but professional
+          
+          Context available:${contextContent}`
+        }, {
+          role: 'user',
+          content: message
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error('OpenAI chat error:', err);
+      throw new Error('Chat request failed');
+    }
+
+    const data = await response.json();
+    const aiResponse = data.choices[0].message.content;
+    
+    console.log('💬 Chat response generated', {
+      sessionId,
+      messageLength: message.length,
+      responseLength: aiResponse.length,
+      contextLength: contextContent.length
+    });
+    
+    res.json({ response: aiResponse });
+  } catch (e) {
+    console.error('Chat error:', e);
+    res.status(500).json({ error: 'Chat failed: ' + e.message });
+  }
+});
+
 // Session management API
-app.get('/api/sessions/:id', (req, res) => {
+app.get('/api/sessions/:id', apiAuth, (req, res) => {
   try {
     const session = db.getSession(req.params.id);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
+    
+    // Also get associated files
+    const files = db.getFilesBySession(req.params.id);
+    session.files = files;
+    
     res.json(session);
   } catch (e) {
     console.error('Get session error:', e);
@@ -547,7 +875,7 @@ app.get('/api/sessions/:id', (req, res) => {
   }
 });
 
-app.put('/api/sessions/:id', express.json({ limit: '10mb' }), (req, res) => {
+app.put('/api/sessions/:id', apiAuth, express.json({ limit: '10mb' }), (req, res) => {
   try {
     const { transcript, requirements, context, status } = req.body;
     db.updateSession(req.params.id, transcript, requirements, context, status || 'active');
@@ -559,7 +887,7 @@ app.put('/api/sessions/:id', express.json({ limit: '10mb' }), (req, res) => {
 });
 
 // Download all assets + requirements as zip
-app.post('/api/export-zip', express.json({ limit: '10mb' }), async (req, res) => {
+app.post('/api/export-zip', apiAuth, express.json({ limit: '10mb' }), async (req, res) => {
   try {
     const { requirementsDoc } = req.body;
     
@@ -577,7 +905,7 @@ app.post('/api/export-zip', express.json({ limit: '10mb' }), async (req, res) =>
     }
 
     // Add all uploaded files in an assets folder
-    const uploadsDir = path.join(__dirname, 'uploads');
+    // uploadsDir already defined at top
     if (fs.existsSync(uploadsDir)) {
       const files = fs.readdirSync(uploadsDir);
       for (const file of files) {
