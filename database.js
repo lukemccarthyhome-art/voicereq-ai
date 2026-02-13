@@ -284,6 +284,15 @@ const updateFileDescription = (fileId, description) => {
   return Promise.resolve(stmt.run(description, fileId));
 };
 
+const logAction = (userId, action, details, ipAddress) => {
+  try {
+    const stmt = db.prepare('INSERT INTO audit_logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)');
+    return Promise.resolve(stmt.run(userId, action, JSON.stringify(details), ipAddress));
+  } catch (e) {
+    return Promise.resolve();
+  }
+};
+
 // Stats for admin dashboard
 const getStats = () => {
   const totalUsers = db.prepare(`SELECT COUNT(*) as count FROM users WHERE role = 'customer'`).get().count;
@@ -333,6 +342,7 @@ module.exports = {
   getFile,
   deleteFile,
   updateFileDescription,
+  logAction,
   // Stats
   getStats
 };

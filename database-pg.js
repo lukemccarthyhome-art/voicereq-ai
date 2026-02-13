@@ -89,6 +89,19 @@ const initDB = async (retries = 3) => {
       )
     `);
 
+    // Audit Logs table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        action TEXT NOT NULL,
+        details TEXT,
+        ip_address TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    `);
+
     // Create seed admin user
     await createSeedUser();
 
@@ -321,6 +334,18 @@ const updateFileDescription = async (fileId, description) => {
   return { changes: result.rowCount };
 };
 
+// Audit logging
+const logAction = async (userId, action, details, ipAddress) => {
+  try {
+    await pool.query(`
+      INSERT INTO audit_logs (user_id, action, details, ip_address)
+      VALUES ($1, $2, $3, $4)
+    `, [userId, action, JSON.stringify(details), ipAddress]);
+  } catch (e) {
+    console.error('❌ Failed to write audit log:', e.message);
+  }
+};
+
 // Stats for admin dashboard
 const getStats = async () => {
   const totalUsersResult = await pool.query(`SELECT COUNT(*) as count FROM users WHERE role = 'customer'`);
@@ -377,6 +402,7 @@ module.exports = {
   getFile,
   deleteFile,
   updateFileDescription,
+  logAction,
   // Stats
   getStats
 };

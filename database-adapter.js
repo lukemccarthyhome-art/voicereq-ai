@@ -1,14 +1,13 @@
 // Database adapter - chooses between SQLite and PostgreSQL based on environment
+const dbBackend = process.env.DATABASE_URL ? require('./database-pg') : require('./database');
+
 if (process.env.DATABASE_URL) {
   console.log('🐘 Using PostgreSQL database');
-  module.exports = require('./database-pg');
 } else {
   console.log('📄 Using SQLite database');
-  try {
-    module.exports = require('./database');
-  } catch (e) {
-    console.error('❌ SQLite failed to load:', e.message);
-    console.log('💡 Set DATABASE_URL for PostgreSQL');
-    process.exit(1);
-  }
 }
+
+// Proxy logAction to ensure it doesn't crash if backend doesn't export it yet
+dbBackend.logAction = dbBackend.logAction || (async () => {});
+
+module.exports = dbBackend;

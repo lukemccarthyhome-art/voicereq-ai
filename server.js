@@ -22,7 +22,20 @@ const HTTPS_PORT = 3443;
 app.set('trust proxy', 1);
 
 // Security middleware
-app.use(helmet({ contentSecurityPolicy: false })); // CSP disabled for inline scripts in EJS
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://vapi.ai", "https://*.vapi.ai"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https://*.vapi.ai"],
+      connectSrc: ["'self'", "https://api.vapi.ai", "wss://*.vapi.ai", "https://api.openai.com"],
+      frameSrc: ["'self'", "https://*.vapi.ai"],
+      mediaSrc: ["'self'", "blob:", "https://*.vapi.ai"]
+    },
+  },
+}));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, message: 'Too many requests' }));
 
 // Stricter rate limit on login
@@ -112,6 +125,7 @@ app.post('/login', loginLimiter, async (req, res) => {
     }
     
     const token = auth.generateToken(user);
+    await db.logAction(user.id, 'login', { email: user.email }, req.ip);
     res.cookie('authToken', token, { 
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production',
