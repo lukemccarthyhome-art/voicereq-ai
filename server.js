@@ -18,6 +18,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const HTTPS_PORT = 3443;
 
+// Trust proxy (Render terminates SSL at load balancer)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({ contentSecurityPolicy: false })); // CSP disabled for inline scripts in EJS
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, message: 'Too many requests' }));
@@ -99,7 +102,8 @@ app.post('/login', loginLimiter, async (req, res) => {
     const token = auth.generateToken(user);
     res.cookie('authToken', token, { 
       httpOnly: true, 
-      secure: false, // Set to true in production with HTTPS
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
     
