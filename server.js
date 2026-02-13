@@ -31,6 +31,16 @@ const upload = multer({
 
 // Ensure directories exist
 fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
+
+// Serve uploaded files (behind auth)
+app.use('/uploads', (req, res, next) => {
+  const token = req.cookies.authToken;
+  if (!token) return res.status(401).send('Unauthorized');
+  try {
+    require('jsonwebtoken').verify(token, require('./auth').JWT_SECRET);
+    next();
+  } catch { res.status(401).send('Unauthorized'); }
+}, express.static(path.join(__dirname, 'uploads')));
 fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
 
 // Serve static files with no-cache
@@ -275,8 +285,8 @@ app.get('/projects/:id/session', auth.authenticate, auth.requireCustomer, (req, 
   res.redirect(`/voice-session?project=${req.params.id}&session=${activeSession.id}`);
 });
 
-app.get('/voice-session', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get('/voice-session', auth.authenticate, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'voice-session.html'));
 });
 
 // === API ROUTES ===
