@@ -155,6 +155,11 @@
                 <a href="<%= user.role === 'admin' ? '/admin' : '/dashboard' %>" class="btn">🏠 Back to Dashboard</a>
                 <a href="/logout" class="btn btn-secondary">🚪 Sign Out</a>
             </div>
+            <div class="profile-card">
+                <h3>Two-Factor Authentication</h3>
+                <p style="margin-bottom: 16px; color: #718096; font-size: 14px;">Add an extra layer of security to your account by requiring a 6-digit code from an authenticator app.</p>
+                <a href="/profile/mfa/setup" class="btn btn-primary" style="display: inline-block; text-decoration: none;">Setup 2FA</a>
+            </div>
         </div>
     </main>
 
