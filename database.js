@@ -133,6 +133,11 @@ const updateUserPassword = (id, hashedPassword) => {
   return Promise.resolve(stmt.run(hashedPassword, id));
 };
 
+const updateUserMfaSecret = (id, secret) => {
+  const stmt = db.prepare('UPDATE users SET mfa_secret = ? WHERE id = ?');
+  return Promise.resolve(stmt.run(secret, id));
+};
+
 const deleteUser = (id) => {
   // Delete user's projects, sessions, and files first (cascade)
   const projects = db.prepare('SELECT id FROM projects WHERE user_id = ?').all(id);
@@ -322,6 +327,7 @@ module.exports = {
   getAllUsers,
   updateUser,
   updateUserPassword,
+  updateUserMfaSecret,
   deleteUser,
   // Projects
   createProject,

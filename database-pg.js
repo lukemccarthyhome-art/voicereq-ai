@@ -202,6 +202,11 @@ const updateUserPassword = async (id, hashedPassword) => {
   return { changes: result.rowCount };
 };
 
+const updateUserMfaSecret = async (id, secret) => {
+  const result = await pool.query('UPDATE users SET mfa_secret = $1 WHERE id = $2', [secret, id]);
+  return { changes: result.rowCount };
+};
+
 const deleteUser = async (id) => {
   // Delete user's projects, sessions, and files first (cascade)
   const projects = await pool.query('SELECT id FROM projects WHERE user_id = $1', [id]);
@@ -434,6 +439,7 @@ module.exports = {
   getAllUsers,
   updateUser,
   updateUserPassword,
+  updateUserMfaSecret,
   deleteUser,
   // Projects
   createProject,

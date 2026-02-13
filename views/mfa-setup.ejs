@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup 2FA - Morti Projects</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --bg: #f7fafc;
+            --text: #2d3748;
+            --white: #ffffff;
+            --error: #e53e3e;
+            --border: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); padding: 40px 20px; }
+        .setup-card { background: var(--white); padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin: 0 auto; }
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+        .step { margin-bottom: 24px; }
+        .step-num { font-weight: 700; color: var(--primary); margin-right: 8px; }
+        .qr-container { background: #f8fafc; padding: 20px; border-radius: 12px; margin: 16px 0; text-align: center; border: 1px dashed #cbd5e0; }
+        .qr-container img { max-width: 200px; }
+        .secret-key { font-family: monospace; background: #edf2f7; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin-top: 8px; display: inline-block; }
+        .form-group { margin-top: 24px; }
+        label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+        input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 18px; margin-bottom: 16px; }
+        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        button:hover { background: var(--primary-dark); }
+        .error { color: var(--error); font-size: 14px; margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+    <div class="setup-card">
+        <h1>🔐 Setup Two-Factor Auth</h1>
+        
+        <div class="step">
+            <p><span class="step-num">1.</span> Scan this QR code with your authenticator app (Google Authenticator, Authy, or similar).</p>
+            <div class="qr-container">
+                <img src="<%= qrCodeUrl %>" alt="QR Code">
+                <div>
+                    <p style="font-size: 12px; color: #718096; margin-top: 8px;">Or enter this key manually:</p>
+                    <span class="secret-key"><%= secret %></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <p><span class="step-num">2.</span> Enter the 6-digit code from your app to verify setup.</p>
+            
+            <% if (locals.error) { %>
+                <div class="error"><%= error %></div>
+            <% } %>
+
+            <form action="/profile/mfa/setup" method="POST">
+                <input type="hidden" name="secret" value="<%= secret %>">
+                <div class="form-group">
+                    <label>Verification Code</label>
+                    <input type="text" name="code" placeholder="000000" maxlength="6" required autofocus>
+                </div>
+                <button type="submit">Verify & Enable 2FA</button>
+            </form>
+        </div>
+        
+        <p style="text-align: center; margin-top: 24px;"><a href="/profile" style="color: #718096; font-size: 14px; text-decoration: none;">← Back to Profile</a></p>
+    </div>
+</body>
+</html>

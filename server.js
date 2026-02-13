@@ -9,6 +9,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const xss = require('xss');
 const ipaddr = require('ipaddr.js');
+const { authenticator } = require('otplib');
+const qrcode = require('qrcode');
 
 require('dotenv').config();
 
@@ -216,6 +218,19 @@ app.post('/login', loginLimiter, async (req, res) => {
 
     const token = auth.generateToken(user);
     await db.logAction(user.id, 'login', { email: user.email }, req.ip);
+
+    // MFA Check
+    if (user.mfa_secret) {
+      // Store temporary session for MFA completion
+      const mfaToken = require('jsonwebtoken').sign(
+        { id: user.id, partial: true }, 
+        auth.JWT_SECRET, 
+        { expiresIn: '5m' }
+      );
+      res.cookie('mfaPending', mfaToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 300000 });
+      return res.redirect('/login/mfa');
+    }
+
     res.cookie('authToken', token, { 
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production',
@@ -232,7 +247,88 @@ app.post('/login', loginLimiter, async (req, res) => {
 
 app.get('/logout', async (req, res) => {
   res.clearCookie('authToken');
+  res.clearCookie('mfaPending');
   res.redirect('/login');
+});
+
+// === MFA ROUTES ===
+
+app.get('/login/mfa', async (req, res) => {
+  const mfaPending = req.cookies.mfaPending;
+  if (!mfaPending) return res.redirect('/login');
+  res.render('login-mfa', { error: null });
+});
+
+app.post('/login/mfa', async (req, res) => {
+  const mfaPending = req.cookies.mfaPending;
+  if (!mfaPending) return res.redirect('/login');
+
+  try {
+    const decoded = require('jsonwebtoken').verify(mfaPending, auth.JWT_SECRET);
+    const user = await db.getUserById(decoded.id);
+    const { code } = req.body;
+
+    const isValid = authenticator.check(code, user.mfa_secret);
+    if (!isValid) {
+      return res.render('login-mfa', { error: 'Invalid verification code' });
+    }
+
+    const token = auth.generateToken(user);
+    res.clearCookie('mfaPending');
+    res.cookie('authToken', token, { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 2 * 60 * 60 * 1000 
+    });
+    
+    res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
+  } catch (e) {
+    res.redirect('/login');
+  }
+});
+
+app.get('/profile/mfa/setup', auth.authenticate, async (req, res) => {
+  const user = await db.getUserById(req.user.id);
+  if (user.mfa_secret) return res.redirect('/profile?message=MFA is already enabled');
+
+  const secret = authenticator.generateSecret();
+  const otpauth = authenticator.keyuri(user.email, 'Morti Projects', secret);
+  const qrCodeUrl = await qrcode.toDataURL(otpauth);
+  
+  // Store secret temporarily in session/cookie or just pass to view hidden
+  res.render('mfa-setup', { 
+    user: req.user,
+    qrCodeUrl,
+    secret,
+    title: 'Setup 2FA',
+    currentPage: 'profile'
+  });
+});
+
+app.post('/profile/mfa/setup', auth.authenticate, async (req, res) => {
+  const { code, secret } = req.body;
+  const isValid = authenticator.check(code, secret);
+  
+  if (!isValid) {
+    const otpauth = authenticator.keyuri(req.user.email, 'Morti Projects', secret);
+    const qrCodeUrl = await qrcode.toDataURL(otpauth);
+    return res.render('mfa-setup', { 
+      user: req.user,
+      qrCodeUrl,
+      secret,
+      error: 'Invalid code, please try again',
+      title: 'Setup 2FA',
+      currentPage: 'profile'
+    });
+  }
+
+  // Save secret to user
+  // We need to add a function to database.js/database-pg.js to update MFA secret
+  await db.updateUserMfaSecret(req.user.id, secret);
+  await db.logAction(req.user.id, 'mfa_enabled', {}, req.ip);
+  
+  res.redirect('/profile?message=Two-factor authentication enabled successfully');
 });
 
 // === ADMIN ROUTES ===
