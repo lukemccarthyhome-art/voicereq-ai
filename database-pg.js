@@ -2,14 +2,30 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
 // PostgreSQL connection pool using DATABASE_URL
+// Render internal PG doesn't need SSL; external does
+const dbUrl = process.env.DATABASE_URL || '';
+const needsSsl = dbUrl.includes('.render.com') ? false : 
+                 (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false);
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  connectionString: dbUrl,
+  ssl: needsSsl,
+  connectionTimeoutMillis: 10000,
 });
 
-// Initialize database tables
-const initDB = async () => {
-  const client = await pool.connect();
+// Initialize database tables with retry
+const initDB = async (retries = 3) => {
+  let client;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      client = await pool.connect();
+      break;
+    } catch (e) {
+      console.error(`❌ PG connect attempt ${attempt}/${retries}:`, e.message);
+      if (attempt === retries) throw e;
+      await new Promise(r => setTimeout(r, 2000 * attempt));
+    }
+  }
   
   try {
     // Users table
@@ -321,7 +337,14 @@ const getStats = async () => {
 };
 
 // Initialize database on startup
-const ready = initDB().catch(err => { console.error('❌ PostgreSQL init failed:', err); process.exit(1); });
+const ready = initDB().catch(err => { 
+  console.error('❌ PostgreSQL init failed:', err.message);
+  console.error('Retrying in 5 seconds...');
+  return new Promise(r => setTimeout(r, 5000)).then(() => initDB(3));
+}).catch(err => {
+  console.error('❌ PostgreSQL init failed permanently:', err.message);
+  process.exit(1);
+});
 
 module.exports = {
   ready,
