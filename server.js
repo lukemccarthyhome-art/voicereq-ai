@@ -36,7 +36,19 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // File upload setup — use persistent storage if available
-const uploadsDir = process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'uploads') : path.join(__dirname, 'uploads');
+// Use DATA_DIR if set AND writable, otherwise fall back to local
+let uploadsDir;
+if (process.env.DATA_DIR) {
+  try {
+    fs.mkdirSync(process.env.DATA_DIR, { recursive: true });
+    uploadsDir = path.join(process.env.DATA_DIR, 'uploads');
+  } catch (e) {
+    console.warn(`⚠️  DATA_DIR ${process.env.DATA_DIR} not writable, using local uploads`);
+    uploadsDir = path.join(__dirname, 'uploads');
+  }
+} else {
+  uploadsDir = path.join(__dirname, 'uploads');
+}
 const upload = multer({ 
   dest: uploadsDir,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB
