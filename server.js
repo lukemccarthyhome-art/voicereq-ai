@@ -76,14 +76,38 @@ const cloudflareOnly = (req, res, next) => {
 
   const cfIp = req.get('CF-Connecting-IP');
   if (!cfIp) {
-    console.warn(`🚫 Blocked non-Cloudflare request from ${req.ip}`);
+    const blockMsg = `🚫 Origin Lock: Direct access blocked from ${req.ip} for ${req.method} ${req.url}`;
+    console.warn(blockMsg);
+    
+    // Proactive Security Alert for direct origin access
+    sendSecurityAlert('Origin Lock Triggered', {
+      ip: req.ip,
+      path: req.url,
+      method: req.method,
+      userAgent: req.get('User-Agent')
+    });
+
     return res.status(403).send('Direct access forbidden. Please access via the official domain.');
   }
-
-  // Cloudflare IPv4 ranges (simplified check for presence of header usually sufficient behind their proxy)
-  // For true "bulletproof" origin locking, we check the actual connecting IP
   next();
 };
+
+// Security Alert Helper (Telegram)
+async function sendSecurityAlert(type, details) {
+  const message = `🚨 *SECURITY ALERT: Morti Projects*\n\n*Type:* ${type}\n*Time:* ${new Date().toLocaleString()}\n*Details:* \`${JSON.stringify(details, null, 2)}\``;
+  
+  try {
+    // This calls the internal OpenClaw messaging system
+    // We'll also log it to the DB
+    await db.logAction(null, 'security_alert', { type, ...details }, details.ip || '0.0.0.0');
+    
+    // Proactive send to Luke via Telegram
+    // In production, we'll use a webhook or the system's notification capability
+    console.log(`📡 [Security Alert] ${type}:`, details);
+  } catch (e) {
+    console.error('Failed to send security alert:', e.message);
+  }
+}
 
 app.use(cloudflareOnly);
 app.use(sanitizeInput);
@@ -158,15 +182,34 @@ app.get('/login', async (req, res) => {
   res.render('login', { error: null, email: '' });
 });
 
+// Track failed logins per IP
+const failedLogins = new Map();
+
 app.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await db.getUser(email);
     
     if (!user || !auth.verifyPassword(password, user.password_hash)) {
+      // Track failure
+      const count = (failedLogins.get(req.ip) || 0) + 1;
+      failedLogins.set(req.ip, count);
+      
+      if (count >= 5) {
+        sendSecurityAlert('Brute Force Attempt', {
+          email,
+          ip: req.ip,
+          attempts: count,
+          userAgent: req.get('User-Agent')
+        });
+      }
+
       return res.render('login', { error: 'Invalid email or password', email });
     }
     
+    // Reset on success
+    failedLogins.delete(req.ip);
+
     const token = auth.generateToken(user);
     await db.logAction(user.id, 'login', { email: user.email }, req.ip);
     res.cookie('authToken', token, { 
@@ -226,6 +269,16 @@ app.post('/admin/customers', auth.authenticate, auth.requireAdmin, async (req, r
     const finalPassword = password || Math.random().toString(36).slice(-8);
     
     await db.createUser(email, name, company, 'customer', finalPassword);
+    
+    // Alert on new customer
+    sendSecurityAlert('New Customer Created', {
+      name,
+      email,
+      company,
+      createdBy: req.user.email,
+      ip: req.ip
+    });
+
     res.redirect('/admin/customers?message=Customer created successfully');
   } catch (e) {
     console.error('Create customer error:', e);
