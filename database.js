@@ -110,7 +110,7 @@ const createUser = (email, name, company, role, plainPassword) => {
 };
 
 const getAllUsers = () => {
-  return db.prepare('SELECT id, email, name, company, role, created_at FROM users WHERE role = "customer" ORDER BY created_at DESC').all();
+  return db.prepare(`SELECT id, email, name, company, role, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC`).all();
 };
 
 const updateUser = (id, email, name, company) => {
@@ -259,10 +259,10 @@ const getFilesBySession = (sessionId) => {
 
 // Stats for admin dashboard
 const getStats = () => {
-  const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users WHERE role = "customer"').get().count;
+  const totalUsers = db.prepare(`SELECT COUNT(*) as count FROM users WHERE role = 'customer'`).get().count;
   const totalProjects = db.prepare('SELECT COUNT(*) as count FROM projects').get().count;
   const totalSessions = db.prepare('SELECT COUNT(*) as count FROM sessions').get().count;
-  const companies = db.prepare('SELECT DISTINCT company FROM users WHERE role = "customer"').all().length;
+  const companies = db.prepare(`SELECT DISTINCT company FROM users WHERE role = 'customer'`).all().length;
   
   return {
     totalUsers,
