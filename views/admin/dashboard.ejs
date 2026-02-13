@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - VoiceReq AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
+        
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
+        .nav { display: flex; gap: 20px; align-items: center; }
+        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.3); }
+        .user-name { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 6px; font-weight: 500; }
+        
+        .main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 200px); }
+        
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card h2 { margin-bottom: 16px; color: #333; font-size: 24px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; }
+        .stat-number { font-size: 32px; font-weight: bold; color: #667eea; margin-bottom: 8px; }
+        .stat-label { color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid #e0e0e0; }
+        .table th { background: #f8f9fa; font-weight: 600; color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .table tbody tr:hover { background: #f8f9ff; }
+        
+        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
+        .empty-state h3 { margin-bottom: 8px; color: #666; }
+        
+        @media (max-width: 768px) {
+            .header-container { flex-direction: column; gap: 12px; text-align: center; }
+            .nav { flex-wrap: wrap; justify-content: center; }
+            .main { padding: 16px; }
+            .card { padding: 16px; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-container">
+            <a href="/admin" class="logo">🎙️ VoiceReq AI</a>
+            <nav class="nav">
+                <a href="/admin" class="active">Dashboard</a>
+                <a href="/admin/customers">Customers</a>
+                <a href="/admin/projects">All Projects</a>
+                <div class="user-name">👤 <%= user.name %></div>
+                <a href="/logout">🚪 Logout</a>
+            </nav>
+        </div>
+    </div>
+
+    <main class="main">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number"><%= stats.totalCompanies %></div>
+                <div class="stat-label">Companies</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><%= stats.totalUsers %></div>
+                <div class="stat-label">Customer Accounts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><%= stats.totalProjects %></div>
+                <div class="stat-label">Active Projects</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><%= stats.totalSessions %></div>
+                <div class="stat-label">Voice Sessions</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="card">
+                <h2>🏢 Recent Companies</h2>
+                <% if (recentCustomers.length > 0) { %>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Contact</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% recentCustomers.slice(0, 6).forEach(customer => { %>
+                                <tr>
+                                    <td>
+                                        <strong><%= customer.company %></strong><br>
+                                        <small style="color: #666;"><%= customer.name %></small>
+                                    </td>
+                                    <td><%= customer.email %></td>
+                                    <td><%= new Date(customer.created_at).toLocaleDateString() %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                    <div style="text-align: center; margin-top: 16px;">
+                        <a href="/admin/customers" class="btn btn-sm">View All Customers</a>
+                    </div>
+                <% } else { %>
+                    <div class="empty-state">
+                        <span class="emoji">👥</span>
+                        <h3>No customers yet</h3>
+                        <p>Customer accounts will appear here</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <div class="card">
+                <h2>📊 Recent Projects</h2>
+                <% if (recentProjects.length > 0) { %>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>Company</th>
+                                <th>Sessions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% recentProjects.slice(0, 6).forEach(project => { %>
+                                <tr>
+                                    <td>
+                                        <strong><%= project.name %></strong><br>
+                                        <% if (project.status === 'active') { %>
+                                            <span style="color: #28a745; font-size: 12px;">● Active</span>
+                                        <% } else if (project.status === 'completed') { %>
+                                            <span style="color: #6c757d; font-size: 12px;">● Completed</span>
+                                        <% } else { %>
+                                            <span style="color: #dc3545; font-size: 12px;">● Archived</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <strong><%= project.company %></strong><br>
+                                        <small style="color: #666;"><%= project.user_name %></small>
+                                    </td>
+                                    <td><%= project.session_count || 0 %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                    <div style="text-align: center; margin-top: 16px;">
+                        <a href="/admin/projects" class="btn btn-sm">View All Projects</a>
+                    </div>
+                <% } else { %>
+                    <div class="empty-state">
+                        <span class="emoji">📋</span>
+                        <h3>No projects yet</h3>
+                        <p>Customer projects will appear here</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🚀 Quick Actions</h2>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <a href="/admin/customers" class="btn btn-success">➕ Add New Customer</a>
+                <a href="/admin/projects" class="btn">📊 Manage All Projects</a>
+                <a href="/admin/customers" class="btn">👥 Manage Customers</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

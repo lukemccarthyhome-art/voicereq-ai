@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceReq AI - Voice-Powered Requirements Gathering</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; min-height: 100vh; }
+        
+        /* Layout */
+        .app { display: flex; height: 100vh; }
+        .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .sidebar { width: 320px; background: white; border-left: 1px solid #e0e0e0; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Mobile: stack vertically */
+        @media (max-width: 768px) {
+            .app { flex-direction: column; }
+            .sidebar { width: 100%; height: 40vh; border-left: none; border-top: 1px solid #e0e0e0; }
+            .main { height: 60vh; }
+        }
+
+        /* Header */
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px 20px; color: white; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 18px; display: flex; align-items: center; gap: 8px; }
+        .header-actions { display: flex; gap: 8px; }
+        .header-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500; }
+        .header-btn:hover { background: rgba(255,255,255,0.3); }
+
+        /* Status bar */
+        .status-bar { background: white; padding: 12px 20px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 12px; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+        .status-dot.listening { background: #4CAF50; animation: blink 1.5s infinite; }
+        .status-dot.speaking { background: #2196F3; animation: blink 1s infinite; }
+        .status-dot.thinking { background: #FF9800; }
+        .status-dot.muted { background: #f44336; }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .status-info { flex: 1; }
+        .status-label { font-size: 14px; font-weight: 600; }
+        .status-sub { font-size: 11px; color: #888; }
+        .volume-mini { width: 80px; height: 3px; background: #e0e0e0; border-radius: 2px; overflow: hidden; }
+        .volume-mini-level { height: 100%; background: #4CAF50; width: 0%; transition: width 0.1s; }
+
+        /* Controls bar */
+        .controls { background: white; padding: 10px 20px; border-bottom: 1px solid #e0e0e0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .ctrl-btn { padding: 8px 14px; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s; }
+        .ctrl-call { background: #4CAF50; color: white; }
+        .ctrl-call.active { background: #f44336; }
+        .ctrl-mute { background: #FF9800; color: white; }
+        .ctrl-mute.active { background: #4CAF50; }
+        .ctrl-mic { background: #607D8B; color: white; }
+        .ctrl-mic.active { background: #f44336; }
+        .ctrl-btn:hover { opacity: 0.9; transform: scale(1.02); }
+        .text-input-wrap { flex: 1; display: flex; gap: 6px; min-width: 200px; }
+        .text-input-wrap input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; outline: none; }
+        .text-input-wrap input:focus { border-color: #667eea; }
+        .text-input-wrap button { padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+        /* Main content area - requirements */
+        .content { flex: 1; overflow-y: auto; padding: 20px; }
+        .section { margin-bottom: 20px; }
+        .section h3 { font-size: 13px; text-transform: uppercase; color: #667eea; margin-bottom: 10px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+        .req-item { background: white; padding: 12px 14px; border-radius: 10px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 3px solid #667eea; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .empty-state { text-align: center; color: #999; padding: 40px 20px; font-size: 14px; }
+        .empty-state .emoji { font-size: 40px; margin-bottom: 12px; display: block; }
+
+        /* Files section */
+        .file-section { padding: 16px 20px; border-bottom: 1px solid #e0e0e0; }
+        .file-section h4 { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .upload-zone { border: 2px dashed #ddd; border-radius: 10px; padding: 14px; text-align: center; cursor: pointer; font-size: 12px; color: #888; transition: all 0.2s; }
+        .upload-zone:hover { border-color: #667eea; background: #f8f9ff; }
+        .upload-zone input { display: none; }
+        .file-chip { display: inline-flex; align-items: center; gap: 4px; background: #f0f0f0; padding: 4px 10px; border-radius: 20px; font-size: 11px; margin: 4px 2px; }
+        .file-chip .x { cursor: pointer; color: #f44336; font-weight: bold; margin-left: 2px; }
+        .file-processing { font-size: 11px; color: #FF9800; margin-top: 4px; }
+
+        /* Sidebar - transcript */
+        .sidebar-header { padding: 14px 16px; border-bottom: 1px solid #e0e0e0; font-size: 13px; font-weight: 600; color: #333; display: flex; align-items: center; gap: 6px; }
+        .transcript { flex: 1; overflow-y: auto; padding: 12px; }
+        .t-msg { padding: 8px 10px; border-radius: 10px; margin-bottom: 6px; font-size: 12px; line-height: 1.4; max-width: 90%; }
+        .t-msg.ai { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-bottom-left-radius: 4px; }
+        .t-msg.user { background: #f0f0f0; margin-left: auto; border-bottom-right-radius: 4px; }
+        .t-msg .t-role { font-size: 10px; font-weight: 600; opacity: 0.7; margin-bottom: 2px; }
+        .t-empty { text-align: center; color: #ccc; padding: 30px; font-size: 12px; }
+
+        .error { background: #ffebee; color: #c62828; padding: 10px 16px; font-size: 13px; display: none; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Main panel -->
+        <div class="main">
+            <div class="header">
+                <h1>🎙️ VoiceReq AI</h1>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="exportZip()">📦 Export Zip</button>
+                    <button class="header-btn" onclick="resetAll()">🔄 New</button>
+                </div>
+            </div>
+
+            <div id="error" class="error"></div>
+
+            <div class="status-bar">
+                <div class="status-dot" id="statusDot"></div>
+                <div class="status-info">
+                    <div class="status-label" id="statusText">Ready</div>
+                    <div class="status-sub" id="statusDetail">Start a conversation to begin</div>
+                </div>
+                <div class="volume-mini"><div class="volume-mini-level" id="volumeLevel"></div></div>
+            </div>
+
+            <div class="controls">
+                <button class="ctrl-btn ctrl-call" id="callBtn" onclick="toggleCall()">📞 Start</button>
+                <button class="ctrl-btn ctrl-mute hidden" id="muteBtn" onclick="toggleMute()">✋ Let Me Speak</button>
+                <button class="ctrl-btn ctrl-mic hidden" id="micBtn" onclick="toggleMic()">🎤 Mute</button>
+                <div class="text-input-wrap">
+                    <input type="text" id="textInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendText()">
+                    <button onclick="sendText()">Send</button>
+                </div>
+            </div>
+
+            <!-- File upload -->
+            <div class="file-section">
+                <h4>📎 Project Assets</h4>
+                <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)">
+                    📁 Tap to upload files (docs, images, specs)
+                </div>
+                <div id="fileList"></div>
+                <div id="fileProcessing" class="file-processing hidden">⏳ Processing file...</div>
+            </div>
+
+            <!-- Requirements content -->
+            <div class="content" id="content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="color: #667eea; margin: 0;">📋 Requirements Analysis</h3>
+                    <button id="refreshReqBtn" class="ctrl-btn" style="background: #28a745; color: white;" onclick="refreshRequirements()">🔄 Refresh Requirements</button>
+                </div>
+                <div class="empty-state" id="emptyState">
+                    <span class="emoji">📋</span>
+                    Have a conversation and upload files, then click "Refresh Requirements" to analyze everything together
+                </div>
+                <div id="reqSections"></div>
+            </div>
+        </div>
+
+        <!-- Sidebar - transcript -->
+        <div class="sidebar">
+            <div class="sidebar-header">💬 Conversation</div>
+            <div class="transcript" id="transcript">
+                <div class="t-empty">Voice transcript will appear here</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/session.js"></script>
+</body>
+</html>

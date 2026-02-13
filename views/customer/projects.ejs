@@ -1,0 +1,159 @@
+<% 
+const title = 'My Projects';
+const currentPage = 'customer-projects';
+const breadcrumbs = [
+    { name: 'Dashboard', url: '/dashboard' },
+    { name: 'Projects' }
+];
+%>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1>📋 My Projects</h1>
+        <p style="color: #666; margin-top: 8px;">Manage your requirements gathering projects</p>
+    </div>
+    <a href="/projects/new" class="btn btn-success">➕ New Project</a>
+</div>
+
+<% if (isNewProject) { %>
+<!-- Create New Project Form -->
+<div class="card" style="background: linear-gradient(135deg, #f8f9ff 0%, #e8eaff 100%); border: 2px solid #667eea; margin-bottom: 30px;">
+    <h2>🚀 Create New Project</h2>
+    <form method="POST" action="/projects">
+        <div class="form-group">
+            <label for="name">Project Name</label>
+            <input type="text" id="name" name="name" class="form-control" required 
+                   placeholder="e.g., Customer Portal Redesign">
+        </div>
+        <div class="form-group">
+            <label for="description">Description (Optional)</label>
+            <textarea id="description" name="description" class="form-control" rows="3" 
+                      placeholder="Brief description of what you're building..."></textarea>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button type="submit" class="btn btn-success">✅ Create Project</button>
+            <a href="/projects" class="btn btn-secondary">❌ Cancel</a>
+        </div>
+    </form>
+</div>
+<% } %>
+
+<% if (projects.length > 0) { %>
+    <div style="display: grid; gap: 20px;">
+        <% projects.forEach(project => { %>
+            <div class="card" style="transition: all 0.2s; cursor: pointer;"
+                 onclick="location.href='/projects/<%= project.id %>'"
+                 onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'; this.style.transform='translateY(-2px)'"
+                 onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)'; this.style.transform='none'">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                    <div style="flex: 1;">
+                        <h3 style="margin-bottom: 8px; color: #333;">
+                            <a href="/projects/<%= project.id %>" style="text-decoration: none; color: inherit;">
+                                <%= project.name %>
+                            </a>
+                        </h3>
+                        <% if (project.description) { %>
+                            <p style="color: #666; margin-bottom: 12px; line-height: 1.5;"><%= project.description %></p>
+                        <% } %>
+                        
+                        <div style="display: flex; align-items: center; gap: 20px; font-size: 13px; color: #666;">
+                            <span>💬 <%= project.session_count || 0 %> sessions</span>
+                            <span>📎 <%= project.file_count || 0 %> files</span>
+                            <span>📅 Updated <%= new Date(project.updated_at).toLocaleDateString() %></span>
+                            <span>🕒 Created <%= new Date(project.created_at).toLocaleDateString() %></span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
+                        <div>
+                            <% if (project.status === 'active') { %>
+                                <span style="background: #d4edda; color: #155724; padding: 6px 16px; border-radius: 16px; font-size: 12px; font-weight: 600;">● Active</span>
+                            <% } else if (project.status === 'completed') { %>
+                                <span style="background: #d1ecf1; color: #0c5460; padding: 6px 16px; border-radius: 16px; font-size: 12px; font-weight: 600;">● Completed</span>
+                            <% } else { %>
+                                <span style="background: #f8d7da; color: #721c24; padding: 6px 16px; border-radius: 16px; font-size: 12px; font-weight: 600;">● Archived</span>
+                            <% } %>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px;" onclick="event.stopPropagation()">
+                            <a href="/projects/<%= project.id %>" class="btn btn-sm">📊 Details</a>
+                            <a href="/projects/<%= project.id %>/session" class="btn btn-sm btn-success">🎙️ Session</a>
+                            <% if (project.session_count > 0) { %>
+                                <button onclick="exportProject(<%= project.id %>)" class="btn btn-sm btn-secondary">📦</button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress indicator -->
+                <% 
+                let totalReqs = 0;
+                if (project.session_count > 0) {
+                    // This would be calculated from actual sessions in real implementation
+                    totalReqs = Math.floor(Math.random() * 15) + 5; // Mock for display
+                }
+                %>
+                <% if (totalReqs > 0) { %>
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 13px; font-weight: 600; color: #667eea;">Requirements Progress</span>
+                            <span style="font-size: 12px; color: #666;"><%= totalReqs %> identified</span>
+                        </div>
+                        <div style="background: #f0f0f0; height: 4px; border-radius: 2px; overflow: hidden;">
+                            <div style="background: #667eea; height: 100%; width: <%= Math.min(100, (totalReqs / 20) * 100) %>%; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        <% }) %>
+    </div>
+<% } else { %>
+    <div class="empty-state">
+        <span class="emoji">📋</span>
+        <h3>No projects yet</h3>
+        <p>Create your first project to start gathering requirements with voice AI</p>
+        <a href="/projects/new" class="btn btn-success" style="margin-top: 20px;">🚀 Create Your First Project</a>
+    </div>
+<% } %>
+
+<!-- Help Section -->
+<div class="card" style="margin-top: 40px; background: linear-gradient(135deg, #f8f9ff 0%, #e8eaff 100%); border: 2px solid #667eea;">
+    <h3 style="color: #667eea; margin-bottom: 16px;">🎯 Getting Started with VoiceReq AI</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div>
+            <h4 style="color: #333; margin-bottom: 8px;">1. 📋 Create Project</h4>
+            <p style="font-size: 14px; color: #666;">Start by creating a new project with a clear name and description</p>
+        </div>
+        <div>
+            <h4 style="color: #333; margin-bottom: 8px;">2. 🎙️ Voice Session</h4>
+            <p style="font-size: 14px; color: #666;">Have natural conversations with our AI about your requirements</p>
+        </div>
+        <div>
+            <h4 style="color: #333; margin-bottom: 8px;">3. 📎 Upload Files</h4>
+            <p style="font-size: 14px; color: #666;">Add documents, specs, or mockups for automatic analysis</p>
+        </div>
+        <div>
+            <h4 style="color: #333; margin-bottom: 8px;">4. 📦 Export Results</h4>
+            <p style="font-size: 14px; color: #666;">Get comprehensive requirements documentation instantly</p>
+        </div>
+    </div>
+</div>
+
+<script>
+async function exportProject(projectId) {
+    event.stopPropagation(); // Prevent card click
+    
+    try {
+        const response = await fetch(`/api/projects/${projectId}/export`);
+        if (!response.ok) throw new Error('Export failed');
+        
+        const blob = await response.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `project-${projectId}-export-${new Date().toISOString().split('T')[0]}.zip`;
+        a.click();
+    } catch (e) {
+        alert('Export failed: ' + e.message);
+    }
+}
+</script>

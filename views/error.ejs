@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - VoiceReq AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
+        .error-container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2); 
+            text-align: center; 
+            max-width: 500px; 
+        }
+        
+        .error-icon { 
+            font-size: 64px; 
+            margin-bottom: 20px; 
+        }
+        
+        h1 { 
+            color: #333; 
+            margin-bottom: 16px; 
+            font-size: 24px; 
+        }
+        
+        p { 
+            color: #666; 
+            margin-bottom: 24px; 
+            line-height: 1.5; 
+        }
+        
+        .btn { 
+            display: inline-block; 
+            padding: 12px 24px; 
+            background: #667eea; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            transition: background 0.2s; 
+        }
+        .btn:hover { 
+            background: #5a6fd8; 
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">⚠️</div>
+        <h1>Something went wrong</h1>
+        <p><%= message || 'An unexpected error occurred. Please try again.' %></p>
+        <% if (user) { %>
+            <a href="<%= user.role === 'admin' ? '/admin' : '/dashboard' %>" class="btn">← Back to Dashboard</a>
+        <% } else { %>
+            <a href="/login" class="btn">← Back to Login</a>
+        <% } %>
+    </div>
+</body>
+</html>

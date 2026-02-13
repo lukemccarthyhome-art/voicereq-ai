@@ -1,0 +1,129 @@
+<% 
+const title = 'All Projects';
+const currentPage = 'admin-projects';
+const breadcrumbs = [
+    { name: 'Dashboard', url: '/admin' },
+    { name: 'All Projects' }
+];
+%>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>📊 All Projects</h2>
+        <div>
+            <span style="color: #666; font-size: 14px; margin-right: 16px;"><%= projects.length %> total projects</span>
+        </div>
+    </div>
+
+    <% if (projects.length > 0) { %>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Project Details</th>
+                    <th>Customer</th>
+                    <th>Activity</th>
+                    <th>Status</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% projects.forEach(project => { %>
+                    <tr>
+                        <td>
+                            <strong><%= project.name %></strong><br>
+                            <% if (project.description) { %>
+                                <small style="color: #666;"><%= project.description.substring(0, 60) %><%= project.description.length > 60 ? '...' : '' %></small>
+                            <% } else { %>
+                                <small style="color: #999; font-style: italic;">No description</small>
+                            <% } %>
+                        </td>
+                        <td>
+                            <strong><%= project.company %></strong><br>
+                            <small style="color: #666;"><%= project.user_name %></small><br>
+                            <small style="color: #888;"><%= project.email %></small>
+                        </td>
+                        <td style="font-size: 13px;">
+                            <div>💬 <%= project.session_count || 0 %> sessions</div>
+                            <div>📎 <%= project.file_count || 0 %> files</div>
+                            <% 
+                            const createdDays = Math.floor((Date.now() - new Date(project.created_at)) / (1000 * 60 * 60 * 24));
+                            const updatedDays = Math.floor((Date.now() - new Date(project.updated_at)) / (1000 * 60 * 60 * 24));
+                            %>
+                            <div style="color: #666;">Created <%= createdDays %>d ago</div>
+                        </td>
+                        <td>
+                            <% if (project.status === 'active') { %>
+                                <span style="background: #d4edda; color: #155724; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">● Active</span>
+                            <% } else if (project.status === 'completed') { %>
+                                <span style="background: #d1ecf1; color: #0c5460; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">● Completed</span>
+                            <% } else { %>
+                                <span style="background: #f8d7da; color: #721c24; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">● Archived</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <%= new Date(project.updated_at).toLocaleDateString() %><br>
+                            <small style="color: #666;"><%= new Date(project.updated_at).toLocaleTimeString() %></small>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <a href="/admin/projects/<%= project.id %>" class="btn btn-sm">👁️ View</a>
+                                <% if (project.session_count > 0) { %>
+                                    <button onclick="exportProject(<%= project.id %>)" class="btn btn-sm btn-secondary">📦 Export</button>
+                                <% } %>
+                            </div>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <div class="empty-state">
+            <span class="emoji">📊</span>
+            <h3>No projects yet</h3>
+            <p>Customer projects will appear here when they start creating them</p>
+        </div>
+    <% } %>
+</div>
+
+<% if (projects.filter(p => p.status === 'active').length > 0) { %>
+<div class="card" style="margin-top: 20px;">
+    <h3>📈 Project Activity Summary</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
+        <div style="text-align: center; padding: 16px; background: #f8f9ff; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #28a745;"><%= projects.filter(p => p.status === 'active').length %></div>
+            <div style="font-size: 12px; color: #666;">Active Projects</div>
+        </div>
+        <div style="text-align: center; padding: 16px; background: #f8f9ff; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #667eea;"><%= projects.reduce((sum, p) => sum + (p.session_count || 0), 0) %></div>
+            <div style="font-size: 12px; color: #666;">Total Sessions</div>
+        </div>
+        <div style="text-align: center; padding: 16px; background: #f8f9ff; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #ff9800;"><%= projects.reduce((sum, p) => sum + (p.file_count || 0), 0) %></div>
+            <div style="font-size: 12px; color: #666;">Files Uploaded</div>
+        </div>
+        <div style="text-align: center; padding: 16px; background: #f8f9ff; border-radius: 8px;">
+            <div style="font-size: 20px; font-weight: bold; color: #6c757d;"><%= projects.filter(p => p.status === 'completed').length %></div>
+            <div style="font-size: 12px; color: #666;">Completed</div>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<script>
+async function exportProject(projectId) {
+    try {
+        // This would need to be implemented similar to the project detail export functionality
+        const response = await fetch(`/api/projects/${projectId}/export`);
+        if (!response.ok) throw new Error('Export failed');
+        
+        const blob = await response.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `project-${projectId}-export-${new Date().toISOString().split('T')[0]}.zip`;
+        a.click();
+    } catch (e) {
+        alert('Export failed: ' + e.message);
+    }
+}
+</script>

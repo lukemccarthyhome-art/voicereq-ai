@@ -1,0 +1,171 @@
+<% 
+const title = 'Customer Management';
+const currentPage = 'admin-customers';
+const breadcrumbs = [
+    { name: 'Dashboard', url: '/admin' },
+    { name: 'Customers' }
+];
+%>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>👥 Customer Management</h2>
+        <button onclick="showCreateForm()" class="btn btn-success">➕ Add Customer</button>
+    </div>
+
+    <!-- Create Customer Form (hidden by default) -->
+    <div id="createForm" class="card" style="display: none; background: #f8f9ff; border: 2px solid #667eea;">
+        <h3>Create New Customer</h3>
+        <form method="POST" action="/admin/customers">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="company">Company</label>
+                    <input type="text" id="company" name="company" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="text" id="password" name="password" class="form-control" 
+                           value="customer123" placeholder="Auto-generated password">
+                    <small style="color: #666;">Leave blank to auto-generate</small>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button type="submit" class="btn btn-success">✅ Create Customer</button>
+                <button type="button" onclick="hideCreateForm()" class="btn btn-secondary">❌ Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <% if (customers.length > 0) { %>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Customer Details</th>
+                    <th>Company</th>
+                    <th>Projects</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% customers.forEach(customer => { %>
+                    <tr>
+                        <td>
+                            <strong><%= customer.name %></strong><br>
+                            <small style="color: #666;"><%= customer.email %></small>
+                        </td>
+                        <td><%= customer.company %></td>
+                        <td>
+                            <% const projectCount = customer.project_count || 0; %>
+                            <%= projectCount %> 
+                            <% if (projectCount > 0) { %>
+                                <a href="/admin/projects?user=<%= customer.id %>" style="font-size: 12px;">→ View</a>
+                            <% } %>
+                        </td>
+                        <td><%= new Date(customer.created_at).toLocaleDateString() %></td>
+                        <td>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="editCustomer(<%= customer.id %>, '<%= customer.name %>', '<%= customer.email %>', '<%= customer.company %>')" 
+                                        class="btn btn-sm">✏️ Edit</button>
+                                <button onclick="deleteCustomer(<%= customer.id %>, '<%= customer.name %>')" 
+                                        class="btn btn-sm btn-danger">🗑️ Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <div class="empty-state">
+            <span class="emoji">👥</span>
+            <h3>No customers yet</h3>
+            <p>Create your first customer account to get started</p>
+            <button onclick="showCreateForm()" class="btn" style="margin-top: 16px;">➕ Add First Customer</button>
+        </div>
+    <% } %>
+</div>
+
+<!-- Edit Customer Modal (hidden by default) -->
+<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 500px;">
+        <h3>Edit Customer</h3>
+        <form id="editForm" method="POST">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="editName" name="name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="editEmail" name="email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Company</label>
+                <input type="text" id="editCompany" name="company" class="form-control" required>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button type="submit" class="btn btn-success">💾 Save Changes</button>
+                <button type="button" onclick="hideEditModal()" class="btn btn-secondary">❌ Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showCreateForm() {
+    document.getElementById('createForm').style.display = 'block';
+    document.getElementById('name').focus();
+}
+
+function hideCreateForm() {
+    document.getElementById('createForm').style.display = 'none';
+}
+
+function editCustomer(id, name, email, company) {
+    document.getElementById('editName').value = name;
+    document.getElementById('editEmail').value = email;
+    document.getElementById('editCompany').value = company;
+    document.getElementById('editForm').action = '/admin/customers/' + id;
+    document.getElementById('editModal').style.display = 'block';
+}
+
+function hideEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+function deleteCustomer(id, name) {
+    if (confirm('Are you sure you want to delete customer "' + name + '"? This will also delete all their projects and sessions.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/admin/customers/' + id + '/delete';
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Auto-generate password
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordField = document.getElementById('password');
+    if (passwordField.value === 'customer123') {
+        // Generate random password
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let password = '';
+        for (let i = 0; i < 8; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        passwordField.value = password;
+    }
+});
+
+// Show create form if action=create in URL
+if (window.location.search.includes('action=create')) {
+    showCreateForm();
+}
+</script>

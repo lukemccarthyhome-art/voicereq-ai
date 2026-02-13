@@ -1,0 +1,165 @@
+<% 
+const title = 'Dashboard';
+const currentPage = 'customer-dashboard';
+const breadcrumbs = [{ name: 'Dashboard' }];
+%>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1>Welcome back, <%= user.name %> 👋</h1>
+        <p style="color: #666; margin-top: 8px;">Manage your requirements gathering projects</p>
+    </div>
+    <a href="/projects/new" class="btn btn-success">➕ New Project</a>
+</div>
+
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-number"><%= projects.length %></div>
+        <div class="stat-label">Your Projects</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">
+            <%= projects.reduce((sum, p) => sum + (p.session_count || 0), 0) %>
+        </div>
+        <div class="stat-label">Voice Sessions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">
+            <%= projects.filter(p => p.status === 'active').length %>
+        </div>
+        <div class="stat-label">Active Projects</div>
+    </div>
+</div>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>📋 Your Projects</h2>
+        <div style="display: flex; gap: 8px;">
+            <a href="/projects" class="btn btn-sm">View All</a>
+            <a href="/projects/new" class="btn btn-sm btn-success">➕ Create New</a>
+        </div>
+    </div>
+
+    <% if (projects.length > 0) { %>
+        <div style="display: grid; gap: 16px;">
+            <% projects.slice(0, 6).forEach(project => { %>
+                <div style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; background: #fafafa; transition: all 0.2s;"
+                     onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'; this.style.transform='translateY(-2px)'"
+                     onmouseout="this.style.boxShadow='none'; this.style.transform='none'">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div>
+                            <h3 style="margin-bottom: 6px;">
+                                <a href="/projects/<%= project.id %>" style="text-decoration: none; color: #333;">
+                                    <%= project.name %>
+                                </a>
+                            </h3>
+                            <% if (project.description) { %>
+                                <p style="color: #666; font-size: 14px; margin-bottom: 0;"><%= project.description %></p>
+                            <% } %>
+                        </div>
+                        <div>
+                            <% if (project.status === 'active') { %>
+                                <span style="background: #d4edda; color: #155724; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">● Active</span>
+                            <% } else if (project.status === 'completed') { %>
+                                <span style="background: #d1ecf1; color: #0c5460; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">● Completed</span>
+                            <% } else { %>
+                                <span style="background: #f8d7da; color: #721c24; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">● Archived</span>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div style="display: flex; gap: 20px; font-size: 13px; color: #666;">
+                            <span>💬 <%= project.session_count || 0 %> sessions</span>
+                            <span>📎 <%= project.file_count || 0 %> files</span>
+                            <span>📅 <%= new Date(project.updated_at).toLocaleDateString() %></span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 8px;">
+                        <a href="/projects/<%= project.id %>" class="btn btn-sm">📊 View Details</a>
+                        <a href="/projects/<%= project.id %>/session" class="btn btn-sm btn-success">🎙️ Start Session</a>
+                        <% if (project.session_count > 0) { %>
+                            <button onclick="exportProject(<%= project.id %>)" class="btn btn-sm btn-secondary">📦 Export</button>
+                        <% } %>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+        
+        <% if (projects.length > 6) { %>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/projects" class="btn">View All <%= projects.length %> Projects</a>
+            </div>
+        <% } %>
+    <% } else { %>
+        <div class="empty-state">
+            <span class="emoji">📋</span>
+            <h3>No projects yet</h3>
+            <p>Create your first project to start gathering requirements with voice AI</p>
+            <a href="/projects/new" class="btn" style="margin-top: 16px;">🚀 Create Your First Project</a>
+        </div>
+    <% } %>
+</div>
+
+<% if (projects.filter(p => p.session_count > 0).length > 0) { %>
+<div class="card">
+    <h2>🎙️ Recent Voice Sessions</h2>
+    <div style="display: grid; gap: 12px;">
+        <% 
+        // Show recent sessions from active projects
+        const recentProjects = projects.filter(p => p.session_count > 0).slice(0, 3);
+        %>
+        <% recentProjects.forEach(project => { %>
+            <div style="border-left: 4px solid #667eea; padding: 12px 16px; background: #f8f9ff; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong><%= project.name %></strong>
+                        <div style="font-size: 13px; color: #666; margin-top: 4px;">
+                            <%= project.session_count %> voice session<%= project.session_count === 1 ? '' : 's' %> • 
+                            Last updated <%= new Date(project.updated_at).toLocaleDateString() %>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <a href="/projects/<%= project.id %>" class="btn btn-sm">View</a>
+                        <a href="/projects/<%= project.id %>/session" class="btn btn-sm btn-success">Resume</a>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+<% } %>
+
+<div class="card" style="background: linear-gradient(135deg, #f8f9ff 0%, #e8eaff 100%); border: 2px solid #667eea;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="font-size: 48px;">🎙️</div>
+        <div>
+            <h3 style="color: #667eea; margin-bottom: 8px;">How VoiceReq AI Works</h3>
+            <p style="margin-bottom: 12px;">Have natural conversations with our AI to gather comprehensive requirements</p>
+            <ul style="font-size: 14px; color: #666; margin: 0; padding-left: 16px;">
+                <li>🗣️ Speak naturally about your project needs</li>
+                <li>📄 Upload documents for automatic analysis</li>
+                <li>✅ AI extracts and organizes requirements in real-time</li>
+                <li>📦 Export complete requirements documentation</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+async function exportProject(projectId) {
+    try {
+        const response = await fetch(`/api/projects/${projectId}/export`);
+        if (!response.ok) throw new Error('Export failed');
+        
+        const blob = await response.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `project-${projectId}-export-${new Date().toISOString().split('T')[0]}.zip`;
+        a.click();
+    } catch (e) {
+        alert('Export failed: ' + e.message);
+    }
+}
+</script>

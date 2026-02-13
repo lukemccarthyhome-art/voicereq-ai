@@ -1,0 +1,369 @@
+<% 
+const title = project.name;
+const currentPage = 'customer-projects';
+const breadcrumbs = [
+    { name: 'Dashboard', url: '/dashboard' },
+    { name: 'Projects', url: '/projects' },
+    { name: project.name }
+];
+%>
+
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+    <div>
+        <h1><%= project.name %></h1>
+        <% if (project.description) { %>
+            <p style="color: #666; margin-top: 8px; font-size: 16px;"><%= project.description %></p>
+        <% } %>
+        <div style="margin-top: 12px;">
+            <% if (project.status === 'active') { %>
+                <span style="background: #d4edda; color: #155724; padding: 6px 16px; border-radius: 16px; font-size: 14px; font-weight: 600;">● Active Project</span>
+            <% } else if (project.status === 'completed') { %>
+                <span style="background: #d1ecf1; color: #0c5460; padding: 6px 16px; border-radius: 16px; font-size: 14px; font-weight: 600;">● Completed</span>
+            <% } else { %>
+                <span style="background: #f8d7da; color: #721c24; padding: 6px 16px; border-radius: 16px; font-size: 14px; font-weight: 600;">● Archived</span>
+            <% } %>
+        </div>
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <% if (activeSession) { %>
+            <a href="/voice-session?project=<%= project.id %>&session=<%= activeSession.id %>" class="btn btn-success">🎙️ Resume Session</a>
+        <% } else { %>
+            <a href="/projects/<%= project.id %>/session" class="btn btn-success">🎙️ Start New Session</a>
+        <% } %>
+        <button onclick="exportProject()" class="btn">📦 Export</button>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+    <div class="stat-card">
+        <div class="stat-number"><%= sessions.length %></div>
+        <div class="stat-label">Voice Sessions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number"><%= files.length %></div>
+        <div class="stat-label">Files Uploaded</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">
+            <% 
+            const totalReqs = sessions.reduce((acc, session) => {
+                try {
+                    const reqs = JSON.parse(session.requirements || '{}');
+                    return acc + Object.values(reqs).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
+                } catch {
+                    return acc;
+                }
+            }, 0);
+            %>
+            <%= totalReqs %>
+        </div>
+        <div class="stat-label">Requirements Captured</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">
+            <%= sessions.filter(s => s.status === 'completed').length %>
+        </div>
+        <div class="stat-label">Completed Sessions</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+    <div>
+        <!-- Voice Sessions -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>💬 Voice Sessions</h2>
+                <a href="/projects/<%= project.id %>/session" class="btn btn-success">🎙️ New Session</a>
+            </div>
+            
+            <% if (sessions.length > 0) { %>
+                <div style="display: grid; gap: 16px;">
+                    <% sessions.forEach(session => { %>
+                        <div style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px; background: #fafafa;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div>
+                                    <strong>Session #<%= session.id %></strong>
+                                    <% if (session.status === 'active') { %>
+                                        <span style="color: #28a745; font-size: 12px; margin-left: 8px;">● Active</span>
+                                    <% } else if (session.status === 'completed') { %>
+                                        <span style="color: #6c757d; font-size: 12px; margin-left: 8px;">● Completed</span>
+                                    <% } else { %>
+                                        <span style="color: #dc3545; font-size: 12px; margin-left: 8px;">● Paused</span>
+                                    <% } %>
+                                </div>
+                                <div style="font-size: 12px; color: #666;">
+                                    <%= new Date(session.created_at).toLocaleDateString() %>
+                                </div>
+                            </div>
+                            
+                            <% 
+                            let transcript = [];
+                            let requirements = {};
+                            try {
+                                transcript = JSON.parse(session.transcript || '[]');
+                                requirements = JSON.parse(session.requirements || '{}');
+                            } catch {}
+                            %>
+                            
+                            <div style="font-size: 13px; color: #666; margin-bottom: 12px;">
+                                📝 <%= transcript.length %> messages exchanged • 
+                                ✅ <%= Object.values(requirements).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0) %> requirements identified
+                            </div>
+                            
+                            <div style="display: flex; gap: 8px;">
+                                <% if (session.status === 'active' || session.status === 'paused') { %>
+                                    <a href="/voice-session?project=<%= project.id %>&session=<%= session.id %>" class="btn btn-sm btn-success">🎙️ Resume</a>
+                                <% } %>
+                                <button onclick="viewSession(<%= session.id %>)" class="btn btn-sm">👁️ View Details</button>
+                                <% if (transcript.length > 0) { %>
+                                    <button onclick="exportSession(<%= session.id %>)" class="btn btn-sm btn-secondary">📄 Export</button>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <span class="emoji">💬</span>
+                    <h3>No voice sessions yet</h3>
+                    <p>Start your first voice session to begin gathering requirements</p>
+                    <a href="/projects/<%= project.id %>/session" class="btn btn-success" style="margin-top: 16px;">🎙️ Start Voice Session</a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <div>
+        <!-- File Upload -->
+        <div class="card">
+            <h3>📎 Project Files</h3>
+            <div class="upload-zone" onclick="document.getElementById('fileInput').click()" 
+                 style="border: 2px dashed #ddd; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; margin: 16px 0; transition: all 0.2s;"
+                 onmouseover="this.style.borderColor='#667eea'; this.style.background='#f8f9ff'"
+                 onmouseout="this.style.borderColor='#ddd'; this.style.background='white'">
+                <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)" style="display: none;">
+                📁 Click to upload files<br>
+                <small style="color: #666;">Documents, specs, mockups</small>
+            </div>
+            
+            <div id="uploadStatus" style="display: none; padding: 8px; border-radius: 6px; font-size: 12px; margin-bottom: 12px;"></div>
+            
+            <% if (files.length > 0) { %>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <% files.forEach(file => { %>
+                        <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white;">
+                            <div style="font-weight: 600; margin-bottom: 4px;">📄 <%= file.original_name %></div>
+                            <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                                <%= (file.size / 1024).toFixed(1) %> KB • <%= new Date(file.created_at).toLocaleDateString() %>
+                            </div>
+                            <% if (file.analysis) { %>
+                                <% 
+                                let analysis = {};
+                                try {
+                                    analysis = JSON.parse(file.analysis);
+                                } catch {}
+                                %>
+                                <% if (analysis.requirements && analysis.requirements.length > 0) { %>
+                                    <div style="font-size: 12px; color: #28a745; margin-bottom: 8px;">
+                                        ✅ <%= analysis.requirements.length %> requirements extracted
+                                    </div>
+                                <% } %>
+                            <% } %>
+                            <button onclick="viewFile('<%= file.filename %>')" class="btn btn-sm" style="font-size: 11px;">👁️ View</button>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div style="text-align: center; color: #999; padding: 20px; font-size: 14px;">
+                    No files uploaded yet
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Project Info -->
+        <div class="card">
+            <h3>ℹ️ Project Info</h3>
+            <div style="margin-top: 12px;">
+                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">CREATED</div>
+                <div style="margin-bottom: 12px;"><%= new Date(project.created_at).toLocaleDateString() %></div>
+                
+                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">LAST UPDATED</div>
+                <div style="margin-bottom: 12px;"><%= new Date(project.updated_at).toLocaleDateString() %></div>
+                
+                <div style="font-size: 12px; color: #666; margin-bottom: 4px;">STATUS</div>
+                <div><%= project.status.charAt(0).toUpperCase() + project.status.slice(1) %></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Session Detail Modal -->
+<div id="sessionModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 id="sessionModalTitle">Session Details</h3>
+            <button onclick="closeSessionModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+        </div>
+        <div id="sessionModalContent"></div>
+    </div>
+</div>
+
+<script>
+const projectId = <%= project.id %>;
+const sessions = <%= JSON.stringify(sessions) %>;
+
+async function handleFiles(fileList) {
+    const status = document.getElementById('uploadStatus');
+    status.style.display = 'block';
+    status.className = 'alert alert-info';
+    status.innerHTML = '📤 Uploading files...';
+
+    for (const file of fileList) {
+        try {
+            status.innerHTML = `📤 Uploading ${file.name}...`;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('projectId', projectId);
+            
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+            if (!uploadRes.ok) throw new Error('Upload failed');
+            const uploadData = await uploadRes.json();
+            
+            status.innerHTML = `🔍 Analyzing ${file.name}...`;
+            
+            const analyzeRes = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    filename: file.name, 
+                    content: uploadData.content,
+                    projectId: projectId 
+                })
+            });
+            
+            if (analyzeRes.ok) {
+                const analysis = await analyzeRes.json();
+                status.className = 'alert alert-success';
+                status.innerHTML = `✅ ${file.name} uploaded and analyzed (${analysis.requirements?.length || 0} requirements found)`;
+            } else {
+                status.className = 'alert alert-success';
+                status.innerHTML = `✅ ${file.name} uploaded successfully`;
+            }
+        } catch (e) {
+            status.className = 'alert alert-error';
+            status.innerHTML = `❌ Failed to upload ${file.name}: ${e.message}`;
+        }
+    }
+    
+    setTimeout(() => {
+        status.style.display = 'none';
+        location.reload(); // Refresh to show new files
+    }, 3000);
+}
+
+function viewSession(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+    
+    let transcript = [];
+    let requirements = {};
+    try {
+        transcript = JSON.parse(session.transcript || '[]');
+        requirements = JSON.parse(session.requirements || '{}');
+    } catch {}
+    
+    document.getElementById('sessionModalTitle').innerText = `Session #${sessionId}`;
+    
+    let content = `
+        <div style="margin-bottom: 20px;">
+            <strong>Status:</strong> ${session.status} | 
+            <strong>Created:</strong> ${new Date(session.created_at).toLocaleString()} |
+            <strong>Updated:</strong> ${new Date(session.updated_at).toLocaleString()}
+        </div>
+    `;
+    
+    // Requirements
+    if (Object.keys(requirements).length > 0) {
+        content += '<h4>📋 Requirements Identified</h4>';
+        for (const [category, items] of Object.entries(requirements)) {
+            if (Array.isArray(items) && items.length > 0) {
+                content += `<h5 style="color: #667eea; margin-top: 16px; margin-bottom: 8px;">${category}</h5><ul style="margin-left: 16px;">`;
+                items.forEach(item => {
+                    content += `<li style="margin-bottom: 4px;">${item}</li>`;
+                });
+                content += '</ul>';
+            }
+        }
+    }
+    
+    // Transcript
+    if (transcript.length > 0) {
+        content += '<h4 style="margin-top: 20px;">💬 Full Transcript</h4>';
+        content += '<div style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px;">';
+        transcript.forEach(msg => {
+            const isAI = msg.role === 'ai';
+            content += `
+                <div style="margin-bottom: 12px; padding: 8px; border-radius: 8px; ${isAI ? 'background: #f0f2ff;' : 'background: #f8f8f8;'}">
+                    <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px; color: ${isAI ? '#667eea' : '#333'};">${isAI ? '🤖 AI' : '👤 You'}</div>
+                    <div>${msg.text}</div>
+                </div>
+            `;
+        });
+        content += '</div>';
+    } else {
+        content += '<p style="color: #666; font-style: italic;">No conversation transcript available</p>';
+    }
+    
+    document.getElementById('sessionModalContent').innerHTML = content;
+    document.getElementById('sessionModal').style.display = 'block';
+}
+
+function closeSessionModal() {
+    document.getElementById('sessionModal').style.display = 'none';
+}
+
+function viewFile(filename) {
+    window.open('/uploads/' + filename, '_blank');
+}
+
+async function exportProject() {
+    try {
+        const response = await fetch(`/api/projects/${projectId}/export`);
+        if (!response.ok) throw new Error('Export failed');
+        
+        const blob = await response.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `<%= project.name.replace(/[^a-z0-9]/gi, '-') %>-export-${new Date().toISOString().split('T')[0]}.zip`;
+        a.click();
+    } catch (e) {
+        alert('Export failed: ' + e.message);
+    }
+}
+
+async function exportSession(sessionId) {
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}/export`);
+        if (!response.ok) throw new Error('Export failed');
+        
+        const blob = await response.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `session-${sessionId}-export-${new Date().toISOString().split('T')[0]}.md`;
+        a.click();
+    } catch (e) {
+        alert('Export failed: ' + e.message);
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('sessionModal');
+    if (e.target === modal) {
+        closeSessionModal();
+    }
+});
+
+document.getElementById('fileInput').value = '';
+</script>

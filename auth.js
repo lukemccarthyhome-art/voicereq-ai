@@ -1,0 +1,68 @@
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const { getUser } = require('./database');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'voicereq-super-secret-key-' + Math.random();
+
+const generateToken = (user) => {
+  return jwt.sign(
+    { 
+      id: user.id, 
+      email: user.email, 
+      role: user.role,
+      name: user.name 
+    },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+};
+
+const verifyPassword = (plainPassword, hashedPassword) => {
+  return bcrypt.compareSync(plainPassword, hashedPassword);
+};
+
+const authenticate = (req, res, next) => {
+  const token = req.cookies.authToken;
+  
+  if (!token) {
+    return res.redirect('/login');
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.clearCookie('authToken');
+    return res.redirect('/login');
+  }
+};
+
+const requireAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).render('error', { 
+      message: 'Access denied. Admin privileges required.',
+      user: req.user 
+    });
+  }
+  next();
+};
+
+const requireCustomer = (req, res, next) => {
+  if (req.user.role !== 'customer') {
+    return res.status(403).render('error', { 
+      message: 'Access denied. Customer account required.',
+      user: req.user 
+    });
+  }
+  next();
+};
+
+module.exports = {
+  generateToken,
+  verifyPassword,
+  authenticate,
+  requireAdmin,
+  requireCustomer,
+  JWT_SECRET
+};

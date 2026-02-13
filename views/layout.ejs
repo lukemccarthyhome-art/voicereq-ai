@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceReq AI - <%= title || 'Voice-Powered Requirements Gathering' %></title>
+    <link href="/style.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
+        
+        /* Header */
+        .header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 16px 0; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 0 20px; 
+        }
+        .logo { 
+            font-size: 20px; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            text-decoration: none; 
+            color: white; 
+        }
+        .nav { display: flex; gap: 20px; align-items: center; }
+        .nav a { 
+            color: rgba(255,255,255,0.9); 
+            text-decoration: none; 
+            padding: 8px 14px; 
+            border-radius: 6px; 
+            transition: background 0.2s; 
+            font-weight: 500;
+        }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.3); }
+        .user-menu { 
+            position: relative; 
+            display: inline-block; 
+        }
+        .user-name { 
+            background: rgba(255,255,255,0.2); 
+            padding: 8px 14px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 500;
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+        }
+        .user-dropdown { 
+            position: absolute; 
+            right: 0; 
+            top: 100%; 
+            background: white; 
+            min-width: 200px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            border-radius: 8px; 
+            display: none; 
+            z-index: 100; 
+            margin-top: 8px; 
+        }
+        .user-dropdown a { 
+            display: block; 
+            padding: 12px 16px; 
+            color: #333; 
+            text-decoration: none; 
+            border-bottom: 1px solid #f0f0f0; 
+        }
+        .user-dropdown a:hover { background: #f8f9ff; }
+        .user-dropdown a:last-child { border-bottom: none; }
+        .user-menu:hover .user-dropdown { display: block; }
+
+        /* Breadcrumbs */
+        .breadcrumbs { 
+            background: white; 
+            padding: 12px 20px; 
+            border-bottom: 1px solid #e0e0e0; 
+        }
+        .breadcrumb-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            font-size: 14px; 
+            color: #666; 
+        }
+        .breadcrumb-container a { 
+            color: #667eea; 
+            text-decoration: none; 
+        }
+        .breadcrumb-container a:hover { 
+            text-decoration: underline; 
+        }
+
+        /* Main content */
+        .main { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            min-height: calc(100vh - 200px); 
+        }
+
+        /* Cards */
+        .card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 24px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+        }
+        .card h2 { 
+            margin-bottom: 16px; 
+            color: #333; 
+            font-size: 24px; 
+        }
+        .card h3 { 
+            margin-bottom: 12px; 
+            color: #555; 
+            font-size: 18px; 
+        }
+
+        /* Buttons */
+        .btn { 
+            display: inline-block; 
+            padding: 10px 20px; 
+            background: #667eea; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            border: none; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            font-size: 14px; 
+        }
+        .btn:hover { 
+            background: #5a6fd8; 
+            transform: translateY(-1px); 
+        }
+        .btn-secondary { 
+            background: #6c757d; 
+        }
+        .btn-secondary:hover { 
+            background: #545b62; 
+        }
+        .btn-danger { 
+            background: #dc3545; 
+        }
+        .btn-danger:hover { 
+            background: #c82333; 
+        }
+        .btn-success { 
+            background: #28a745; 
+        }
+        .btn-success:hover { 
+            background: #218838; 
+        }
+        .btn-sm { 
+            padding: 6px 12px; 
+            font-size: 12px; 
+        }
+
+        /* Forms */
+        .form-group { 
+            margin-bottom: 16px; 
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 6px; 
+            font-weight: 600; 
+            color: #333; 
+        }
+        .form-control { 
+            width: 100%; 
+            padding: 10px 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            transition: border-color 0.2s; 
+        }
+        .form-control:focus { 
+            outline: none; 
+            border-color: #667eea; 
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); 
+        }
+
+        /* Tables */
+        .table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 12px; 
+        }
+        .table th, .table td { 
+            text-align: left; 
+            padding: 12px; 
+            border-bottom: 1px solid #e0e0e0; 
+        }
+        .table th { 
+            background: #f8f9fa; 
+            font-weight: 600; 
+            color: #555; 
+            font-size: 13px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+        .table tbody tr:hover { 
+            background: #f8f9ff; 
+        }
+
+        /* Stats grid */
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 30px; 
+        }
+        .stat-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+            text-align: center; 
+        }
+        .stat-number { 
+            font-size: 32px; 
+            font-weight: bold; 
+            color: #667eea; 
+            margin-bottom: 8px; 
+        }
+        .stat-label { 
+            color: #666; 
+            font-size: 14px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .header-container { 
+                flex-direction: column; 
+                gap: 12px; 
+                text-align: center; 
+            }
+            .nav { 
+                flex-wrap: wrap; 
+                justify-content: center; 
+            }
+            .main { 
+                padding: 16px; 
+            }
+            .card { 
+                padding: 16px; 
+            }
+            .stats-grid { 
+                grid-template-columns: 1fr; 
+            }
+        }
+
+        /* Alerts */
+        .alert { 
+            padding: 12px 16px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
+            border-left: 4px solid; 
+        }
+        .alert-success { 
+            background: #d4edda; 
+            color: #155724; 
+            border-color: #28a745; 
+        }
+        .alert-error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border-color: #dc3545; 
+        }
+        .alert-info { 
+            background: #cce7ff; 
+            color: #004085; 
+            border-color: #007bff; 
+        }
+
+        /* Empty state */
+        .empty-state { 
+            text-align: center; 
+            padding: 60px 20px; 
+            color: #999; 
+        }
+        .empty-state .emoji { 
+            font-size: 48px; 
+            margin-bottom: 16px; 
+            display: block; 
+        }
+        .empty-state h3 { 
+            margin-bottom: 8px; 
+            color: #666; 
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-container">
+            <a href="<%= user.role === 'admin' ? '/admin' : '/dashboard' %>" class="logo">
+                🎙️ VoiceReq AI
+            </a>
+            
+            <nav class="nav">
+                <% if (user.role === 'admin') { %>
+                    <a href="/admin" class="<%= currentPage === 'admin-dashboard' ? 'active' : '' %>">Dashboard</a>
+                    <a href="/admin/customers" class="<%= currentPage === 'admin-customers' ? 'active' : '' %>">Customers</a>
+                    <a href="/admin/projects" class="<%= currentPage === 'admin-projects' ? 'active' : '' %>">All Projects</a>
+                <% } else { %>
+                    <a href="/dashboard" class="<%= currentPage === 'customer-dashboard' ? 'active' : '' %>">Dashboard</a>
+                    <a href="/projects" class="<%= currentPage === 'customer-projects' ? 'active' : '' %>">Projects</a>
+                <% } %>
+                
+                <div class="user-menu">
+                    <div class="user-name">
+                        👤 <%= user.name %> ▼
+                    </div>
+                    <div class="user-dropdown">
+                        <a href="#">📧 <%= user.email %></a>
+                        <a href="#">🏢 <%= user.company || 'N/A' %></a>
+                        <a href="#">👑 <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %></a>
+                        <a href="/logout">🚪 Logout</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <% if (breadcrumbs && breadcrumbs.length > 0) { %>
+    <div class="breadcrumbs">
+        <div class="breadcrumb-container">
+            <% breadcrumbs.forEach((crumb, index) => { %>
+                <% if (index > 0) { %> / <% } %>
+                <% if (crumb.url && index < breadcrumbs.length - 1) { %>
+                    <a href="<%= crumb.url %>"><%= crumb.name %></a>
+                <% } else { %>
+                    <%= crumb.name %>
+                <% } %>
+            <% }) %>
+        </div>
+    </div>
+    <% } %>
+
+    <main class="main">
+        <% if (message) { %>
+            <div class="alert alert-<%= messageType || 'info' %>">
+                <%= message %>
+            </div>
+        <% } %>
+
+        <!-- Page content will be rendered here by the individual templates -->
+    </main>
+
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

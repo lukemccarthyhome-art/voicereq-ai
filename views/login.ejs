@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - VoiceReq AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
+        .login-container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2); 
+            width: 100%; 
+            max-width: 400px; 
+        }
+        
+        .logo { 
+            text-align: center; 
+            margin-bottom: 32px; 
+        }
+        .logo h1 { 
+            font-size: 24px; 
+            color: #333; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+        }
+        .logo p { 
+            color: #666; 
+            margin-top: 8px; 
+            font-size: 14px; 
+        }
+        
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 6px; 
+            font-weight: 600; 
+            color: #333; 
+        }
+        .form-control { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            transition: border-color 0.2s; 
+        }
+        .form-control:focus { 
+            outline: none; 
+            border-color: #667eea; 
+        }
+        
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            background: #667eea; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: background 0.2s; 
+        }
+        .btn:hover { 
+            background: #5a6fd8; 
+        }
+        
+        .alert { 
+            padding: 12px 16px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            text-align: center; 
+        }
+        .alert-error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        
+        .demo-creds { 
+            margin-top: 24px; 
+            padding: 16px; 
+            background: #f8f9ff; 
+            border-radius: 8px; 
+            border: 1px solid #e0e7ff; 
+        }
+        .demo-creds h4 { 
+            color: #667eea; 
+            margin-bottom: 8px; 
+            font-size: 14px; 
+        }
+        .demo-creds p { 
+            font-size: 12px; 
+            color: #666; 
+            margin: 4px 0; 
+        }
+        .demo-creds strong { 
+            font-family: monospace; 
+            background: white; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🎙️ VoiceReq AI</h1>
+            <p>Voice-Powered Requirements Gathering</p>
+        </div>
+
+        <% if (error) { %>
+            <div class="alert alert-error">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <form method="POST" action="/login">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" required value="<%= email || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn">Sign In</button>
+        </form>
+
+        <div class="demo-creds">
+            <h4>🔑 Demo Account</h4>
+            <p><strong>Email:</strong> luke@voicereq.ai</p>
+            <p><strong>Password:</strong> admin123</p>
+            <p><em>Admin access with full system privileges</em></p>
+        </div>
+    </div>
+</body>
+</html>
