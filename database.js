@@ -303,6 +303,7 @@ const getStats = () => {
 initDB();
 
 module.exports = {
+  ready: Promise.resolve(),
   db,
   // Users
   getUser,

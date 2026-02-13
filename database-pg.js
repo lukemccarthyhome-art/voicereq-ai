@@ -321,9 +321,10 @@ const getStats = async () => {
 };
 
 // Initialize database on startup
-initDB().catch(console.error);
+const ready = initDB().catch(err => { console.error('❌ PostgreSQL init failed:', err); process.exit(1); });
 
 module.exports = {
+  ready,
   pool,
   // Users
   getUser,

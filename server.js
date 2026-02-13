@@ -953,21 +953,24 @@ app.use((err, req, res, next) => {
   });
 });
 
-// HTTP
-app.listen(PORT, () => {
-  console.log(`🎙️  VoiceReq AI running on http://localhost:${PORT}`);
-  console.log(`📊 Dashboard: http://localhost:${PORT}/admin (luke@voicereq.ai / admin123)`);
-});
-
-// HTTPS
-try {
-  const sslOptions = {
-    key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem')),
-  };
-  https.createServer(sslOptions, app).listen(HTTPS_PORT, () => {
-    console.log(`🔒 HTTPS running on https://localhost:${HTTPS_PORT}`);
+// Wait for database to be ready, then start server
+db.ready.then(() => {
+  // HTTP
+  app.listen(PORT, () => {
+    console.log(`🎙️  VoiceReq AI running on http://localhost:${PORT}`);
+    console.log(`📊 Dashboard: http://localhost:${PORT}/admin (luke@voicereq.ai / admin123)`);
   });
-} catch (e) {
-  console.log('⚠️  No SSL certs, HTTPS disabled');
-}
+
+  // HTTPS
+  try {
+    const sslOptions = {
+      key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
+      cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem')),
+    };
+    https.createServer(sslOptions, app).listen(HTTPS_PORT, () => {
+      console.log(`🔒 HTTPS running on https://localhost:${HTTPS_PORT}`);
+    });
+  } catch (e) {
+    console.log('⚠️  No SSL certs, HTTPS disabled');
+  }
+});
