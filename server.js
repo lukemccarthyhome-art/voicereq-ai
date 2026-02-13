@@ -51,7 +51,7 @@ const apiAuth = (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const decoded = require('jsonwebtoken').verify(token, auth.JWT_SECRET);
-    req.user = db.getUserById(decoded.userId);
+    req.user = db.getUserById(decoded.id);
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     next();
   } catch { res.status(401).json({ error: 'Unauthorized' }); }
