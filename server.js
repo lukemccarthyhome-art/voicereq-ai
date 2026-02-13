@@ -18,6 +18,7 @@ const HTTPS_PORT = 3443;
 
 // Middleware
 app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
