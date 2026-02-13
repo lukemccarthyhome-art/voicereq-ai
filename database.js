@@ -21,6 +21,7 @@ const initDB = () => {
       name TEXT NOT NULL,
       company TEXT NOT NULL,
       role TEXT NOT NULL CHECK (role IN ('admin', 'customer')),
+      mfa_secret TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);

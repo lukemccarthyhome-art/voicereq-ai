@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const archiver = require('archiver');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const xss = require('xss');
 
 require('dotenv').config();
 
@@ -45,6 +46,20 @@ const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'To
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Input Sanitization Middleware
+const sanitizeInput = (req, res, next) => {
+  if (req.body) {
+    for (let key in req.body) {
+      if (typeof req.body[key] === 'string') {
+        req.body[key] = xss(req.body[key]);
+      }
+    }
+  }
+  next();
+};
+app.use(sanitizeInput);
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -130,7 +145,7 @@ app.post('/login', loginLimiter, async (req, res) => {
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 2 * 60 * 60 * 1000 // 2 hours
     });
     
     res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
@@ -233,6 +248,10 @@ app.delete('/api/files/:id', apiAuth, async (req, res) => {
   try {
     const file = await db.getFile(req.params.id);
     if (!file) return res.status(404).json({ error: 'File not found' });
+    
+    // Log deletion
+    await db.logAction(req.user.id, 'file_delete', { filename: file.filename, projectId: file.project_id }, req.ip);
+
     // Delete from disk
     const fp = path.join(uploadsDir, file.filename || file.original_name);
     if (fs.existsSync(fp)) fs.unlinkSync(fp);
@@ -402,6 +421,7 @@ app.post('/projects', auth.authenticate, auth.requireCustomer, async (req, res) 
   try {
     const { name, description } = req.body;
     const result = await db.createProject(req.user.id, name, description);
+    await db.logAction(req.user.id, 'project_create', { name, projectId: result.lastInsertRowid }, req.ip);
     res.redirect(`/projects/${result.lastInsertRowid}?message=Project created successfully`);
   } catch (e) {
     console.error('Create project error:', e);

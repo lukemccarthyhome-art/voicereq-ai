@@ -37,6 +37,7 @@ const initDB = async (retries = 3) => {
         name TEXT NOT NULL,
         company TEXT NOT NULL,
         role TEXT NOT NULL CHECK (role IN ('admin', 'customer')),
+        mfa_secret TEXT,
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
