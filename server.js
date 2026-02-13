@@ -71,31 +71,8 @@ const sanitizeInput = (req, res, next) => {
 
 // Cloudflare-only Middleware
 const cloudflareOnly = (req, res, next) => {
-  // Only enforce in production
-  if (process.env.NODE_ENV !== 'production' || process.env.BYPASS_CLOUDFLARE === 'true') {
-    return next();
-  }
-
-  // Check multiple header variations
-  const cfIp = req.header('cf-connecting-ip') || req.header('CF-Connecting-IP');
-  const via = req.header('via') || '';
-  
-  if (!cfIp) {
-    const blockMsg = `🚫 Origin Lock Triggered: Direct access blocked from ${req.ip}. Host: ${req.get('host')}`;
-    console.warn(blockMsg);
-    
-    // Proactive Security Alert
-    sendSecurityAlert('Origin Lock Triggered', {
-      ip: req.ip,
-      path: req.url,
-      method: req.method,
-      host: req.get('host'),
-      allHeaders: req.headers // This will let me see exactly what's reaching the app
-    });
-
-    return res.status(403).send('Direct access forbidden. Please access via the official Morti Projects domain.');
-  }
-  next();
+  // TEMPORARILY DISABLED TO DEBUG 502 ERROR
+  return next();
 };
 
 // Security Alert Helper (Telegram)
