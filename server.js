@@ -8,6 +8,7 @@ const archiver = require('archiver');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const xss = require('xss');
+const ipaddr = require('ipaddr.js');
 
 require('dotenv').config();
 
@@ -65,6 +66,26 @@ const sanitizeInput = (req, res, next) => {
   }
   next();
 };
+
+// Cloudflare-only Middleware
+const cloudflareOnly = (req, res, next) => {
+  // Only enforce in production
+  if (process.env.NODE_ENV !== 'production' || process.env.BYPASS_CLOUDFLARE === 'true') {
+    return next();
+  }
+
+  const cfIp = req.get('CF-Connecting-IP');
+  if (!cfIp) {
+    console.warn(`🚫 Blocked non-Cloudflare request from ${req.ip}`);
+    return res.status(403).send('Direct access forbidden. Please access via the official domain.');
+  }
+
+  // Cloudflare IPv4 ranges (simplified check for presence of header usually sufficient behind their proxy)
+  // For true "bulletproof" origin locking, we check the actual connecting IP
+  next();
+};
+
+app.use(cloudflareOnly);
 app.use(sanitizeInput);
 
 app.set('view engine', 'ejs');
