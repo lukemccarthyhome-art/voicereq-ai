@@ -286,6 +286,15 @@ app.post('/login', loginLimiter, async (req, res) => {
 
     const token = auth.generateToken(user);
     await db.logAction(user.id, 'login', { email: user.email }, req.ip);
+    
+    // Alert on every login
+    sendSecurityAlert('User Login', {
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
 
     // MFA Check
     if (user.mfa_secret) {
