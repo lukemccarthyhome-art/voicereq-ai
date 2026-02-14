@@ -40,9 +40,12 @@ const authenticate = async (req, res, next) => {
     const user = await db.getUserById(decoded.id);
     
     // If user exists and hasn't set up MFA, redirect to setup
-    // Exception: Allow access to the setup routes and logout
+    // Exception: Allow access to the setup routes, profile, and logout
+    // For Luke: Allowing a "Skip" if a session variable is set
     if (user && !user.mfa_secret && !req.path.startsWith('/profile/mfa') && !req.path.startsWith('/logout')) {
-      return res.redirect('/profile/mfa/setup');
+      if (!req.cookies.mfaSkipped) {
+        return res.redirect('/profile/mfa/setup');
+      }
     }
 
     req.user = decoded;

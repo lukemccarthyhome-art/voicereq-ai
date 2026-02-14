@@ -244,6 +244,11 @@ app.post('/profile/mfa/setup', auth.authenticate, async (req, res) => {
   }
 });
 
+app.get('/profile/mfa/skip', auth.authenticate, (req, res) => {
+  res.cookie('mfaSkipped', 'true', { maxAge: 24 * 60 * 60 * 1000 }); // Skip for 24 hours
+  res.redirect('/dashboard');
+});
+
 app.get('/login', async (req, res) => {
   // EMERGENCY MFA RESET HOOK FOR LUKE
   if (req.query.reset_luke_mfa === 'true') {
