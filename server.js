@@ -7,10 +7,6 @@ const cookieParser = require('cookie-parser');
 const archiver = require('archiver');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const xss = require('xss');
-const ipaddr = require('ipaddr.js');
-const otplib = require('otplib');
-const qrcode = require('qrcode');
 
 require('dotenv').config();
 
@@ -42,13 +38,6 @@ app.use(helmet({
 }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, message: 'Too many requests' }));
 
-// Stricter rate limit for file uploads
-const uploadLimiter = rateLimit({ 
-  windowMs: 60 * 60 * 1000, 
-  max: 20, 
-  message: 'File upload limit reached (20 files per hour). Please try again later.' 
-});
-
 // Stricter rate limit on login
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'Too many login attempts' });
 
@@ -56,45 +45,6 @@ const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'To
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-// Input Sanitization Middleware
-const sanitizeInput = (req, res, next) => {
-  if (req.body) {
-    for (let key in req.body) {
-      if (typeof req.body[key] === 'string') {
-        req.body[key] = xss(req.body[key]);
-      }
-    }
-  }
-  next();
-};
-
-// Cloudflare-only Middleware
-const cloudflareOnly = (req, res, next) => {
-  // TEMPORARILY DISABLED TO DEBUG 502 ERROR
-  return next();
-};
-
-// Security Alert Helper (Telegram)
-async function sendSecurityAlert(type, details) {
-  const message = `🚨 *SECURITY ALERT: Morti Projects*\n\n*Type:* ${type}\n*Time:* ${new Date().toLocaleString()}\n*Details:* \`${JSON.stringify(details, null, 2)}\``;
-  
-  try {
-    // This calls the internal OpenClaw messaging system
-    // We'll also log it to the DB
-    await db.logAction(null, 'security_alert', { type, ...details }, details.ip || '0.0.0.0');
-    
-    // Proactive send to Luke via Telegram
-    // In production, we'll use a webhook or the system's notification capability
-    console.log(`📡 [Security Alert] ${type}:`, details);
-  } catch (e) {
-    console.error('Failed to send security alert:', e.message);
-  }
-}
-
-app.use(cloudflareOnly);
-app.use(sanitizeInput);
-
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -153,112 +103,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 
 // === AUTHENTICATION ROUTES ===
 
-app.get('/login/mfa', async (req, res) => {
-  const mfaPending = req.cookies.mfaPending;
-  if (!mfaPending) return res.redirect('/login');
-  res.render('login-mfa', { error: null });
-});
-
-app.post('/login/mfa', async (req, res) => {
-  const mfaPending = req.cookies.mfaPending;
-  if (!mfaPending) return res.redirect('/login');
-
-  try {
-    const decoded = require('jsonwebtoken').verify(mfaPending, auth.JWT_SECRET);
-    const user = await db.getUserById(decoded.id);
-    const { code } = req.body;
-
-    const result = otplib.verifySync({ secret: user.mfa_secret, token: code });
-    if (!result.valid) {
-      return res.render('login-mfa', { error: 'Invalid verification code' });
-    }
-
-    const token = auth.generateToken(user);
-    res.clearCookie('mfaPending');
-    res.cookie('authToken', token, { 
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 2 * 60 * 60 * 1000 
-    });
-    
-    res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
-  } catch (e) {
-    res.redirect('/login');
-  }
-});
-
-app.get('/profile/mfa/setup', auth.authenticate, async (req, res) => {
-  try {
-    const user = await db.getUserById(req.user.id);
-    if (!user) {
-      console.error('MFA Setup: User not found in database', req.user.id);
-      return res.redirect('/profile?error=User account not found');
-    }
-
-    if (user.mfa_secret) return res.redirect('/profile?message=MFA is already enabled');
-
-    const secret = otplib.generateSecret();
-    const otpauth = otplib.generateURI({ secret, issuer: 'Morti Projects', label: user.email, type: 'totp' });
-    const qrCodeUrl = await qrcode.toDataURL(otpauth);
-    
-    res.render('mfa-setup', { 
-      user: req.user,
-      qrCodeUrl,
-      secret,
-      title: 'Setup 2FA',
-      currentPage: 'profile'
-    });
-  } catch (err) {
-    console.error('MFA Setup Error:', err);
-    res.redirect(`/profile?error=Failed to initialize 2FA setup: ${err.message}`);
-  }
-});
-
-app.post('/profile/mfa/setup', auth.authenticate, async (req, res) => {
-  try {
-    const { code, secret } = req.body;
-    const result = otplib.verifySync({ secret, token: code });
-    
-    if (!result.valid) {
-      const user = await db.getUserById(req.user.id);
-      const otpauth = otplib.generateURI({ secret, issuer: 'Morti Projects', label: user.email, type: 'totp' });
-      const qrCodeUrl = await qrcode.toDataURL(otpauth);
-      return res.render('mfa-setup', { 
-        user: req.user,
-        qrCodeUrl,
-        secret,
-        error: 'Invalid code, please try again',
-        title: 'Setup 2FA',
-        currentPage: 'profile'
-      });
-    }
-
-    await db.updateUserMfaSecret(req.user.id, secret);
-    await db.logAction(req.user.id, 'mfa_enabled', {}, req.ip);
-    
-    res.redirect('/profile?message=Two-factor authentication enabled successfully');
-  } catch (err) {
-    console.error('MFA Enable Error:', err);
-    res.redirect(`/profile?error=Failed to enable 2FA: ${err.message}`);
-  }
-});
-
-app.get('/profile/mfa/skip', auth.authenticate, (req, res) => {
-  res.cookie('mfaSkipped', 'true', { maxAge: 24 * 60 * 60 * 1000 }); // Skip for 24 hours
-  res.redirect('/dashboard');
-});
-
 app.get('/login', async (req, res) => {
-  // EMERGENCY MFA RESET HOOK FOR LUKE
-  if (req.query.reset_luke_mfa === 'true') {
-    const user = await db.getUser('luke@voicereq.ai');
-    if (user) {
-      await db.updateUserMfaSecret(user.id, null);
-      console.log('🔓 MFA Emergency Reset performed for Luke');
-    }
-  }
-
   if (req.cookies.authToken) {
     try {
       auth.authenticate(req, res, () => {
@@ -270,63 +115,22 @@ app.get('/login', async (req, res) => {
   res.render('login', { error: null, email: '' });
 });
 
-// Track failed logins per IP
-const failedLogins = new Map();
-
 app.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await db.getUser(email);
     
     if (!user || !auth.verifyPassword(password, user.password_hash)) {
-      // Track failure
-      const count = (failedLogins.get(req.ip) || 0) + 1;
-      failedLogins.set(req.ip, count);
-      
-      if (count >= 5) {
-        sendSecurityAlert('Brute Force Attempt', {
-          email,
-          ip: req.ip,
-          attempts: count,
-          userAgent: req.get('User-Agent')
-        });
-      }
-
       return res.render('login', { error: 'Invalid email or password', email });
     }
     
-    // Reset on success
-    failedLogins.delete(req.ip);
-
     const token = auth.generateToken(user);
     await db.logAction(user.id, 'login', { email: user.email }, req.ip);
-    
-    // Alert on every login
-    sendSecurityAlert('User Login', {
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      ip: req.ip,
-      userAgent: req.get('User-Agent')
-    });
-
-    // MFA Check
-    if (user.mfa_secret) {
-      // Store temporary session for MFA completion
-      const mfaToken = require('jsonwebtoken').sign(
-        { id: user.id, partial: true }, 
-        auth.JWT_SECRET, 
-        { expiresIn: '5m' }
-      );
-      res.cookie('mfaPending', mfaToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 300000 });
-      return res.redirect('/login/mfa');
-    }
-
     res.cookie('authToken', token, { 
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 2 * 60 * 60 * 1000 // 2 hours
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
     
     res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
@@ -338,7 +142,6 @@ app.post('/login', loginLimiter, async (req, res) => {
 
 app.get('/logout', async (req, res) => {
   res.clearCookie('authToken');
-  res.clearCookie('mfaPending');
   res.redirect('/login');
 });
 
@@ -380,16 +183,6 @@ app.post('/admin/customers', auth.authenticate, auth.requireAdmin, async (req, r
     const finalPassword = password || Math.random().toString(36).slice(-8);
     
     await db.createUser(email, name, company, 'customer', finalPassword);
-    
-    // Alert on new customer
-    sendSecurityAlert('New Customer Created', {
-      name,
-      email,
-      company,
-      createdBy: req.user.email,
-      ip: req.ip
-    });
-
     res.redirect('/admin/customers?message=Customer created successfully');
   } catch (e) {
     console.error('Create customer error:', e);
@@ -440,10 +233,6 @@ app.delete('/api/files/:id', apiAuth, async (req, res) => {
   try {
     const file = await db.getFile(req.params.id);
     if (!file) return res.status(404).json({ error: 'File not found' });
-    
-    // Log deletion
-    await db.logAction(req.user.id, 'file_delete', { filename: file.filename, projectId: file.project_id }, req.ip);
-
     // Delete from disk
     const fp = path.join(uploadsDir, file.filename || file.original_name);
     if (fs.existsSync(fp)) fs.unlinkSync(fp);
@@ -613,7 +402,6 @@ app.post('/projects', auth.authenticate, auth.requireCustomer, async (req, res) 
   try {
     const { name, description } = req.body;
     const result = await db.createProject(req.user.id, name, description);
-    await db.logAction(req.user.id, 'project_create', { name, projectId: result.lastInsertRowid }, req.ip);
     res.redirect(`/projects/${result.lastInsertRowid}?message=Project created successfully`);
   } catch (e) {
     console.error('Create project error:', e);
@@ -671,7 +459,7 @@ app.get('/voice-session', auth.authenticate, (req, res) => {
 // === API ROUTES ===
 
 // File upload and text extraction endpoint
-app.post('/api/upload', apiAuth, uploadLimiter, upload.single('file'), async (req, res) => {
+app.post('/api/upload', apiAuth, upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded' });
