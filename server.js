@@ -174,8 +174,13 @@ app.post('/login/mfa', async (req, res) => {
 
     const result = otplib.verifySync({ secret: user.mfa_secret, token: code });
     if (!result.valid) {
+      sendSecurityAlert('Failed MFA Attempt', { email: user.email, ip: req.ip, userAgent: req.get('User-Agent') });
       return res.render('login-mfa', { error: 'Invalid verification code' });
     }
+
+    // Successful MFA Login - alert and log
+    sendSecurityAlert('Successful MFA Login', { email: user.email, ip: req.ip, userAgent: req.get('User-Agent') });
+    await db.logAction(user.id, 'mfa_login', { email: user.email }, req.ip);
 
     const token = auth.generateToken(user);
     res.clearCookie('mfaPending');
@@ -281,13 +286,15 @@ app.post('/login', loginLimiter, async (req, res) => {
         });
       }
 
+      sendSecurityAlert('Failed Login Attempt', { email, ip: req.ip, userAgent: req.get('User-Agent') });
       return res.render('login', { error: 'Invalid email or password', email });
     }
     
     // Reset on success
     failedLogins.delete(req.ip);
 
-    const token = auth.generateToken(user);
+    // Successful login - alert and log
+    sendSecurityAlert('Successful Login', { email: user.email, ip: req.ip, userAgent: req.get('User-Agent') });
     await db.logAction(user.id, 'login', { email: user.email }, req.ip);
 
     // MFA Check
