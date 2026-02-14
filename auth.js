@@ -25,7 +25,7 @@ const hashPassword = (plainPassword) => {
   return bcrypt.hashSync(plainPassword, 10);
 };
 
-const authenticate = (req, res, next) => {
+const authenticate = async (req, res, next) => {
   const token = req.cookies.authToken;
   
   if (!token) {
@@ -34,6 +34,17 @@ const authenticate = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
+    const db = require('./database-adapter');
+    
+    // Check if user has completed MFA setup
+    const user = await db.getUserById(decoded.id);
+    
+    // If user exists and hasn't set up MFA, redirect to setup
+    // Exception: Allow access to the setup routes and logout
+    if (user && !user.mfa_secret && !req.path.startsWith('/profile/mfa') && !req.path.startsWith('/logout')) {
+      return res.redirect('/profile/mfa/setup');
+    }
+
     req.user = decoded;
     next();
   } catch (err) {
