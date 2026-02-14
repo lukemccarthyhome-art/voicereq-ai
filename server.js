@@ -36,7 +36,8 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https://*.vapi.ai"],
       connectSrc: ["'self'", "https://api.vapi.ai", "wss://*.vapi.ai", "https://api.openai.com"],
       frameSrc: ["'self'", "https://*.vapi.ai"],
-      mediaSrc: ["'self'", "blob:", "https://*.vapi.ai"]
+      mediaSrc: ["'self'", "blob:", "https://*.vapi.ai"],
+      workerSrc: ["'self'", "blob:"]
     },
   },
 }));
