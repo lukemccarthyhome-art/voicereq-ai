@@ -105,6 +105,13 @@ const initDB = async (retries = 3) => {
     // Create seed admin user
     await createSeedUser();
 
+    // Migrations: Add mfa_secret if missing
+    try {
+      await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret TEXT');
+    } catch (e) {
+      // Ignore if column exists
+    }
+
     console.log('✅ PostgreSQL database initialized');
   } finally {
     client.release();
@@ -371,6 +378,10 @@ const ready = initDB().catch(err => {
   process.exit(1);
 });
 
+const updateUserMfaSecret = async (userId, secret) => {
+  await pool.query('UPDATE users SET mfa_secret = $1 WHERE id = $2', [secret, userId]);
+};
+
 module.exports = {
   ready,
   pool,
@@ -403,6 +414,7 @@ module.exports = {
   deleteFile,
   updateFileDescription,
   logAction,
+  updateUserMfaSecret,
   // Stats
   getStats
 };
