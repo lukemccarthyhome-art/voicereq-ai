@@ -26,7 +26,7 @@ const HTTPS_PORT = 3443;
 app.set('trust proxy', 1);
 
 // Security middleware
-app.use(helmet({
+/* app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -40,6 +40,9 @@ app.use(helmet({
       workerSrc: ["'self'", "blob:"]
     },
   },
+})); */
+app.use(helmet({
+  contentSecurityPolicy: false
 }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300, message: 'Too many requests' }));
 
