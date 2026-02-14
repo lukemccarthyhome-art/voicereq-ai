@@ -239,7 +239,8 @@ app.post('/profile/mfa/setup', auth.authenticate, async (req, res) => {
     
     res.redirect('/profile?message=Two-factor authentication enabled successfully');
   } catch (err) {
-    res.redirect('/profile?error=Failed to enable 2FA');
+    console.error('MFA Enable Error:', err);
+    res.redirect(`/profile?error=Failed to enable 2FA: ${err.message}`);
   }
 });
 
