@@ -80,21 +80,7 @@ const cloudflareOnly = (req, res, next) => {
 };
 
 // Security Alert Helper (Telegram)
-async function sendSecurityAlert(type, details) {
-  const message = `🚨 *SECURITY ALERT: Morti Projects*\n\n*Type:* ${type}\n*Time:* ${new Date().toLocaleString()}\n*Details:* \`${JSON.stringify(details, null, 2)}\``;
-  
-  try {
-    // This calls the internal OpenClaw messaging system
-    // We'll also log it to the DB
-    await db.logAction(null, 'security_alert', { type, ...details }, details.ip || '0.0.0.0');
-    
-    // Proactive send to Luke via Telegram
-    // In production, we'll use a webhook or the system's notification capability
-    console.log(`📡 [Security Alert] ${type}:`, details);
-  } catch (e) {
-    console.error('Failed to send security alert:', e.message);
-  }
-}
+async function sendSecurityAlert(type, details) {\n  const message = `🚨 *SECURITY ALERT: Morti Projects*\\n\\n*Type:* ${type}\\n*Time:* ${new Date().toLocaleString()}\\n*Details:* \`\`\`json\\n${JSON.stringify(details, null, 2)}\\n\`\`\`\`;\n  \n  try {\n    // Log to DB\n    await db.logAction(null, \'security_alert\', { type, ...details }, details.ip || \'0.0.0.0\');\n    \n    // Send to Luke via Telegram Bot API\n    const telegramBotToken = process.env.TELEGRAM_SECURITY_BOT_TOKEN; // From Render env vars\n    const telegramChatId = process.env.TELEGRAM_LUKE_CHAT_ID; // Your chat ID\n\n    if (telegramBotToken && telegramChatId) {\n      const telegramApiUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;\n      await fetch(telegramApiUrl, {\n        method: \'POST\',\n        headers: { \'Content-Type\': \'application/json\' },\n        body: JSON.stringify({\n          chat_id: telegramChatId,\n          text: message,\n          parse_mode: \'MarkdownV2\'\n        })\n      });\n      console.log(`📡 [Security Alert Sent to Telegram] ${type}:`, details);\n    } else {\n      console.warn(\'⚠️ Telegram security alert not sent: Missing TELEGRAM_SECURITY_BOT_TOKEN or TELEGRAM_LUKE_CHAT_ID environment variables.\');\n    }\n    \n    console.log(`📡 [Security Alert] ${type}:`, details);\n  } catch (e) {\n    console.error(\'Failed to send security alert or Telegram message:\', e.message);\n  }\n}
 
 app.use(cloudflareOnly);
 app.use(sanitizeInput);
