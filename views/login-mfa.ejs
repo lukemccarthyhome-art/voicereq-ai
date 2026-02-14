@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Factor Authentication - Morti Projects</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --bg: #f7fafc;
+            --text: #2d3748;
+            --white: #ffffff;
+            --error: #e53e3e;
+            --border: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .login-card { background: var(--white); padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); width: 100%; max-width: 400px; text-align: center; }
+        .logo { font-size: 28px; font-weight: 700; color: var(--primary); margin-bottom: 24px; display: block; }
+        h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+        p { color: #718096; font-size: 14px; margin-bottom: 24px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+        input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 24px; text-align: center; letter-spacing: 0.5em; font-family: monospace; }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: var(--primary-dark); }
+        .error-msg { background: #fff5f5; color: var(--error); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+        .cancel { display: block; margin-top: 16px; color: #718096; font-size: 14px; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <span class="logo">🔐 Morti Projects</span>
+        <h1>Two-Factor Auth</h1>
+        <p>Enter the 6-digit code from your authenticator app</p>
+        
+        <% if (error) { %>
+            <div class="error-msg"><%= error %></div>
+        <% } %>
+
+        <form action="/login/mfa" method="POST">
+            <div class="form-group">
+                <input type="text" name="code" placeholder="000000" maxlength="6" required autofocus autocomplete="one-time-code">
+            </div>
+            <button type="submit">Verify & Login</button>
+        </form>
+        
+        <a href="/logout" class="cancel">Cancel and Login Again</a>
+    </div>
+</body>
+</html>
