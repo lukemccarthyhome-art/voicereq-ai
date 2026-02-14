@@ -9,8 +9,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const xss = require('xss');
 const ipaddr = require('ipaddr.js');
-const otplib = require('otplib');
-const authenticator = otplib.authenticator;
+const { TOTP } = require('otplib');
+const authenticator = new TOTP();
 const qrcode = require('qrcode');
 
 require('dotenv').config();
