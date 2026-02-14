@@ -507,9 +507,10 @@ app.post('/admin/customers/:id/password', auth.authenticate, auth.requireAdmin, 
 
 // === PROFILE ROUTES (for both admin and customer) ===
 
-app.get('/profile', auth.authenticate, (req, res) => {
+app.get('/profile', auth.authenticate, async (req, res) => {
+  const fullUser = await db.getUserById(req.user.id) || req.user;
   res.render('profile', {
-    user: req.user,
+    user: { ...req.user, mfa_secret: fullUser.mfa_secret },
     title: 'Profile Settings',
     currentPage: req.user.role === 'admin' ? 'admin-profile' : 'customer-profile',
     message: req.query.message,

@@ -150,6 +150,28 @@
         </div>
 
         <div class="card">
+            <h2>🔐 Two-Factor Authentication</h2>
+            <% if (user.mfa_secret) { %>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #d4edda; border-radius: 8px; border-left: 4px solid #28a745;">
+                    <span style="font-size: 24px;">✅</span>
+                    <div>
+                        <strong style="color: #155724;">2FA is enabled</strong>
+                        <p style="color: #155724; font-size: 14px; margin-top: 4px;">Your account is protected with two-factor authentication.</p>
+                    </div>
+                </div>
+            <% } else { %>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107; margin-bottom: 16px;">
+                    <span style="font-size: 24px;">⚠️</span>
+                    <div>
+                        <strong style="color: #856404;">2FA is not enabled</strong>
+                        <p style="color: #856404; font-size: 14px; margin-top: 4px;">Add an extra layer of security to your account.</p>
+                    </div>
+                </div>
+                <a href="/profile/mfa/setup" class="btn btn-success">🔐 Setup 2FA Now</a>
+            <% } %>
+        </div>
+
+        <div class="card">
             <h2>🔧 Account Actions</h2>
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
                 <a href="<%= user.role === 'admin' ? '/admin' : '/dashboard' %>" class="btn">🏠 Back to Dashboard</a>
