@@ -9,8 +9,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const xss = require('xss');
 const ipaddr = require('ipaddr.js');
-const { TOTP } = require('otplib');
-const authenticator = new TOTP();
+const otplib = require('otplib');
 const qrcode = require('qrcode');
 
 require('dotenv').config();
@@ -169,8 +168,8 @@ app.post('/login/mfa', async (req, res) => {
     const user = await db.getUserById(decoded.id);
     const { code } = req.body;
 
-    const isValid = authenticator.check(code, user.mfa_secret);
-    if (!isValid) {
+    const result = otplib.verifySync({ secret: user.mfa_secret, token: code });
+    if (!result.valid) {
       return res.render('login-mfa', { error: 'Invalid verification code' });
     }
 
@@ -199,8 +198,8 @@ app.get('/profile/mfa/setup', auth.authenticate, async (req, res) => {
 
     if (user.mfa_secret) return res.redirect('/profile?message=MFA is already enabled');
 
-    const secret = authenticator.generateSecret();
-    const otpauth = authenticator.keyuri(user.email, 'Morti Projects', secret);
+    const secret = otplib.generateSecret();
+    const otpauth = otplib.generateURI({ secret, issuer: 'Morti Projects', label: user.email, type: 'totp' });
     const qrCodeUrl = await qrcode.toDataURL(otpauth);
     
     res.render('mfa-setup', { 
@@ -219,11 +218,11 @@ app.get('/profile/mfa/setup', auth.authenticate, async (req, res) => {
 app.post('/profile/mfa/setup', auth.authenticate, async (req, res) => {
   try {
     const { code, secret } = req.body;
-    const isValid = authenticator.check(code, secret);
+    const result = otplib.verifySync({ secret, token: code });
     
-    if (!isValid) {
+    if (!result.valid) {
       const user = await db.getUserById(req.user.id);
-      const otpauth = authenticator.keyuri(user.email, 'Morti Projects', secret);
+      const otpauth = otplib.generateURI({ secret, issuer: 'Morti Projects', label: user.email, type: 'totp' });
       const qrCodeUrl = await qrcode.toDataURL(otpauth);
       return res.render('mfa-setup', { 
         user: req.user,
