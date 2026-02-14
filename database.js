@@ -88,6 +88,7 @@ const initDB = () => {
   console.log('✅ Database initialized');
 };
 
+// Create seed admin user
 const createSeedUser = () => {
   const existingAdmin = db.prepare('SELECT * FROM users WHERE email = ?').get('luke@voicereq.ai');
   if (!existingAdmin) {
@@ -98,6 +99,14 @@ const createSeedUser = () => {
     `);
     stmt.run('luke@voicereq.ai', hashedPassword, 'Luke McCarthy', 'Morti Projects', 'admin');
     console.log('✅ Seed admin user created: luke@voicereq.ai / admin123');
+  }
+  
+  // Migrations: Add mfa_secret if missing
+  try {
+    db.prepare('ALTER TABLE users ADD COLUMN mfa_secret TEXT').run();
+    console.log('✅ SQLite: Added mfa_secret column');
+  } catch (e) {
+    // Ignore if column exists
   }
 };
 

@@ -140,6 +140,13 @@ const initDB = async (retries = 3) => {
     // Create seed admin user
     await createSeedUser();
 
+    // Migrations: Add mfa_secret if missing
+    try {
+      await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret TEXT');
+    } catch (e) {
+      // Ignore if column exists
+    }
+
     console.log('✅ PostgreSQL database initialized');
   } finally {
     client.release();
