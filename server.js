@@ -97,7 +97,26 @@ async function sendSecurityAlert(type, details) {
     console.log('[Security Alert]', type, details);
   } catch(e) { console.error('Failed to send security alert:', e.message); }
 }
-uploadsDir = path.join(__dirname, 'uploads');
+
+app.use(cloudflareOnly);
+app.use(sanitizeInput);
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// File upload setup — use persistent storage if available
+let uploadsDir;
+if (process.env.DATA_DIR) {
+  try {
+    fs.mkdirSync(process.env.DATA_DIR, { recursive: true });
+    uploadsDir = path.join(process.env.DATA_DIR, 'uploads');
+  } catch (e) {
+    console.warn(`DATA_DIR ${process.env.DATA_DIR} not writable, using local uploads`);
+    uploadsDir = path.join(__dirname, 'uploads');
+  }
+} else {
+  uploadsDir = path.join(__dirname, 'uploads');
+}
 
 const upload = multer({ 
   dest: uploadsDir,
