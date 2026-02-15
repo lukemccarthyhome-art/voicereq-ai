@@ -80,28 +80,25 @@ const cloudflareOnly = (req, res, next) => {
 };
 
 // Security Alert Helper (Telegram)
-async function sendSecurityAlert(type, details) {\n  const message = `🚨 *SECURITY ALERT: Morti Projects*\\n\\n*Type:* ${type}\\n*Time:* ${new Date().toLocaleString()}\\n*Details:* \`\`\`json\\n${JSON.stringify(details, null, 2)}\\n\`\`\`\`;\n  \n  try {\n    // Log to DB\n    await db.logAction(null, \'security_alert\', { type, ...details }, details.ip || \'0.0.0.0\');\n    \n    // Send to Luke via Telegram Bot API\n    const telegramBotToken = process.env.TELEGRAM_SECURITY_BOT_TOKEN; // From Render env vars\n    const telegramChatId = process.env.TELEGRAM_LUKE_CHAT_ID; // Your chat ID\n\n    if (telegramBotToken && telegramChatId) {\n      const telegramApiUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;\n      await fetch(telegramApiUrl, {\n        method: \'POST\',\n        headers: { \'Content-Type\': \'application/json\' },\n        body: JSON.stringify({\n          chat_id: telegramChatId,\n          text: message,\n          parse_mode: \'MarkdownV2\'\n        })\n      });\n      console.log(`📡 [Security Alert Sent to Telegram] ${type}:`, details);\n    } else {\n      console.warn(\'⚠️ Telegram security alert not sent: Missing TELEGRAM_SECURITY_BOT_TOKEN or TELEGRAM_LUKE_CHAT_ID environment variables.\');\n    }\n    \n    console.log(`📡 [Security Alert] ${type}:`, details);\n  } catch (e) {\n    console.error(\'Failed to send security alert or Telegram message:\', e.message);\n  }\n}
+async function sendSecurityAlert(type, details) {
+  const message = 'SECURITY ALERT: Morti Projects\nType: ' + type + '\nTime: ' + new Date().toLocaleString() + '\nDetails: ' + JSON.stringify(details);
 
-app.use(cloudflareOnly);
-app.use(sanitizeInput);
-
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
-// File upload setup — use persistent storage if available
-// Use DATA_DIR if set AND writable, otherwise fall back to local
-let uploadsDir;
-if (process.env.DATA_DIR) {
   try {
-    fs.mkdirSync(process.env.DATA_DIR, { recursive: true });
-    uploadsDir = path.join(process.env.DATA_DIR, 'uploads');
-  } catch (e) {
-    console.warn(`⚠️  DATA_DIR ${process.env.DATA_DIR} not writable, using local uploads`);
-    uploadsDir = path.join(__dirname, 'uploads');
-  }
-} else {
-  uploadsDir = path.join(__dirname, 'uploads');
+    await db.logAction(null, 'security_alert', { type, ...details }, details.ip || '0.0.0.0');
+    const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_SECURITY_BOT_TOKEN;
+    const telegramChatId = process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_LUKE_CHAT_ID;
+    if (telegramBotToken && telegramChatId) {
+      const url = 'https://api.telegram.org/bot' + telegramBotToken + '/sendMessage';
+      try {
+        await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({chat_id: telegramChatId, text: message}) });
+        console.log('[Security Alert Sent to Telegram]', type);
+      } catch(err) { console.error('Telegram send failed:', err.message); }
+    } else { console.warn('Telegram token/chat missing'); }
+    console.log('[Security Alert]', type, details);
+  } catch(e) { console.error('Failed to send security alert:', e.message); }
 }
+uploadsDir = path.join(__dirname, 'uploads');
+
 const upload = multer({ 
   dest: uploadsDir,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB
@@ -294,6 +291,13 @@ app.post('/login', loginLimiter, async (req, res) => {
       res.cookie('mfaPending', mfaToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 300000 });
       return res.redirect('/login/mfa');
     }
+
+    // Generate JWT for non-MFA login
+    const token = require('jsonwebtoken').sign(
+      { id: user.id, email: user.email, role: user.role, name: user.name },
+      auth.JWT_SECRET,
+      { expiresIn: '2h' }
+    );
 
     res.cookie('authToken', token, { 
       httpOnly: true, 
