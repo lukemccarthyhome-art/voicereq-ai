@@ -180,6 +180,7 @@ const deleteUser = async (id) => {
   for (const project of projects.rows) {
     await deleteProject(project.id);
   }
+  await pool.query('DELETE FROM audit_logs WHERE user_id = $1', [id]);
   const result = await pool.query('DELETE FROM users WHERE id = $1', [id]);
   return { changes: result.rowCount };
 };
