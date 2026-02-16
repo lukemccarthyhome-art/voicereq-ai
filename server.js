@@ -554,6 +554,13 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
         }).sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
         // attach to locals
         res.locals.designsList = designsList;
+        try {
+          const newestFile = designsList[0] && designsList[0].file;
+          if (newestFile) {
+            const newestDesign = JSON.parse(fs.readFileSync(path.join(designsDir, newestFile), "utf8"));
+            res.locals.latestDesign = newestDesign;
+          }
+        } catch(e) {}
       }
     }
   } catch(e) { designExists = false; }

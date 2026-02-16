@@ -156,6 +156,33 @@
                 </select>
               </div>
             <% } %>
+            <% if (locals.latestDesign) { %>
+              <div style="margin-top:12px;padding:12px;border-radius:8px;background:#fff;border:1px solid #e6eef8">
+                <h4 style="margin-bottom:8px">🧭 Design Questions (latest)</h4>
+                <% const dq = locals.latestDesign.questions || []; const da = locals.latestDesign.answers || []; %>
+                <% if (dq.length === 0) { %>
+                  <div style="color:#666">No outstanding questions.</div>
+                <% } else { %>
+                  <% dq.forEach((q, idx) => { %>
+                    <div style="margin-bottom:8px;padding:8px;border-radius:6px;background:#f8fafc;border:1px solid #eef7ff;">
+                      <div style="font-weight:600">Q: <%= q %></div>
+                      <% const answered = (da.find(a=>a.question===q)); %>
+                      <% if (answered) { %>
+                        <div style="margin-top:6px;color:#0f5132;background:#e6ffed;padding:8px;border-radius:6px">A: <%= answered.answer %> <span style="font-size:12px;color:#666">— <%= answered.from %></span></div>
+                      <% } else { %>
+                        <form method="POST" action="/admin/projects/<%= project.id %>/design/answer" style="margin-top:6px;display:flex;gap:8px">
+                          <input type="hidden" name="designId" value="<%= locals.latestDesign.id %>">
+                          <input type="hidden" name="question" value="<%= q %>">
+                          <input name="answer" placeholder="Type your answer here" style="flex:1;padding:8px;border-radius:6px;border:1px solid #dbeafe">
+                          <button class="btn btn-sm" type="submit" style="background:#10b981;color:white">Save</button>
+                        </form>
+                      <% } %>
+                    </div>
+                  <% }) %>
+                <% } %>
+              </div>
+            <% } %>
+
             <form method="POST" action="/admin/projects/<%= project.id %>/delete" onsubmit="return confirm('Delete this project and all its sessions/files? This cannot be undone.')" style="margin-top: 8px;">
                 <button type="submit" class="btn btn-sm" style="width: 100%; background: #dc3545; color: white;">🗑️ Delete Project</button>
             </form>
