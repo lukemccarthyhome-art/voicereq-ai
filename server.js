@@ -510,6 +510,7 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
   let designExists = false;
   try { if (fs.existsSync(designsDir)) { const files = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${req.params.id}-`)); if (files.length > 0) designExists = true; } } catch(e) { designExists = false; }
   res.render('admin/project-detail', {
+    designExists: designExists,
     user: req.user,
     project,
     sessions,
