@@ -724,7 +724,7 @@ ${summarizeRequirements(reqText)}
       version: designVersion,
       status: designStatus,
       designMarkdown: llmDesignMarkdown,
-      designHtml: designHtml,
+      designHtml: mdToHtml(llmDesignMarkdown),
       questions: llmQuestions,
       chat: [],
       answers: []
