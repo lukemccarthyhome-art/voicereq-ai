@@ -579,69 +579,156 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
     files.forEach(f => { reqText += `FILE ${f.original_name}: ${ (f.extracted_text||'').substring(0,200) }
 `; });
 
-    // Use LLM (gpt-5-mini) to generate a solution design and follow-up questions
+    // Use LLM (gpt-5-mini) to generate a structured solution design and follow-up questions
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
-    let llmDesignText = '';
+    let llmDesignMarkdown = '';
     let llmQuestions = generateFollowupQuestions(summarizeRequirements(reqText));
+    let designVersion = 1;
+    let designStatus = 'draft';
 
-    if (OPENAI_KEY) {
-      try {
-        const prompt = `You are an expert software architect. Given the project conversation and files, produce a SOLUTION DESIGN document.
+    // Build structured prompt asking for JSON with explicit fields
+    const buildPrompt = (context, prevAnswers) => {
+      return `You are an expert software architect. Given the project conversation and uploaded files below, produce a SOLUTION DESIGN document.
+
+INSTRUCTIONS:
+- Output valid JSON only.
+- JSON keys: "design" (string, markdown with sections: Summary, Architecture, Components, Data Flow, APIs, Security, Integrations, Acceptance Criteria, Risks), "questions" (array of strings, outstanding clarifying questions), "summary" (2-3 sentence summary).
+- Do NOT include raw chat transcript in the design. Distill requirements into decisions and assumptions.
 
 CONTEXT:
-${reqText.substring(0,15000)}
+${context}
 
-Return a JSON object with keys: \"design\" (markdown text describing architecture, components, data flow, APIs, security, integrations, and success criteria), \"questions\" (array of outstanding clarifying questions).`;
+PREVIOUS_ANSWERS:
+${prevAnswers || 'None'}`;
+    };
+
+    const prevAnswersText = '';// include any existing answers if available
+    if (OPENAI_KEY) {
+      try {
+        const prompt = buildPrompt(reqText.substring(0,15000), prevAnswersText);
         const resp = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-          body: JSON.stringify({ model: 'gpt-5-mini', temperature: 0.2, max_tokens: 1500, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
+          body: JSON.stringify({ model: 'gpt-5-mini', temperature: 0.15, max_tokens: 2000, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
         });
         if (resp.ok) {
           const data = await resp.json();
           let content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-          // try to parse JSON out of the response
+          // Parse JSON safely: try to extract JSON substring
           try {
-            const parsed = JSON.parse(content);
-            llmDesignText = parsed.design || parsed.designHtml || parsed.design_text || '';
+            const jsonStart = content.indexOf('{');
+            const jsonText = jsonStart >=0 ? content.slice(jsonStart) : content;
+            const parsed = JSON.parse(jsonText);
+            llmDesignMarkdown = parsed.design || parsed.design_md || parsed.designText || parsed.design_html || '';
             llmQuestions = parsed.questions || llmQuestions;
           } catch (e) {
-            // fallback: assume entire content is the design text
-            llmDesignText = content || '';
+            // fallback: treat entire content as markdown
+            llmDesignMarkdown = content || '';
           }
         } else {
           console.error('LLM call failed with status', resp.status);
         }
       } catch (e) { console.error('LLM call error:', e.message); }
     } else {
-      // Fallback stub when no key: create a best-effort design using the summarizer
-      llmDesignText = `## Solution Design
+      // stub
+      llmDesignMarkdown = `## Summary
 
 ${summarizeRequirements(reqText)}
 
-Architecture: Mono-repo web app with Express backend, SQLite/Postgres for storage, optional Render deployment.
+## Architecture
 
-Integration: Customer portal for signing, use webhook/API.
+- Backend: Express
+- DB: SQLite/Postgres
 
-Security: JWT auth, HTTPS, audit logs.
+## Components
 
-Success criteria: Deliver proposal generation, approval flow, online signing.`;
+- Proposal generator service
+
+## Data Flow
+
+- Input: project requirements -> generator -> proposal
+
+## APIs
+
+- /api/proposals/create
+
+## Security
+
+- JWT auth, HTTPS
+
+## Acceptance Criteria
+
+- Generates proposal, supports approval and signing.`;
     }
 
-    const designHtml = '<div>' + escapeHtml(llmDesignText).replace(/\n\n/g,'<br/><br/>') + '</div>';
+    // Defensive sanitization: remove verbatim transcript lines that start with user: or ai:
+    llmDesignMarkdown = llmDesignMarkdown.replace(/^ *(user|ai|assistant):.*$/gmi, '').trim();
+
+    // Minimal markdown -> HTML renderer (safe)
+    function mdToHtml(md){
+      if(!md) return '';
+      // escape
+      md = String(md).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      // headings
+      md = md.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+      md = md.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+      md = md.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+      // bold
+      md = md.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // lists
+      md = md.replace(/^\s*-\s+(.*)$/gm, '<li>$1</li>');
+      md = md.replace(/(<li>.*<\/li>)(?:(
+)<li>)/s, '$1');
+      md = md.replace(/(?:
+)?(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+      // paragraphs
+      md = md.replace(/
+
++/g, '</p><p>');
+      md = '<p>' + md + '</p>';
+      // cleanup list wrappers
+      md = md.replace(/<p>\s*<ul>/g,'<ul>');
+      md = md.replace(/<\/ul>\s*<\/p>/g,'</ul>');
+      return md;
+    }
+
+    const designHtml = mdToHtml(llmDesignMarkdown);
+
+    // versioning: if there is already a design, increment version
+    try {
+      const designsDirCheck = path.join(__dirname, 'data', 'designs');
+      if (fs.existsSync(designsDirCheck)) {
+        const existing = fs.readdirSync(designsDirCheck).filter(f => f.startsWith(`design-${projectId}-`));
+        if (existing.length > 0) {
+          // find newest
+          let newest = existing[0];
+          let newestMtime = fs.statSync(path.join(designsDirCheck, newest)).mtimeMs;
+          for (const c of existing) {
+            const m = fs.statSync(path.join(designsDirCheck, c)).mtimeMs;
+            if (m > newestMtime) { newest = c; newestMtime = m; }
+          }
+          try {
+            const prev = JSON.parse(fs.readFileSync(path.join(designsDirCheck, newest), 'utf8'));
+            if (prev && prev.version) designVersion = prev.version + 1;
+          } catch(e){}
+        }
+      }
+    } catch(e){}
 
     const design = {
       id: `design-${projectId}-${Date.now()}`,
       projectId,
       createdAt: new Date().toISOString(),
       owner: req.user.email,
+      version: designVersion,
+      status: designStatus,
+      designMarkdown: llmDesignMarkdown,
       designHtml: designHtml,
       questions: llmQuestions,
       chat: [],
       answers: []
     };
-
-    const designsDir = path.join(__dirname, 'data', 'designs');
+const designsDir = path.join(__dirname, 'data', 'designs');
     fs.mkdirSync(designsDir, { recursive: true });
     fs.writeFileSync(path.join(designsDir, design.id + '.json'), JSON.stringify(design, null, 2));
 
