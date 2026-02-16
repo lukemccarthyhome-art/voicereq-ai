@@ -579,18 +579,64 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
     files.forEach(f => { reqText += `FILE ${f.original_name}: ${ (f.extracted_text||'').substring(0,200) }
 `; });
 
-    // Build a proposed design HTML (wireframe + brief description) from the extracted requirements
-    const proposedDesignSummary = summarizeRequirements(reqText);
-    const wireframeHtml = buildWireframeHtml(projectId, proposedDesignSummary);
+    // Use LLM (gpt-5-mini) to generate a solution design and follow-up questions
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    let llmDesignText = '';
+    let llmQuestions = generateFollowupQuestions(summarizeRequirements(reqText));
+
+    if (OPENAI_KEY) {
+      try {
+        const prompt = `You are an expert software architect. Given the project conversation and files, produce a SOLUTION DESIGN document.
+
+CONTEXT:
+${reqText.substring(0,15000)}
+
+Return a JSON object with keys: \"design\" (markdown text describing architecture, components, data flow, APIs, security, integrations, and success criteria), \"questions\" (array of outstanding clarifying questions).`;
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
+          body: JSON.stringify({ model: 'gpt-5-mini', temperature: 0.2, max_tokens: 1500, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          let content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+          // try to parse JSON out of the response
+          try {
+            const parsed = JSON.parse(content);
+            llmDesignText = parsed.design || parsed.designHtml || parsed.design_text || '';
+            llmQuestions = parsed.questions || llmQuestions;
+          } catch (e) {
+            // fallback: assume entire content is the design text
+            llmDesignText = content || '';
+          }
+        } else {
+          console.error('LLM call failed with status', resp.status);
+        }
+      } catch (e) { console.error('LLM call error:', e.message); }
+    } else {
+      // Fallback stub when no key: create a best-effort design using the summarizer
+      llmDesignText = `## Solution Design
+
+${summarizeRequirements(reqText)}
+
+Architecture: Mono-repo web app with Express backend, SQLite/Postgres for storage, optional Render deployment.
+
+Integration: Customer portal for signing, use webhook/API.
+
+Security: JWT auth, HTTPS, audit logs.
+
+Success criteria: Deliver proposal generation, approval flow, online signing.`;
+    }
+
+    const designHtml = '<div>' + escapeHtml(llmDesignText).replace(/\n\n/g,'<br/><br/>') + '</div>';
 
     const design = {
       id: `design-${projectId}-${Date.now()}`,
       projectId,
       createdAt: new Date().toISOString(),
       owner: req.user.email,
-      // designHtml contains a proposed design (wireframe + short summary), not raw transcript
-      designHtml: wireframeHtml,
-      questions: generateFollowupQuestions(proposedDesignSummary),
+      designHtml: designHtml,
+      questions: llmQuestions,
       chat: [],
       answers: []
     };
