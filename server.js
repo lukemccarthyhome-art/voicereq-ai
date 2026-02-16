@@ -508,6 +508,89 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
   });
 });
 
+
+// Morti Projects: Design extraction and admin design view
+app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const sessions = await db.getSessionsByProject(projectId);
+    // aggregate transcript and file contents
+    let reqText = '';
+    sessions.forEach(s => {
+      try {
+        const t = JSON.parse(s.transcript || '[]');
+        t.forEach(m => reqText += `${m.role}: ${m.text}
+`);
+      } catch {}
+    });
+    const files = await db.getFilesByProject(projectId);
+    files.forEach(f => { reqText += `FILE ${f.original_name}: ${ (f.extracted_text||'').substring(0,200) }
+`; });
+
+    const design = {
+      id: `design-${projectId}-${Date.now()}`,
+      projectId,
+      createdAt: new Date().toISOString(),
+      owner: req.user.email,
+      designHtml: `<h2>Design for ${projectId}</h2><p>Summary extracted from requirements:</p><pre>${escapeHtml(reqText.substring(0,5000))}</pre>`,
+      questions: [
+        'What is the primary user flow for this project?',
+        'Are there existing brand assets to apply?'
+      ],
+      chat: []
+    };
+
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    fs.mkdirSync(designsDir, { recursive: true });
+    fs.writeFileSync(path.join(designsDir, design.id + '.json'), JSON.stringify(design, null, 2));
+
+    res.redirect(`/admin/projects/${projectId}?message=Design+extracted`);
+  } catch (e) {
+    console.error('Extract design error:', e);
+    res.redirect(`/admin/projects/${req.params.id}?error=Design+extraction+failed`);
+  }
+});
+
+app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    if (!fs.existsSync(designsDir)) return res.status(404).send('No designs found');
+    const files = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
+    if (files.length === 0) return res.status(404).send('No design for project');
+    const design = JSON.parse(fs.readFileSync(path.join(designsDir, files[0]), 'utf8'));
+    res.render('admin/project-design', { user: req.user, projectId, design, title: projectId + ' - Design' });
+  } catch (e) {
+    console.error('Get design error:', e);
+    res.status(500).send('Failed to load design');
+  }
+});
+
+app.post('/admin/projects/:id/design/chat', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { designId, text } = req.body;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    const filePath = path.join(designsDir, designId + '.json');
+    if (!fs.existsSync(filePath)) return res.status(404).send('Design not found');
+    const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const entry = { from: req.user.email, text, ts: new Date().toISOString() };
+    design.chat.push(entry);
+    fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
+
+    // append to latest session safely
+    try {
+      await db.appendSessionMessageSafe(projectId, { role: 'admin', text });
+    } catch (e) {
+      console.warn('appendSessionMessageSafe failed:', e.message);
+    }
+
+    res.redirect(`/admin/projects/${projectId}/design`);
+  } catch (e) {
+    console.error('Design chat error:', e);
+    res.redirect(`/admin/projects/${req.params.id}/design?error=Chat+failed`);
+  }
+});
 // Admin: Reset customer password
 app.post('/admin/customers/:id/password', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
