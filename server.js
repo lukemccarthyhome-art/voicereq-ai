@@ -735,11 +735,39 @@ ${summarizeRequirements(reqText)}
       designHtml: mdToHtml(llmDesignMarkdown),
       questions: llmQuestions,
       chat: [],
-      answers: []
+      answers: [],
+      raw_output: ''
     };
-const designsDir = path.join(__dirname, 'data', 'designs');
+
+    // If designMarkdown contains JSON-in-markdown, parse and populate top-level questions
+    try {
+      if (design.designMarkdown && String(design.designMarkdown).trim().startsWith('```json')) {
+        const jsonText = String(design.designMarkdown).replace(/```json\s*|```/g, '').trim();
+        try {
+          const parsed = JSON.parse(jsonText);
+          if (parsed.questions && Array.isArray(parsed.questions)) {
+            design.questions = parsed.questions;
+          }
+          if (parsed.design) {
+            // render parsed.design sections
+            design.designHtml = '';
+            for (const [k,v] of Object.entries(parsed.design)) {
+              design.designHtml += `<h3>${escapeHtml(k)}</h3><p>${escapeHtml(String(v))}</p>`;
+            }
+          }
+          if (parsed.raw_output) design.raw_output = parsed.raw_output;
+        } catch(e) { console.warn('Failed to parse design JSON output:', e.message); }
+      }
+    } catch(e) {}
+
+    const designsDir = path.join(__dirname, 'data', 'designs');
     fs.mkdirSync(designsDir, { recursive: true });
     fs.writeFileSync(path.join(designsDir, design.id + '.json'), JSON.stringify(design, null, 2));
+
+    // Mirror questions to project record for easy lookup
+    try {
+      await db.updateProjectDesignQuestions(projectId, JSON.stringify(design.questions || []));
+    } catch(e) { console.warn('Failed to update project.design_questions', e.message); }
 
     res.redirect(`/admin/projects/${projectId}?message=Design+extracted`);
   } catch (e) {
