@@ -1,0 +1,34 @@
+<div class="card">
+  <h2>Design: <%= design.id %></h2>
+  <div style="margin-top:12px">
+    <div><strong>Owner:</strong> <%= design.owner %></div>
+    <div><strong>Created:</strong> <%= new Date(design.createdAt).toLocaleString() %></div>
+  </div>
+  <div style="margin-top:12px">
+    <h3>Design Summary</h3>
+    <div style="border:1px solid #eee;padding:12px;border-radius:8px;background:#fafafa">
+      <%= design.designHtml %>
+    </div>
+  </div>
+  <div style="margin-top:12px">
+    <h3>Questions</h3>
+    <ul>
+      <% design.questions.forEach(q=>{ %>
+        <li><%= q %></li>
+      <% }) %>
+    </ul>
+  </div>
+  <div style="margin-top:12px">
+    <h3>Admin Chat</h3>
+    <div style="border:1px solid #eee;padding:12px;border-radius:8px; max-height:200px; overflow:auto; background:#fff">
+      <% design.chat.forEach(c=>{ %>
+        <div style="margin-bottom:8px"><strong><%= c.from %></strong> <span style="color:#999;font-size:12px">(<%= new Date(c.ts).toLocaleString() %>)</span><div><%= c.text %></div></div>
+      <% }) %>
+    </div>
+    <form method="POST" action="/admin/projects/<%= projectId %>/design/chat" style="margin-top:8px">
+      <input type="hidden" name="designId" value="<%= design.id %>" />
+      <textarea name="text" rows="3" style="width:100%"></textarea>
+      <div style="margin-top:8px"><button class="btn">Send</button></div>
+    </form>
+  </div>
+</div>
