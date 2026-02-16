@@ -833,7 +833,8 @@ app.post('/admin/projects/:id/design/answer', auth.authenticate, auth.requireAdm
     // also append to a session safely for audit
     try { await db.appendSessionMessageSafe(projectId, { role: 'admin', text: `Answer: ${question} -> ${answer}` }); } catch (e) { console.warn('appendSessionMessageSafe failed:', e.message); }
 
-    res.redirect(`/admin/projects/${projectId}/design`);
+    // Redirect back to project detail so answers appear in the Design Questions area
+    res.redirect(`/admin/projects/${projectId}?message=Answer+saved`);
   } catch (e) {
     console.error('Design answer error:', e);
     res.redirect(`/admin/projects/${req.params.id}/design?error=Save+failed`);
