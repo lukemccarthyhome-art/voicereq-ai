@@ -12,17 +12,17 @@
   </div>
   <div style="margin-top:12px">
     <h3>Questions</h3>
-    <form method="POST" action="/admin/projects/<%= projectId %>/design/answer">
+    <div style="display:flex;flex-direction:column;gap:10px">
       <% design.questions.forEach(function(q,i){ %>
-        <div style="margin-bottom:10px;">
-          <label style="display:block;font-weight:600;margin-bottom:6px"><%= q %></label>
+        <form method="POST" action="/admin/projects/<%= projectId %>/design/answer" style="display:flex;gap:8px;align-items:center">
           <input type="hidden" name="designId" value="<%= design.id %>" />
           <input type="hidden" name="question" value="<%= q %>" />
-          <input type="text" name="answer" placeholder="Type your answer here" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px" />
-        </div>
+          <label style="flex:1; font-weight:600"><%= q %></label>
+          <input type="text" name="answer" placeholder="Type your answer here" style="flex:2;padding:8px;border:1px solid #e2e8f0;border-radius:6px" />
+          <button type="submit" class="btn btn-sm">Save</button>
+        </form>
       <% }) %>
-      <div><button type="submit" class="btn">Save answers</button></div>
-    </form>
+    </div>
   </div>
   <div style="margin-top:12px">
     <h3>Admin Chat</h3>
