@@ -682,9 +682,7 @@ ${summarizeRequirements(reqText)}
       md = md.replace(/(?:
 )?(<li>.*<\/li>)/gs, '<ul>$1</ul>');
       // paragraphs
-      md = md.replace(/
-
-+/g, '</p><p>');
+      md = md.replace(/\n\n+/g, '</p><p>');
       md = '<p>' + md + '</p>';
       // cleanup list wrappers
       md = md.replace(/<p>\s*<ul>/g,'<ul>');
