@@ -667,30 +667,23 @@ ${summarizeRequirements(reqText)}
     // Minimal markdown -> HTML renderer (safe)
     function mdToHtml(md){
       if(!md) return '';
-      // escape
-      md = String(md).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      // headings
-      md = md.replace(/^### (.*)$/gm, '<h3>$1</h3>');
-      md = md.replace(/^## (.*)$/gm, '<h2>$1</h2>');
-      md = md.replace(/^# (.*)$/gm, '<h1>$1</h1>');
-      // bold
-      md = md.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      // lists
-      md = md.replace(/^\s*-\s+(.*)$/gm, '<li>$1</li>');
-      md = md.replace(/(<li>.*<\/li>)(?:(
-)<li>)/s, '$1');
-      md = md.replace(/(?:
-)?(<li>.*<\/li>)/gs, '<ul>$1</ul>');
-      // paragraphs
-      md = md.replace(/\n\n+/g, '</p><p>');
-      md = '<p>' + md + '</p>';
-      // cleanup list wrappers
-      md = md.replace(/<p>\s*<ul>/g,'<ul>');
-      md = md.replace(/<\/ul>\s*<\/p>/g,'</ul>');
-      return md;
+      let out = String(md || '');
+      // basic escaping
+      out = out.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      // simple headings
+      out = out.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+      out = out.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+      out = out.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+      // paragraphs (split by double newlines)
+      const paras = out.split(/
+
++/).map(p=>p.trim()).filter(Boolean);
+      out = paras.map(p => '<p>' + p.replace(/
+/g,'<br/>') + '</p>').join('
+');
+      return out;
     }
 
-    const designHtml = mdToHtml(llmDesignMarkdown);
 
     // versioning: if there is already a design, increment version
     try {
