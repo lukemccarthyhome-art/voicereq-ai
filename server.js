@@ -557,7 +557,7 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
       }
     }
   } catch(e) { designExists = false; }
-  res.render('admin/project-detail', {'
+  res.render('admin/project-detail', {
 
     designExists: designExists,
     user: req.user,
