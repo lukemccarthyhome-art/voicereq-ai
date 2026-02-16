@@ -131,16 +131,31 @@
         </div>
 
         <div style="margin-top: 20px;">
-            <div style="display:flex;gap:8px">
+            <div style="display:flex;gap:8px;align-items:center">
                 <button onclick="exportProject()" class="btn btn-sm" style="flex:1">📦 Export Project</button>
                 <% if (typeof designExists !== "undefined" && designExists) { %>
-                  <a href="/admin/projects/<%= project.id %>/design" class="btn btn-sm" style="background:#10b981;color:white;padding:8px;border-radius:6px;">🔎 View Design</a>
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <a href="/admin/projects/<%= project.id %>/design" class="btn btn-sm" style="background:#10b981;color:white;padding:8px;border-radius:6px;">🔎 View Latest Design</a>
+                    <form method="POST" action="/admin/projects/<%= project.id %>/extract-design" style="margin:0">
+                      <button type="submit" class="btn btn-sm" style="background:#f59e0b;border-radius:8px">🔄 Refresh design</button>
+                    </form>
+                  </div>
                 <% } else { %>
                   <form method="POST" action="/admin/projects/<%= project.id %>/extract-design" style="margin:0">
                     <button type="submit" class="btn btn-sm" style="background:#667eea;color:white;padding:8px;border-radius:6px;">🎯 Extract → Design</button>
                   </form>
                 <% } %>
             </div>
+            <% if (locals.designsList && locals.designsList.length > 0) { %>
+              <div style="margin-top:8px">
+                <label style="font-size:12px;color:#666;margin-right:8px">Design versions:</label>
+                <select onchange="location = this.value" style="padding:6px;border-radius:6px">
+                  <% locals.designsList.forEach(d => { %>
+                    <option value="/admin/projects/<%= project.id %>/design?design=<%= d.id %>">v<%= d.version %> — <%= new Date(d.createdAt).toLocaleString() %> — <%= d.status %></option>
+                  <% }) %>
+                </select>
+              </div>
+            <% } %>
             <form method="POST" action="/admin/projects/<%= project.id %>/delete" onsubmit="return confirm('Delete this project and all its sessions/files? This cannot be undone.')" style="margin-top: 8px;">
                 <button type="submit" class="btn btn-sm" style="width: 100%; background: #dc3545; color: white;">🗑️ Delete Project</button>
             </form>

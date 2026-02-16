@@ -543,8 +543,22 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
   // check for existing design
   const designsDir = path.join(__dirname, 'data', 'designs');
   let designExists = false;
-  try { if (fs.existsSync(designsDir)) { const files = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${req.params.id}-`)); if (files.length > 0) designExists = true; } } catch(e) { designExists = false; }
-  res.render('admin/project-detail', {
+  try {
+    if (fs.existsSync(designsDir)) {
+      const files = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${req.params.id}-`));
+      if (files.length > 0) {
+        designExists = true;
+        // build designs list with metadata
+        const designsList = files.map(fn => {
+          try { const d = JSON.parse(fs.readFileSync(path.join(designsDir, fn), 'utf8')); return { id: d.id || fn.replace('.json',''), file: fn, createdAt: d.createdAt || fs.statSync(path.join(designsDir, fn)).mtime.toISOString(), version: d.version || 1, status: d.status || 'draft', owner: d.owner || '' }; } catch(e) { return { id: fn.replace('.json',''), file: fn, createdAt: fs.statSync(path.join(designsDir, fn)).mtime.toISOString(), version: 1, status: 'draft', owner: '' }; }
+        }).sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+        // attach to locals
+        res.locals.designsList = designsList;
+      }
+    }
+  } catch(e) { designExists = false; }
+  res.render('admin/project-detail', {'
+
     designExists: designExists,
     user: req.user,
     project,
