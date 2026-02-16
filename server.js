@@ -623,7 +623,7 @@ ${prevAnswers || 'None'}`;
         const resp = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-          body: JSON.stringify({ model: 'gpt-5-mini', temperature: 0.15, max_tokens: 2000, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
+          body: JSON.stringify({ model: 'gpt-5-mini', temperature: 0.15, max_completion_tokens: 2000, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
         });
         if (resp.ok) {
           const data = await resp.json();
@@ -1247,7 +1247,7 @@ app.post('/api/analyze-session', apiAuth, express.json({ limit: '20mb' }), async
       body: JSON.stringify({
         model: 'gpt-3.5-turbo',
         temperature: 0.3,
-        max_tokens: 4000,
+        max_completion_tokens: 4000,
         messages: [{
           role: 'system',
           content: `You are an expert business analyst conducting requirements analysis. Analyze the provided conversation transcript and uploaded documents to extract NEW requirements not already captured.
