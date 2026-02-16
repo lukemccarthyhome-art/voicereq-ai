@@ -84,6 +84,42 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
+// Lightweight summarizer for requirements -> return brief summary
+function summarizeRequirements(text){
+  const lines = text.split(/
++/).filter(Boolean);
+  // naive: take first 5 lines and join
+  return lines.slice(0,5).join(' ');
+}
+
+// Build a simple wireframe HTML for the design proposal
+function buildWireframeHtml(projectId, summary){
+  return `
+    <div style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial; color:#0f172a;">
+      <h2 style="margin-bottom:6px">Proposed design for ${projectId}</h2>
+      <p style="color:#475569">${escapeHtml(summary)}</p>
+      <div style="margin-top:12px;padding:12px;border:1px dashed #cbd5e1;border-radius:8px;background:#fff">
+        <div style="height:12px;background:#eef2ff;border-radius:6px;margin-bottom:10px;width:40%"></div>
+        <div style="height:200px;border:1px solid #e2e8f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#64748b">Wireframe placeholder (hero card + CTA)</div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <div style="flex:1;height:40px;background:#667eea;border-radius:8px;color:white;display:flex;align-items:center;justify-content:center">Primary CTA</div>
+          <div style="flex:1;height:40px;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#0f172a">Secondary</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function generateFollowupQuestions(summary){
+  // naive questions based on summary length and common gaps
+  const qs = [
+    'Confirm primary CTA and desired user action.',
+    'Any branding or color guidelines to apply?',
+    'Which data sources or files are authoritative for requirements?'
+  ];
+  return qs;
+}
+
 
 // Cloudflare-only Middleware
 const cloudflareOnly = (req, res, next) => {
@@ -544,17 +580,20 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
     files.forEach(f => { reqText += `FILE ${f.original_name}: ${ (f.extracted_text||'').substring(0,200) }
 `; });
 
+    // Build a proposed design HTML (wireframe + brief description) from the extracted requirements
+    const proposedDesignSummary = summarizeRequirements(reqText);
+    const wireframeHtml = buildWireframeHtml(projectId, proposedDesignSummary);
+
     const design = {
       id: `design-${projectId}-${Date.now()}`,
       projectId,
       createdAt: new Date().toISOString(),
       owner: req.user.email,
-      designHtml: `<h2>Design for ${projectId}</h2><p>Summary extracted from requirements:</p><pre>${escapeHtml(reqText.substring(0,5000))}</pre>`,
-      questions: [
-        'What is the primary user flow for this project?',
-        'Are there existing brand assets to apply?'
-      ],
-      chat: []
+      // designHtml contains a proposed design (wireframe + short summary), not raw transcript
+      designHtml: wireframeHtml,
+      questions: generateFollowupQuestions(proposedDesignSummary),
+      chat: [],
+      answers: []
     };
 
     const designsDir = path.join(__dirname, 'data', 'designs');
