@@ -73,6 +73,18 @@ const sanitizeInput = (req, res, next) => {
   next();
 };
 
+// Small HTML escape helper used when rendering extracted design snippets
+function escapeHtml(s) {
+  if (s === undefined || s === null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+
 // Cloudflare-only Middleware
 const cloudflareOnly = (req, res, next) => {
   // TEMPORARILY DISABLED TO DEBUG 502 ERROR
@@ -591,6 +603,32 @@ app.post('/admin/projects/:id/design/chat', auth.authenticate, auth.requireAdmin
     res.redirect(`/admin/projects/${req.params.id}/design?error=Chat+failed`);
   }
 });
+
+// Save answers to design questions
+app.post('/admin/projects/:id/design/answer', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { designId, question, answer } = req.body;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    const filePath = path.join(designsDir, designId + '.json');
+    if (!fs.existsSync(filePath)) return res.status(404).send('Design not found');
+    const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+    // store answer in design.answers
+    design.answers = design.answers || [];
+    design.answers.push({ question, answer, from: req.user.email, ts: new Date().toISOString() });
+    fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
+
+    // also append to a session safely for audit
+    try { await db.appendSessionMessageSafe(projectId, { role: 'admin', text: `Answer: ${question} -> ${answer}` }); } catch (e) { console.warn('appendSessionMessageSafe failed:', e.message); }
+
+    res.redirect(`/admin/projects/${projectId}/design`);
+  } catch (e) {
+    console.error('Design answer error:', e);
+    res.redirect(`/admin/projects/${req.params.id}/design?error=Save+failed`);
+  }
+});
+
 // Admin: Reset customer password
 app.post('/admin/customers/:id/password', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
