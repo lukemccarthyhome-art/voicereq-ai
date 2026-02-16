@@ -340,6 +340,13 @@ const getStats = () => {
 // Initialize database on startup
 initDB();
 
+// Add project.design_questions column if missing
+try {
+  db.exec(`ALTER TABLE projects ADD COLUMN design_questions TEXT`);
+  console.log('✅ Added design_questions column to projects table');
+} catch (e) {}
+
+
 module.exports = {
   ready: Promise.resolve(),
   db,
@@ -356,6 +363,10 @@ module.exports = {
   getProjectsByUser,
   getAllProjects,
   getProject,
+  updateProjectDesignQuestions: (id, json) => {
+    const stmt = db.prepare('UPDATE projects SET design_questions = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+    return Promise.resolve(stmt.run(json, id));
+  },
   updateProject,
   deleteProject,
   // Sessions
