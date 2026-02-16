@@ -675,12 +675,8 @@ ${summarizeRequirements(reqText)}
       out = out.replace(/^## (.*)$/gm, '<h2>$1</h2>');
       out = out.replace(/^# (.*)$/gm, '<h1>$1</h1>');
       // paragraphs (split by double newlines)
-      const paras = out.split(/
-
-+/).map(p=>p.trim()).filter(Boolean);
-      out = paras.map(p => '<p>' + p.replace(/
-/g,'<br/>') + '</p>').join('
-');
+      const paras = out.split(/\n\n+/).map(p=>p.trim()).filter(Boolean);
+      out = paras.map(p => '<p>' + p.replace(/\n/g,'<br/>') + '</p>').join('\n');
       return out;
     }
 
