@@ -620,10 +620,11 @@ ${prevAnswers || 'None'}`;
     if (OPENAI_KEY) {
       try {
         const prompt = buildPrompt(reqText.substring(0,15000), prevAnswersText);
+        const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
         const resp = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-          body: JSON.stringify({ model: 'gpt-5-mini', temperature: 0.15, max_completion_tokens: 2000, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
+          body: JSON.stringify({ model: model, temperature: 1, max_completion_tokens: 2000, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
         });
         if (resp.ok) {
           const data = await resp.json();
