@@ -248,6 +248,35 @@ const getLatestSessionForProject = (projectId) => {
   `).get(projectId));
 };
 
+// Append a message to a session transcript, creating a session if needed
+const appendSessionMessage = async (sessionId, message) => {
+  if (sessionId) {
+    const s = db.prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId);
+    if (!s) throw new Error('session not found');
+    let transcript = [];
+    try { transcript = JSON.parse(s.transcript || '[]'); } catch { transcript = []; }
+    transcript.push(message);
+    db.prepare('UPDATE sessions SET transcript = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(JSON.stringify(transcript), sessionId);
+    return sessionId;
+  } else {
+    throw new Error('sessionId required');
+  }
+};
+
+// Safe append: find or create latest session for project, then append
+const appendSessionMessageSafe = async (projectId, message) => {
+  let session = db.prepare(`SELECT * FROM sessions WHERE project_id = ? AND status != 'completed' ORDER BY updated_at DESC LIMIT 1`).get(projectId);
+  if (!session) {
+    const res = db.prepare('INSERT INTO sessions (project_id, transcript, requirements, context) VALUES (?, ?, ?, ?)').run(projectId, JSON.stringify([message]), JSON.stringify({}), JSON.stringify({}));
+    return res.lastInsertRowid;
+  } else {
+    const transcript = JSON.parse(session.transcript || '[]');
+    transcript.push(message);
+    db.prepare('UPDATE sessions SET transcript = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(JSON.stringify(transcript), session.id);
+    return session.id;
+  }
+};
+
 // File operations
 const createFile = (projectId, sessionId, filename, originalName, mimeType, size, extractedText, analysis) => {
   const stmt = db.prepare(`
