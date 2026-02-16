@@ -86,8 +86,7 @@ function escapeHtml(s) {
 
 // Lightweight summarizer for requirements -> return brief summary
 function summarizeRequirements(text){
-  const lines = text.split(/
-+/).filter(Boolean);
+  const lines = (text||'').split(/\n+/).map(l=>l.trim()).filter(Boolean);
   // naive: take first 5 lines and join
   return lines.slice(0,5).join(' ');
 }
@@ -612,9 +611,16 @@ app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, asyn
     const projectId = req.params.id;
     const designsDir = path.join(__dirname, 'data', 'designs');
     if (!fs.existsSync(designsDir)) return res.status(404).send('No designs found');
-    const files = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
-    if (files.length === 0) return res.status(404).send('No design for project');
-    const design = JSON.parse(fs.readFileSync(path.join(designsDir, files[0]), 'utf8'));
+    const candidates = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
+    if (candidates.length === 0) return res.status(404).send('No design for project');
+    // pick the newest design file by modified time
+    let newest = candidates[0];
+    let newestMtime = fs.statSync(path.join(designsDir, newest)).mtimeMs;
+    for (const c of candidates) {
+      const m = fs.statSync(path.join(designsDir, c)).mtimeMs;
+      if (m > newestMtime) { newest = c; newestMtime = m; }
+    }
+    const design = JSON.parse(fs.readFileSync(path.join(designsDir, newest), 'utf8'));
     res.render('admin/project-design', { user: req.user, projectId, design, title: projectId + ' - Design' });
   } catch (e) {
     console.error('Get design error:', e);
