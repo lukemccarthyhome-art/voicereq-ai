@@ -133,9 +133,13 @@
         <div style="margin-top: 20px;">
             <div style="display:flex;gap:8px">
                 <button onclick="exportProject()" class="btn btn-sm" style="flex:1">📦 Export Project</button>
-                <form method="POST" action="/admin/projects/<%= project.id %>/extract-design" style="margin:0">
-                  <button type="submit" class="btn btn-sm" style="background:#667eea;color:white;padding:8px;border-radius:6px;">🎯 Extract → Design</button>
-                </form>
+                <% if (typeof designExists !== "undefined" && designExists) { %>
+                  <a href="/admin/projects/<%= project.id %>/design" class="btn btn-sm" style="background:#10b981;color:white;padding:8px;border-radius:6px;">🔎 View Design</a>
+                <% } else { %>
+                  <form method="POST" action="/admin/projects/<%= project.id %>/extract-design" style="margin:0">
+                    <button type="submit" class="btn btn-sm" style="background:#667eea;color:white;padding:8px;border-radius:6px;">🎯 Extract → Design</button>
+                  </form>
+                <% } %>
             </div>
             <form method="POST" action="/admin/projects/<%= project.id %>/delete" onsubmit="return confirm('Delete this project and all its sessions/files? This cannot be undone.')" style="margin-top: 8px;">
                 <button type="submit" class="btn btn-sm" style="width: 100%; background: #dc3545; color: white;">🗑️ Delete Project</button>
