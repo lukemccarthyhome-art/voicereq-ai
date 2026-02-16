@@ -756,6 +756,25 @@ app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, asyn
       if (m > newestMtime) { newest = c; newestMtime = m; }
     }
     const design = JSON.parse(fs.readFileSync(path.join(designsDir, newest), 'utf8'));
+    // If designMarkdown contains JSON in code fences, try to parse and build designHtml sections
+    try {
+      if (design.designMarkdown && design.designMarkdown.trim().startsWith('```json')) {
+        const jsonText = design.designMarkdown.replace(/```json\s*|```/g, '').trim();
+        try {
+          const parsed = JSON.parse(jsonText);
+          if (parsed && parsed.design) {
+            // parsed.design may be object with sections
+            const sections = parsed.design;
+            let html = '';
+            if (parsed.summary) html += `<h3>Summary</h3><p>${escapeHtml(parsed.summary)}</p>`;
+            for (const [k,v] of Object.entries(sections)) {
+              html += `<h3>${escapeHtml(k)}</h3><p>${escapeHtml(v)}</p>`;
+            }
+            design.designHtml = html;
+          }
+        } catch(e) { /* ignore parse errors */ }
+      }
+    } catch(e) { /* ignore */ }
     res.render('admin/project-design', { user: req.user, projectId, design, title: projectId + ' - Design' });
   } catch (e) {
     console.error('Get design error:', e);
