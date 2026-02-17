@@ -816,6 +816,46 @@ app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, asyn
     res.status(500).send('Failed to load design');
   }
 });
+// Generate a simple mermaid flowchart from the design and return as text
+app.post('/admin/projects/:id/design/flowchart', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    if (!fs.existsSync(designsDir)) return res.status(404).json({ error: 'No designs found' });
+    const candidates = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
+    if (candidates.length === 0) return res.status(404).json({ error: 'No design for project' });
+    // pick newest
+    let newest = candidates[0];
+    let newestMtime = fs.statSync(path.join(designsDir, newest)).mtimeMs;
+    for (const c of candidates) {
+      const m = fs.statSync(path.join(designsDir, c)).mtimeMs;
+      if (m > newestMtime) { newest = c; newestMtime = m; }
+    }
+    const design = JSON.parse(fs.readFileSync(path.join(designsDir, newest), 'utf8'));
+    // Build mermaid flow: list top components and simple arrows
+    let components = [];
+    try {
+      if (design.designMarkdown && design.designMarkdown.trim().startsWith('```json')) {
+        const jsonText = design.designMarkdown.replace(/```json\s*|```/g, '').trim();
+        try { const parsed = JSON.parse(jsonText); if (parsed.design && parsed.design.Components) {
+            const comps = String(parsed.design.Components).split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
+            components = comps;
+        } }
+        catch(e){}
+      }
+    } catch (e) {}
+    if (components.length === 0) {
+      // fallback: use a default set
+      components = ['Proposal Generator', 'Morti Projects', 'Customer Portal', 'Signing Service'];
+    }
+    let mermaid = 'flowchart LR\n';
+    const ids = components.map((c,i)=> `C${i+1}`);
+    components.forEach((c,i)=>{ mermaid += `${ids[i]}["${c.replace(/\"/g,'')}"]\n`; });
+    for (let i=0;i<ids.length-1;i++) mermaid += `${ids[i]} --> ${ids[i+1]}\n`;
+    res.json({ mermaid });
+  } catch (e) { console.error('Flowchart error', e); res.status(500).json({ error: 'Failed to generate flowchart' }); }
+});
+
 
 app.post('/admin/projects/:id/design/chat', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {

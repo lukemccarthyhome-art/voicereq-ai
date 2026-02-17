@@ -7,9 +7,12 @@
   <div style="margin-top:12px">
     <div style="display:flex;align-items:center;justify-content:space-between">
       <h3>Design Summary</h3>
-      <form method="POST" action="/admin/projects/<%= projectId %>/extract-design" style="margin:0">
-        <button type="submit" class="btn btn-sm" style="background:#f59e0b;border-radius:8px">🔄 Refresh design</button>
-      </form>
+      <div style="display:flex;gap:8px;align-items:center">
+        <form method="POST" action="/admin/projects/<%= projectId %>/extract-design" style="margin:0">
+          <button type="submit" class="btn btn-sm" style="background:#f59e0b;border-radius:8px">🔄 Refresh design</button>
+        </form>
+        <button id="generateFlowchart" class="btn btn-sm" style="background:#06b6d4;border-radius:8px">🗺️ Generate flowchart</button>
+      </div>
     </div>
     <div style="border:1px solid #eee;padding:16px;border-radius:8px;background:#ffffff; box-shadow: 0 2px 6px rgba(16,24,40,0.04);">
       <div style="color:#111; font-size:14px; line-height:1.5"><%- design.designHtml %></div>
