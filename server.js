@@ -1932,9 +1932,25 @@ app.post('/profile/password', auth.authenticate, async (req, res) => {
 
 app.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, res) => {
   const projects = await db.getProjectsByUser(req.user.id);
+  
+  // Enrich projects with stage info
+  const enriched = projects.map(p => {
+    const designFiles = fs.existsSync(DESIGNS_DIR) ? fs.readdirSync(DESIGNS_DIR).filter(f => f.startsWith(`design-${p.id}-`)).sort().reverse() : [];
+    const proposalFiles = fs.existsSync(PROPOSALS_DIR) ? fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${p.id}-`)).sort().reverse() : [];
+    let hasDesign = false, hasProposal = false, isApproved = false;
+    if (designFiles.length > 0) {
+      try { const d = JSON.parse(fs.readFileSync(path.join(DESIGNS_DIR, designFiles[0]), 'utf8')); hasDesign = !!d.published; } catch {}
+    }
+    if (proposalFiles.length > 0) {
+      try { const pr = JSON.parse(fs.readFileSync(path.join(PROPOSALS_DIR, proposalFiles[0]), 'utf8')); hasProposal = !!pr.published; isApproved = !!pr.approvedAt; } catch {}
+    }
+    const stage = isApproved ? 'approved' : hasProposal ? 'proposal' : hasDesign ? 'design' : (p.session_count > 0 ? 'session' : 'new');
+    return { ...p, stage, hasDesign, hasProposal, isApproved };
+  });
+  
   res.render('customer/dashboard', {
     user: req.user,
-    projects,
+    projects: enriched,
     title: 'Dashboard',
     currentPage: 'customer-dashboard',
     breadcrumbs: [{ name: 'Dashboard' }]
