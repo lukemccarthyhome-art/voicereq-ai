@@ -607,8 +607,14 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
       } catch {}
     });
     const files = await db.getFilesByProject(projectId);
-    files.forEach(f => { reqText += `FILE ${f.original_name}: ${ (f.extracted_text||'').substring(0,200) }
-`; });
+    files.forEach(f => { 
+      const text = (f.extracted_text || '').trim();
+      if (text) {
+        reqText += `\n\nUPLOADED FILE: ${f.original_name}\n${f.description ? 'Description: ' + f.description + '\n' : ''}Content:\n${text.substring(0, 5000)}\n`;
+      } else {
+        reqText += `\nUPLOADED FILE: ${f.original_name} (no text extracted)\n`;
+      }
+    });
 
     // Include admin notes
     const project = await db.getProject(projectId);
