@@ -632,7 +632,7 @@ ${prevAnswers || 'None'}`;
         const resp = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-          body: JSON.stringify({ model: model, temperature: 1, max_completion_tokens: 2000, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
+          body: JSON.stringify({ model: model, max_completion_tokens: 2000, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
         });
         if (resp.ok) {
           const data = await resp.json();
@@ -1153,8 +1153,8 @@ app.post('/api/upload', apiAuth, uploadLimiter, upload.single('file'), async (re
                 'Authorization': 'Bearer ' + OPENAI_KEY
               },
               body: JSON.stringify({
-                model: 'gpt-3.5-turbo',
-                temperature: 0.3,
+                model: process.env.LLM_MODEL || 'chatgpt-4o-latest',
+        
                 messages: [{
                   role: 'system',
                   content: 'Analyze this document and write a concise 2-3 sentence description that covers: (1) what type of document it is, (2) its key content/purpose, and (3) how it could be utilised in the project — e.g. informing requirements, defining constraints, identifying stakeholders, shaping business rules, etc. Be specific about what project-relevant information can be extracted from it.'
@@ -1210,8 +1210,8 @@ app.post('/api/analyze', apiAuth, express.json({ limit: '10mb' }), async (req, r
         'Authorization': 'Bearer ' + OPENAI_KEY
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        temperature: 0.3,
+        model: process.env.LLM_MODEL || 'chatgpt-4o-latest',
+
         messages: [{
           role: 'system',
           content: `You are a business analyst extracting software requirements from a document. Analyze the document and extract any requirements, specifications, constraints, stakeholders, or project details.
@@ -1342,41 +1342,51 @@ app.post('/api/analyze-session', apiAuth, express.json({ limit: '20mb' }), async
         'Authorization': 'Bearer ' + OPENAI_KEY
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        temperature: 0.3,
-        max_completion_tokens: 4000,
+        model: process.env.LLM_MODEL || 'chatgpt-4o-latest',
+
+        max_completion_tokens: 4096,
         messages: [{
           role: 'system',
-          content: `You are an expert business analyst conducting requirements analysis. Analyze the provided conversation transcript and uploaded documents to extract NEW requirements not already captured.
+          content: `You are an expert business analyst conducting detailed requirements analysis. Analyze the provided conversation transcript and uploaded documents to extract NEW requirements not already captured.
 
 CRITICAL: A section titled "ALREADY CAPTURED REQUIREMENTS" lists requirements that have already been identified. DO NOT repeat or rephrase any of these. ONLY return genuinely NEW requirements, additional details, or refinements discovered in the latest conversation or documents. If nothing new is found for a category, omit that category entirely.
 
-Focus on extracting clear, actionable requirements - not just restating what was said. Convert conversational statements into formal requirements.
+DETAIL PRESERVATION IS ESSENTIAL:
+- The user has taken time to explain specifics — capture ALL relevant detail, not just summaries
+- If the user mentions specific numbers, names, platforms, tools, frequencies, workflows, or examples — include them
+- Do NOT simplify "I need to contact 200 people across 3 platforms weekly" into "System should support multi-platform communication"
+- Preserve the WHY behind requirements, not just the WHAT
+- Each requirement should be a rich, self-contained statement that someone unfamiliar with the conversation could understand
+- When the user provides context, reasoning, or constraints around a requirement, fold that into the requirement statement
+- Longer, detailed requirement statements are BETTER than short generic ones
 
 Return a JSON object with this exact structure:
 {
   "requirements": {
-    "Project Overview": ["Clear statement about project purpose, scope, or objectives"],
-    "Stakeholders": ["Specific user roles, personas, or stakeholder groups with their needs"],
-    "Functional Requirements": ["What the system must do - specific features, capabilities, processes"],
-    "Non-Functional Requirements": ["Performance, security, usability, scalability, compliance requirements"],
-    "Constraints": ["Budget, timeline, technology, regulatory, or resource limitations"],
-    "Success Criteria": ["Measurable goals, KPIs, or definition of done"],
-    "Business Rules": ["Policies, regulations, or business logic that must be enforced"]
+    "Project Overview": ["Detailed statements about project purpose, scope, objectives, and context"],
+    "Stakeholders": ["Specific user roles, personas, or stakeholder groups with their needs and context"],
+    "Functional Requirements": ["Detailed feature descriptions including specific behaviors, workflows, edge cases, and examples the user mentioned"],
+    "Non-Functional Requirements": ["Performance targets, security needs, usability expectations, scalability requirements — with specific numbers/thresholds where given"],
+    "Constraints": ["Budget, timeline, technology, regulatory, or resource limitations with specifics"],
+    "Success Criteria": ["Measurable goals, KPIs, or definition of done with concrete targets"],
+    "Business Rules": ["Policies, regulations, or business logic — include the reasoning/context behind each rule"],
+    "User Workflows": ["Step-by-step processes the user described, including current pain points and desired improvements"],
+    "Integrations": ["Specific platforms, tools, APIs, or systems mentioned and how they should connect"],
+    "Data & Content": ["What data is involved, its sources, formats, volumes, and how it should be managed"]
   },
-  "summary": "2-3 sentence executive summary of the overall requirements",
-  "keyInsights": ["Important insights or themes that emerged from the analysis"],
+  "summary": "3-5 sentence detailed summary covering the project's purpose, key challenges, and primary goals",
+  "keyInsights": ["Important insights, themes, or non-obvious implications from the analysis"],
   "documentReferences": ["Quotes or key points from uploaded documents that support requirements"]
 }
 
 Guidelines:
-- Convert conversational language to formal requirement statements
-- Be specific and measurable where possible
-- Group related requirements logically
+- PRESERVE SPECIFICITY: include exact numbers, names, tools, platforms, frequencies, and examples from the conversation
+- Write requirements at the detail level the user provided — do not abstract away their specifics
+- If the user said something important, it should be recognizable in the output
+- Group related requirements logically but don't merge distinct requirements into one
 - Include context from both conversation and documents
 - Only include categories that have actual requirements
-- Make each requirement statement clear and actionable
-- Reference document content when it supports requirements
+- A single detailed requirement is worth more than five vague ones
 
 Return valid JSON only.`
         }, {
@@ -1390,11 +1400,16 @@ Return valid JSON only.`
     if (!response.ok) {
       const err = await response.text();
       console.error('OpenAI session analysis error:', err);
-      throw new Error('Session analysis failed');
+      throw new Error('Session analysis failed: ' + err.substring(0, 200));
     }
 
     const data = await response.json();
-    const analysis = JSON.parse(data.choices[0].message.content);
+    const content = data.choices[0].message.content;
+    if (!content) {
+      console.error('OpenAI returned empty content. Usage:', JSON.stringify(data.usage));
+      throw new Error('Model returned empty content — try a different model');
+    }
+    const analysis = JSON.parse(content);
     
     // Count total requirements
     const totalReqs = Object.values(analysis.requirements || {}).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
@@ -1453,8 +1468,8 @@ app.post('/api/chat', apiAuth, express.json({ limit: '10mb' }), async (req, res)
         'Authorization': 'Bearer ' + OPENAI_KEY
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        temperature: 0.7,
+        model: process.env.LLM_MODEL || 'chatgpt-4o-latest',
+
         messages: [{
           role: 'system',
           content: `You are an expert business analyst helping with requirements gathering and project analysis. You have access to uploaded documents and conversation history for context.
@@ -1524,6 +1539,19 @@ app.put('/api/sessions/:id', apiAuth, express.json({ limit: '10mb' }), async (re
   } catch (e) {
     console.error('Update session error:', e);
     res.status(500).json({ error: 'Failed to update session' });
+  }
+});
+
+// POST /save endpoint for sendBeacon (page unload) — sendBeacon only sends POST
+app.post('/api/sessions/:id/save', apiAuth, express.json({ limit: '10mb' }), async (req, res) => {
+  try {
+    const { transcript, requirements, context, status } = req.body;
+    await db.updateSession(req.params.id, transcript, requirements, context, status || 'paused');
+    console.log(`💾 Beacon save for session ${req.params.id} — ${(transcript || []).length} messages`);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Beacon save error:', e);
+    res.status(500).json({ error: 'Failed to save session' });
   }
 });
 
@@ -1603,6 +1631,14 @@ app.post('/admin/import-project', auth.authenticate, auth.requireAdmin, importUp
     // Use the logged-in admin user
     const adminUser = req.user || { id: 1 };
 
+    // Build a proper description from parsed requirements if none provided
+    if (!projectDescription && requirementsDoc) {
+      // Use first paragraph or company line as description
+      const companyMatch = requirementsDoc.match(/\*\*Company:\*\*\s*(.+)/);
+      const firstPara = requirementsDoc.split('\n\n').find(p => p && !p.startsWith('#') && !p.startsWith('*') && !p.startsWith('-'));
+      projectDescription = companyMatch ? companyMatch[1].trim() : (firstPara ? firstPara.trim().substring(0, 200) : 'Imported from ZIP');
+    }
+
     // Create project
     const result = await db.createProject(adminUser.id, projectName, projectDescription || 'Imported from ZIP');
     const projectId = result.lastInsertRowid || result.id;
@@ -1621,7 +1657,7 @@ app.post('/admin/import-project', auth.authenticate, auth.requireAdmin, importUp
 
       // Extract transcript if present
       let transcript = [];
-      const transcriptSection = requirementsDoc.match(/## Full Conversation History\n\n([\s\S]*?)(?=---|$)/);
+      const transcriptSection = requirementsDoc.match(/## Full (?:Conversation History|Transcript)\n\n([\s\S]*?)(?=---|$)/);
       if (transcriptSection) {
         const msgRegex = /\*\*(\w+):\*\*\s*([\s\S]*?)(?=\*\*\w+:\*\*|$)/g;
         let m;
@@ -1640,7 +1676,7 @@ app.post('/admin/import-project', auth.authenticate, auth.requireAdmin, importUp
       const sessions = await db.getSessionsByProject(projectId);
       if (sessions.length > 0) {
         const sid = sessions[0].id;
-        await db.updateSession(sid, JSON.stringify(transcript), JSON.stringify(requirements));
+        await db.updateSession(sid, transcript, requirements, {}, 'completed');
       }
     }
 
@@ -1664,6 +1700,92 @@ app.post('/admin/import-project', auth.authenticate, auth.requireAdmin, importUp
     res.redirect('/admin/projects/' + projectId);
   } catch (e) {
     console.error('Import error:', e);
+    res.status(500).send('Import failed: ' + e.message);
+  }
+});
+
+// Import ZIP into existing project (from project detail page)
+app.post('/admin/projects/:id/import', auth.authenticate, auth.requireAdmin, importUpload.single('zipfile'), async (req, res) => {
+  const projectId = req.params.id;
+  try {
+    if (!req.file) return res.status(400).send('No file uploaded');
+
+    const project = await db.getProject(projectId);
+    if (!project) return res.status(404).send('Project not found');
+
+    const zip = new AdmZip(req.file.buffer);
+    const entries = zip.getEntries();
+
+    let requirementsDoc = '';
+    const assetFiles = [];
+
+    for (const entry of entries) {
+      if (entry.isDirectory) continue;
+      const name = entry.entryName;
+      if (name === 'requirements.md' || name.endsWith('/requirements.md')) {
+        requirementsDoc = entry.getData().toString('utf8');
+      } else if (name.startsWith('assets/') || name.startsWith('files/')) {
+        assetFiles.push({ name: path.basename(name), data: entry.getData(), size: entry.header.size });
+      }
+    }
+
+    if (requirementsDoc) {
+      // Handle literal \n in exported files
+      requirementsDoc = requirementsDoc.replace(/\\n/g, '\n');
+
+      // Parse requirements sections
+      const requirements = {};
+      const reqSection = requirementsDoc.match(/## Requirements\n\n([\s\S]*?)(?=\n## Full|\n## Project Assets|$)/);
+      if (reqSection) {
+        const sectionRegex = /### (.+)\n\n([\s\S]*?)(?=\n### |$)/g;
+        let match;
+        while ((match = sectionRegex.exec(reqSection[1])) !== null) {
+          const items = match[2].split('\n').filter(l => l.startsWith('- ')).map(l => l.replace(/^- /, '').trim());
+          if (items.length > 0) requirements[match[1].trim()] = items;
+        }
+      }
+
+      // Parse transcript
+      const transcript = [];
+      const tSection = requirementsDoc.match(/## Full (?:Conversation History|Transcript)\n\n([\s\S]*?)(?=\n---|$)/);
+      if (tSection) {
+        const msgRegex = /\*\*(\w+):\*\*\s*([\s\S]*?)(?=\n\n\*\*\w+:\*\*|$)/g;
+        let m;
+        while ((m = msgRegex.exec(tSection[1])) !== null) {
+          transcript.push({ role: m[1].toLowerCase() === 'ai' ? 'ai' : 'user', text: m[2].trim() });
+        }
+      }
+
+      // Get or create session for this project
+      let sessions = await db.getSessionsByProject(projectId);
+      if (sessions.length === 0) {
+        await db.appendSessionMessageSafe(projectId, JSON.stringify({ role: 'system', text: 'Imported from ZIP', timestamp: new Date().toISOString() }));
+        sessions = await db.getSessionsByProject(projectId);
+      }
+
+      if (sessions.length > 0) {
+        await db.updateSession(sessions[0].id, transcript, requirements, {}, 'paused');
+      }
+
+      console.log(`📥 Imported into project "${project.name}" (ID: ${projectId}): ${transcript.length} messages, ${Object.keys(requirements).length} requirement categories`);
+    }
+
+    // Save asset files
+    if (assetFiles.length > 0) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      const sessions = await db.getSessionsByProject(projectId);
+      const sessionId = sessions.length > 0 ? sessions[0].id : null;
+      for (const asset of assetFiles) {
+        const filename = Date.now() + '-' + asset.name;
+        const filePath = path.join(uploadsDir, filename);
+        fs.writeFileSync(filePath, asset.data);
+        db.createFile(projectId, sessionId, filename, asset.name, '', asset.size, '', '');
+      }
+    }
+
+    res.redirect('/admin/projects/' + projectId);
+  } catch (e) {
+    console.error('Project import error:', e);
     res.status(500).send('Import failed: ' + e.message);
   }
 });

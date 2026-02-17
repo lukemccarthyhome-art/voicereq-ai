@@ -132,7 +132,8 @@
 
         <div style="margin-top: 20px;">
             <div style="display:flex;gap:8px;align-items:center">
-                <button onclick="exportProject()" class="btn btn-sm" style="flex:1">📦 Export Project</button>
+                <button onclick="exportProject()" class="btn btn-sm" style="flex:1">📦 Export</button>
+                <button onclick="document.getElementById('importModal').style.display='flex'" class="btn btn-sm" style="flex:1;background:#10b981">📥 Import ZIP</button>
                 <% if (typeof designExists !== "undefined" && designExists) { %>
                   <div style="display:flex;gap:8px;align-items:center">
                     <a href="/admin/projects/<%= project.id %>/design" class="btn btn-sm" style="background:#10b981;color:white;padding:8px;border-radius:6px;">🔎 View Latest Design</a>
@@ -461,5 +462,23 @@ document.addEventListener('click', function(e) {
 });
 </script>
     </main>
+
+<!-- Import ZIP Modal -->
+<div id="importModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:white;border-radius:12px;padding:28px;max-width:500px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+    <h3 style="margin-bottom:16px;color:#333">📥 Import ZIP into "<%= project.name %>"</h3>
+    <p style="color:#666;font-size:13px;margin-bottom:16px">Upload an exported ZIP file to restore or merge requirements and transcript into this project. This will <strong>replace</strong> the current session data.</p>
+    <form method="POST" action="/admin/projects/<%= project.id %>/import" enctype="multipart/form-data">
+      <div style="margin-bottom:16px">
+        <label style="font-weight:600;font-size:13px;color:#333;display:block;margin-bottom:4px">ZIP File</label>
+        <input type="file" name="zipfile" accept=".zip" required style="width:100%;padding:8px;font-size:14px" />
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" onclick="document.getElementById('importModal').style.display='none'" style="padding:10px 20px;border:1px solid #ddd;border-radius:8px;background:white;cursor:pointer;font-size:14px">Cancel</button>
+        <button type="submit" style="padding:10px 20px;border:none;border-radius:8px;background:#10b981;color:white;cursor:pointer;font-weight:600;font-size:14px">📥 Import</button>
+      </div>
+    </form>
+  </div>
+</div>
 </body>
 </html>

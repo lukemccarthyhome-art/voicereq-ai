@@ -383,6 +383,9 @@ module.exports = {
   deleteFile,
   updateFileDescription,
   logAction,
+  // Sessions (extended)
+  appendSessionMessage,
+  appendSessionMessageSafe,
   // Stats
   getStats
 };

@@ -81,28 +81,35 @@ class VoiceSession {
     }
 
     setupAutoSave() {
-        // Auto-save every 30 seconds during active session
+        // Auto-save every 10 seconds during active session
         setInterval(() => {
             if (this.sessionId && (this.messages.length > 0 || Object.keys(this.requirements).length > 0)) {
                 this.saveSession();
             }
-        }, 30000);
+        }, 10000);
         
         // Save on page unload
         window.addEventListener('beforeunload', () => {
-            if (this.sessionId) {
-                navigator.sendBeacon('/api/sessions/' + this.sessionId + '/save', JSON.stringify({
+            if (this.sessionId && (this.messages.length > 0 || Object.keys(this.requirements).length > 0)) {
+                const blob = new Blob([JSON.stringify({
                     transcript: this.messages,
                     requirements: this.requirements,
                     context: this.sessionContext,
                     status: this.inCall ? 'active' : 'paused'
-                }));
+                })], { type: 'application/json' });
+                navigator.sendBeacon('/api/sessions/' + this.sessionId + '/save', blob);
             }
         });
     }
 
     async saveSession() {
         if (!this.sessionId) return;
+        
+        // Don't overwrite existing data with empty state
+        if (this.messages.length === 0 && Object.keys(this.requirements).length === 0) {
+            console.log('⏭️ Skipping save — no data to write');
+            return;
+        }
         
         try {
             await fetch(`/api/sessions/${this.sessionId}`, {
@@ -115,7 +122,7 @@ class VoiceSession {
                     status: this.inCall ? 'active' : 'paused'
                 })
             });
-            console.log('💾 Session auto-saved');
+            console.log('💾 Session auto-saved — ' + this.messages.length + ' messages');
         } catch (e) {
             console.error('Failed to save session:', e);
         }
