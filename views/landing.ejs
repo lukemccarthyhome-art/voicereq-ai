@@ -192,16 +192,33 @@
         }
 
         /* Mobile */
-        @media (max-width: 640px) {
+        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #667eea; }
+
+        @media (max-width: 768px) {
             nav { padding: 12px 20px; }
-            .nav-links { gap: 14px; }
+            .hamburger { display: block; }
+            .nav-links {
+                display: none; flex-direction: column; position: absolute;
+                top: 100%; left: 0; right: 0; background: #fff;
+                padding: 16px 20px; gap: 4px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            }
+            .nav-links.open { display: flex; }
+            .nav-links a.nav-text { padding: 10px 0; font-size: 1rem; }
+            .btn-login { text-align: center; margin-top: 8px; }
             .hero { padding: 100px 20px 60px; }
-            .hero h1 { font-size: 2.2rem; }
-            .hero p { font-size: 1.05rem; }
+            .hero h1 { font-size: 2rem; }
+            .hero p { font-size: 1rem; }
+            .hero-buttons { flex-direction: column; align-items: center; }
             section { padding: 60px 20px; }
+            .section-title { font-size: 1.6rem; }
             .step-arrow { display: none; }
             .steps { gap: 32px; }
+            .steps .step { min-width: unset; }
             .services-grid, .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+            .pricing-note { font-size: 0.85rem; }
+            .cta { padding: 40px 24px; }
+            .cta h2 { font-size: 1.5rem; }
         }
 
         html { scroll-behavior: smooth; }
@@ -211,6 +228,7 @@
 
 <nav>
     <a href="/" class="nav-brand">✦ Morti Projects</a>
+    <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
     <div class="nav-links">
         <a href="#services" class="nav-text">Services</a>
         <a href="#how-it-works" class="nav-text">How It Works</a>

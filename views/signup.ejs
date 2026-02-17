@@ -81,8 +81,21 @@
         }
         footer a { color: #667eea; }
 
-        @media (max-width: 640px) {
+        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #667eea; }
+
+        @media (max-width: 768px) {
             nav { padding: 12px 20px; }
+            .hamburger { display: block; }
+            .nav-links {
+                display: none; flex-direction: column; position: absolute;
+                top: 100%; left: 0; right: 0; background: #fff;
+                padding: 16px 20px; gap: 4px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            }
+            .nav-links.open { display: flex; }
+            .nav-links a.nav-text { padding: 10px 0; font-size: 1rem; }
+            .btn-login { text-align: center; margin-top: 8px; }
+            .signup-container { margin-top: 80px; }
             .signup-card { padding: 32px 24px; }
             .signup-card h1 { font-size: 1.6rem; }
             .form-row { grid-template-columns: 1fr; }
@@ -93,6 +106,7 @@
 
 <nav>
     <a href="/" class="nav-brand">✦ Morti Projects</a>
+    <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
     <div class="nav-links">
         <a href="/#services" class="nav-text">Services</a>
         <a href="/#how-it-works" class="nav-text">How It Works</a>
