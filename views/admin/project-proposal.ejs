@@ -85,7 +85,7 @@
         <div style="display: flex; gap: 8px;">
             <a href="/admin/projects/<%= project.id %>" class="btn" style="background: #64748b;">← Back to Project</a>
             <form method="POST" action="/admin/projects/<%= project.id %>/generate-proposal" style="margin:0;">
-                <button type="submit" class="btn" style="background: #8b5cf6;" onclick="this.disabled=true;this.textContent='Generating...';">
+                <button type="submit" class="btn" style="background: #8b5cf6;" >
                     <%= proposal ? '🔄 Regenerate Proposal' : '⚡ Generate Proposal' %>
                 </button>
             </form>
@@ -105,7 +105,7 @@
             <h3 style="color: #64748b; margin-bottom: 8px;">No Proposal Yet</h3>
             <p style="color: #94a3b8; margin-bottom: 20px;">Generate a fee proposal based on the project design, estimated value, and cost savings.</p>
             <form method="POST" action="/admin/projects/<%= project.id %>/generate-proposal">
-                <button type="submit" class="btn" style="background: #8b5cf6;" onclick="this.disabled=true;this.textContent='Generating...';">⚡ Generate Proposal</button>
+                <button type="submit" class="btn" style="background: #8b5cf6;" >⚡ Generate Proposal</button>
             </form>
         </div>
     <% } else { %>
@@ -217,3 +217,11 @@
 
 </body>
 </html>
+<script>
+document.querySelectorAll('form[action*="generate-proposal"]').forEach(f => {
+    f.addEventListener('submit', function() {
+        const btn = this.querySelector('button[type="submit"]');
+        setTimeout(() => { btn.disabled = true; btn.textContent = '⏳ Generating proposal...'; }, 50);
+    });
+});
+</script>
