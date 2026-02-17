@@ -750,7 +750,8 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
     "Dependencies": "External dependencies: APIs, third-party tools, data sources, access credentials, user-provided inputs. Clarify which are critical vs optional.",
     "Phase2Enhancements": "OUT OF SCOPE for MVP. List enhancements that improve scale, analytics, automation, resilience. Make clear these are future considerations, not required for launch.",
     "RisksAndMitigations": "Realistic risks only — no theatrical or enterprise-only risks. For each: impact and lightweight mitigation suitable for MVP stage.",
-    "BuildEffortEstimate": "Complexity rating (Low/Medium/High), rough timeline, key build phases. Be practical."
+    "BuildEffortEstimate": "Complexity rating (Low/Medium/High), rough timeline, key build phases. Be practical.",
+    "CostBenefitAnalysis": "ROI analysis: current cost of the process being replaced (or human labour equivalent for new initiatives), expected value/savings the system delivers, simple payback calculation. If cost data was not provided in requirements, state this clearly and flag it as a required input before proposal generation."
   },
   "questions": [
     {"id": 1, "text": "Specific question about a gap or ambiguity", "assumption": "What we'll assume if unanswered"}
@@ -792,6 +793,11 @@ QUESTIONS RULES (FIRST EXTRACTION):
 - Questions MUST reference specific details from the conversation.
 - BAD: "Any branding guidelines?", "What data sources?" — generic filler.
 - GOOD: "You mentioned LinkedIn Sales Navigator — do you need real-time monitoring or is a daily batch sync sufficient for MVP?"
+- MANDATORY: If the requirements do NOT include cost/value information (current process cost, expected ROI, human labour equivalent), you MUST include at least one question about this. Examples:
+  - "What does the current process cost your team in time or money each month?"
+  - "If you were to handle [specific workflow] manually with staff, roughly what would that cost?"
+  - "What's the expected value or saving this system would deliver in the first 12 months?"
+  This is required before a proposal can be generated.
 - Maximum 5 questions. If the conversation covers everything needed for MVP, return an EMPTY array [].
 - Each question needs a unique sequential id starting from 1.
 
@@ -816,6 +822,7 @@ QUESTIONS RULES (REFRESH — STRICT):
 - Only ask NEW questions if the new information reveals a critical gap that blocks MVP build.
 - Do NOT re-ask answered questions. Do NOT ask follow-ups to satisfactory answers.
 - Prefer making an [ASSUMPTION] over asking another question.
+- MANDATORY: If the CostBenefitAnalysis section still lacks concrete cost/value data (current process cost, ROI estimate, human labour equivalent), include a question about this. Proposals cannot be generated without cost justification.
 - Maximum 3 new questions. Return EMPTY array [] if nothing critical is missing.
 - If previous questions were answered satisfactorily, there should be ZERO new questions.
 
@@ -2001,7 +2008,8 @@ Return a JSON object with this exact structure:
     "Business Rules": ["Policies, regulations, or business logic — include the reasoning/context behind each rule"],
     "User Workflows": ["Step-by-step processes the user described, including current pain points and desired improvements"],
     "Integrations": ["Specific platforms, tools, APIs, or systems mentioned and how they should connect"],
-    "Data & Content": ["What data is involved, its sources, formats, volumes, and how it should be managed"]
+    "Data & Content": ["What data is involved, its sources, formats, volumes, and how it should be managed"],
+    "Cost & Value": ["Current cost of existing process, expected value/ROI, human labour equivalent cost, cost savings potential, business case justification"]
   },
   "summary": "3-5 sentence detailed summary covering the project's purpose, key challenges, and primary goals",
   "keyInsights": ["Important insights, themes, or non-obvious implications from the analysis"],
@@ -2109,6 +2117,19 @@ app.post('/api/chat', apiAuth, express.json({ limit: '10mb' }), async (req, res)
           - Identify gaps or inconsistencies in requirements
           - Suggest best practices and considerations
           - Be conversational but professional
+          
+          CONVERSATION STYLE:
+          - Do NOT recap the full conversation each time. Focus on what was JUST discussed.
+          - When summarising understanding, only cover the most recent points or new information.
+          - Reference earlier topics briefly ("building on what you said about X...") rather than restating them.
+          
+          COST & VALUE DISCOVERY (important — approach gently once core requirements are mostly understood):
+          - Once the client has explained the core of what they need, naturally explore the business value:
+          - If it replaces an existing process: "How is this handled today? What does that currently cost in time or money?"
+          - For new initiatives: "What value do you see this bringing to the organisation?" and "If you were to do this manually with people, roughly what would that look like cost-wise?"
+          - Frame these as helping understand priorities, not as an interrogation about budget.
+          - The goal is to establish whether the project delivers clear ROI — this helps everyone make good decisions.
+          - Don't ask all cost questions at once. Weave them in naturally over 2-3 exchanges.
           
           Context available:${contextContent}`
         }, {
