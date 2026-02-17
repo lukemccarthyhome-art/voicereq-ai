@@ -944,6 +944,7 @@ ${summarizeRequirements(reqText)}
         if (prev.chat && prev.chat.length > 0) design.chat = prev.chat;
         if (prev.published) { design.published = prev.published; design.publishedAt = prev.publishedAt; }
         if (prev.acceptedAssumptions && prev.acceptedAssumptions.length > 0) design.acceptedAssumptions = prev.acceptedAssumptions;
+        if (prev.flowchart) design.flowchart = prev.flowchart;
       }
     } catch(e) {}
 
@@ -1095,6 +1096,15 @@ ${designContext.substring(0, 12000)}`;
     // Strip any markdown fences
     mermaid = mermaid.replace(/^```(?:mermaid)?\s*/i, '').replace(/```\s*$/, '').trim();
     if (!mermaid.startsWith('flowchart')) mermaid = 'flowchart TD\n' + mermaid;
+
+    // Save flowchart to design JSON
+    try {
+      const result = loadNewestDesign(req.params.id);
+      if (result) {
+        result.design.flowchart = mermaid;
+        saveDesign(result.design);
+      }
+    } catch(e) { console.warn('Failed to save flowchart to design:', e.message); }
 
     res.json({ mermaid });
   } catch (e) { console.error('Flowchart error', e); res.status(500).json({ error: 'Failed to generate flowchart: ' + e.message }); }

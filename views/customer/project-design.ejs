@@ -104,6 +104,14 @@
       <% } %>
     </div>
 
+    <!-- Flowchart -->
+    <% if (design.flowchart) { %>
+    <div class="card">
+      <h3 style="margin-bottom:12px;">🗺️ System Architecture</h3>
+      <div id="flowchartRender" style="min-height:100px;display:flex;align-items:center;justify-content:center;"></div>
+    </div>
+    <% } %>
+
     <!-- Customer Questions -->
     <div class="card">
       <h3 style="margin-bottom:12px;">❓ Questions for You</h3>
@@ -145,5 +153,17 @@
       <% } %>
     </div>
   </main>
+  <% if (design.flowchart) { %>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    (async () => {
+      try {
+        const { svg } = await mermaid.render('flowchart-svg', `<%- design.flowchart.replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`);
+        document.getElementById('flowchartRender').innerHTML = svg;
+      } catch(e) { document.getElementById('flowchartRender').textContent = 'Flowchart rendering failed'; }
+    })();
+  </script>
+  <% } %>
 </body>
 </html>

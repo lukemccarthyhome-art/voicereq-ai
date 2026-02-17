@@ -165,7 +165,7 @@
     </div>
 
     <!-- Flowchart -->
-    <div id="flowchartContainer" style="display:none;" class="card">
+    <div id="flowchartContainer" style="<%= design.flowchart ? '' : 'display:none;' %>" class="card">
       <h3 style="margin-bottom:12px;">🗺️ Component Flowchart</h3>
       <div id="flowchartRender"></div>
     </div>
@@ -263,6 +263,16 @@
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>
     mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+    // Render saved flowchart on page load
+    <% if (design.flowchart) { %>
+    (async () => {
+      try {
+        const { svg } = await mermaid.render('flowchart-svg-saved', `<%- design.flowchart.replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`);
+        document.getElementById('flowchartRender').innerHTML = svg;
+      } catch(e) { console.warn('Saved flowchart render failed:', e); }
+    })();
+    <% } %>
 
     // AI Chat
     async function sendChat() {
