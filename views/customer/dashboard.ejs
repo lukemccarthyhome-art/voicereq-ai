@@ -142,7 +142,6 @@
                         <a href="/projects/<%= project.id %>" class="btn btn-sm">📊 View Details</a>
                         <a href="/projects/<%= project.id %>/session" class="btn btn-sm btn-success">🎙️ Start Session</a>
                         <% if (project.session_count > 0) { %>
-                            <button onclick="exportProject(<%= project.id %>)" class="btn btn-sm btn-secondary">📦 Export</button>
                         <% } %>
                     </div>
                 </div>
@@ -203,7 +202,6 @@
                 <li>🗣️ Speak naturally about your project needs</li>
                 <li>📄 Upload documents for automatic analysis</li>
                 <li>✅ AI extracts and organizes requirements in real-time</li>
-                <li>📦 Export complete requirements documentation</li>
             </ul>
         </div>
     </div>

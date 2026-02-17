@@ -141,7 +141,6 @@
                             <a href="/projects/<%= project.id %>" class="btn btn-sm">📊 Details</a>
                             <a href="/projects/<%= project.id %>/session" class="btn btn-sm btn-success">🎙️ Session</a>
                             <% if (project.session_count > 0) { %>
-                                <button onclick="exportProject(<%= project.id %>)" class="btn btn-sm btn-secondary">📦</button>
                             <% } %>
                         </div>
                     </div>
@@ -195,7 +194,6 @@
             <p style="font-size: 14px; color: #666;">Add documents, specs, or mockups for automatic analysis</p>
         </div>
         <div>
-            <h4 style="color: #333; margin-bottom: 8px;">4. 📦 Export Results</h4>
             <p style="font-size: 14px; color: #666;">Get comprehensive requirements documentation instantly</p>
         </div>
     </div>
