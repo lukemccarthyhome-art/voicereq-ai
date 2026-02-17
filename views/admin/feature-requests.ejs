@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Requests - Admin - Morti Projects</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
+        .nav { display: flex; gap: 20px; align-items: center; }
+        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.3); }
+        .main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card h2 { margin-bottom: 16px; color: #333; font-size: 24px; }
+        .request-item { border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px; margin-bottom: 12px; background: #fafafa; }
+        .request-meta { font-size: 12px; color: #888; margin-bottom: 8px; }
+        .request-text { font-size: 14px; color: #333; line-height: 1.6; white-space: pre-wrap; }
+        .badge { display: inline-block; background: #667eea; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-container">
+            <a href="/admin" class="logo">🎙️ Morti Projects</a>
+            <nav class="nav">
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/customers">Customers</a>
+                <a href="/admin/feature-requests" class="active">Feature Requests</a>
+                <a href="/logout">🚪 Logout</a>
+            </nav>
+        </div>
+    </div>
+    <main class="main">
+        <h1 style="margin-bottom: 24px;">💡 Feature Requests</h1>
+        <div class="card">
+            <h2>All Requests (<%= requests.length %>)</h2>
+            <% if (requests.length > 0) { %>
+                <% requests.forEach(r => { %>
+                    <div class="request-item">
+                        <div class="request-meta">
+                            <strong><%= r.user_name %></strong> (<%= r.user_email %>) · 
+                            <span class="badge"><%= r.page %></span> · 
+                            <%= new Date(r.created_at).toLocaleString() %>
+                        </div>
+                        <div class="request-text"><%= r.text %></div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="empty-state">
+                    <p>No feature requests yet.</p>
+                </div>
+            <% } %>
+        </div>
+    </main>
+</body>
+</html>

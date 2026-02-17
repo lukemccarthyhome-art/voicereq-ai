@@ -63,6 +63,7 @@
                 <a href="/admin">Dashboard</a>
                 <a href="/admin/customers" class="active">Customers</a>
                 <a href="/admin/projects">Projects</a>
+                <a href="/admin/feature-requests">Feature Requests</a>
                 <a href="/profile">Profile</a>
                 <div class="user-name">👤 <%= user.name %></div>
                 <a href="/logout">🚪 Logout</a>
@@ -114,6 +115,7 @@
                 <tr>
                     <th>Customer Details</th>
                     <th>Company</th>
+                    <th>Status</th>
                     <th>Projects</th>
                     <th>Joined</th>
                     <th>Actions</th>
@@ -128,6 +130,13 @@
                         </td>
                         <td><%= customer.company %></td>
                         <td>
+                            <% if (customer.approved === 0) { %>
+                                <span style="background:#fef3cd;color:#856404;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">⏳ Pending</span>
+                            <% } else { %>
+                                <span style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">✅ Active</span>
+                            <% } %>
+                        </td>
+                        <td>
                             <% const projectCount = customer.project_count || 0; %>
                             <%= projectCount %> 
                             <% if (projectCount > 0) { %>
@@ -137,6 +146,11 @@
                         <td><%= new Date(customer.created_at).toLocaleDateString() %></td>
                         <td>
                             <div style="display: flex; gap: 8px;">
+                                <% if (customer.approved === 0) { %>
+                                <form method="POST" action="/admin/customers/<%= customer.id %>/approve" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-success">✅ Approve</button>
+                                </form>
+                                <% } %>
                                 <button onclick="editCustomer(<%= customer.id %>, '<%= customer.name %>', '<%= customer.email %>', '<%= customer.company %>')" 
                                         class="btn btn-sm">✏️ Edit</button>
                                 <button onclick="changePassword(<%= customer.id %>, '<%= customer.name %>')" 

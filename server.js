@@ -12,6 +12,7 @@ const xss = require('xss');
 const ipaddr = require('ipaddr.js');
 const otplib = require('otplib');
 const qrcode = require('qrcode');
+const nodemailer = require('nodemailer');
 
 require('dotenv').config();
 
@@ -186,12 +187,51 @@ const apiAuth = async (req, res, next) => {
   } catch { res.status(401).json({ error: 'Unauthorized' }); }
 };
 
-// Serve uploaded files (behind auth)
-app.use('/uploads', (req, res, next) => {
+// Ownership check: verify session or project belongs to the requesting user (admins bypass)
+const verifySessionOwnership = async (req, res, next) => {
+  if (req.user.role === 'admin') return next();
+  const sessionId = req.params.id;
+  const session = await db.getSession(sessionId);
+  if (!session) return res.status(404).json({ error: 'Session not found' });
+  const project = await db.getProject(session.project_id);
+  if (!project || project.user_id !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+  req.sessionData = session;
+  next();
+};
+
+const verifyProjectOwnership = async (req, res, next) => {
+  if (req.user.role === 'admin') return next();
+  const projectId = req.body.projectId || req.body.project_id || req.params.projectId;
+  if (!projectId) return res.status(400).json({ error: 'Project ID required' });
+  const project = await db.getProject(projectId);
+  if (!project || project.user_id !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+  next();
+};
+
+const verifyFileOwnership = async (req, res, next) => {
+  if (req.user.role === 'admin') return next();
+  const fileId = req.params.id;
+  const file = await db.getFileById(fileId);
+  if (!file) return res.status(404).json({ error: 'File not found' });
+  const project = await db.getProject(file.project_id);
+  if (!project || project.user_id !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+  next();
+};
+
+// Serve uploaded files (behind auth + ownership check)
+app.use('/uploads', async (req, res, next) => {
   const token = req.cookies.authToken;
   if (!token) return res.status(401).send('Unauthorized');
   try {
-    require('jsonwebtoken').verify(token, require('./auth').JWT_SECRET);
+    const decoded = require('jsonwebtoken').verify(token, require('./auth').JWT_SECRET);
+    const user = await db.getUserById(decoded.id);
+    if (!user) return res.status(401).send('Unauthorized');
+    // Admins can access all files
+    if (user.role === 'admin') return next();
+    // Customers: verify file belongs to their project
+    const filename = decodeURIComponent(req.path.replace(/^\//, ''));
+    const file = db.db.prepare('SELECT f.*, p.user_id FROM files f JOIN projects p ON f.project_id = p.id WHERE f.filename = ? OR f.original_name = ?').get(filename, filename);
+    if (!file || file.user_id !== user.id) return res.status(403).send('Forbidden');
     next();
   } catch { res.status(401).send('Unauthorized'); }
 }, express.static(uploadsDir));
@@ -245,6 +285,11 @@ app.post('/login/mfa', async (req, res) => {
   } catch (e) {
     res.redirect('/login');
   }
+});
+
+// MFA enrollment prompt (shown after login for users without MFA)
+app.get('/profile/mfa/prompt', auth.authenticate, async (req, res) => {
+  res.render('mfa-prompt', { user: req.user });
 });
 
 app.get('/profile/mfa/setup', auth.authenticate, async (req, res) => {
@@ -322,6 +367,11 @@ app.post('/login', loginLimiter, async (req, res) => {
     const { email, password } = req.body;
     const user = await db.getUser(email);
     
+    // Check if account is pending approval
+    if (user && user.approved === 0) {
+      return res.render('login', { error: 'Your account is pending approval. We\'ll be in touch soon.', email });
+    }
+
     if (!user || !auth.verifyPassword(password, user.password_hash)) {
       // Track failure
       const count = (failedLogins.get(req.ip) || 0) + 1;
@@ -373,6 +423,11 @@ app.post('/login', loginLimiter, async (req, res) => {
       maxAge: 2 * 60 * 60 * 1000 // 2 hours
     });
     
+    // Redirect non-MFA users to setup prompt
+    if (!user.mfa_secret) {
+      return res.redirect('/profile/mfa/prompt');
+    }
+
     res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
   } catch (e) {
     console.error('Login error:', e);
@@ -462,6 +517,17 @@ app.post('/admin/customers/:id/delete', auth.authenticate, auth.requireAdmin, as
   }
 });
 
+// Approve customer account
+app.post('/admin/customers/:id/approve', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    db.getDb().prepare('UPDATE users SET approved = 1 WHERE id = ?').run(req.params.id);
+    res.redirect('/admin/customers?message=Customer approved successfully');
+  } catch (e) {
+    console.error('Approve customer error:', e);
+    res.redirect('/admin/customers?error=Failed to approve customer');
+  }
+});
+
 // Delete project (admin)
 app.post('/admin/projects/:id/delete', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
@@ -479,8 +545,43 @@ app.post('/admin/projects/:id/delete', auth.authenticate, auth.requireAdmin, asy
   }
 });
 
+// Feature Request API
+app.post('/api/feature-request', apiAuth, async (req, res) => {
+  try {
+    const { text, page } = req.body;
+    if (!text || !text.trim()) return res.status(400).json({ error: 'Text is required' });
+    const stmt = db.db.prepare('INSERT INTO feature_requests (user_id, user_name, user_email, text, page) VALUES (?, ?, ?, ?, ?)');
+    stmt.run(req.user.id, req.user.name, req.user.email, text.trim(), page || 'unknown');
+    // Telegram notification
+    const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+    const tgChat = process.env.TELEGRAM_CHAT_ID;
+    if (tgToken && tgChat) {
+      const msg = `💡 Feature Request\nFrom: ${req.user.name} (${req.user.email})\nPage: ${page || 'unknown'}\n\n${text.trim()}`;
+      fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: tgChat, text: msg })
+      }).catch(err => console.error('Telegram notify failed:', err.message));
+    }
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Feature request error:', e);
+    res.status(500).json({ error: 'Failed to submit feature request' });
+  }
+});
+
+// Admin: Feature Requests list
+app.get('/admin/feature-requests', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const requests = db.db.prepare('SELECT * FROM feature_requests ORDER BY created_at DESC').all();
+    res.render('admin/feature-requests', { user: req.user, requests, currentPage: 'admin-feature-requests' });
+  } catch (e) {
+    console.error('Feature requests page error:', e);
+    res.status(500).send('Error loading feature requests');
+  }
+});
+
 // Delete file (API - works from portal and session)
-app.delete('/api/files/:id', apiAuth, async (req, res) => {
+app.delete('/api/files/:id', apiAuth, verifyFileOwnership, async (req, res) => {
   try {
     const file = await db.getFile(req.params.id);
     if (!file) return res.status(404).json({ error: 'File not found' });
@@ -1643,6 +1744,11 @@ app.post('/api/upload', apiAuth, uploadLimiter, upload.single('file'), async (re
     let description = '';
     
     if (projectId) {
+      // Verify ownership
+      if (req.user.role !== 'admin') {
+        const proj = await db.getProject(projectId);
+        if (!proj || proj.user_id !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+      }
       const result = await db.createFile(
         projectId,
         sessionId || null,
@@ -1766,7 +1872,7 @@ Only include actual requirements, specifications, or important project facts. Do
 });
 
 // Update file description
-app.put('/api/files/:id/description', apiAuth, express.json(), async (req, res) => {
+app.put('/api/files/:id/description', apiAuth, express.json(), verifyFileOwnership, async (req, res) => {
   try {
     const { description } = req.body;
     const fileId = req.params.id;
@@ -1783,6 +1889,13 @@ app.put('/api/files/:id/description', apiAuth, express.json(), async (req, res) 
 app.post('/api/analyze-session', apiAuth, express.json({ limit: '20mb' }), async (req, res) => {
   try {
     const { transcript, fileContents, sessionId, projectId, existingRequirements } = req.body;
+    
+    // Verify ownership
+    if (projectId && req.user.role !== 'admin') {
+      const proj = await db.getProject(projectId);
+      if (!proj || proj.user_id !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+    }
+    
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
     
     if (!OPENAI_KEY) {
@@ -2027,7 +2140,7 @@ app.post('/api/chat', apiAuth, express.json({ limit: '10mb' }), async (req, res)
 });
 
 // Session management API
-app.get('/api/sessions/:id', apiAuth, async (req, res) => {
+app.get('/api/sessions/:id', apiAuth, verifySessionOwnership, async (req, res) => {
   try {
     const session = await db.getSession(req.params.id);
     if (!session) {
@@ -2045,7 +2158,7 @@ app.get('/api/sessions/:id', apiAuth, async (req, res) => {
   }
 });
 
-app.put('/api/sessions/:id', apiAuth, express.json({ limit: '10mb' }), async (req, res) => {
+app.put('/api/sessions/:id', apiAuth, express.json({ limit: '10mb' }), verifySessionOwnership, async (req, res) => {
   try {
     const { transcript, requirements, context, status } = req.body;
     await db.updateSession(req.params.id, transcript, requirements, context, status || 'active');
@@ -2057,7 +2170,7 @@ app.put('/api/sessions/:id', apiAuth, express.json({ limit: '10mb' }), async (re
 });
 
 // POST /save endpoint for sendBeacon (page unload) — sendBeacon only sends POST
-app.post('/api/sessions/:id/save', apiAuth, express.json({ limit: '10mb' }), async (req, res) => {
+app.post('/api/sessions/:id/save', apiAuth, express.json({ limit: '10mb' }), verifySessionOwnership, async (req, res) => {
   try {
     const { transcript, requirements, context, status } = req.body;
     await db.updateSession(req.params.id, transcript, requirements, context, status || 'paused');
@@ -2309,7 +2422,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // Protected backup endpoint — dumps all data as JSON
-app.get('/api/backup', async (req, res) => {
+app.get('/api/backup', apiAuth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   const backupKey = req.query.key;
   if (!backupKey || backupKey !== (process.env.BACKUP_KEY || 'morti-backup-2026')) {
     return res.status(403).json({ error: 'Invalid backup key' });
@@ -2349,6 +2463,135 @@ app.get('/api/backup', async (req, res) => {
     console.error('Backup error:', e);
     res.status(500).json({ error: 'Backup failed: ' + e.message });
   }
+});
+
+// Signup page
+app.get('/signup', (req, res) => {
+  res.render('signup');
+});
+
+const signupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: 'Too many signup attempts, please try again later.' });
+
+app.post('/signup', signupLimiter, async (req, res) => {
+  try {
+    const { name, company, phone, email, password, password2 } = req.body;
+    if (!name || !company || !phone || !email || !password || !password2) {
+      return res.render('signup', { error: 'Please fill in all fields.', formData: req.body });
+    }
+    if (password !== password2) {
+      return res.render('signup', { error: 'Passwords do not match.', formData: req.body });
+    }
+    if (password.length < 8) {
+      return res.render('signup', { error: 'Password must be at least 8 characters.', formData: req.body });
+    }
+
+    // Check if email already exists
+    const existing = await db.getUser(email);
+    if (existing) {
+      return res.render('signup', { error: 'An account with this email already exists.', formData: req.body });
+    }
+
+    // Create user with approved = 0 (pending)
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const stmt = db.getDb().prepare(`
+      INSERT INTO users (email, password_hash, name, company, phone, role, approved)
+      VALUES (?, ?, ?, ?, ?, 'customer', 0)
+    `);
+    stmt.run(email, hashedPassword, name, company, phone);
+
+    // Telegram notification
+    const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+    const tgChat = process.env.TELEGRAM_CHAT_ID;
+    if (tgToken && tgChat) {
+      try {
+        const tgMsg = `🆕 New signup request!\n\nName: ${name}\nCompany: ${company}\nEmail: ${email}\nPhone: ${phone}\n\nAccount is pending approval.`;
+        await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: tgChat, text: tgMsg })
+        });
+      } catch (err) {
+        console.error('Telegram notify failed:', err.message);
+      }
+    }
+
+    res.render('signup', { success: true });
+  } catch (e) {
+    console.error('Signup error:', e);
+    res.render('signup', { error: 'Something went wrong. Please try again.', formData: req.body });
+  }
+});
+
+// About page
+app.get('/about', (req, res) => {
+  res.render('about');
+});
+
+// Contact page
+app.get('/contact', (req, res) => {
+  res.render('contact');
+});
+
+const contactLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: 'Too many enquiries, please try again later.' });
+
+app.post('/contact', contactLimiter, async (req, res) => {
+  const { name, email, company, subject, message } = req.body;
+  if (!name || !email || !message) {
+    return res.render('contact', { error: 'Please fill in all required fields.', formData: req.body });
+  }
+
+  const subjectLabels = { general: 'General Enquiry', 'new-project': 'New Project', quote: 'Request a Quote', support: 'Existing Project Support' };
+  const subjectLine = `[Morti Projects] ${subjectLabels[subject] || 'Enquiry'} from ${name}`;
+  const body = `Name: ${name}\nEmail: ${email}\nCompany: ${company || 'N/A'}\nType: ${subjectLabels[subject] || subject}\n\nMessage:\n${message}`;
+
+  // Save to file as backup
+  const enquiriesDir = path.join(process.env.DATA_DIR || path.join(__dirname, 'data'), 'enquiries');
+  if (!fs.existsSync(enquiriesDir)) fs.mkdirSync(enquiriesDir, { recursive: true });
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  fs.writeFileSync(path.join(enquiriesDir, `enquiry-${timestamp}.txt`), `${subjectLine}\nDate: ${new Date().toISOString()}\n\n${body}`);
+
+  // Send email if SMTP configured
+  const smtpUser = process.env.SMTP_USER || process.env.CONTACT_EMAIL;
+  const smtpPass = process.env.SMTP_PASS;
+  const contactTo = process.env.CONTACT_EMAIL || 'luke.mccarthy.home@gmail.com';
+
+  if (smtpUser && smtpPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: smtpUser, pass: smtpPass }
+      });
+      await transporter.sendMail({
+        from: `"Morti Projects" <${smtpUser}>`,
+        to: contactTo,
+        replyTo: email,
+        subject: subjectLine,
+        text: body
+      });
+    } catch (err) {
+      console.error('Email send failed:', err.message);
+      // Still show success — enquiry saved to file
+    }
+  }
+
+  // Also send Telegram notification
+  const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+  const tgChat = process.env.TELEGRAM_CHAT_ID;
+  if (tgToken && tgChat) {
+    try {
+      const tgMsg = `📬 New enquiry from ${name} (${email})${company ? ' — ' + company : ''}\n\n${subjectLabels[subject] || subject}: ${message.substring(0, 500)}`;
+      await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: tgChat, text: tgMsg })
+      });
+    } catch (err) {
+      console.error('Telegram notify failed:', err.message);
+    }
+  }
+
+  res.render('contact', { success: true });
 });
 
 // Root redirect

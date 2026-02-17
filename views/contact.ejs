@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact — Morti Projects</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #333; background: #f7f8fc; min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 40px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+        }
+        .nav-brand { font-size: 1.25rem; font-weight: 700; color: #667eea; }
+        .nav-links { display: flex; gap: 28px; align-items: center; }
+        .nav-links a.nav-text { font-size: 0.9rem; color: #555; transition: color 0.2s; }
+        .nav-links a.nav-text:hover { color: #667eea; }
+        .btn-login {
+            display: inline-block; padding: 10px 28px; border-radius: 8px;
+            font-weight: 600; font-size: 0.95rem; transition: all 0.25s;
+            background: #10b981; color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); background: #059669; }
+
+        .contact-container {
+            max-width: 640px; margin: 120px auto 60px; padding: 0 20px;
+        }
+        .contact-card {
+            background: #fff; border-radius: 16px; padding: 48px 40px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+        }
+        .contact-card h1 {
+            font-size: 2rem; font-weight: 700; color: #2d3748; margin-bottom: 8px;
+        }
+        .contact-card .subtitle {
+            color: #718096; margin-bottom: 32px; line-height: 1.6;
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 0.9rem; font-weight: 600;
+            color: #4a5568; margin-bottom: 6px;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0;
+            border-radius: 10px; font-size: 0.95rem; font-family: inherit;
+            transition: border-color 0.2s; background: #fff;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none; border-color: #667eea;
+        }
+        .form-group textarea { resize: vertical; min-height: 140px; }
+        .btn-submit {
+            display: inline-block; padding: 14px 36px; border-radius: 10px;
+            font-weight: 600; font-size: 1rem; border: none; cursor: pointer;
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+            box-shadow: 0 4px 14px rgba(102,126,234,0.4);
+            transition: all 0.25s; width: 100%;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .success-msg {
+            background: #f0fff4; border: 2px solid #c6f6d5; border-radius: 12px;
+            padding: 24px; text-align: center; color: #276749;
+        }
+        .success-msg h2 { margin-bottom: 8px; }
+        .error-msg {
+            background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px;
+            padding: 12px 16px; color: #c53030; margin-bottom: 16px; font-size: 0.9rem;
+        }
+
+        footer {
+            text-align: center; padding: 40px; color: #a0aec0; font-size: 0.85rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        footer a { color: #667eea; }
+
+        @media (max-width: 640px) {
+            nav { padding: 12px 20px; }
+            .contact-card { padding: 32px 24px; }
+            .contact-card h1 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="nav-brand">✦ Morti Projects</a>
+    <div class="nav-links">
+        <a href="/#services" class="nav-text">Services</a>
+        <a href="/#how-it-works" class="nav-text">How It Works</a>
+        <a href="/about" class="nav-text">About</a>
+        <a href="/#pricing" class="nav-text">Pricing</a>
+        <a href="/contact" class="nav-text" style="color: #667eea; font-weight: 600;">Contact</a>
+        <a href="/login" class="btn-login">Customer Login</a>
+    </div>
+</nav>
+
+<div class="contact-container">
+    <div class="contact-card">
+        <% if (locals.success) { %>
+            <div class="success-msg">
+                <h2>✅ Message Sent!</h2>
+                <p>Thanks for reaching out. We'll get back to you shortly.</p>
+                <br>
+                <a href="/" style="color: #667eea; font-weight: 600;">← Back to Home</a>
+            </div>
+        <% } else { %>
+            <h1>Get in Touch</h1>
+            <p class="subtitle">Have a project idea? Want to learn more about how we work? Drop us a message and we'll get back to you.</p>
+
+            <% if (locals.error) { %>
+                <div class="error-msg"><%= error %></div>
+            <% } %>
+
+            <form method="POST" action="/contact" id="contactForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Your Name *</label>
+                        <input type="text" id="name" name="name" required value="<%= locals.formData ? formData.name || '' : '' %>">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required value="<%= locals.formData ? formData.email || '' : '' %>">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="company">Company / Organisation</label>
+                        <input type="text" id="company" name="company" value="<%= locals.formData ? formData.company || '' : '' %>">
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">What can we help with?</label>
+                        <select id="subject" name="subject">
+                        <option value="general" <%= locals.formData && formData.subject === 'general' ? 'selected' : '' %>>General Enquiry</option>
+                        <option value="new-project" <%= locals.formData && formData.subject === 'new-project' ? 'selected' : '' %>>New Project</option>
+                        <option value="quote" <%= locals.formData && formData.subject === 'quote' ? 'selected' : '' %>>Request a Quote</option>
+                        <option value="support" <%= locals.formData && formData.subject === 'support' ? 'selected' : '' %>>Existing Project Support</option>
+                    </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="message">Message *</label>
+                    <textarea id="message" name="message" required placeholder="Tell us about your project or question..."><%= locals.formData ? formData.message || '' : '' %></textarea>
+                </div>
+                <button type="submit" class="btn-submit" id="submitBtn">Send Message</button>
+            </form>
+
+            <script>
+                document.getElementById('contactForm').addEventListener('submit', function() {
+                    var btn = document.getElementById('submitBtn');
+                    btn.disabled = true;
+                    btn.textContent = 'Sending...';
+                });
+            </script>
+        <% } %>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; <%= new Date().getFullYear() %> Morti Projects &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/login">Customer Login</a></p>
+</footer>
+
+</body>
+</html>

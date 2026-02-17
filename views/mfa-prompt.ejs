@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Your Account — Morti Projects</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #333; background: #f7f8fc; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .prompt-card {
+            background: #fff; border-radius: 16px; padding: 48px 40px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+            max-width: 480px; width: 100%; margin: 20px; text-align: center;
+        }
+        .shield { font-size: 3.5rem; margin-bottom: 16px; }
+        .prompt-card h1 { font-size: 1.6rem; font-weight: 700; color: #2d3748; margin-bottom: 12px; }
+        .prompt-card p { font-size: 1rem; color: #718096; line-height: 1.7; margin-bottom: 24px; }
+        .benefits {
+            text-align: left; background: #f0fff4; border-radius: 10px;
+            padding: 20px 24px; margin-bottom: 28px;
+        }
+        .benefits li {
+            list-style: none; font-size: 0.92rem; color: #276749; padding: 6px 0;
+            padding-left: 24px; position: relative; line-height: 1.5;
+        }
+        .benefits li::before {
+            content: '✓'; position: absolute; left: 0; font-weight: 700; color: #10b981;
+        }
+        .btn-setup {
+            display: block; width: 100%; padding: 14px; border-radius: 10px;
+            font-weight: 600; font-size: 1rem; border: none; cursor: pointer;
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+            box-shadow: 0 4px 14px rgba(102,126,234,0.4);
+            transition: all 0.25s; text-decoration: none; margin-bottom: 16px;
+        }
+        .btn-setup:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .skip-link {
+            display: block; padding: 12px; font-size: 0.95rem; font-weight: 600;
+            color: #667eea; text-decoration: none; border: 2px solid #e2e8f0;
+            border-radius: 10px; transition: all 0.2s;
+        }
+        .skip-link:hover { border-color: #667eea; background: #f7f8fc; }
+        .note { font-size: 0.8rem; color: #a0aec0; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="prompt-card">
+    <div class="shield">🛡️</div>
+    <h1>Protect Your Account</h1>
+    <p>Two-factor authentication (2FA) adds an extra layer of security. It only takes a minute to set up.</p>
+
+    <ul class="benefits">
+        <li>Prevents unauthorised access even if your password is compromised</li>
+        <li>Uses your phone as a second verification step</li>
+        <li>Works with Google Authenticator, Authy, or any TOTP app</li>
+    </ul>
+
+    <a href="/profile/mfa/setup" class="btn-setup">Set Up 2FA Now</a>
+    <a href="<%= user.role === 'admin' ? '/admin' : '/dashboard' %>" class="skip-link">Skip for Now →</a>
+
+    <p class="note">You can always enable 2FA later from your Profile settings.</p>
+</div>
+
+</body>
+</html>

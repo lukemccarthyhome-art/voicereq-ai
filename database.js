@@ -73,6 +73,20 @@ const initDB = () => {
     )
   `);
 
+  // Feature requests table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS feature_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      user_name TEXT,
+      user_email TEXT,
+      text TEXT NOT NULL,
+      page TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id)
+    )
+  `);
+
   // Add description column if it doesn't exist (for existing databases)
   try {
     db.exec(`ALTER TABLE files ADD COLUMN description TEXT`);
@@ -80,6 +94,11 @@ const initDB = () => {
   } catch (e) {
     // Column already exists, ignore error
   }
+
+  // Add phone column if it doesn't exist
+  try { db.exec(`ALTER TABLE users ADD COLUMN phone TEXT`); } catch (e) {}
+  // Add approved column if it doesn't exist (0 = pending, 1 = approved)
+  try { db.exec(`ALTER TABLE users ADD COLUMN approved INTEGER DEFAULT 1`); } catch (e) {}
 
   // Create seed admin user
   createSeedUser();
@@ -119,7 +138,7 @@ const createUser = (email, name, company, role, plainPassword) => {
 };
 
 const getAllUsers = () => {
-  return Promise.resolve(db.prepare(`SELECT id, email, name, company, role, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC`).all());
+  return Promise.resolve(db.prepare(`SELECT id, email, name, company, phone, role, approved, created_at FROM users WHERE role = 'customer' ORDER BY created_at DESC`).all());
 };
 
 const updateUser = (id, email, name, company) => {
@@ -286,6 +305,10 @@ const createFile = (projectId, sessionId, filename, originalName, mimeType, size
   return Promise.resolve(stmt.run(projectId, sessionId, filename, originalName, mimeType, size, extractedText, analysis ? JSON.stringify(analysis) : null));
 };
 
+const getFileById = (id) => {
+  return Promise.resolve(db.prepare('SELECT * FROM files WHERE id = ?').get(id));
+};
+
 const getFilesByProject = (projectId) => {
   return Promise.resolve(db.prepare(`
     SELECT f.*, s.status as session_status
@@ -356,6 +379,7 @@ try {
 module.exports = {
   ready: Promise.resolve(),
   db,
+  getDb: () => db,
   // Users
   getUser,
   getUserById,
@@ -387,6 +411,7 @@ module.exports = {
   getLatestSessionForProject,
   // Files
   createFile,
+  getFileById,
   getFilesByProject,
   getFilesBySession,
   getFile,

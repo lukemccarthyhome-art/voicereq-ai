@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up — Morti Projects</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #333; background: #f7f8fc; min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 40px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+        }
+        .nav-brand { font-size: 1.25rem; font-weight: 700; color: #667eea; }
+        .nav-links { display: flex; gap: 28px; align-items: center; }
+        .nav-links a.nav-text { font-size: 0.9rem; color: #555; transition: color 0.2s; }
+        .nav-links a.nav-text:hover { color: #667eea; }
+        .btn-login {
+            display: inline-block; padding: 10px 28px; border-radius: 8px;
+            font-weight: 600; font-size: 0.95rem; transition: all 0.25s;
+            background: #10b981; color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); background: #059669; }
+
+        .signup-container { max-width: 560px; margin: 120px auto 60px; padding: 0 20px; }
+        .signup-card {
+            background: #fff; border-radius: 16px; padding: 48px 40px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+        }
+        .signup-card h1 { font-size: 2rem; font-weight: 700; color: #2d3748; margin-bottom: 8px; }
+        .signup-card .subtitle { color: #718096; margin-bottom: 32px; line-height: 1.6; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 0.9rem; font-weight: 600;
+            color: #4a5568; margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0;
+            border-radius: 10px; font-size: 0.95rem; font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .btn-submit {
+            display: inline-block; padding: 14px 36px; border-radius: 10px;
+            font-weight: 600; font-size: 1rem; border: none; cursor: pointer;
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+            box-shadow: 0 4px 14px rgba(102,126,234,0.4);
+            transition: all 0.25s; width: 100%; margin-top: 8px;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .success-msg {
+            background: #f0fff4; border: 2px solid #c6f6d5; border-radius: 12px;
+            padding: 32px; text-align: center; color: #276749;
+        }
+        .success-msg h2 { margin-bottom: 12px; font-size: 1.5rem; }
+        .success-msg p { line-height: 1.7; margin-bottom: 8px; }
+        .error-msg {
+            background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px;
+            padding: 12px 16px; color: #c53030; margin-bottom: 16px; font-size: 0.9rem;
+        }
+        .login-link { text-align: center; margin-top: 20px; color: #718096; font-size: 0.9rem; }
+        .login-link a { color: #667eea; font-weight: 600; }
+        .pw-hint { font-size: 0.8rem; color: #a0aec0; margin-top: 4px; }
+
+        footer {
+            text-align: center; padding: 40px; color: #a0aec0; font-size: 0.85rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        footer a { color: #667eea; }
+
+        @media (max-width: 640px) {
+            nav { padding: 12px 20px; }
+            .signup-card { padding: 32px 24px; }
+            .signup-card h1 { font-size: 1.6rem; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="nav-brand">✦ Morti Projects</a>
+    <div class="nav-links">
+        <a href="/#services" class="nav-text">Services</a>
+        <a href="/#how-it-works" class="nav-text">How It Works</a>
+        <a href="/about" class="nav-text">About</a>
+        <a href="/#pricing" class="nav-text">Pricing</a>
+        <a href="/contact" class="nav-text">Contact</a>
+        <a href="/login" class="btn-login">Customer Login</a>
+    </div>
+</nav>
+
+<div class="signup-container">
+    <div class="signup-card">
+        <% if (locals.success) { %>
+            <div class="success-msg">
+                <h2>✅ Account Request Submitted</h2>
+                <p>Thanks for signing up! Your account is currently <strong>under review</strong>.</p>
+                <p>We'll verify your details and activate your account shortly — you'll receive an email once you're approved.</p>
+                <br>
+                <a href="/" style="color: #667eea; font-weight: 600;">← Back to Home</a>
+            </div>
+        <% } else { %>
+            <h1>Create an Account</h1>
+            <p class="subtitle">Sign up to start capturing requirements and building your project with us.</p>
+
+            <% if (locals.error) { %>
+                <div class="error-msg"><%= error %></div>
+            <% } %>
+
+            <form method="POST" action="/signup" id="signupForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input type="text" id="name" name="name" required value="<%= locals.formData ? formData.name || '' : '' %>">
+                    </div>
+                    <div class="form-group">
+                        <label for="company">Company / Organisation *</label>
+                        <input type="text" id="company" name="company" required value="<%= locals.formData ? formData.company || '' : '' %>">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required value="<%= locals.formData ? formData.email || '' : '' %>">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" name="phone" required value="<%= locals.formData ? formData.phone || '' : '' %>">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input type="password" id="password" name="password" required minlength="8">
+                        <div class="pw-hint">Minimum 8 characters</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password2">Confirm Password *</label>
+                        <input type="password" id="password2" name="password2" required minlength="8">
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit" id="submitBtn">Create Account</button>
+            </form>
+
+            <div class="login-link">Already have an account? <a href="/login">Log in</a></div>
+
+            <script>
+                document.getElementById('signupForm').addEventListener('submit', function(e) {
+                    var pw = document.getElementById('password').value;
+                    var pw2 = document.getElementById('password2').value;
+                    if (pw !== pw2) {
+                        e.preventDefault();
+                        alert('Passwords do not match.');
+                        return;
+                    }
+                    var btn = document.getElementById('submitBtn');
+                    btn.disabled = true;
+                    btn.textContent = 'Creating Account...';
+                });
+            </script>
+        <% } %>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; <%= new Date().getFullYear() %> Morti Projects &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/login">Customer Login</a></p>
+</footer>
+
+</body>
+</html>

@@ -3,131 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Morti Projects</title>
+    <title>Login — Morti Projects</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            min-height: 100vh; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #333; background: #f7f8fc; min-height: 100vh;
         }
-        
-        .login-container { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 16px; 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2); 
-            width: 100%; 
-            max-width: 400px; 
+        a { text-decoration: none; color: inherit; }
+
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 40px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 1px 8px rgba(0,0,0,0.06);
         }
-        
-        .logo { 
-            text-align: center; 
-            margin-bottom: 32px; 
+        .nav-brand { font-size: 1.25rem; font-weight: 700; color: #667eea; }
+        .nav-links { display: flex; gap: 28px; align-items: center; }
+        .nav-links a.nav-text { font-size: 0.9rem; color: #555; transition: color 0.2s; }
+        .nav-links a.nav-text:hover { color: #667eea; }
+        .btn-login {
+            display: inline-block; padding: 10px 28px; border-radius: 8px;
+            font-weight: 600; font-size: 0.95rem; transition: all 0.25s;
+            background: #10b981; color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.3);
         }
-        .logo h1 { 
-            font-size: 24px; 
-            color: #333; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 8px; 
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); background: #059669; }
+
+        .login-container {
+            max-width: 440px; margin: 140px auto 60px; padding: 0 20px;
         }
-        .logo p { 
-            color: #666; 
-            margin-top: 8px; 
-            font-size: 14px; 
+        .login-card {
+            background: #fff; border-radius: 16px; padding: 48px 40px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
         }
-        
-        .form-group { 
-            margin-bottom: 20px; 
+        .login-card .logo { text-align: center; margin-bottom: 32px; }
+        .login-card .logo h1 { font-size: 1.6rem; color: #2d3748; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .login-card .logo p { color: #718096; margin-top: 8px; font-size: 0.9rem; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 0.9rem; font-weight: 600;
+            color: #4a5568; margin-bottom: 6px;
         }
-        .form-group label { 
-            display: block; 
-            margin-bottom: 6px; 
-            font-weight: 600; 
-            color: #333; 
+        .form-control {
+            width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0;
+            border-radius: 10px; font-size: 0.95rem; font-family: inherit;
+            transition: border-color 0.2s;
         }
-        .form-control { 
-            width: 100%; 
-            padding: 12px 16px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 8px; 
-            font-size: 14px; 
-            transition: border-color 0.2s; 
+        .form-control:focus { outline: none; border-color: #667eea; }
+
+        .btn-submit {
+            display: inline-block; padding: 14px 36px; border-radius: 10px;
+            font-weight: 600; font-size: 1rem; border: none; cursor: pointer;
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+            box-shadow: 0 4px 14px rgba(102,126,234,0.4);
+            transition: all 0.25s; width: 100%;
         }
-        .form-control:focus { 
-            outline: none; 
-            border-color: #667eea; 
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+
+        .alert-error {
+            background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px;
+            padding: 12px 16px; color: #c53030; margin-bottom: 20px; font-size: 0.9rem; text-align: center;
         }
-        
-        .btn { 
-            width: 100%; 
-            padding: 14px; 
-            background: #667eea; 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            font-size: 16px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: background 0.2s; 
+        .login-footer { text-align: center; margin-top: 24px; color: #718096; font-size: 0.9rem; }
+        .login-footer a { color: #667eea; font-weight: 600; }
+
+        footer {
+            text-align: center; padding: 40px; color: #a0aec0; font-size: 0.85rem;
+            border-top: 1px solid #e2e8f0;
         }
-        .btn:hover { 
-            background: #5a6fd8; 
-        }
-        
-        .alert { 
-            padding: 12px 16px; 
-            border-radius: 8px; 
-            margin-bottom: 20px; 
-            text-align: center; 
-        }
-        .alert-error { 
-            background: #f8d7da; 
-            color: #721c24; 
-            border: 1px solid #f5c6cb; 
-        }
-        
-        .demo-creds { 
-            margin-top: 24px; 
-            padding: 16px; 
-            background: #f8f9ff; 
-            border-radius: 8px; 
-            border: 1px solid #e0e7ff; 
-        }
-        .demo-creds h4 { 
-            color: #667eea; 
-            margin-bottom: 8px; 
-            font-size: 14px; 
-        }
-        .demo-creds p { 
-            font-size: 12px; 
-            color: #666; 
-            margin: 4px 0; 
-        }
-        .demo-creds strong { 
-            font-family: monospace; 
-            background: white; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
+        footer a { color: #667eea; }
+
+        @media (max-width: 640px) {
+            nav { padding: 12px 20px; }
+            .login-card { padding: 32px 24px; }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
+
+<nav>
+    <a href="/" class="nav-brand">✦ Morti Projects</a>
+    <div class="nav-links">
+        <a href="/#services" class="nav-text">Services</a>
+        <a href="/about" class="nav-text">About</a>
+        <a href="/#pricing" class="nav-text">Pricing</a>
+        <a href="/contact" class="nav-text">Contact</a>
+        <a href="/signup" class="btn-login">Sign Up</a>
+    </div>
+</nav>
+
+<div class="login-container">
+    <div class="login-card">
         <div class="logo">
-            <h1>🎙️ Morti Projects</h1>
-            <p>Voice-Powered Requirements Gathering</p>
+            <h1>✦ Morti Projects</h1>
+            <p>Sign in to your account</p>
         </div>
 
         <% if (error) { %>
-            <div class="alert alert-error">
-                <%= error %>
-            </div>
+            <div class="alert-error"><%= error %></div>
         <% } %>
 
         <form method="POST" action="/login">
@@ -135,16 +111,22 @@
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" class="form-control" required value="<%= email || '' %>">
             </div>
-
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" class="form-control" required>
             </div>
-
-            <button type="submit" class="btn">Sign In</button>
+            <button type="submit" class="btn-submit">Sign In</button>
         </form>
 
-        <!-- credentials removed -->
+        <div class="login-footer">
+            Don't have an account? <a href="/signup">Sign up</a>
+        </div>
     </div>
+</div>
+
+<footer>
+    <p>&copy; <%= new Date().getFullYear() %> Morti Projects &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/contact">Contact</a></p>
+</footer>
+
 </body>
 </html>

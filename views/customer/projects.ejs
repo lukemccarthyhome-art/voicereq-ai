@@ -220,5 +220,36 @@ async function exportProject(projectId) {
 }
 </script>
     </main>
+<!-- Feature Request Button & Modal -->
+<button onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:12px 20px;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(102,126,234,0.4);z-index:999;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">💡 Feature Request</button>
+<div id="featureModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:12px;padding:28px;width:90%;max-width:500px;box-shadow:0 8px 30px rgba(0,0,0,0.2);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="color:#333;">💡 Submit a Feature Request</h3>
+      <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button>
+    </div>
+    <textarea id="featureText" rows="5" placeholder="Describe the feature you'd like to see..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+      <button onclick="document.getElementById('featureModal').style.display='none'" style="padding:10px 20px;border:1px solid #ddd;border-radius:8px;background:white;cursor:pointer;font-size:14px;">Cancel</button>
+      <button onclick="submitFeature()" style="padding:10px 20px;border:none;border-radius:8px;background:#667eea;color:white;cursor:pointer;font-weight:600;font-size:14px;">Submit</button>
+    </div>
+    <div id="featureStatus" style="margin-top:8px;font-size:13px;"></div>
+  </div>
+</div>
+<script>
+async function submitFeature(){
+  const text=document.getElementById('featureText').value.trim();
+  if(!text)return;
+  const st=document.getElementById('featureStatus');
+  st.innerHTML='Submitting...';st.style.color='#666';
+  try{
+    const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'projects'})});
+    if(!r.ok)throw new Error('Failed');
+    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#28a745';
+    document.getElementById('featureText').value='';
+    setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
+  }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#dc3545';}
+}
+</script>
 </body>
 </html>

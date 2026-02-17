@@ -24,6 +24,7 @@
     "jsonwebtoken": "^9.0.3",
     "mammoth": "^1.11.0",
     "multer": "^2.0.2",
+    "nodemailer": "^8.0.1",
     "otplib": "^13.3.0",
     "pdf-parse": "^2.4.5",
     "pg": "^8.18.0",
