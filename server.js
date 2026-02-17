@@ -1714,7 +1714,7 @@ async function generateProposalAsync(projectId, project, design, OPENAI_KEY, use
       }
     }
     
-    const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1';
+    const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1-mini';
     
     const prompt = `You are a commercially minded product strategist and pricing advisor for Morti Pty Ltd, an AI consultancy based in Melbourne, Australia. You are given a project design. Your task is to produce a clear, honest pricing proposal with exactly TWO fees the client will sign off on.
 
