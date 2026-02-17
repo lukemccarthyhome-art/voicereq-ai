@@ -697,8 +697,21 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
 
 // Morti Projects: Design extraction and admin design view
 app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const projectId = req.params.id;
+  
+  // Mark as generating and redirect immediately
+  generationStatus[projectId] = { type: 'design', status: 'generating', startedAt: Date.now() };
+  res.redirect(`/admin/projects/${projectId}/design`);
+  
+  // Run extraction in background
+  extractDesignAsync(projectId, req.user).catch(err => {
+    console.error('Background design extraction failed:', err);
+    generationStatus[projectId] = { type: 'design', status: 'error', error: err.message };
+  });
+});
+
+async function extractDesignAsync(projectId, user) {
   try {
-    const projectId = req.params.id;
     const sessions = await db.getSessionsByProject(projectId);
     // aggregate transcript and file contents
     let reqText = '';
@@ -1040,7 +1053,7 @@ ${summarizeRequirements(reqText)}
       id: `design-${projectId}-${Date.now()}`,
       projectId,
       createdAt: new Date().toISOString(),
-      owner: req.user.email,
+      owner: user.email,
       version: designVersion,
       status: designStatus,
       summary: designSummary,
@@ -1098,20 +1111,32 @@ ${summarizeRequirements(reqText)}
       await db.updateProjectDesignQuestions(projectId, JSON.stringify(design.questions || []));
     } catch(e) { console.warn('Failed to update project.design_questions', e.message); }
 
-    res.redirect(`/admin/projects/${projectId}?message=Design+extracted`);
+    generationStatus[projectId] = { type: 'design', status: 'done', finishedAt: Date.now() };
+    console.log(`✅ Design extracted for project ${projectId}`);
   } catch (e) {
     console.error('Extract design error:', e);
-    res.redirect(`/admin/projects/${req.params.id}?error=Design+extraction+failed`);
+    generationStatus[projectId] = { type: 'design', status: 'error', error: e.message };
   }
-});
+}
 
 app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
     const projectId = req.params.id;
+    const genStatus = generationStatus[projectId];
+    const isGenerating = genStatus && genStatus.type === 'design' && genStatus.status === 'generating';
+    
     const designsDir = DESIGNS_DIR;
-    if (!fs.existsSync(designsDir)) return res.status(404).send('No designs found');
-    const candidates = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
-    if (candidates.length === 0) return res.status(404).send('No design for project');
+    const candidates = (fs.existsSync(designsDir) ? fs.readdirSync(designsDir) : []).filter(f => f.startsWith(`design-${projectId}-`));
+    
+    if (candidates.length === 0) {
+      if (isGenerating) {
+        return res.render('admin/project-design', { user: req.user, projectId, design: null, generating: true, title: projectId + ' - Design' });
+      }
+      if (genStatus && genStatus.status === 'error') {
+        return res.render('admin/project-design', { user: req.user, projectId, design: null, generating: false, genError: genStatus.error, title: projectId + ' - Design' });
+      }
+      return res.status(404).send('No design for project');
+    }
     // pick the newest design file by modified time
     let newest = candidates[0];
     let newestMtime = fs.statSync(path.join(designsDir, newest)).mtimeMs;
@@ -1139,7 +1164,7 @@ app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, asyn
         } catch(e) { /* ignore parse errors */ }
       }
     } catch(e) { /* ignore */ }
-    res.render('admin/project-design', { user: req.user, projectId, design, title: projectId + ' - Design' });
+    res.render('admin/project-design', { user: req.user, projectId, design, generating: isGenerating, title: projectId + ' - Design' });
   } catch (e) {
     console.error('Get design error:', e);
     res.status(500).send('Failed to load design');
@@ -1492,11 +1517,21 @@ app.get('/customer/projects/:id/design', auth.authenticate, async (req, res) => 
 const PROPOSALS_DIR = path.join(process.env.DATA_DIR || path.join(__dirname, 'data'), 'proposals');
 if (!fs.existsSync(PROPOSALS_DIR)) fs.mkdirSync(PROPOSALS_DIR, { recursive: true });
 
+// In-memory generation status tracking
+const generationStatus = {}; // { [projectId]: { type: 'proposal'|'design', status: 'generating'|'done'|'error', error?: string, startedAt: number } }
+
 const loadNewestProposal = (projectId) => {
   const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${projectId}-`)).sort().reverse();
   if (files.length === 0) return null;
   return JSON.parse(fs.readFileSync(path.join(PROPOSALS_DIR, files[0]), 'utf8'));
 };
+
+// Poll generation status
+app.get('/admin/projects/:id/generation-status', auth.authenticate, auth.requireAdmin, (req, res) => {
+  const status = generationStatus[req.params.id];
+  if (!status) return res.json({ status: 'idle' });
+  res.json(status);
+});
 
 // View proposal
 app.get('/admin/projects/:id/proposal', auth.authenticate, auth.requireAdmin, async (req, res) => {
@@ -1505,6 +1540,7 @@ app.get('/admin/projects/:id/proposal', auth.authenticate, auth.requireAdmin, as
   
   const proposal = loadNewestProposal(req.params.id);
   const designResult = loadNewestDesign(req.params.id);
+  const genStatus = generationStatus[req.params.id];
   
   res.render('admin/project-proposal', {
     user: req.user,
@@ -1512,6 +1548,7 @@ app.get('/admin/projects/:id/proposal', auth.authenticate, auth.requireAdmin, as
     proposal,
     design: designResult ? designResult.design : null,
     query: req.query,
+    generating: genStatus && genStatus.type === 'proposal' && genStatus.status === 'generating',
     title: project.name + ' - Proposal',
     currentPage: 'admin-projects'
   });
@@ -1519,8 +1556,10 @@ app.get('/admin/projects/:id/proposal', auth.authenticate, auth.requireAdmin, as
 
 // Generate proposal
 app.post('/admin/projects/:id/generate-proposal', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const projectId = req.params.id;
+  
+  // Quick validation, then redirect immediately
   try {
-    const projectId = req.params.id;
     const project = await db.getProject(projectId);
     if (!project) return res.status(404).send('Project not found');
     
@@ -1528,7 +1567,26 @@ app.post('/admin/projects/:id/generate-proposal', auth.authenticate, auth.requir
     if (!designResult || !designResult.design) {
       return res.redirect(`/admin/projects/${projectId}/proposal?error=No design found. Extract a design first.`);
     }
+    
+    // Mark as generating and redirect immediately
+    generationStatus[projectId] = { type: 'proposal', status: 'generating', startedAt: Date.now() };
+    res.redirect(`/admin/projects/${projectId}/proposal`);
+    
+    // Generate in background
     const design = designResult.design;
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    generateProposalAsync(projectId, project, design, OPENAI_KEY, req.user).catch(err => {
+      console.error('Background proposal generation failed:', err);
+      generationStatus[projectId] = { type: 'proposal', status: 'error', error: err.message };
+    });
+  } catch(e) {
+    console.error('Proposal generation error:', e);
+    res.redirect(`/admin/projects/${projectId}/proposal?error=${encodeURIComponent(e.message)}`);
+  }
+});
+
+async function generateProposalAsync(projectId, project, design, OPENAI_KEY, user) {
+  try {
     
     // Build context
     const sections = design.sections || {};
@@ -1673,12 +1731,13 @@ Use commercial judgement. Produce a sophisticated, value-anchored proposal.`;
     // Save
     fs.writeFileSync(path.join(PROPOSALS_DIR, proposal.id + '.json'), JSON.stringify(proposal, null, 2));
     
-    res.redirect(`/admin/projects/${projectId}/proposal`);
+    generationStatus[projectId] = { type: 'proposal', status: 'done', finishedAt: Date.now() };
+    console.log(`✅ Proposal generated for project ${projectId}`);
   } catch(e) {
     console.error('Proposal generation error:', e);
-    res.redirect(`/admin/projects/${req.params.id}/proposal?error=${encodeURIComponent(e.message)}`);
+    generationStatus[projectId] = { type: 'proposal', status: 'error', error: e.message };
   }
-});
+}
 
 // Customer: answer assigned question
 app.post('/customer/projects/:id/design/answer', auth.authenticate, async (req, res) => {

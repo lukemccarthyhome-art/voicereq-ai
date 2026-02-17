@@ -112,6 +112,16 @@
             <p style="color: #94a3b8;">Extract a design before generating a proposal.</p>
             <a href="/admin/projects/<%= project.id %>" class="btn" style="margin-top: 16px;">← Back to Project</a>
         </div>
+    <% } else if (locals.generating) { %>
+        <div class="card" style="text-align: center; padding: 60px;" id="genCard">
+            <div style="font-size: 3rem; margin-bottom: 16px;" id="genSpinner">⏳</div>
+            <h3 style="color: #8b5cf6; margin-bottom: 8px;" id="genTitle">Generating Proposal...</h3>
+            <p style="color: #94a3b8;" id="genMsg">AI is analysing your design and building a value-based proposal. This usually takes 15-30 seconds.</p>
+            <div style="margin-top: 16px; width: 200px; height: 4px; background: #e2e8f0; border-radius: 2px; margin-left: auto; margin-right: auto; overflow: hidden;">
+                <div style="width: 30%; height: 100%; background: #8b5cf6; border-radius: 2px; animation: progress 2s ease-in-out infinite;" id="genBar"></div>
+            </div>
+        </div>
+        <style>@keyframes progress { 0% { width: 10%; margin-left: 0; } 50% { width: 60%; margin-left: 20%; } 100% { width: 10%; margin-left: 90%; } }</style>
     <% } else if (!proposal) { %>
         <div class="card" style="text-align: center; padding: 60px;">
             <div style="font-size: 3rem; margin-bottom: 16px;">💰</div>
@@ -333,6 +343,35 @@ document.querySelectorAll('form[action*="generate-proposal"]').forEach(f => {
         setTimeout(() => { btn.disabled = true; btn.textContent = '⏳ Generating proposal...'; }, 50);
     });
 });
+
+// Poll for generation status if generating
+<% if (locals.generating) { %>
+(function pollStatus() {
+    const projectId = '<%= project.id %>';
+    let elapsed = 0;
+    const interval = setInterval(async () => {
+        elapsed += 2;
+        try {
+            const res = await fetch(`/admin/projects/${projectId}/generation-status`);
+            const data = await res.json();
+            if (data.status === 'done') {
+                clearInterval(interval);
+                window.location.reload();
+            } else if (data.status === 'error') {
+                clearInterval(interval);
+                document.getElementById('genSpinner').textContent = '❌';
+                document.getElementById('genTitle').textContent = 'Generation Failed';
+                document.getElementById('genTitle').style.color = '#dc2626';
+                document.getElementById('genMsg').textContent = data.error || 'Unknown error. Try again.';
+                document.getElementById('genBar').style.display = 'none';
+            } else if (elapsed > 120) {
+                clearInterval(interval);
+                document.getElementById('genMsg').textContent = 'Taking longer than expected. Try refreshing the page.';
+            }
+        } catch(e) { /* retry */ }
+    }, 2000);
+})();
+<% } %>
 </script>
 
 </body>
