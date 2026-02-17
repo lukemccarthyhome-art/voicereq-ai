@@ -100,6 +100,20 @@ const initDB = () => {
   // Add approved column if it doesn't exist (0 = pending, 1 = approved)
   try { db.exec(`ALTER TABLE users ADD COLUMN approved INTEGER DEFAULT 1`); } catch (e) {}
 
+  // Feature requests table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS feature_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      user_name TEXT,
+      user_email TEXT,
+      text TEXT NOT NULL,
+      page TEXT,
+      status TEXT DEFAULT 'new',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Create seed admin user
   createSeedUser();
 
@@ -418,6 +432,29 @@ module.exports = {
   deleteFile,
   updateFileDescription,
   logAction,
+  // Signup/approval
+  createPendingUser: (email, name, company, phone, hashedPassword) => {
+    const stmt = db.prepare('INSERT INTO users (email, password_hash, name, company, phone, role, approved) VALUES (?, ?, ?, ?, ?, \'customer\', 0)');
+    const result = stmt.run(email, hashedPassword, name, company, phone);
+    return Promise.resolve(result);
+  },
+  approveUser: (id) => {
+    db.prepare('UPDATE users SET approved = 1 WHERE id = ?').run(id);
+    return Promise.resolve();
+  },
+  // Feature requests
+  createFeatureRequest: (userId, userName, userEmail, text, page) => {
+    db.prepare('INSERT INTO feature_requests (user_id, user_name, user_email, text, page) VALUES (?, ?, ?, ?, ?)').run(userId, userName, userEmail, text, page);
+    return Promise.resolve();
+  },
+  getAllFeatureRequests: () => {
+    return Promise.resolve(db.prepare('SELECT * FROM feature_requests ORDER BY created_at DESC').all());
+  },
+  queryOne: (sql, params) => {
+    // Convert $1, $2 style to ? for SQLite
+    const sqliteSql = sql.replace(/\$\d+/g, '?');
+    return Promise.resolve(db.prepare(sqliteSql).get(...params));
+  },
   // Sessions (extended)
   appendSessionMessage,
   appendSessionMessageSafe,

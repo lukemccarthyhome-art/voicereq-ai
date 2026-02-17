@@ -230,7 +230,10 @@ app.use('/uploads', async (req, res, next) => {
     if (user.role === 'admin') return next();
     // Customers: verify file belongs to their project
     const filename = decodeURIComponent(req.path.replace(/^\//, ''));
-    const file = db.db.prepare('SELECT f.*, p.user_id FROM files f JOIN projects p ON f.project_id = p.id WHERE f.filename = ? OR f.original_name = ?').get(filename, filename);
+    let file;
+    if (db.queryOne) {
+      file = await db.queryOne('SELECT f.*, p.user_id FROM files f JOIN projects p ON f.project_id = p.id WHERE f.filename = $1 OR f.original_name = $2', [filename, filename]);
+    }
     if (!file || file.user_id !== user.id) return res.status(403).send('Forbidden');
     next();
   } catch { res.status(401).send('Unauthorized'); }
@@ -520,7 +523,7 @@ app.post('/admin/customers/:id/delete', auth.authenticate, auth.requireAdmin, as
 // Approve customer account
 app.post('/admin/customers/:id/approve', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
-    db.getDb().prepare('UPDATE users SET approved = 1 WHERE id = ?').run(req.params.id);
+    await db.approveUser(req.params.id);
     res.redirect('/admin/customers?message=Customer approved successfully');
   } catch (e) {
     console.error('Approve customer error:', e);
@@ -550,8 +553,7 @@ app.post('/api/feature-request', apiAuth, async (req, res) => {
   try {
     const { text, page } = req.body;
     if (!text || !text.trim()) return res.status(400).json({ error: 'Text is required' });
-    const stmt = db.db.prepare('INSERT INTO feature_requests (user_id, user_name, user_email, text, page) VALUES (?, ?, ?, ?, ?)');
-    stmt.run(req.user.id, req.user.name, req.user.email, text.trim(), page || 'unknown');
+    await db.createFeatureRequest(req.user.id, req.user.name, req.user.email, text.trim(), page || 'unknown');
     // Telegram notification
     const tgToken = process.env.TELEGRAM_BOT_TOKEN;
     const tgChat = process.env.TELEGRAM_CHAT_ID;
@@ -572,7 +574,7 @@ app.post('/api/feature-request', apiAuth, async (req, res) => {
 // Admin: Feature Requests list
 app.get('/admin/feature-requests', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
-    const requests = db.db.prepare('SELECT * FROM feature_requests ORDER BY created_at DESC').all();
+    const requests = await db.getAllFeatureRequests();
     res.render('admin/feature-requests', { user: req.user, requests, currentPage: 'admin-feature-requests' });
   } catch (e) {
     console.error('Feature requests page error:', e);
@@ -2494,11 +2496,7 @@ app.post('/signup', signupLimiter, async (req, res) => {
     // Create user with approved = 0 (pending)
     const bcrypt = require('bcryptjs');
     const hashedPassword = bcrypt.hashSync(password, 10);
-    const stmt = db.getDb().prepare(`
-      INSERT INTO users (email, password_hash, name, company, phone, role, approved)
-      VALUES (?, ?, ?, ?, ?, 'customer', 0)
-    `);
-    stmt.run(email, hashedPassword, name, company, phone);
+    await db.createPendingUser(email, name, company, phone, hashedPassword);
 
     // Telegram notification
     const tgToken = process.env.TELEGRAM_BOT_TOKEN;

@@ -108,9 +108,29 @@ const initDB = async (retries = 3) => {
     // Migrations: Add mfa_secret if missing
     try {
       await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret TEXT');
-    } catch (e) {
-      // Ignore if column exists
-    }
+    } catch (e) {}
+    try {
+      await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT');
+    } catch (e) {}
+    try {
+      await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS approved INTEGER DEFAULT 1');
+    } catch (e) {}
+
+    // Feature requests table
+    try {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS feature_requests (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER,
+          user_name TEXT,
+          user_email TEXT,
+          text TEXT NOT NULL,
+          page TEXT,
+          status TEXT DEFAULT 'new',
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+    } catch (e) {}
 
     console.log('✅ PostgreSQL database initialized');
   } finally {
@@ -154,7 +174,7 @@ const createUser = async (email, name, company, role, plainPassword) => {
 
 const getAllUsers = async () => {
   const result = await pool.query(`
-    SELECT id, email, name, company, role, created_at 
+    SELECT id, email, name, company, phone, role, approved, created_at 
     FROM users WHERE role = 'customer' 
     ORDER BY created_at DESC
   `);
@@ -383,6 +403,46 @@ const updateUserMfaSecret = async (userId, secret) => {
   await pool.query('UPDATE users SET mfa_secret = $1 WHERE id = $2', [secret, userId]);
 };
 
+// Signup: create user with pending approval
+const createPendingUser = async (email, name, company, phone, hashedPassword) => {
+  const result = await pool.query(`
+    INSERT INTO users (email, password_hash, name, company, phone, role, approved)
+    VALUES ($1, $2, $3, $4, $5, 'customer', 0)
+    RETURNING *
+  `, [email, hashedPassword, name, company, phone]);
+  return result.rows[0];
+};
+
+// Approve user
+const approveUser = async (id) => {
+  await pool.query('UPDATE users SET approved = 1 WHERE id = $1', [id]);
+};
+
+// File by ID
+const getFileById = async (id) => {
+  const result = await pool.query('SELECT * FROM files WHERE id = $1', [id]);
+  return result.rows[0];
+};
+
+// Feature requests
+const createFeatureRequest = async (userId, userName, userEmail, text, page) => {
+  await pool.query(
+    'INSERT INTO feature_requests (user_id, user_name, user_email, text, page) VALUES ($1, $2, $3, $4, $5)',
+    [userId, userName, userEmail, text, page]
+  );
+};
+
+const getAllFeatureRequests = async () => {
+  const result = await pool.query('SELECT * FROM feature_requests ORDER BY created_at DESC');
+  return result.rows;
+};
+
+// Query helper for ownership checks
+const queryOne = async (sql, params) => {
+  const result = await pool.query(sql, params);
+  return result.rows[0];
+};
+
 module.exports = {
   ready,
   pool,
@@ -416,6 +476,12 @@ module.exports = {
   updateFileDescription,
   logAction,
   updateUserMfaSecret,
+  createPendingUser,
+  approveUser,
+  getFileById,
+  createFeatureRequest,
+  getAllFeatureRequests,
+  queryOne,
   // Stats
   getStats
 };
