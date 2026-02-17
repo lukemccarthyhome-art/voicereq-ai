@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morti Projects — AI-Powered Requirements & Project Design</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #333;
+            overflow-x: hidden;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* Nav */
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 40px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+        }
+        .nav-brand { font-size: 1.25rem; font-weight: 700; color: #667eea; }
+        .nav-links { display: flex; gap: 28px; align-items: center; }
+        .nav-links a { font-size: 0.9rem; color: #555; transition: color 0.2s; }
+        .nav-links a:hover { color: #667eea; }
+        .btn {
+            display: inline-block; padding: 10px 24px; border-radius: 8px;
+            font-weight: 600; font-size: 0.9rem; transition: all 0.25s; cursor: pointer; border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+            box-shadow: 0 4px 14px rgba(102,126,234,0.4);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .btn-outline {
+            border: 2px solid #667eea; color: #667eea; background: transparent;
+        }
+        .btn-outline:hover { background: #667eea; color: #fff; }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 120px 40px 80px; text-align: center; color: #fff;
+        }
+        .hero h1 {
+            font-size: 3.2rem; font-weight: 800; margin-bottom: 20px;
+            animation: fadeUp 0.8s ease-out;
+        }
+        .hero p {
+            font-size: 1.25rem; max-width: 600px; margin: 0 auto 36px;
+            opacity: 0.9; line-height: 1.6;
+            animation: fadeUp 0.8s ease-out 0.15s both;
+        }
+        .hero-buttons {
+            display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+            animation: fadeUp 0.8s ease-out 0.3s both;
+        }
+        .hero .btn-primary { background: #fff; color: #667eea; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+        .hero .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+        .hero .btn-outline { border-color: #fff; color: #fff; }
+        .hero .btn-outline:hover { background: #fff; color: #667eea; }
+
+        /* Sections */
+        section { padding: 100px 40px; }
+        .section-title { text-align: center; font-size: 2rem; font-weight: 700; margin-bottom: 16px; color: #2d3748; }
+        .section-sub { text-align: center; color: #718096; max-width: 560px; margin: 0 auto 60px; line-height: 1.6; }
+
+        /* Features */
+        .features-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 32px; max-width: 1000px; margin: 0 auto;
+        }
+        .feature-card {
+            background: #fff; border-radius: 16px; padding: 36px 28px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+            transition: transform 0.25s, box-shadow 0.25s;
+        }
+        .feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+        .feature-icon { font-size: 2.4rem; margin-bottom: 16px; }
+        .feature-card h3 { font-size: 1.15rem; margin-bottom: 10px; color: #2d3748; }
+        .feature-card p { font-size: 0.95rem; color: #718096; line-height: 1.6; }
+
+        /* How it works */
+        .steps-bg { background: #f7f8fc; }
+        .steps {
+            display: flex; justify-content: center; gap: 48px; max-width: 900px;
+            margin: 0 auto; flex-wrap: wrap; align-items: flex-start;
+        }
+        .step { text-align: center; flex: 1; min-width: 200px; position: relative; }
+        .step-num {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; font-size: 1.4rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 18px;
+        }
+        .step h3 { font-size: 1.15rem; margin-bottom: 8px; color: #2d3748; }
+        .step p { font-size: 0.9rem; color: #718096; line-height: 1.5; }
+        .step-arrow {
+            position: absolute; right: -36px; top: 18px;
+            font-size: 1.5rem; color: #cbd5e0;
+        }
+
+        /* CTA */
+        .cta {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff; border-radius: 24px; max-width: 800px;
+            margin: 0 auto; padding: 60px 40px;
+        }
+        .cta h2 { font-size: 2rem; margin-bottom: 16px; }
+        .cta p { opacity: 0.9; margin-bottom: 32px; font-size: 1.05rem; }
+        .cta .btn-primary { background: #fff; color: #667eea; }
+        .cta .btn-primary:hover { transform: translateY(-2px); }
+
+        /* Footer */
+        footer {
+            text-align: center; padding: 40px; color: #a0aec0; font-size: 0.85rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        footer a { color: #667eea; }
+
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile */
+        @media (max-width: 640px) {
+            nav { padding: 12px 20px; }
+            .nav-links { gap: 14px; }
+            .hero { padding: 100px 20px 60px; }
+            .hero h1 { font-size: 2.2rem; }
+            .hero p { font-size: 1.05rem; }
+            section { padding: 60px 20px; }
+            .step-arrow { display: none; }
+            .steps { gap: 32px; }
+        }
+
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand">✦ Morti Projects</div>
+    <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <% if (isLoggedIn) { %>
+            <a href="<%= dashboardUrl %>" class="btn btn-primary">Dashboard</a>
+        <% } else { %>
+            <a href="/login" class="btn btn-primary">Login</a>
+        <% } %>
+    </div>
+</nav>
+
+<section class="hero">
+    <div>
+        <h1>AI-Powered Project Design</h1>
+        <p>Talk through your requirements naturally. Morti captures everything, designs your solution, and keeps stakeholders aligned — from first conversation to build-ready specs.</p>
+        <div class="hero-buttons">
+            <% if (isLoggedIn) { %>
+                <a href="<%= dashboardUrl %>" class="btn btn-primary">Go to Dashboard</a>
+            <% } else { %>
+                <a href="/login" class="btn btn-primary">Get Started</a>
+                <a href="#features" class="btn btn-outline">Learn More</a>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<section id="features">
+    <h2 class="section-title">Everything you need to nail your next project</h2>
+    <p class="section-sub">From messy conversations to structured, actionable design documents — powered by AI.</p>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🎙️</div>
+            <h3>Voice-Powered Gathering</h3>
+            <p>Talk naturally about your project. Upload recordings, chat live, or paste notes — our AI captures requirements, decisions, and context automatically.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📐</div>
+            <h3>AI Solution Design</h3>
+            <p>Get structured MVP design documents generated from your conversations. Architecture, user flows, and tech recommendations — all in minutes.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">❓</div>
+            <h3>Smart Questions</h3>
+            <p>AI identifies gaps and ambiguities, then routes questions to the right stakeholders. No detail falls through the cracks.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Customer Portal</h3>
+            <p>Clients view designs, answer questions, and track progress in real time. Full transparency, zero back-and-forth emails.</p>
+        </div>
+    </div>
+</section>
+
+<section id="how-it-works" class="steps-bg">
+    <h2 class="section-title">How it works</h2>
+    <p class="section-sub">Three steps from idea to build-ready specs.</p>
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">1</div>
+            <h3>Talk</h3>
+            <p>Record a voice session or chat about your project. Share files, sketches, anything.</p>
+            <span class="step-arrow">→</span>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <h3>Design</h3>
+            <p>AI analyses everything and generates a structured solution design with smart follow-up questions.</p>
+            <span class="step-arrow">→</span>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <h3>Build</h3>
+            <p>Hand off a complete, reviewed design document to your dev team. No gaps, no surprises.</p>
+        </div>
+    </div>
+</section>
+
+<section>
+    <div class="cta">
+        <h2>Ready to streamline your projects?</h2>
+        <p>Stop losing requirements in email threads and meeting notes.</p>
+        <% if (isLoggedIn) { %>
+            <a href="<%= dashboardUrl %>" class="btn btn-primary">Go to Dashboard</a>
+        <% } else { %>
+            <a href="/login" class="btn btn-primary">Get Started — It's Free</a>
+        <% } %>
+    </div>
+</section>
+
+<footer>
+    <p>&copy; <%= new Date().getFullYear() %> Morti Projects. <a href="/login">Login</a></p>
+</footer>
+
+</body>
+</html>

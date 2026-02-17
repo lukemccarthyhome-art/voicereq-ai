@@ -2353,15 +2353,17 @@ app.get('/api/backup', async (req, res) => {
 
 // Root redirect
 app.get('/', (req, res) => {
+  let isLoggedIn = false;
+  let dashboardUrl = '/dashboard';
   if (req.cookies.authToken) {
     try {
-      auth.authenticate(req, res, () => {
-        return res.redirect(req.user.role === 'admin' ? '/admin' : '/dashboard');
-      });
-      return;
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(req.cookies.authToken, process.env.JWT_SECRET || 'your-secret-key');
+      isLoggedIn = true;
+      dashboardUrl = decoded.role === 'admin' ? '/admin' : '/dashboard';
     } catch {}
   }
-  res.redirect('/login');
+  res.render('landing', { isLoggedIn, dashboardUrl });
 });
 
 // Error handling middleware
