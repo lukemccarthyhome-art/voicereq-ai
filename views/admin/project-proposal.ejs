@@ -102,6 +102,17 @@
                 </button>
             </form>
             <% } %>
+            <% if (proposal) { %>
+                <% if (proposal.published) { %>
+                    <form method="POST" action="/admin/projects/<%= project.id %>/proposal/unpublish" style="margin:0;">
+                        <button type="submit" class="btn" style="background: #ef4444;">🔒 Unpublish</button>
+                    </form>
+                <% } else { %>
+                    <form method="POST" action="/admin/projects/<%= project.id %>/proposal/publish" style="margin:0;">
+                        <button type="submit" class="btn" style="background: #10b981;">📤 Publish to Customer</button>
+                    </form>
+                <% } %>
+            <% } %>
         </div>
     </div>
 
@@ -141,6 +152,15 @@
                         Client: <strong><%= proposal.clientCompany || 'TBD' %></strong>
                         &nbsp;·&nbsp; Generated: <%= new Date(proposal.createdAt).toLocaleDateString() %>
                     </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <% if (proposal.approvedAt) { %>
+                        <span style="background:#d1fae5;color:#065f46;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">✅ Approved by <%= proposal.approvedBy %> · <%= new Date(proposal.approvedAt).toLocaleDateString() %></span>
+                    <% } else if (proposal.published) { %>
+                        <span style="background:#dbeafe;color:#1e40af;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">📤 Published <%= proposal.publishedAt ? new Date(proposal.publishedAt).toLocaleDateString() : '' %></span>
+                    <% } else { %>
+                        <span style="background:#fef3c7;color:#92400e;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">Draft</span>
+                    <% } %>
                 </div>
             </div>
 

@@ -90,6 +90,9 @@
         <% if (typeof hasPublishedDesign !== 'undefined' && hasPublishedDesign) { %>
           <a href="/customer/projects/<%= project.id %>/design" class="btn" style="background:#10b981;">📐 View Design</a>
         <% } %>
+        <% if (typeof hasPublishedProposal !== 'undefined' && hasPublishedProposal) { %>
+          <a href="/customer/projects/<%= project.id %>/proposal" class="btn" style="background:#8b5cf6;"><%= (typeof proposalApproved !== 'undefined' && proposalApproved) ? '✅ Proposal Approved' : '💰 View Proposal' %></a>
+        <% } %>
         <form method="POST" action="/projects/<%= project.id %>/delete" onsubmit="return confirm('Delete this project and all its data? This cannot be undone.')" style="display:inline;">
             <button type="submit" class="btn" style="background: #dc3545;">🗑️ Delete Project</button>
         </form>

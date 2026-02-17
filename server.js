@@ -1611,6 +1611,58 @@ app.post('/admin/projects/:id/proposal/chat', auth.authenticate, auth.requireAdm
   }
 });
 
+// Publish/unpublish proposal
+app.post('/admin/projects/:id/proposal/publish', auth.authenticate, auth.requireAdmin, (req, res) => {
+  const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${req.params.id}-`)).sort().reverse();
+  if (files.length === 0) return res.redirect(`/admin/projects/${req.params.id}/proposal?error=No proposal found`);
+  const filePath = path.join(PROPOSALS_DIR, files[0]);
+  const proposal = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  proposal.published = true;
+  proposal.publishedAt = new Date().toISOString();
+  fs.writeFileSync(filePath, JSON.stringify(proposal, null, 2));
+  res.redirect(`/admin/projects/${req.params.id}/proposal`);
+});
+
+app.post('/admin/projects/:id/proposal/unpublish', auth.authenticate, auth.requireAdmin, (req, res) => {
+  const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${req.params.id}-`)).sort().reverse();
+  if (files.length === 0) return res.redirect(`/admin/projects/${req.params.id}/proposal?error=No proposal found`);
+  const filePath = path.join(PROPOSALS_DIR, files[0]);
+  const proposal = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  proposal.published = false;
+  delete proposal.publishedAt;
+  delete proposal.approvedAt;
+  delete proposal.approvedBy;
+  fs.writeFileSync(filePath, JSON.stringify(proposal, null, 2));
+  res.redirect(`/admin/projects/${req.params.id}/proposal`);
+});
+
+// Customer: view published proposal
+app.get('/customer/projects/:id/proposal', auth.authenticate, async (req, res) => {
+  const project = await db.getProject(req.params.id);
+  if (!project) return res.status(404).send('Project not found');
+  if (req.user.role === 'customer' && project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+  const proposal = loadNewestProposal(req.params.id);
+  if (!proposal || !proposal.published) return res.status(404).send('No published proposal');
+  res.render('customer/project-proposal', { user: req.user, project, proposal, title: project.name + ' - Proposal', currentPage: 'customer-projects' });
+});
+
+// Customer: approve proposal
+app.post('/customer/projects/:id/proposal/approve', auth.authenticate, async (req, res) => {
+  const project = await db.getProject(req.params.id);
+  if (!project) return res.status(404).send('Project not found');
+  if (req.user.role === 'customer' && project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+  const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${req.params.id}-`)).sort().reverse();
+  if (files.length === 0) return res.status(404).send('No proposal');
+  const filePath = path.join(PROPOSALS_DIR, files[0]);
+  const proposal = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  if (!proposal.published) return res.status(403).send('Proposal not published');
+  proposal.approvedAt = new Date().toISOString();
+  proposal.approvedBy = req.user.email;
+  proposal.status = 'approved';
+  fs.writeFileSync(filePath, JSON.stringify(proposal, null, 2));
+  res.redirect(`/customer/projects/${req.params.id}/proposal`);
+});
+
 async function generateProposalAsync(projectId, project, design, OPENAI_KEY, user) {
   try {
     
@@ -1929,6 +1981,8 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
   let customerQuestions = [];
   let customerDesignId = '';
   let customerAnswers = [];
+  let hasPublishedProposal = false;
+  let proposalApproved = false;
   try {
     const designResult = loadNewestDesign(req.params.id);
     if (designResult && designResult.design) {
@@ -1940,6 +1994,10 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
       }
     }
   } catch(e) {}
+  try {
+    const proposal = loadNewestProposal(req.params.id);
+    if (proposal && proposal.published) { hasPublishedProposal = true; proposalApproved = !!proposal.approvedAt; }
+  } catch(e) {}
 
   res.render('customer/project', {
     user: req.user,
@@ -1948,6 +2006,8 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
     files,
     activeSession,
     hasPublishedDesign,
+    hasPublishedProposal,
+    proposalApproved,
     customerQuestions,
     customerDesignId,
     customerAnswers,
