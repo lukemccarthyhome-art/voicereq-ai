@@ -73,6 +73,53 @@ const sanitizeInput = (req, res, next) => {
   next();
 };
 
+// Small HTML escape helper used when rendering extracted design snippets
+function escapeHtml(s) {
+  if (s === undefined || s === null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Lightweight summarizer for requirements -> return brief summary
+function summarizeRequirements(text){
+  const lines = (text||'').split(/\n+/).map(l=>l.trim()).filter(Boolean);
+  // naive: take first 5 lines and join
+  return lines.slice(0,5).join(' ');
+}
+
+// Build a simple wireframe HTML for the design proposal
+function buildWireframeHtml(projectId, summary){
+  return `
+    <div style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial; color:#0f172a;">
+      <h2 style="margin-bottom:6px">Proposed design for ${projectId}</h2>
+      <p style="color:#475569">${escapeHtml(summary)}</p>
+      <div style="margin-top:12px;padding:12px;border:1px dashed #cbd5e1;border-radius:8px;background:#fff">
+        <div style="height:12px;background:#eef2ff;border-radius:6px;margin-bottom:10px;width:40%"></div>
+        <div style="height:200px;border:1px solid #e2e8f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#64748b">Wireframe placeholder (hero card + CTA)</div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <div style="flex:1;height:40px;background:#667eea;border-radius:8px;color:white;display:flex;align-items:center;justify-content:center">Primary CTA</div>
+          <div style="flex:1;height:40px;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#0f172a">Secondary</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function generateFollowupQuestions(summary){
+  // naive questions based on summary length and common gaps
+  const qs = [
+    'Confirm primary CTA and desired user action.',
+    'Any branding or color guidelines to apply?',
+    'Which data sources or files are authoritative for requirements?'
+  ];
+  return qs;
+}
+
+
 // Cloudflare-only Middleware
 const cloudflareOnly = (req, res, next) => {
   // TEMPORARILY DISABLED TO DEBUG 502 ERROR
@@ -493,7 +540,33 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
   const sessions = await db.getSessionsByProject(req.params.id);
   const files = await db.getFilesByProject(req.params.id);
   
+  // check for existing design
+  const designsDir = path.join(__dirname, 'data', 'designs');
+  let designExists = false;
+  try {
+    if (fs.existsSync(designsDir)) {
+      const files = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${req.params.id}-`));
+      if (files.length > 0) {
+        designExists = true;
+        // build designs list with metadata
+        const designsList = files.map(fn => {
+          try { const d = JSON.parse(fs.readFileSync(path.join(designsDir, fn), 'utf8')); return { id: d.id || fn.replace('.json',''), file: fn, createdAt: d.createdAt || fs.statSync(path.join(designsDir, fn)).mtime.toISOString(), version: d.version || 1, status: d.status || 'draft', owner: d.owner || '' }; } catch(e) { return { id: fn.replace('.json',''), file: fn, createdAt: fs.statSync(path.join(designsDir, fn)).mtime.toISOString(), version: 1, status: 'draft', owner: '' }; }
+        }).sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+        // attach to locals
+        res.locals.designsList = designsList;
+        try {
+          const newestFile = designsList[0] && designsList[0].file;
+          if (newestFile) {
+            const newestDesign = JSON.parse(fs.readFileSync(path.join(designsDir, newestFile), "utf8"));
+            res.locals.latestDesign = newestDesign;
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(e) { designExists = false; }
   res.render('admin/project-detail', {
+
+    designExists: designExists,
     user: req.user,
     project,
     sessions,
@@ -506,6 +579,334 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
       { name: project.name }
     ]
   });
+});
+
+
+// Morti Projects: Design extraction and admin design view
+app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const sessions = await db.getSessionsByProject(projectId);
+    // aggregate transcript and file contents
+    let reqText = '';
+    sessions.forEach(s => {
+      try {
+        const t = JSON.parse(s.transcript || '[]');
+        t.forEach(m => reqText += `${m.role}: ${m.text}
+`);
+      } catch {}
+    });
+    const files = await db.getFilesByProject(projectId);
+    files.forEach(f => { reqText += `FILE ${f.original_name}: ${ (f.extracted_text||'').substring(0,200) }
+`; });
+
+    // Use LLM (gpt-5-mini) to generate a structured solution design and follow-up questions
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    let llmDesignMarkdown = '';
+    let llmQuestions = generateFollowupQuestions(summarizeRequirements(reqText));
+    let designVersion = 1;
+    let designStatus = 'draft';
+
+    // Build structured prompt asking for JSON with explicit fields
+    const buildPrompt = (context, prevAnswers) => {
+      return `You are an expert software architect. Given the project conversation and uploaded files below, produce a SOLUTION DESIGN document.
+
+INSTRUCTIONS:
+- Output valid JSON only.
+- JSON keys: "design" (string, markdown with sections: Summary, Architecture, Components, Data Flow, APIs, Security, Integrations, Acceptance Criteria, Risks), "questions" (array of strings, outstanding clarifying questions), "summary" (2-3 sentence summary).
+- Do NOT include raw chat transcript in the design. Distill requirements into decisions and assumptions.
+
+CONTEXT:
+${context}
+
+PREVIOUS_ANSWERS:
+${prevAnswers || 'None'}`;
+    };
+
+    const prevAnswersText = '';// include any existing answers if available
+    if (OPENAI_KEY) {
+      try {
+        const prompt = buildPrompt(reqText.substring(0,15000), prevAnswersText);
+        const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
+          body: JSON.stringify({ model: model, temperature: 1, max_completion_tokens: 2000, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          let content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+          // Parse JSON safely: try to extract JSON substring
+          try {
+            const jsonStart = content.indexOf('{');
+            const jsonText = jsonStart >=0 ? content.slice(jsonStart) : content;
+            const parsed = JSON.parse(jsonText);
+            llmDesignMarkdown = parsed.design || parsed.design_md || parsed.designText || parsed.design_html || '';
+            llmQuestions = parsed.questions || llmQuestions;
+          } catch (e) {
+            // fallback: treat entire content as markdown
+            llmDesignMarkdown = content || '';
+          }
+        } else {
+          console.error('LLM call failed with status', resp.status);
+        }
+      } catch (e) { console.error('LLM call error:', e.message); }
+    } else {
+      // stub
+      llmDesignMarkdown = `## Summary
+
+${summarizeRequirements(reqText)}
+
+## Architecture
+
+- Backend: Express
+- DB: SQLite/Postgres
+
+## Components
+
+- Proposal generator service
+
+## Data Flow
+
+- Input: project requirements -> generator -> proposal
+
+## APIs
+
+- /api/proposals/create
+
+## Security
+
+- JWT auth, HTTPS
+
+## Acceptance Criteria
+
+- Generates proposal, supports approval and signing.`;
+    }
+
+    // Defensive sanitization: remove verbatim transcript lines that start with user: or ai:
+    llmDesignMarkdown = llmDesignMarkdown.replace(/^ *(user|ai|assistant):.*$/gmi, '').trim();
+
+    // Minimal markdown -> HTML renderer (safe)
+    function mdToHtml(md){
+      if(!md) return '';
+      let out = String(md || '');
+      // basic escaping
+      out = out.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      // simple headings
+      out = out.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+      out = out.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+      out = out.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+      // paragraphs (split by double newlines)
+      const paras = out.split(/\n\n+/).map(p=>p.trim()).filter(Boolean);
+      out = paras.map(p => '<p>' + p.replace(/\n/g,'<br/>') + '</p>').join('\n');
+      return out;
+    }
+
+
+    // versioning: if there is already a design, increment version
+    try {
+      const designsDirCheck = path.join(__dirname, 'data', 'designs');
+      if (fs.existsSync(designsDirCheck)) {
+        const existing = fs.readdirSync(designsDirCheck).filter(f => f.startsWith(`design-${projectId}-`));
+        if (existing.length > 0) {
+          // find newest
+          let newest = existing[0];
+          let newestMtime = fs.statSync(path.join(designsDirCheck, newest)).mtimeMs;
+          for (const c of existing) {
+            const m = fs.statSync(path.join(designsDirCheck, c)).mtimeMs;
+            if (m > newestMtime) { newest = c; newestMtime = m; }
+          }
+          try {
+            const prev = JSON.parse(fs.readFileSync(path.join(designsDirCheck, newest), 'utf8'));
+            if (prev && prev.version) designVersion = prev.version + 1;
+          } catch(e){}
+        }
+      }
+    } catch(e){}
+
+    const design = {
+      id: `design-${projectId}-${Date.now()}`,
+      projectId,
+      createdAt: new Date().toISOString(),
+      owner: req.user.email,
+      version: designVersion,
+      status: designStatus,
+      designMarkdown: llmDesignMarkdown,
+      designHtml: mdToHtml(llmDesignMarkdown),
+      questions: llmQuestions,
+      chat: [],
+      answers: [],
+      raw_output: ''
+    };
+
+    // If designMarkdown contains JSON-in-markdown, parse and populate top-level questions
+    try {
+      if (design.designMarkdown && String(design.designMarkdown).trim().startsWith('```json')) {
+        const jsonText = String(design.designMarkdown).replace(/```json\s*|```/g, '').trim();
+        try {
+          const parsed = JSON.parse(jsonText);
+          if (parsed.questions && Array.isArray(parsed.questions)) {
+            design.questions = parsed.questions;
+          }
+          if (parsed.design) {
+            // render parsed.design sections
+            design.designHtml = '';
+            for (const [k,v] of Object.entries(parsed.design)) {
+              design.designHtml += `<h3>${escapeHtml(k)}</h3><p>${escapeHtml(String(v))}</p>`;
+            }
+          }
+          if (parsed.raw_output) design.raw_output = parsed.raw_output;
+        } catch(e) { console.warn('Failed to parse design JSON output:', e.message); }
+      }
+    } catch(e) {}
+
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    fs.mkdirSync(designsDir, { recursive: true });
+    fs.writeFileSync(path.join(designsDir, design.id + '.json'), JSON.stringify(design, null, 2));
+
+    // Mirror questions to project record for easy lookup
+    try {
+      await db.updateProjectDesignQuestions(projectId, JSON.stringify(design.questions || []));
+    } catch(e) { console.warn('Failed to update project.design_questions', e.message); }
+
+    res.redirect(`/admin/projects/${projectId}?message=Design+extracted`);
+  } catch (e) {
+    console.error('Extract design error:', e);
+    res.redirect(`/admin/projects/${req.params.id}?error=Design+extraction+failed`);
+  }
+});
+
+app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    if (!fs.existsSync(designsDir)) return res.status(404).send('No designs found');
+    const candidates = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
+    if (candidates.length === 0) return res.status(404).send('No design for project');
+    // pick the newest design file by modified time
+    let newest = candidates[0];
+    let newestMtime = fs.statSync(path.join(designsDir, newest)).mtimeMs;
+    for (const c of candidates) {
+      const m = fs.statSync(path.join(designsDir, c)).mtimeMs;
+      if (m > newestMtime) { newest = c; newestMtime = m; }
+    }
+    const design = JSON.parse(fs.readFileSync(path.join(designsDir, newest), 'utf8'));
+    // If designMarkdown contains JSON in code fences, try to parse and build designHtml sections
+    try {
+      if (design.designMarkdown && design.designMarkdown.trim().startsWith('```json')) {
+        const jsonText = design.designMarkdown.replace(/```json\s*|```/g, '').trim();
+        try {
+          const parsed = JSON.parse(jsonText);
+          if (parsed && parsed.design) {
+            // parsed.design may be object with sections
+            const sections = parsed.design;
+            let html = '';
+            if (parsed.summary) html += `<h3>Summary</h3><p>${escapeHtml(parsed.summary)}</p>`;
+            for (const [k,v] of Object.entries(sections)) {
+              html += `<h3>${escapeHtml(k)}</h3><p>${escapeHtml(v)}</p>`;
+            }
+            design.designHtml = html;
+          }
+        } catch(e) { /* ignore parse errors */ }
+      }
+    } catch(e) { /* ignore */ }
+    res.render('admin/project-design', { user: req.user, projectId, design, title: projectId + ' - Design' });
+  } catch (e) {
+    console.error('Get design error:', e);
+    res.status(500).send('Failed to load design');
+  }
+});
+// Generate a simple mermaid flowchart from the design and return as text
+app.post('/admin/projects/:id/design/flowchart', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    if (!fs.existsSync(designsDir)) return res.status(404).json({ error: 'No designs found' });
+    const candidates = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
+    if (candidates.length === 0) return res.status(404).json({ error: 'No design for project' });
+    // pick newest
+    let newest = candidates[0];
+    let newestMtime = fs.statSync(path.join(designsDir, newest)).mtimeMs;
+    for (const c of candidates) {
+      const m = fs.statSync(path.join(designsDir, c)).mtimeMs;
+      if (m > newestMtime) { newest = c; newestMtime = m; }
+    }
+    const design = JSON.parse(fs.readFileSync(path.join(designsDir, newest), 'utf8'));
+    // Build mermaid flow: list top components and simple arrows
+    let components = [];
+    try {
+      if (design.designMarkdown && design.designMarkdown.trim().startsWith('```json')) {
+        const jsonText = design.designMarkdown.replace(/```json\s*|```/g, '').trim();
+        try { const parsed = JSON.parse(jsonText); if (parsed.design && parsed.design.Components) {
+            const comps = String(parsed.design.Components).split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
+            components = comps;
+        } }
+        catch(e){}
+      }
+    } catch (e) {}
+    if (components.length === 0) {
+      // fallback: use a default set
+      components = ['Proposal Generator', 'Morti Projects', 'Customer Portal', 'Signing Service'];
+    }
+    let mermaid = 'flowchart LR\n';
+    const ids = components.map((c,i)=> `C${i+1}`);
+    components.forEach((c,i)=>{ mermaid += `${ids[i]}["${c.replace(/\"/g,'')}"]\n`; });
+    for (let i=0;i<ids.length-1;i++) mermaid += `${ids[i]} --> ${ids[i+1]}\n`;
+    res.json({ mermaid });
+  } catch (e) { console.error('Flowchart error', e); res.status(500).json({ error: 'Failed to generate flowchart' }); }
+});
+
+
+app.post('/admin/projects/:id/design/chat', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { designId, text } = req.body;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    const filePath = path.join(designsDir, designId + '.json');
+    if (!fs.existsSync(filePath)) return res.status(404).send('Design not found');
+    const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const entry = { from: req.user.email, text, ts: new Date().toISOString() };
+    design.chat.push(entry);
+    fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
+
+    // append to latest session safely
+    try {
+      await db.appendSessionMessageSafe(projectId, { role: 'admin', text });
+    } catch (e) {
+      console.warn('appendSessionMessageSafe failed:', e.message);
+    }
+
+    res.redirect(`/admin/projects/${projectId}/design`);
+  } catch (e) {
+    console.error('Design chat error:', e);
+    res.redirect(`/admin/projects/${req.params.id}/design?error=Chat+failed`);
+  }
+});
+
+// Save answers to design questions
+app.post('/admin/projects/:id/design/answer', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { designId, question, answer } = req.body;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    const filePath = path.join(designsDir, designId + '.json');
+    if (!fs.existsSync(filePath)) return res.status(404).send('Design not found');
+    const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+    // store answer in design.answers
+    design.answers = design.answers || [];
+    design.answers.push({ question, answer, from: req.user.email, ts: new Date().toISOString() });
+    fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
+
+    // also append to a session safely for audit
+    try { await db.appendSessionMessageSafe(projectId, { role: 'admin', text: `Answer: ${question} -> ${answer}` }); } catch (e) { console.warn('appendSessionMessageSafe failed:', e.message); }
+
+    // Redirect back to project detail so answers appear in the Design Questions area
+    res.redirect(`/admin/projects/${projectId}?message=Answer+saved`);
+  } catch (e) {
+    console.error('Design answer error:', e);
+    res.redirect(`/admin/projects/${req.params.id}/design?error=Save+failed`);
+  }
 });
 
 // Admin: Reset customer password
@@ -942,7 +1343,7 @@ app.post('/api/analyze-session', apiAuth, express.json({ limit: '20mb' }), async
       body: JSON.stringify({
         model: 'gpt-3.5-turbo',
         temperature: 0.3,
-        max_tokens: 4000,
+        max_completion_tokens: 4000,
         messages: [{
           role: 'system',
           content: `You are an expert business analyst conducting requirements analysis. Analyze the provided conversation transcript and uploaded documents to extract NEW requirements not already captured.

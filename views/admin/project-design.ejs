@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Morti Projects</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f0f2f5; line-height:1.6; color:#0f172a; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:16px 0; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+    .header-container { max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:0 20px; }
+    .logo { font-size:20px; font-weight:bold; display:flex; align-items:center; gap:8px; text-decoration:none; color:white; }
+    .nav { display:flex; gap:12px; align-items:center; }
+    .nav a { color:rgba(255,255,255,0.9); text-decoration:none; padding:8px 14px; border-radius:6px; transition:background 0.2s; font-weight:500; font-size:14px; }
+    .nav a:hover { background:rgba(255,255,255,0.2); }
+    .main { max-width:1100px; margin:0 auto; padding:24px 20px; }
+    .breadcrumb { font-size:13px; color:#64748b; margin-bottom:16px; }
+    .breadcrumb a { color:#667eea; text-decoration:none; }
+    .breadcrumb a:hover { text-decoration:underline; }
+    .card { background:white; border-radius:12px; padding:24px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); }
+    .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .card-header h2 { font-size:20px; color:#0f172a; }
+    .badge { display:inline-block; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+    .badge-draft { background:#fef3c7; color:#92400e; }
+    .badge-final { background:#d1fae5; color:#065f46; }
+    .meta-row { display:flex; gap:24px; font-size:13px; color:#64748b; margin-bottom:4px; }
+    .section { margin-top:20px; }
+    .section h3 { font-size:16px; color:#334155; margin-bottom:8px; padding-bottom:6px; border-bottom:2px solid #eef2ff; }
+    .section-body { font-size:14px; color:#334155; line-height:1.7; }
+    .design-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
+    .design-item { padding:16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; }
+    .design-item h4 { font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:#667eea; margin-bottom:6px; }
+    .design-item p { font-size:13px; color:#475569; line-height:1.6; }
+    .full-width { grid-column: 1 / -1; }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border:none; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer; transition:all 0.15s; text-decoration:none; }
+    .btn:hover { transform:translateY(-1px); box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+    .btn-primary { background:#667eea; color:white; }
+    .btn-amber { background:#f59e0b; color:white; }
+    .btn-cyan { background:#06b6d4; color:white; }
+    .btn-sm { padding:6px 12px; font-size:12px; }
+    .question-card { padding:12px 16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; margin-bottom:10px; }
+    .question-card .q-id { display:inline-block; background:#667eea; color:white; width:24px; height:24px; border-radius:50%; text-align:center; line-height:24px; font-size:12px; font-weight:700; margin-right:8px; }
+    .question-card .q-text { font-weight:600; color:#0f172a; font-size:14px; }
+    .question-card .q-assumption { font-size:12px; color:#64748b; margin-top:4px; font-style:italic; }
+    .question-card .q-answer { margin-top:8px; padding:8px 12px; background:#d1fae5; border-radius:6px; color:#065f46; font-size:13px; }
+    .answer-form { display:flex; gap:8px; margin-top:8px; }
+    .answer-form input[type="text"] { flex:1; padding:8px 12px; border:1px solid #dbeafe; border-radius:6px; font-size:13px; }
+    .answer-form button { padding:8px 16px; }
+    .chat-bubble { margin-bottom:10px; padding:10px 14px; border-radius:8px; background:#f1f5f9; }
+    .chat-bubble .chat-meta { font-size:12px; color:#64748b; margin-bottom:4px; }
+    .chat-bubble .chat-meta strong { color:#0f172a; }
+    .chat-bubble .chat-text { font-size:14px; color:#0f172a; }
+    .chat-input { display:flex; gap:8px; margin-top:12px; }
+    .chat-input textarea { flex:1; padding:10px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; font-family:inherit; resize:vertical; min-height:60px; }
+    #flowchartContainer { margin-top:16px; padding:16px; border:1px solid #e2e8f0; border-radius:8px; background:#fff; }
+    #flowchartContainer h4 { margin-bottom:12px; color:#334155; }
+    #flowchartRender { min-height:100px; display:flex; align-items:center; justify-content:center; }
+    .empty-state { text-align:center; padding:24px; color:#94a3b8; font-size:14px; }
+    @media (max-width:768px) {
+      .design-grid { grid-template-columns:1fr; }
+      .card-header { flex-direction:column; gap:12px; align-items:flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-container">
+      <a href="/admin" class="logo">🎙️ Morti Projects</a>
+      <nav class="nav">
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/customers">Customers</a>
+        <a href="/admin/projects">Projects</a>
+        <a href="/profile">Profile</a>
+        <a href="/logout">🚪 Logout</a>
+      </nav>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="breadcrumb">
+      <a href="/admin">Dashboard</a> › <a href="/admin/projects">Projects</a> › <a href="/admin/projects/<%= projectId %>">Project <%= projectId %></a> › Design
+    </div>
+
+    <%
+      // Parse design sections from JSON-in-markdown if available
+      let designSections = null;
+      let designSummary = '';
+      try {
+        if (design.designMarkdown && design.designMarkdown.trim().startsWith('```json')) {
+          const jsonText = design.designMarkdown.replace(/```json\s*|```/g, '').trim();
+          const parsed = JSON.parse(jsonText);
+          if (parsed.design) designSections = parsed.design;
+          if (parsed.summary) designSummary = parsed.summary;
+        }
+      } catch(e) {}
+    %>
+
+    <!-- Header Card -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>📐 Solution Design</h2>
+          <div class="meta-row" style="margin-top:8px;">
+            <span>👤 <%= design.owner %></span>
+            <span>📅 <%= new Date(design.createdAt).toLocaleString() %></span>
+            <% if (design.version) { %><span>v<%= design.version %></span><% } %>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge <%= (design.status === 'final') ? 'badge-final' : 'badge-draft' %>"><%= design.status || 'draft' %></span>
+          <form method="POST" action="/admin/projects/<%= projectId %>/extract-design" style="margin:0">
+            <button type="submit" class="btn btn-amber btn-sm">🔄 Refresh</button>
+          </form>
+          <button id="generateFlowchart" class="btn btn-cyan btn-sm">🗺️ Flowchart</button>
+        </div>
+      </div>
+
+      <% if (designSummary) { %>
+        <div style="padding:12px 16px;background:#eef2ff;border-radius:8px;font-size:14px;color:#3730a3;margin-bottom:16px;">
+          <strong>Summary:</strong> <%= designSummary %>
+        </div>
+      <% } %>
+
+      <% if (designSections) { %>
+        <div class="design-grid">
+          <% const sectionOrder = ['Summary','Dependencies','ClientResponsibilities','Architecture','Components','DataFlow','APIs','Security','Integrations','AcceptanceCriteria','Risks']; %>
+          <% const sectionLabels = { Summary:'Summary', Dependencies:'Dependencies', ClientResponsibilities:'Client Responsibilities', Architecture:'Architecture', Components:'Components', DataFlow:'Data Flow', APIs:'APIs', Security:'Security', Integrations:'Integrations', AcceptanceCriteria:'Acceptance Criteria', Risks:'Risks' }; %>
+          <% const fullWidthSections = ['Summary','Architecture','AcceptanceCriteria']; %>
+          <% sectionOrder.forEach(key => { %>
+            <% if (designSections[key]) { %>
+              <div class="design-item <%= fullWidthSections.includes(key) ? 'full-width' : '' %>">
+                <h4><%= sectionLabels[key] || key %></h4>
+                <p><%= designSections[key] %></p>
+              </div>
+            <% } %>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="section">
+          <div class="section-body">
+            <%- design.designHtml || '<div class="empty-state">No design content generated yet. Click Refresh to generate.</div>' %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Flowchart -->
+    <div id="flowchartContainer" style="display:none;" class="card">
+      <h3 style="margin-bottom:12px;">🗺️ Component Flowchart</h3>
+      <div id="flowchartRender"></div>
+    </div>
+
+    <!-- Questions -->
+    <div class="card">
+      <h3 style="margin-bottom:12px;">❓ Outstanding Questions</h3>
+      <% if (!design.questions || design.questions.length === 0) { %>
+        <div class="empty-state">✅ No outstanding questions — design is complete based on available requirements.</div>
+      <% } else { %>
+        <% design.questions.forEach(function(q, i) { %>
+          <%
+            const isObj = (typeof q === 'object' && q !== null);
+            const qText = isObj ? q.text : String(q);
+            const qId = isObj ? q.id : (i+1);
+            const qAssumption = isObj ? q.assumption : '';
+            const answered = (design.answers || []).find(a => a.question === qText);
+          %>
+          <div class="question-card">
+            <div>
+              <span class="q-id"><%= qId %></span>
+              <span class="q-text"><%= qText %></span>
+            </div>
+            <% if (qAssumption) { %>
+              <div class="q-assumption">💡 <%= qAssumption %></div>
+            <% } %>
+            <% if (answered) { %>
+              <div class="q-answer">✅ <strong>Answer:</strong> <%= answered.answer %> <span style="font-size:11px;color:#6b7280">— <%= answered.from %>, <%= new Date(answered.ts).toLocaleString() %></span></div>
+            <% } else { %>
+              <form method="POST" action="/admin/projects/<%= projectId %>/design/answer" class="answer-form">
+                <input type="hidden" name="designId" value="<%= design.id %>" />
+                <input type="hidden" name="question" value="<%= qText %>" />
+                <input type="text" name="answer" placeholder="Type your answer…" />
+                <button type="submit" class="btn btn-primary btn-sm">Save</button>
+              </form>
+            <% } %>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+
+    <!-- Admin Chat -->
+    <div class="card">
+      <h3 style="margin-bottom:12px;">💬 Design Discussion</h3>
+      <div style="max-height:300px;overflow-y:auto;">
+        <% if (!design.chat || design.chat.length === 0) { %>
+          <div class="empty-state">No messages yet. Start a conversation about this design below.</div>
+        <% } else { %>
+          <% design.chat.forEach(function(c) { %>
+            <div class="chat-bubble">
+              <div class="chat-meta"><strong><%= c.from %></strong> — <%= new Date(c.ts).toLocaleString() %></div>
+              <div class="chat-text"><%= c.text %></div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+      <form method="POST" action="/admin/projects/<%= projectId %>/design/chat" class="chat-input">
+        <input type="hidden" name="designId" value="<%= design.id %>" />
+        <textarea name="text" placeholder="Type a message about this design…" rows="2"></textarea>
+        <button type="submit" class="btn btn-primary" style="align-self:flex-end;">Send</button>
+      </form>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+    document.getElementById('generateFlowchart').addEventListener('click', async function() {
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = '⏳ Generating…';
+      try {
+        const res = await fetch('/admin/projects/<%= projectId %>/design/flowchart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (!res.ok) throw new Error('Server returned ' + res.status);
+        const data = await res.json();
+        if (!data.mermaid) throw new Error('No flowchart data returned');
+
+        const container = document.getElementById('flowchartContainer');
+        const render = document.getElementById('flowchartRender');
+        container.style.display = 'block';
+
+        // Use mermaid.render for reliable rendering
+        const { svg } = await mermaid.render('flowchart-svg', data.mermaid);
+        render.innerHTML = svg;
+      } catch (e) {
+        alert('Failed to generate flowchart: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🗺️ Flowchart';
+      }
+    });
+  </script>
+</body>
+</html>
