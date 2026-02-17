@@ -5,6 +5,7 @@ const https = require('https');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const archiver = require('archiver');
+const AdmZip = require('adm-zip');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const xss = require('xss');
@@ -1563,6 +1564,110 @@ app.post('/api/export-zip', apiAuth, express.json({ limit: '10mb' }), async (req
   }
 });
 
+// Import project from ZIP (reverse of export)
+const importUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+app.post('/admin/import-project', auth.authenticate, auth.requireAdmin, importUpload.single('zipfile'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).send('No file uploaded');
+
+    const zip = new AdmZip(req.file.buffer);
+    const entries = zip.getEntries();
+
+    // Parse requirements.md if present
+    let requirementsDoc = '';
+    let projectName = 'Imported Project';
+    let projectDescription = '';
+    const assetFiles = [];
+
+    for (const entry of entries) {
+      if (entry.isDirectory) continue;
+      const name = entry.entryName;
+
+      if (name === 'requirements.md' || name.endsWith('/requirements.md')) {
+        requirementsDoc = entry.getData().toString('utf8');
+        // Try to extract project name from markdown header
+        const nameMatch = requirementsDoc.match(/^#\s+(.+?)(?:\s*-\s*Requirements|\s*$)/m);
+        if (nameMatch) projectName = nameMatch[1].trim();
+        // Try to extract company
+        const companyMatch = requirementsDoc.match(/\*\*Company:\*\*\s*(.+)/);
+        if (companyMatch) projectDescription = companyMatch[1].trim();
+      } else if (name.startsWith('assets/') || name.startsWith('files/')) {
+        assetFiles.push({ name: path.basename(name), data: entry.getData(), size: entry.header.size });
+      }
+    }
+
+    // Use provided name/description from form if given
+    if (req.body.projectName) projectName = req.body.projectName;
+    if (req.body.projectDescription) projectDescription = req.body.projectDescription;
+
+    // Use the logged-in admin user
+    const adminUser = req.user || { id: 1 };
+
+    // Create project
+    const result = await db.createProject(adminUser.id, projectName, projectDescription || 'Imported from ZIP');
+    const projectId = result.lastInsertRowid || result.id;
+
+    // Create a session with the requirements
+    if (requirementsDoc) {
+      // Parse requirements sections from markdown
+      const requirements = {};
+      const sectionRegex = /###\s+(.+)\n([\s\S]*?)(?=###|## |$)/g;
+      let match;
+      while ((match = sectionRegex.exec(requirementsDoc)) !== null) {
+        const section = match[1].trim();
+        const items = match[2].split('\n').filter(l => l.startsWith('- ')).map(l => l.replace(/^- /, '').trim());
+        if (items.length > 0) requirements[section] = items;
+      }
+
+      // Extract transcript if present
+      let transcript = [];
+      const transcriptSection = requirementsDoc.match(/## Full Conversation History\n\n([\s\S]*?)(?=---|$)/);
+      if (transcriptSection) {
+        const msgRegex = /\*\*(\w+):\*\*\s*([\s\S]*?)(?=\*\*\w+:\*\*|$)/g;
+        let m;
+        while ((m = msgRegex.exec(transcriptSection[1])) !== null) {
+          transcript.push({ role: m[1].toLowerCase() === 'ai' ? 'ai' : 'user', text: m[2].trim() });
+        }
+      }
+
+      db.appendSessionMessageSafe(projectId, JSON.stringify({
+        role: 'system',
+        text: 'Imported from project ZIP',
+        timestamp: new Date().toISOString()
+      }));
+
+      // Update the session with parsed requirements and transcript
+      const sessions = await db.getSessionsByProject(projectId);
+      if (sessions.length > 0) {
+        const sid = sessions[0].id;
+        await db.updateSession(sid, JSON.stringify(transcript), JSON.stringify(requirements));
+      }
+    }
+
+    // Save asset files
+    if (assetFiles.length > 0) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      const sessions = await db.getSessionsByProject(projectId);
+      const sessionId = sessions.length > 0 ? sessions[0].id : null;
+
+      for (const asset of assetFiles) {
+        const filename = Date.now() + '-' + asset.name;
+        const filePath = path.join(uploadsDir, filename);
+        fs.writeFileSync(filePath, asset.data);
+
+        // Register in DB
+        db.createFile(projectId, sessionId, filename, asset.name, '', asset.size, '', '');
+      }
+    }
+
+    console.log(`📦 Imported project "${projectName}" (ID: ${projectId}) with ${assetFiles.length} assets`);
+    res.redirect('/admin/projects/' + projectId);
+  } catch (e) {
+    console.error('Import error:', e);
+    res.status(500).send('Import failed: ' + e.message);
+  }
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy' });
 });
@@ -1603,8 +1708,8 @@ db.ready.then(() => {
       key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
       cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem')),
     };
-    https.createServer(sslOptions, app).listen(HTTPS_PORT, () => {
-      console.log(`🔒 HTTPS running on https://localhost:${HTTPS_PORT}`);
+    https.createServer(sslOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
+      console.log(`🔒 HTTPS running on https://192.168.1.178:${HTTPS_PORT}`);
     });
   } catch (e) {
     console.log('⚠️  No SSL certs, HTTPS disabled');
