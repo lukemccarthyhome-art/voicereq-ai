@@ -191,6 +191,55 @@
     </div>
 </div>
 
+<!-- Admin Notes -->
+<div class="card">
+    <h3>📝 Admin Notes</h3>
+    <% 
+      let adminNotes = [];
+      try { adminNotes = JSON.parse(project.admin_notes || '[]'); } catch(e) {}
+    %>
+    <% if (adminNotes.length > 0) { %>
+        <div style="max-height: 300px; overflow-y: auto; margin-bottom: 12px;">
+            <% adminNotes.forEach(function(note, idx) { %>
+                <div style="padding: 10px 14px; background: #f8fafc; border-left: 3px solid #667eea; border-radius: 0 8px 8px 0; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 14px; color: #0f172a; white-space: pre-wrap;"><%= note.text %></div>
+                            <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;"><%= note.from %> · <%= new Date(note.ts).toLocaleString() %></div>
+                        </div>
+                        <form method="POST" action="/admin/projects/<%= project.id %>/notes/<%= idx %>/delete" style="margin: 0;">
+                            <button type="submit" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 14px;" title="Delete note">✕</button>
+                        </form>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } else { %>
+        <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">No admin notes yet. Add context, decisions, or information for this project.</p>
+    <% } %>
+    <form method="POST" action="/admin/projects/<%= project.id %>/notes" style="display: flex; gap: 8px;">
+        <textarea name="note" placeholder="Add a note — additional context, decisions, technical constraints…" rows="2" style="flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical;"></textarea>
+        <button type="submit" class="btn btn-sm" style="align-self: flex-end; background: #667eea; color: white;">Add Note</button>
+    </form>
+</div>
+
+<!-- Customer Answers -->
+<% if (customerAnswers && customerAnswers.length > 0) { %>
+<div class="card" style="border-left: 4px solid #10b981;">
+    <h3>💬 Customer Answers</h3>
+    <p style="color: #64748b; font-size: 12px; margin-bottom: 12px;">Answers provided by the customer to assigned design questions. These are included when refreshing the design.</p>
+    <div style="max-height: 300px; overflow-y: auto;">
+        <% customerAnswers.forEach(function(a) { %>
+            <div style="padding: 10px 14px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 0 8px 8px 0; margin-bottom: 8px;">
+                <div style="font-size: 13px; color: #64748b; font-weight: 600;">❓ <%= a.question %></div>
+                <div style="font-size: 14px; color: #0f172a; margin-top: 4px;">✅ <%= a.answer %></div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;"><%= a.from %> · <%= new Date(a.ts).toLocaleString() %></div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+<% } %>
+
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
     <div class="card">
         <h3>💬 Voice Sessions</h3>

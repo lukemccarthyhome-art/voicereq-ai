@@ -565,8 +565,17 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
       }
     }
   } catch(e) { designExists = false; }
-  res.render('admin/project-detail', {
+  // Get customer answers from latest design
+  let customerAnswers = [];
+  try {
+    const designResult = loadNewestDesign(req.params.id);
+    if (designResult && designResult.design && designResult.design.customerAnswers) {
+      customerAnswers = designResult.design.customerAnswers;
+    }
+  } catch(e) {}
 
+  res.render('admin/project-detail', {
+    customerAnswers,
     designExists: designExists,
     user: req.user,
     project,
@@ -601,6 +610,16 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
     files.forEach(f => { reqText += `FILE ${f.original_name}: ${ (f.extracted_text||'').substring(0,200) }
 `; });
 
+    // Include admin notes
+    const project = await db.getProject(projectId);
+    try {
+      const adminNotes = JSON.parse(project.admin_notes || '[]');
+      if (adminNotes.length > 0) {
+        reqText += '\n\nADMIN NOTES (additional context provided by the project administrator):\n';
+        adminNotes.forEach(n => { reqText += `- ${n.text}\n`; });
+      }
+    } catch(e) {}
+
     // Use LLM (gpt-5-mini) to generate a structured solution design and follow-up questions
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
     let llmDesignMarkdown = '';
@@ -610,58 +629,103 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
     let designParsedSections = null;
     let designSummary = '';
 
-    // Build structured prompt asking for JSON with explicit fields
-    const buildPrompt = (context, prevAnswers) => {
-      return `You are a senior solutions architect producing a COMPREHENSIVE SOLUTION DESIGN from a client requirements conversation. This design should be detailed enough that a development team could begin implementation from it — short of writing actual code.
-
-OUTPUT FORMAT: Valid JSON only. No markdown wrapping. Structure:
-{
+    const DESIGN_SECTIONS_SCHEMA = `{
   "summary": "3-5 sentence executive summary of what's being built, for whom, and why",
   "design": {
     "BusinessContext": "Problem statement, target users, business goals, success metrics, competitive landscape if discussed",
     "Scope": "What's IN scope for this build (with specifics), what's explicitly OUT of scope, phasing/MVP vs future",
     "UserPersonas": "Who uses this system? Roles, permissions, workflows per persona. Be specific.",
-    "UserJourneys": "Step-by-step flows for each key user action. E.g. 'Sales rep opens dashboard → sees prioritized contacts → clicks contact → sees LinkedIn activity timeline → chooses outreach template → sends via GHL'. Cover happy path AND edge cases discussed.",
+    "UserJourneys": "Step-by-step flows for each key user action. Cover happy path AND edge cases discussed.",
     "Architecture": "System architecture: frontend/backend/services/databases/queues/cron jobs. Deployment model. How components communicate. Include specific technology recommendations with reasoning.",
-    "DataModel": "Key entities, their attributes, and relationships. E.g. 'Contact: {name, email, linkedin_url, company, last_activity_date, engagement_score, source}. Relationship: Contact belongs_to Company, has_many Interactions'. Cover all entities discussed.",
-    "Components": "Each major system component with: purpose, inputs, outputs, key logic/rules, dependencies. Not just names — describe what each component DOES.",
-    "APIs": "Every API endpoint or integration point: method, path, request/response shape, auth, rate limits. For third-party APIs: which specific endpoints you'll use, what data you get, known limitations.",
-    "Integrations": "For EACH external system: what data flows in/out, sync frequency, error handling, authentication method, fallback if unavailable. Be specific about LinkedIn/CRM/etc integration mechanics.",
-    "DataFlow": "How data moves through the system end-to-end. Ingestion → processing → storage → retrieval → presentation. Include automation triggers, scheduled jobs, real-time vs batch.",
-    "Security": "Authentication method, authorization model (RBAC details), data encryption (at rest + in transit), API key management, PII handling, audit logging, compliance requirements discussed.",
-    "Infrastructure": "Hosting, deployment pipeline, environments (dev/staging/prod), monitoring, logging, backup strategy, scaling approach.",
-    "AcceptanceCriteria": "Specific, testable acceptance criteria grouped by feature. Format: 'GIVEN [context] WHEN [action] THEN [expected result]'. At least 3-5 per major feature.",
+    "DataModel": "Key entities, their attributes, and relationships. Cover all entities discussed.",
+    "Components": "Each major system component with: purpose, inputs, outputs, key logic/rules, dependencies.",
+    "APIs": "Every API endpoint or integration point: method, path, request/response shape, auth, rate limits.",
+    "Integrations": "For EACH external system: what data flows in/out, sync frequency, error handling, authentication method, fallback if unavailable.",
+    "DataFlow": "How data moves through the system end-to-end. Include automation triggers, scheduled jobs, real-time vs batch.",
+    "Security": "Authentication method, authorization model (RBAC details), data encryption, API key management, PII handling, audit logging.",
+    "Infrastructure": "Hosting, deployment pipeline, environments, monitoring, logging, backup strategy, scaling approach.",
+    "AcceptanceCriteria": "Specific, testable acceptance criteria grouped by feature. Format: 'GIVEN [context] WHEN [action] THEN [expected result]'.",
     "Risks": "Technical risks, dependency risks, timeline risks, adoption risks. For each: likelihood, impact, mitigation strategy.",
-    "Dependencies": "External dependencies: third-party services, APIs, libraries, hardware, data sources. For each: what happens if it's unavailable?",
+    "Dependencies": "External dependencies: third-party services, APIs, libraries, hardware, data sources.",
     "ClientResponsibilities": "What the client needs to provide: API keys, access, content, decisions, test data, feedback cycles."
   },
   "questions": [
-    {"id": 1, "text": "Specific question about a gap or ambiguity in the requirements", "assumption": "What we'll assume if unanswered"}
+    {"id": 1, "text": "Specific question about a gap or ambiguity", "assumption": "What we'll assume if unanswered"}
   ]
-}
+}`;
 
-RULES:
-- Extract EVERY concrete detail from the conversation. Names, tools, workflows, numbers, preferences — all of it.
-- Where the conversation is vague, make a reasonable assumption and STATE it clearly. Mark assumptions with [ASSUMPTION].
-- Questions should ONLY be about genuinely missing critical information, not generic "have you considered X?" padding.
-- Each design section should be multiple paragraphs with real substance. If a section has only 1-2 sentences, you haven't extracted enough.
-- ALL section values MUST be plain text strings (no nested JSON objects, no code blocks). Use bullet points with "- " for lists. Use numbered steps with "1. " for sequences.
-- Write for a product owner / business stakeholder — clear, specific, but not overly technical. Explain WHY, not just WHAT. Avoid jargon where plain language works. A non-developer should understand every section.
+    const DESIGN_RULES = `RULES:
+- Extract EVERY concrete detail. Names, tools, workflows, numbers, preferences — all of it.
+- Where vague, make a reasonable assumption and mark it with [ASSUMPTION].
+- ALL section values MUST be plain text strings (no nested JSON objects). Use "- " for lists, "1. " for sequences.
+- Write for a product owner / business stakeholder — clear, specific, not overly technical.
 - Do NOT include raw chat transcript. Synthesize and organize.
-- Do NOT be generic. Reference the specific tools, platforms, and workflows the client mentioned.
+- Do NOT be generic. Reference the specific tools, platforms, and workflows mentioned.`;
+
+    // Build different prompts for first-run vs refresh
+    const buildPrompt = (context, prevAnswers, previousDesign) => {
+      if (!previousDesign) {
+        // FIRST RUN: full extraction from conversation
+        return `You are a senior solutions architect producing a COMPREHENSIVE SOLUTION DESIGN from a client requirements conversation. This design should be detailed enough that a development team could begin implementation — short of writing actual code.
+
+OUTPUT FORMAT: Valid JSON only. No markdown wrapping. Structure:
+${DESIGN_SECTIONS_SCHEMA}
+
+${DESIGN_RULES}
+
+QUESTIONS RULES (FIRST EXTRACTION):
+- Generate questions ONLY for genuinely missing critical information that would block implementation.
+- Questions MUST reference specific details from the conversation.
+- BAD: "Any branding guidelines?", "What data sources?" — generic filler.
+- GOOD: "You mentioned LinkedIn Sales Navigator — do you need real-time monitoring or daily batch sync?"
+- Maximum 5 questions. If the conversation covers everything, return an EMPTY array [].
+- Each question needs a unique sequential id starting from 1.
 
 CONVERSATION & FILES:
-${context}
+${context}`;
+      } else {
+        // REFRESH: update existing design with new information only
+        return `You are a senior solutions architect UPDATING an existing solution design. A previous design already exists. Your job is to:
 
-PREVIOUS ANSWERS TO QUESTIONS:
-${prevAnswers || 'None yet'}`;
+1. START with the previous design as the baseline — preserve all existing content and detail.
+2. INCORPORATE new information: answered questions, new admin notes, updated requirements, new conversation messages.
+3. REFINE sections that are affected by the new information.
+4. DO NOT regenerate sections that haven't changed — keep them as-is.
+5. DO NOT ask new questions unless the new information reveals a genuinely critical gap.
+
+OUTPUT FORMAT: Valid JSON only. No markdown wrapping. Same structure as before:
+${DESIGN_SECTIONS_SCHEMA}
+
+${DESIGN_RULES}
+
+QUESTIONS RULES (REFRESH — STRICT):
+- Only ask NEW questions if the new information since last design reveals a critical gap.
+- Do NOT re-ask questions that have already been answered (see ANSWERED QUESTIONS below).
+- Do NOT ask follow-up questions to already-answered questions unless the answer was explicitly incomplete or contradictory.
+- Prefer making an [ASSUMPTION] over asking another question.
+- Maximum 3 new questions on refresh. Return EMPTY array [] if nothing critical is missing.
+- If previous questions were answered satisfactorily, there should be ZERO new questions.
+
+PREVIOUS DESIGN (baseline — preserve this content, update where new info applies):
+${JSON.stringify(previousDesign.sections || {}, null, 2).substring(0, 20000)}
+
+Previous Summary: ${previousDesign.summary || 'None'}
+
+ANSWERED QUESTIONS (incorporate these into the design, do NOT re-ask):
+${prevAnswers || 'None'}
+
+NEW INFORMATION SINCE LAST DESIGN:
+${context}`;
+      }
     };
 
-    // Include existing answers (admin + customer) from previous design version
+    // Load previous design for refresh mode
     let prevAnswersText = '';
+    let previousDesign = null;
     try {
       const prevResult = loadNewestDesign(projectId);
       if (prevResult && prevResult.design) {
+        previousDesign = prevResult.design;
         const prev = prevResult.design;
         if (prev.answers && prev.answers.length > 0) {
           prevAnswersText += prev.answers.map(a => `Q: ${a.question}\nA (admin): ${a.answer}`).join('\n\n');
@@ -670,10 +734,38 @@ ${prevAnswers || 'None yet'}`;
           prevAnswersText += '\n\n' + prev.customerAnswers.map(a => `Q: ${a.question}\nA (customer - ${a.from}): ${a.answer}`).join('\n\n');
         }
       }
-    } catch(e) { console.warn('Failed to load previous answers:', e.message); }
+    } catch(e) { console.warn('Failed to load previous design:', e.message); }
+
+    // For refresh: build context of what's NEW since last design
+    let promptContext = reqText.substring(0, 60000);
+    if (previousDesign) {
+      // On refresh, focus on new information
+      const newInfo = [];
+      if (prevAnswersText) newInfo.push('ANSWERED QUESTIONS:\n' + prevAnswersText);
+      
+      // Include accepted assumptions
+      if (previousDesign.acceptedAssumptions && previousDesign.acceptedAssumptions.length > 0) {
+        newInfo.push('ACCEPTED ASSUMPTIONS (incorporate these as decisions, do NOT re-ask):\n' + 
+          previousDesign.acceptedAssumptions.map(a => `- Q: ${a.question} → Assumption accepted: ${a.assumption}`).join('\n'));
+      }
+      
+      // Admin notes (all, since they may have been updated)
+      try {
+        const adminNotes = JSON.parse(project.admin_notes || '[]');
+        if (adminNotes.length > 0) {
+          newInfo.push('ADMIN NOTES:\n' + adminNotes.map(n => `- ${n.text}`).join('\n'));
+        }
+      } catch(e) {}
+      
+      // Include full transcript for context but mark it
+      newInfo.push('FULL PROJECT TRANSCRIPT (for reference):\n' + reqText.substring(0, 40000));
+      
+      promptContext = newInfo.join('\n\n---\n\n');
+    }
+
     if (OPENAI_KEY) {
       try {
-        const prompt = buildPrompt(reqText.substring(0,60000), prevAnswersText);
+        const prompt = buildPrompt(promptContext, prevAnswersText, previousDesign);
         const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'chatgpt-4o-latest';
         const resp = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -838,8 +930,22 @@ ${summarizeRequirements(reqText)}
       questions: llmQuestions,
       chat: [],
       answers: [],
+      customerAnswers: [],
       raw_output: ''
     };
+
+    // Carry forward state from previous design version
+    try {
+      const prevResult = loadNewestDesign(projectId);
+      if (prevResult && prevResult.design) {
+        const prev = prevResult.design;
+        if (prev.answers && prev.answers.length > 0) design.answers = prev.answers;
+        if (prev.customerAnswers && prev.customerAnswers.length > 0) design.customerAnswers = prev.customerAnswers;
+        if (prev.chat && prev.chat.length > 0) design.chat = prev.chat;
+        if (prev.published) { design.published = prev.published; design.publishedAt = prev.publishedAt; }
+        if (prev.acceptedAssumptions && prev.acceptedAssumptions.length > 0) design.acceptedAssumptions = prev.acceptedAssumptions;
+      }
+    } catch(e) {}
 
     // If designMarkdown contains JSON-in-markdown, parse and populate top-level questions
     try {
@@ -1023,7 +1129,7 @@ app.post('/admin/projects/:id/design/chat', auth.authenticate, auth.requireAdmin
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
           body: JSON.stringify({
-            model: 'gpt-5-mini',
+            model: 'gpt-4.1-mini',
             max_completion_tokens: 1500,
             messages: [
               { role: 'system', content: `You are a helpful solutions architect assistant. The user is discussing a solution design before publishing it to a customer. Help them refine, clarify, or improve the design. Be concise and actionable.\n\nDesign context:\n${designContext}` },
@@ -1098,6 +1204,84 @@ app.post('/admin/projects/:id/design/publish', auth.authenticate, auth.requireAd
   }
 });
 
+// Admin notes for project
+app.post('/admin/projects/:id/notes', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { note } = req.body;
+    if (!note || !note.trim()) return res.redirect(`/admin/projects/${projectId}`);
+    const project = await db.getProject(projectId);
+    if (!project) return res.status(404).send('Project not found');
+    let notes = [];
+    try { notes = JSON.parse(project.admin_notes || '[]'); } catch(e) {}
+    notes.push({ text: note.trim(), from: req.user.email, ts: new Date().toISOString() });
+    await db.updateProjectAdminNotes(projectId, JSON.stringify(notes));
+    res.redirect(`/admin/projects/${projectId}?message=Note+added`);
+  } catch (e) {
+    console.error('Add note error:', e);
+    res.redirect(`/admin/projects/${req.params.id}?error=Failed+to+add+note`);
+  }
+});
+
+app.post('/admin/projects/:id/notes/:noteIndex/delete', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const noteIndex = parseInt(req.params.noteIndex);
+    const project = await db.getProject(projectId);
+    let notes = [];
+    try { notes = JSON.parse(project.admin_notes || '[]'); } catch(e) {}
+    notes.splice(noteIndex, 1);
+    await db.updateProjectAdminNotes(projectId, JSON.stringify(notes));
+    res.redirect(`/admin/projects/${projectId}?message=Note+deleted`);
+  } catch (e) {
+    res.redirect(`/admin/projects/${req.params.id}?error=Failed+to+delete+note`);
+  }
+});
+
+app.post('/admin/projects/:id/design/unpublish', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const result = loadNewestDesign(req.params.id);
+    if (!result) return res.status(404).send('No design found');
+    const { design } = result;
+    design.published = false;
+    design.publishedAt = null;
+    saveDesign(design);
+    res.redirect(`/admin/projects/${req.params.id}/design?message=Design+unpublished`);
+  } catch (e) {
+    console.error('Unpublish error:', e);
+    res.redirect(`/admin/projects/${req.params.id}/design?error=Unpublish+failed`);
+  }
+});
+
+// Accept assumption (move question to assumptions)
+app.post('/admin/projects/:id/design/accept-assumption', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const { designId, questionText, assumption } = req.body;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    const filePath = path.join(designsDir, designId + '.json');
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Design not found' });
+    const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    
+    // Add to accepted assumptions
+    design.acceptedAssumptions = design.acceptedAssumptions || [];
+    design.acceptedAssumptions.push({ question: questionText, assumption, acceptedBy: req.user.email, ts: new Date().toISOString() });
+    
+    // Remove from questions list
+    if (design.questions && Array.isArray(design.questions)) {
+      design.questions = design.questions.filter(q => {
+        const qt = (typeof q === 'object') ? q.text : String(q);
+        return qt !== questionText;
+      });
+    }
+    
+    fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('Accept assumption error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Assign question to customer
 app.post('/admin/projects/:id/design/assign-question', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
@@ -1163,7 +1347,7 @@ app.post('/customer/projects/:id/design/answer', auth.authenticate, async (req, 
     design.customerAnswers.push({ question, answer, from: req.user.email, ts: new Date().toISOString() });
     fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
 
-    res.redirect(`/customer/projects/${projectId}/design`);
+    res.redirect(`/projects/${projectId}`);
   } catch (e) {
     console.error('Customer answer error:', e);
     res.status(500).send('Failed to save answer');
@@ -1290,11 +1474,21 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
   const files = await db.getFilesByProject(req.params.id);
   const activeSession = await db.getLatestSessionForProject(req.params.id);
   
-  // Check for published design
+  // Check for published design and customer questions
   let hasPublishedDesign = false;
+  let customerQuestions = [];
+  let customerDesignId = '';
+  let customerAnswers = [];
   try {
     const designResult = loadNewestDesign(req.params.id);
-    if (designResult && designResult.design && designResult.design.published) hasPublishedDesign = true;
+    if (designResult && designResult.design) {
+      if (designResult.design.published) hasPublishedDesign = true;
+      customerDesignId = designResult.design.id || '';
+      customerAnswers = designResult.design.customerAnswers || [];
+      if (designResult.design.questions && Array.isArray(designResult.design.questions)) {
+        customerQuestions = designResult.design.questions.filter(q => q.assignedTo === 'customer');
+      }
+    }
   } catch(e) {}
 
   res.render('customer/project', {
@@ -1304,6 +1498,9 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
     files,
     activeSession,
     hasPublishedDesign,
+    customerQuestions,
+    customerDesignId,
+    customerAnswers,
     title: project.name,
     currentPage: 'customer-projects',
     breadcrumbs: [

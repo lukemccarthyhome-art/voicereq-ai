@@ -346,6 +346,12 @@ try {
   console.log('✅ Added design_questions column to projects table');
 } catch (e) {}
 
+// Add project.admin_notes column if missing
+try {
+  db.exec(`ALTER TABLE projects ADD COLUMN admin_notes TEXT DEFAULT '[]'`);
+  console.log('✅ Added admin_notes column to projects table');
+} catch (e) {}
+
 
 module.exports = {
   ready: Promise.resolve(),
@@ -365,6 +371,10 @@ module.exports = {
   getProject,
   updateProjectDesignQuestions: (id, json) => {
     const stmt = db.prepare('UPDATE projects SET design_questions = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+    return Promise.resolve(stmt.run(json, id));
+  },
+  updateProjectAdminNotes: (id, json) => {
+    const stmt = db.prepare('UPDATE projects SET admin_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
     return Promise.resolve(stmt.run(json, id));
   },
   updateProject,

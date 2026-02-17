@@ -115,11 +115,15 @@
             <button type="submit" class="btn btn-amber btn-sm">🔄 Refresh</button>
           </form>
           <button id="generateFlowchart" class="btn btn-cyan btn-sm">🗺️ Flowchart</button>
-          <form method="POST" action="/admin/projects/<%= projectId %>/design/publish" style="margin:0">
-            <button type="submit" class="btn btn-sm" style="background:#10b981;color:white;">📤 Publish to Customer</button>
-          </form>
           <% if (design.published) { %>
+            <form method="POST" action="/admin/projects/<%= projectId %>/design/unpublish" style="margin:0">
+              <button type="submit" class="btn btn-sm" style="background:#ef4444;color:white;">🔒 Unpublish</button>
+            </form>
             <span class="badge badge-final" style="font-size:10px;">Published <%= design.publishedAt ? new Date(design.publishedAt).toLocaleDateString() : '' %></span>
+          <% } else { %>
+            <form method="POST" action="/admin/projects/<%= projectId %>/design/publish" style="margin:0">
+              <button type="submit" class="btn btn-sm" style="background:#10b981;color:white;">📤 Publish to Customer</button>
+            </form>
           <% } %>
         </div>
       </div>
@@ -207,12 +211,32 @@
                 <button onclick="assignQuestion(this, '<%= qText.replace(/'/g, "\\'") %>')" class="btn btn-sm" style="background:<%= assignedTo === 'customer' ? '#f59e0b' : '#94a3b8' %>;color:white;white-space:nowrap;font-size:11px;" title="<%= assignedTo === 'customer' ? 'Assigned to customer' : 'Click to assign to customer' %>">
                   👤 <%= assignedTo === 'customer' ? 'Customer ✓' : 'Assign to Customer' %>
                 </button>
+                <% if (qAssumption) { %>
+                <button onclick="acceptAssumption(this, '<%= qText.replace(/'/g, "\\'") %>', '<%= qAssumption.replace(/'/g, "\\'") %>')" class="btn btn-sm" style="background:#8b5cf6;color:white;white-space:nowrap;font-size:11px;" title="Accept the assumption and move this question out">
+                  💡 Accept Assumption
+                </button>
+                <% } %>
               </div>
             <% } %>
           </div>
         <% }) %>
       <% } %>
     </div>
+
+    <!-- Accepted Assumptions -->
+    <% if (design.acceptedAssumptions && design.acceptedAssumptions.length > 0) { %>
+    <div class="card" style="border-left: 4px solid #8b5cf6;">
+      <h3 style="margin-bottom:12px;">💡 Accepted Assumptions</h3>
+      <p style="color:#64748b;font-size:12px;margin-bottom:12px;">These assumptions were accepted in place of asking more questions. They are incorporated into the design on refresh.</p>
+      <% design.acceptedAssumptions.forEach(function(a) { %>
+        <div style="padding:10px 14px;background:#f5f3ff;border-left:3px solid #8b5cf6;border-radius:0 8px 8px 0;margin-bottom:8px;">
+          <div style="font-size:13px;color:#64748b;">❓ <%= a.question %></div>
+          <div style="font-size:14px;color:#0f172a;margin-top:4px;">💡 <strong>Assumption:</strong> <%= a.assumption %></div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Accepted by <%= a.acceptedBy %> · <%= new Date(a.ts).toLocaleString() %></div>
+        </div>
+      <% }) %>
+    </div>
+    <% } %>
 
     <!-- AI Chat -->
     <div class="card">
@@ -293,6 +317,25 @@
     });
 
     // Assign question to customer
+    async function acceptAssumption(btn, questionText, assumption) {
+      try {
+        const res = await fetch('/admin/projects/<%= projectId %>/design/accept-assumption', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ designId: '<%= design.id %>', questionText, assumption })
+        });
+        if (res.ok) {
+          // Remove the question card from the UI
+          const card = btn.closest('.question-card');
+          card.style.transition = 'opacity 0.3s';
+          card.style.opacity = '0';
+          setTimeout(() => card.remove(), 300);
+        } else {
+          alert('Failed to accept assumption');
+        }
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
     async function assignQuestion(btn, questionText) {
       try {
         const res = await fetch('/admin/projects/<%= projectId %>/design/assign-question', {
