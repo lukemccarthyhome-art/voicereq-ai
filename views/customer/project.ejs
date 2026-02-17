@@ -43,14 +43,16 @@
         /* Progress tracker */
         .milestone-tracker { display: flex; align-items: center; gap: 0; margin: 20px 0; }
         .milestone { flex: 1; text-align: center; position: relative; }
-        .milestone-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 18px; border: 3px solid #e0e0e0; background: white; position: relative; z-index: 1; }
-        .milestone-icon.done { border-color: #28a745; background: #d4edda; }
-        .milestone-icon.current { border-color: #667eea; background: #e8eaff; }
-        .milestone-label { font-size: 12px; color: #666; font-weight: 600; }
-        .milestone-label.done { color: #28a745; }
-        .milestone-label.current { color: #667eea; }
-        .milestone-connector { height: 3px; flex: 0 0 auto; width: 40px; background: #e0e0e0; margin-top: -30px; }
+        .milestone-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 20px; border: 3px solid #e0e0e0; background: #f8f9fa; position: relative; z-index: 1; opacity: 0.4; }
+        .milestone-icon.done { border-color: #28a745; background: #28a745; opacity: 1; }
+        .milestone-icon.done::after { content: '✓'; position: absolute; top: -6px; right: -6px; background: #28a745; color: white; font-size: 11px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+        .milestone-icon.current { border-color: #667eea; background: #667eea; animation: pulse-ring 2s ease infinite; opacity: 1; }
+        .milestone-label { font-size: 13px; color: #aaa; font-weight: 600; }
+        .milestone-label.done { color: #28a745; font-weight: 700; }
+        .milestone-label.current { color: #667eea; font-weight: 700; }
+        .milestone-connector { height: 4px; flex: 0 0 auto; width: 50px; background: #e0e0e0; margin-top: -30px; border-radius: 2px; }
         .milestone-connector.done { background: #28a745; }
+        @keyframes pulse-ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(102,126,234,0.4); } 50% { box-shadow: 0 0 0 8px rgba(102,126,234,0); } }
 
         /* Milestone cards */
         .milestone-card { border-radius: 12px; padding: 20px; border: 1px solid #e0e0e0; }
@@ -125,26 +127,26 @@
 
         <!-- Progress milestone tracker -->
         <div class="card">
-            <h3 style="margin-bottom: 4px;">Project Progress</h3>
+            <h3 style="margin-bottom: 12px; color: #333;">Project Progress</h3>
             <div class="milestone-tracker">
                 <div class="milestone">
                     <div class="milestone-icon <%= hasSession ? 'done' : 'current' %>">🎙️</div>
-                    <div class="milestone-label <%= hasSession ? 'done' : 'current' %>">Session</div>
+                    <div class="milestone-label <%= hasSession ? 'done' : 'current' %>"><%= hasSession ? '✓ Session' : 'Session' %></div>
                 </div>
                 <div class="milestone-connector <%= hasSession ? 'done' : '' %>"></div>
                 <div class="milestone">
                     <div class="milestone-icon <%= designReady ? 'done' : (hasSession ? 'current' : '') %>">📐</div>
-                    <div class="milestone-label <%= designReady ? 'done' : (hasSession ? 'current' : '') %>">Design</div>
+                    <div class="milestone-label <%= designReady ? 'done' : (hasSession ? 'current' : '') %>"><%= designReady ? '✓ Design' : 'Design' %></div>
                 </div>
                 <div class="milestone-connector <%= designReady ? 'done' : '' %>"></div>
                 <div class="milestone">
                     <div class="milestone-icon <%= proposalReady ? 'done' : (designReady ? 'current' : '') %>">💰</div>
-                    <div class="milestone-label <%= proposalReady ? 'done' : (designReady ? 'current' : '') %>">Proposal</div>
+                    <div class="milestone-label <%= proposalReady ? 'done' : (designReady ? 'current' : '') %>"><%= proposalReady ? '✓ Proposal' : 'Proposal' %></div>
                 </div>
                 <div class="milestone-connector <%= isApproved ? 'done' : '' %>"></div>
                 <div class="milestone">
                     <div class="milestone-icon <%= isApproved ? 'done' : (proposalReady ? 'current' : '') %>">✅</div>
-                    <div class="milestone-label <%= isApproved ? 'done' : (proposalReady ? 'current' : '') %>">Approved</div>
+                    <div class="milestone-label <%= isApproved ? 'done' : (proposalReady ? 'current' : '') %>"><%= isApproved ? '✓ Approved' : 'Approved' %></div>
                 </div>
             </div>
         </div>
