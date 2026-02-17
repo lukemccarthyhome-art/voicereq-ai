@@ -2308,6 +2308,49 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy' });
 });
 
+// Protected backup endpoint — dumps all data as JSON
+app.get('/api/backup', async (req, res) => {
+  const backupKey = req.query.key;
+  if (!backupKey || backupKey !== (process.env.BACKUP_KEY || 'morti-backup-2026')) {
+    return res.status(403).json({ error: 'Invalid backup key' });
+  }
+  try {
+    const users = await db.getAllUsers();
+    const projects = await db.getAllProjects();
+    const allSessions = [];
+    const allFiles = [];
+    for (const p of projects) {
+      const sessions = await db.getSessionsByProject(p.id);
+      sessions.forEach(s => allSessions.push(s));
+      const files = await db.getFilesByProject(p.id);
+      files.forEach(f => allFiles.push(f));
+    }
+    // Load design files
+    const designs = [];
+    try {
+      if (fs.existsSync(DESIGNS_DIR)) {
+        fs.readdirSync(DESIGNS_DIR).forEach(f => {
+          try {
+            designs.push(JSON.parse(fs.readFileSync(path.join(DESIGNS_DIR, f), 'utf8')));
+          } catch(e) {}
+        });
+      }
+    } catch(e) {}
+    res.json({
+      timestamp: new Date().toISOString(),
+      users: users.map(u => ({ id: u.id, email: u.email, name: u.name, role: u.role, company: u.company, created_at: u.created_at })),
+      projects,
+      sessions: allSessions,
+      files: allFiles.map(f => ({ id: f.id, project_id: f.project_id, session_id: f.session_id, filename: f.filename, original_name: f.original_name, description: f.description, size: f.size, created_at: f.created_at })),
+      designs,
+      stats: { users: users.length, projects: projects.length, sessions: allSessions.length, files: allFiles.length, designs: designs.length }
+    });
+  } catch (e) {
+    console.error('Backup error:', e);
+    res.status(500).json({ error: 'Backup failed: ' + e.message });
+  }
+});
+
 // Root redirect
 app.get('/', (req, res) => {
   if (req.cookies.authToken) {
