@@ -1692,81 +1692,79 @@ async function generateProposalAsync(projectId, project, design, OPENAI_KEY, use
       extraContext += '\n\nPREVIOUS PROPOSAL FEEDBACK (CRITICAL — you MUST address every point below in the new proposal):\n';
       extraContext += prevProposal.chat.map(m => `${m.from}: ${m.text}`).join('\n');
       extraContext += '\n\nThe previous proposal had these values — adjust based on feedback:\n';
-      extraContext += `- Total Upfront: $${prevProposal.totalUpfront || 'N/A'}\n`;
-      extraContext += `- Annual Maintenance: $${prevProposal.annualMaintenance || 'N/A'}\n`;
-      if (prevProposal.fees) {
-        extraContext += `- Discovery: $${prevProposal.fees.discovery?.amount || 'N/A'}\n`;
-        extraContext += `- Implementation: $${prevProposal.fees.implementation?.amount || 'N/A'}\n`;
-        extraContext += `- Monthly: $${prevProposal.fees.monthly_maintenance?.amount || 'N/A'}\n`;
+      if (prevProposal.upfrontFee) {
+        extraContext += `- Upfront Fee: $${prevProposal.upfrontFee.total || 'N/A'} (${prevProposal.upfrontFee.totalHours || '?'} hrs)\n`;
+      } else {
+        extraContext += `- Total Upfront: $${prevProposal.totalUpfront || 'N/A'}\n`;
+      }
+      if (prevProposal.annualFee) {
+        extraContext += `- Annual Fee: $${prevProposal.annualFee.total || 'N/A'} ($${prevProposal.annualFee.monthlyEquivalent || '?'}/mo)\n`;
+      } else {
+        extraContext += `- Annual Maintenance: $${prevProposal.annualMaintenance || 'N/A'}\n`;
+      }
+      if (prevProposal.labourAnalysis) {
+        extraContext += `- Labour Savings Used: $${prevProposal.labourAnalysis.totalAnnualSavings || 'N/A'}/yr\n`;
       }
     }
     
     const model = process.env.LLM_MODEL || 'chatgpt-4o-latest';
     
-    const prompt = `You are a commercially minded product strategist and pricing advisor for Morti Pty Ltd, an AI consultancy based in Melbourne, Australia. You are given a project design. Your task is to determine a value-based pricing proposal.
+    const prompt = `You are a commercially minded product strategist and pricing advisor for Morti Pty Ltd, an AI consultancy based in Melbourne, Australia. You are given a project design. Your task is to produce a clear, honest pricing proposal with exactly TWO fees the client will sign off on.
 
-This is NOT a cost-plus estimate. You must:
-- Estimate the likely financial impact of the solution for the client: direct cost savings, time savings (convert to salary equivalents), revenue upside, risk reduction value, strategic leverage.
-- Estimate the order-of-magnitude annual economic value created.
-- Propose a pricing structure based on value share — not fixed hourly pricing.
-- Use commercial judgement to determine what is reasonable and credible.
+THE TWO FEES:
+1. **Upfront Fee** — covers discovery, design, and implementation to deliver the working system. Based on realistic engineering effort at $400/hour for AI engineering. Be honest about hours required. Include discovery/design AND build in this single upfront number.
+2. **Annual Fee** — ongoing support, optimisation, monitoring, and maintenance. This should be 50% of the estimated annual labour savings the system delivers. The client keeps the other 50% as pure saving. This is a 12-month commitment.
 
-CONSTRAINT: Assume the client is commercially intelligent and will evaluate ROI. The pricing must feel justified, not opportunistic.
+All prices are in AUD and exclude GST.
 
-PRICING PRINCIPLES:
-- Capture 10-30% of credible economic value in early stage.
-- Ensure client ROI > 3x in moderate scenario.
-- Do not underprice strategic leverage. Do not overprice unproven automation.
-- Align risk with pricing (more risk → lower upfront, more performance-based).
-- Avoid: hourly rate breakdowns, "dev days" costing, overly precise numbers with no reasoning.
-- Prices in AUD.
+PRICING RULES:
+- Upfront fee: Estimate realistic hours at $400/hr. Don't inflate but don't undercut. Include: requirements analysis, architecture, development, testing, deployment, handover. Round to nearest $500.
+- Annual fee: Calculate the labour/cost savings the system replaces → take 50% as the annual fee. Show the working clearly.
+- ROI: Based on the annual fee vs annual value delivered. The client should see clear positive ROI from year 1 (since they keep 50% of savings + the upfront is a one-off).
+- Be specific about what hours go where in the upfront estimate.
+- Be specific about what labour/costs the system replaces in the annual calculation.
 
 OUTPUT FORMAT: Valid JSON only. Structure:
 {
   "projectName": "Name",
   "clientCompany": "Company name from context or 'TBD'",
-  "commercialContext": "Summarise the likely economic impact of the solution. What does this change for the client's business?",
-  "estimatedValue": {
-    "annualSavings": "Estimated direct cost savings per year with reasoning",
-    "revenueUplift": "Estimated revenue impact if applicable, or 'N/A'",
-    "efficiencyGains": "Time/resource efficiency gains converted to dollar value",
-    "strategicValue": "Intangible strategic value: competitive advantage, risk reduction, market positioning",
-    "conservativeAnnual": 0,
-    "moderateAnnual": 0,
-    "optimisticAnnual": 0
+  "commercialContext": "What this system changes for the client's business. Be specific about the problem being solved.",
+  "labourAnalysis": {
+    "currentProcess": "Describe the current manual/existing process and who does it",
+    "hoursPerWeek": 0,
+    "hourlyRate": 0,
+    "annualLabourCost": 0,
+    "additionalCosts": "Any other costs replaced (software, outsourcing, errors, etc)",
+    "totalAnnualSavings": 0
   },
-  "pricingLogic": "Explain how pricing is derived from value created. What % of value is captured and why that % is reasonable. Why the client still achieves strong ROI.",
-  "fees": {
-    "discovery": {
-      "description": "What's included in discovery & design phase",
-      "amount": 0,
-      "rationale": "Justification tied to value and complexity"
-    },
-    "implementation": {
-      "description": "What's included in the build phase",
-      "amount": 0,
-      "rationale": "Justification tied to value delivered"
-    },
-    "monthly_maintenance": {
-      "description": "Ongoing optimisation, support, updates",
-      "amount": 0,
-      "rationale": "Justification tied to ongoing value protection"
-    }
+  "upfrontFee": {
+    "totalHours": 0,
+    "hourlyRate": 400,
+    "breakdown": [
+      {"phase": "Discovery & Design", "hours": 0, "description": "What's included"},
+      {"phase": "Development & Integration", "hours": 0, "description": "What's included"},
+      {"phase": "Testing & Deployment", "hours": 0, "description": "What's included"},
+      {"phase": "Handover & Documentation", "hours": 0, "description": "What's included"}
+    ],
+    "total": 0
   },
-  "performanceComponents": "Where appropriate: performance-linked components, revenue-share models, tiered scaling based on realised value. Or 'None recommended for this engagement' if not applicable.",
-  "totalUpfront": 0,
-  "annualMaintenance": 0,
+  "annualFee": {
+    "calculation": "50% of $X annual savings = $Y",
+    "monthlyEquivalent": 0,
+    "total": 0,
+    "includes": "What ongoing support covers: monitoring, optimisation, updates, support hours, etc"
+  },
   "roiIllustration": {
-    "totalAnnualCost": 0,
-    "moderateAnnualValue": 0,
-    "roiMultiple": "e.g. 4.2x",
-    "paybackPeriod": "How quickly the investment pays for itself",
-    "summary": "1-2 sentence ROI statement demonstrating strong client upside"
+    "annualSavings": 0,
+    "annualFee": 0,
+    "netAnnualBenefit": 0,
+    "roiMultiple": "e.g. 2.0x (client keeps 50% of savings)",
+    "paybackOnUpfront": "How many months of net savings to recoup upfront fee",
+    "summary": "1-2 sentence ROI statement"
   },
-  "sensitivity": "How pricing adjusts if: scope shrinks, scope expands, client is enterprise vs mid-market",
-  "timeline": "Estimated delivery timeline",
+  "timeline": "Estimated delivery timeline from kick-off to live",
   "assumptions": ["Key assumptions that affect pricing"],
-  "exclusions": ["What's NOT included"],
+  "exclusions": ["What's NOT included in either fee"],
   "validUntil": "30 days from generation"
 }
 
@@ -1781,7 +1779,7 @@ Phase 2 Enhancements: ${phase2}
 Risks: ${risks}
 ${extraContext}
 
-Use commercial judgement. Produce a sophisticated, value-anchored proposal.`;
+Be realistic and commercially credible. Show your working.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',

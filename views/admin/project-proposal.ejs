@@ -151,6 +151,7 @@
                     <div style="color: #64748b; font-size: 0.9rem;">
                         Client: <strong><%= proposal.clientCompany || 'TBD' %></strong>
                         &nbsp;·&nbsp; Generated: <%= new Date(proposal.createdAt).toLocaleDateString() %>
+                        &nbsp;·&nbsp; All prices ex GST
                     </div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;">
@@ -169,104 +170,89 @@
                 <h3>🏢 Commercial Context</h3>
                 <p><%= proposal.commercialContext %></p>
             </div>
-            <% } else if (proposal.executiveSummary) { %>
-            <div class="section">
-                <h3>📋 Executive Summary</h3>
-                <p><%= proposal.executiveSummary %></p>
-            </div>
             <% } %>
         </div>
 
-        <!-- Estimated Value -->
-        <% if (proposal.estimatedValue) { %>
+        <!-- Labour Analysis -->
+        <% if (proposal.labourAnalysis) { %>
         <div class="value-card">
-            <h3>💎 Estimated Value Created</h3>
-            <% if (proposal.estimatedValue.annualSavings) { %>
+            <h3>📊 Current Cost Analysis</h3>
+            <% if (proposal.labourAnalysis.currentProcess) { %>
             <div class="value-row">
-                <span class="value-label">Annual Cost Savings</span>
-                <span class="value-text"><%= proposal.estimatedValue.annualSavings %></span>
+                <span class="value-label">Current Process</span>
+                <span class="value-text"><%= proposal.labourAnalysis.currentProcess %></span>
             </div>
             <% } %>
-            <% if (proposal.estimatedValue.revenueUplift && proposal.estimatedValue.revenueUplift !== 'N/A') { %>
+            <% if (proposal.labourAnalysis.hoursPerWeek) { %>
             <div class="value-row">
-                <span class="value-label">Revenue Uplift</span>
-                <span class="value-text"><%= proposal.estimatedValue.revenueUplift %></span>
+                <span class="value-label">Hours/Week</span>
+                <span class="value-text"><%= proposal.labourAnalysis.hoursPerWeek %> hrs @ $<%= (proposal.labourAnalysis.hourlyRate || 0).toLocaleString() %>/hr</span>
             </div>
             <% } %>
-            <% if (proposal.estimatedValue.efficiencyGains) { %>
+            <% if (proposal.labourAnalysis.annualLabourCost) { %>
             <div class="value-row">
-                <span class="value-label">Efficiency Gains</span>
-                <span class="value-text"><%= proposal.estimatedValue.efficiencyGains %></span>
+                <span class="value-label">Annual Labour Cost</span>
+                <span class="value-text" style="font-weight:700;">$<%= (proposal.labourAnalysis.annualLabourCost || 0).toLocaleString() %></span>
             </div>
             <% } %>
-            <% if (proposal.estimatedValue.strategicValue) { %>
+            <% if (proposal.labourAnalysis.additionalCosts) { %>
             <div class="value-row">
-                <span class="value-label">Strategic Value</span>
-                <span class="value-text"><%= proposal.estimatedValue.strategicValue %></span>
+                <span class="value-label">Additional Costs Replaced</span>
+                <span class="value-text"><%= proposal.labourAnalysis.additionalCosts %></span>
             </div>
             <% } %>
-            <% if (proposal.estimatedValue.conservativeAnnual || proposal.estimatedValue.moderateAnnual || proposal.estimatedValue.optimisticAnnual) { %>
-            <div class="scenario-grid">
-                <div class="scenario">
-                    <div class="scenario-label">Conservative</div>
-                    <div class="scenario-amount">$<%= (proposal.estimatedValue.conservativeAnnual || 0).toLocaleString() %></div>
-                </div>
-                <div class="scenario" style="background: #eff6ff;">
-                    <div class="scenario-label">Moderate</div>
-                    <div class="scenario-amount">$<%= (proposal.estimatedValue.moderateAnnual || 0).toLocaleString() %></div>
-                </div>
-                <div class="scenario">
-                    <div class="scenario-label">Optimistic</div>
-                    <div class="scenario-amount">$<%= (proposal.estimatedValue.optimisticAnnual || 0).toLocaleString() %></div>
-                </div>
-            </div>
-            <% } %>
-        </div>
-        <% } %>
-
-        <!-- Pricing Logic -->
-        <% if (proposal.pricingLogic) { %>
-        <div class="card">
-            <div class="section">
-                <h3>🧮 Pricing Logic</h3>
-                <p><%= proposal.pricingLogic %></p>
+            <div class="value-row" style="border-top: 2px solid #93c5fd; padding-top: 12px;">
+                <span class="value-label" style="font-weight: 700;">Total Annual Savings</span>
+                <span class="value-text" style="font-size: 1.2rem; font-weight: 800; color: #1e40af;">$<%= (proposal.labourAnalysis.totalAnnualSavings || 0).toLocaleString() %></span>
             </div>
         </div>
         <% } %>
 
-        <!-- Fee Cards -->
-        <% if (proposal.fees) { %>
-        <div class="fee-grid">
-            <div class="fee-card">
-                <div class="fee-label">Discovery & Design</div>
-                <div class="fee-amount">$<%= (proposal.fees.discovery.amount || 0).toLocaleString() %></div>
-                <div class="fee-desc"><%= proposal.fees.discovery.description %></div>
-                <div class="fee-rationale"><%= proposal.fees.discovery.rationale %></div>
-            </div>
+        <!-- Two Fee Cards -->
+        <div class="fee-grid" style="grid-template-columns: 1fr 1fr;">
             <div class="fee-card highlight">
-                <div class="fee-label">Implementation</div>
-                <div class="fee-amount">$<%= (proposal.fees.implementation.amount || 0).toLocaleString() %></div>
-                <div class="fee-desc"><%= proposal.fees.implementation.description %></div>
-                <div class="fee-rationale"><%= proposal.fees.implementation.rationale %></div>
+                <div class="fee-label">1. Upfront Fee</div>
+                <div class="fee-amount">$<%= ((proposal.upfrontFee && proposal.upfrontFee.total) || proposal.totalUpfront || 0).toLocaleString() %></div>
+                <div class="fee-desc" style="text-align: left; margin-top: 12px;">
+                    <% if (proposal.upfrontFee && proposal.upfrontFee.breakdown) { %>
+                        <% proposal.upfrontFee.breakdown.forEach(item => { %>
+                            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0;">
+                                <span><strong><%= item.phase %></strong> (<%= item.hours %>hrs)</span>
+                                <span>$<%= (item.hours * (proposal.upfrontFee.hourlyRate || 400)).toLocaleString() %></span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #94a3b8; padding: 2px 0 6px;"><%= item.description %></div>
+                        <% }) %>
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0 0; font-weight: 700; border-top: 2px solid #667eea;">
+                            <span>Total (<%= proposal.upfrontFee.totalHours || 0 %> hrs × $<%= (proposal.upfrontFee.hourlyRate || 400).toLocaleString() %>/hr)</span>
+                            <span>$<%= (proposal.upfrontFee.total || 0).toLocaleString() %></span>
+                        </div>
+                    <% } %>
+                </div>
             </div>
-            <div class="fee-card">
-                <div class="fee-label">Monthly Support</div>
-                <div class="fee-amount">$<%= (proposal.fees.monthly_maintenance.amount || 0).toLocaleString() %> <small>/mo</small></div>
-                <div class="fee-desc"><%= proposal.fees.monthly_maintenance.description %></div>
-                <div class="fee-rationale"><%= proposal.fees.monthly_maintenance.rationale %></div>
+            <div class="fee-card highlight" style="border-color: #10b981;">
+                <div class="fee-label" style="color: #10b981;">2. Annual Fee</div>
+                <div class="fee-amount">$<%= ((proposal.annualFee && proposal.annualFee.total) || proposal.annualMaintenance || 0).toLocaleString() %> <small>/yr</small></div>
+                <% if (proposal.annualFee) { %>
+                    <div style="font-size: 0.85rem; color: #64748b; margin: 8px 0;"><%= proposal.annualFee.calculation %></div>
+                    <div style="font-size: 0.9rem; color: #475569; background: #f0fdf4; padding: 8px 12px; border-radius: 6px; margin: 8px 0;">
+                        $<%= (proposal.annualFee.monthlyEquivalent || 0).toLocaleString() %>/month
+                    </div>
+                    <div class="fee-desc" style="text-align: left; margin-top: 8px;">
+                        <strong>Includes:</strong> <%= proposal.annualFee.includes %>
+                    </div>
+                <% } %>
             </div>
         </div>
-        <% } %>
 
-        <!-- Totals -->
+        <!-- Summary Bar -->
         <div class="total-bar">
             <div class="total-item">
-                <h4>Total Upfront</h4>
-                <div class="amount">$<%= (proposal.totalUpfront || 0).toLocaleString() %></div>
+                <h4>Upfront (one-off)</h4>
+                <div class="amount">$<%= ((proposal.upfrontFee && proposal.upfrontFee.total) || proposal.totalUpfront || 0).toLocaleString() %></div>
             </div>
             <div class="total-item">
-                <h4>Annual Maintenance</h4>
-                <div class="amount">$<%= (proposal.annualMaintenance || 0).toLocaleString() %> <small>/yr</small></div>
+                <h4>Annual Fee</h4>
+                <div class="amount">$<%= ((proposal.annualFee && proposal.annualFee.total) || proposal.annualMaintenance || 0).toLocaleString() %> <small>/yr</small></div>
             </div>
             <div class="total-item">
                 <h4>Timeline</h4>
@@ -274,58 +260,46 @@
             </div>
         </div>
 
-        <!-- Performance Components -->
-        <% if (proposal.performanceComponents && proposal.performanceComponents !== 'None recommended for this engagement') { %>
-        <div class="card">
-            <div class="section">
-                <h3>🎯 Performance-Linked Components</h3>
-                <p><%= proposal.performanceComponents %></p>
-            </div>
-        </div>
-        <% } %>
-
         <!-- ROI -->
         <% const roi = proposal.roiIllustration || proposal.roi; %>
         <% if (roi) { %>
         <div class="roi-card">
             <h3>📈 ROI Illustration</h3>
             <div class="roi-grid">
+                <% if (roi.annualSavings) { %>
+                <div class="roi-stat">
+                    <div class="label">Annual Savings</div>
+                    <div class="val">$<%= (roi.annualSavings || 0).toLocaleString() %></div>
+                </div>
+                <% } %>
+                <% if (roi.annualFee) { %>
+                <div class="roi-stat">
+                    <div class="label">Annual Fee</div>
+                    <div class="val">$<%= (roi.annualFee || 0).toLocaleString() %></div>
+                </div>
+                <% } %>
+                <% if (roi.netAnnualBenefit) { %>
+                <div class="roi-stat">
+                    <div class="label">Net Annual Benefit</div>
+                    <div class="val">$<%= (roi.netAnnualBenefit || 0).toLocaleString() %></div>
+                </div>
+                <% } %>
                 <% if (roi.roiMultiple) { %>
                 <div class="roi-stat">
                     <div class="label">ROI Multiple</div>
                     <div class="val"><%= roi.roiMultiple %></div>
                 </div>
                 <% } %>
-                <% if (roi.paybackPeriod) { %>
+                <% if (roi.paybackOnUpfront || roi.paybackPeriod) { %>
                 <div class="roi-stat">
-                    <div class="label">Payback Period</div>
-                    <div class="val"><%= roi.paybackPeriod %></div>
-                </div>
-                <% } %>
-                <% if (roi.totalAnnualCost) { %>
-                <div class="roi-stat">
-                    <div class="label">Total Annual Cost</div>
-                    <div class="val">$<%= (roi.totalAnnualCost || 0).toLocaleString() %></div>
-                </div>
-                <% } %>
-                <% if (roi.moderateAnnualValue) { %>
-                <div class="roi-stat">
-                    <div class="label">Moderate Annual Value</div>
-                    <div class="val">$<%= (roi.moderateAnnualValue || 0).toLocaleString() %></div>
+                    <div class="label">Upfront Payback</div>
+                    <div class="val"><%= roi.paybackOnUpfront || roi.paybackPeriod %></div>
                 </div>
                 <% } %>
             </div>
+            <% if (roi.summary) { %>
             <div class="roi-summary"><%= roi.summary %></div>
-        </div>
-        <% } %>
-
-        <!-- Sensitivity -->
-        <% if (proposal.sensitivity) { %>
-        <div class="card">
-            <div class="section">
-                <h3>📊 Sensitivity</h3>
-                <p><%= proposal.sensitivity %></p>
-            </div>
+            <% } %>
         </div>
         <% } %>
 
