@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Morti Projects</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f0f2f5; line-height:1.6; color:#0f172a; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:16px 0; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+    .header-container { max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:0 20px; }
+    .logo { font-size:20px; font-weight:bold; display:flex; align-items:center; gap:8px; text-decoration:none; color:white; }
+    .nav { display:flex; gap:12px; align-items:center; }
+    .nav a { color:rgba(255,255,255,0.9); text-decoration:none; padding:8px 14px; border-radius:6px; transition:background 0.2s; font-weight:500; font-size:14px; }
+    .nav a:hover { background:rgba(255,255,255,0.2); }
+    .main { max-width:1100px; margin:0 auto; padding:24px 20px; }
+    .breadcrumb { font-size:13px; color:#64748b; margin-bottom:16px; }
+    .breadcrumb a { color:#667eea; text-decoration:none; }
+    .card { background:white; border-radius:12px; padding:24px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+    .badge { display:inline-block; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase; }
+    .badge-final { background:#d1fae5; color:#065f46; }
+    .meta-row { display:flex; gap:24px; font-size:13px; color:#64748b; margin-bottom:4px; }
+    .design-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
+    .design-item { padding:16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; }
+    .design-item h4 { font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:#667eea; margin-bottom:6px; }
+    .design-item .section-body { font-size:13px; color:#475569; line-height:1.7; }
+    .full-width { grid-column: 1 / -1; }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border:none; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer; transition:all 0.15s; text-decoration:none; }
+    .btn-primary { background:#667eea; color:white; }
+    .btn-sm { padding:6px 12px; font-size:12px; }
+    .question-card { padding:12px 16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; margin-bottom:10px; }
+    .question-card .q-id { display:inline-block; background:#667eea; color:white; width:24px; height:24px; border-radius:50%; text-align:center; line-height:24px; font-size:12px; font-weight:700; margin-right:8px; }
+    .question-card .q-text { font-weight:600; color:#0f172a; font-size:14px; }
+    .question-card .q-assumption { font-size:12px; color:#64748b; margin-top:4px; font-style:italic; }
+    .question-card .q-answer { margin-top:8px; padding:8px 12px; background:#d1fae5; border-radius:6px; color:#065f46; font-size:13px; }
+    .answer-form { display:flex; gap:8px; margin-top:8px; }
+    .answer-form input[type="text"] { flex:1; padding:8px 12px; border:1px solid #dbeafe; border-radius:6px; font-size:13px; }
+    @media (max-width:768px) { .design-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-container">
+      <a href="/dashboard" class="logo">🎙️ Morti Projects</a>
+      <nav class="nav">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/projects">My Projects</a>
+        <a href="/profile">Profile</a>
+        <a href="/logout">🚪 Logout</a>
+      </nav>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="breadcrumb">
+      <a href="/dashboard">Dashboard</a> › <a href="/projects">Projects</a> › <a href="/projects/<%= projectId %>"><%= project.name %></a> › Design
+    </div>
+
+    <%
+      let designSections = design.sections || null;
+      let designSummary = design.summary || '';
+    %>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <h2>📐 Solution Design</h2>
+          <div class="meta-row" style="margin-top:8px;">
+            <span>📅 Published <%= design.publishedAt ? new Date(design.publishedAt).toLocaleString() : '' %></span>
+            <% if (design.version) { %><span>v<%= design.version %></span><% } %>
+          </div>
+        </div>
+        <span class="badge badge-final">Published</span>
+      </div>
+
+      <% if (designSummary) { %>
+        <div style="padding:12px 16px;background:#eef2ff;border-radius:8px;font-size:14px;color:#3730a3;margin-bottom:16px;">
+          <strong>Summary:</strong> <%= designSummary %>
+        </div>
+      <% } %>
+
+      <% if (designSections) { %>
+        <div class="design-grid">
+          <% const sectionOrder = ['BusinessContext','Scope','UserPersonas','UserJourneys','Architecture','DataModel','Components','APIs','Integrations','DataFlow','Security','Infrastructure','AcceptanceCriteria','Risks','Dependencies','ClientResponsibilities']; %>
+          <% const sectionLabels = { BusinessContext:'Business Context', Scope:'Scope & Phasing', UserPersonas:'User Personas', UserJourneys:'User Journeys', Architecture:'Architecture', DataModel:'Data Model', Components:'Components', APIs:'APIs & Endpoints', Integrations:'Integrations', DataFlow:'Data Flow', Security:'Security', Infrastructure:'Infrastructure', AcceptanceCriteria:'Acceptance Criteria', Risks:'Risks & Mitigations', Dependencies:'Dependencies', ClientResponsibilities:'Client Responsibilities' }; %>
+          <% const fullWidthSections = ['BusinessContext','Scope','UserJourneys','Architecture','DataModel','AcceptanceCriteria','Infrastructure']; %>
+          <%
+            const allKeys = Object.keys(designSections);
+            const orderedKeys = sectionOrder.filter(k => designSections[k]);
+            const extraKeys = allKeys.filter(k => !sectionOrder.includes(k));
+            const renderKeys = orderedKeys.concat(extraKeys);
+          %>
+          <% renderKeys.forEach(key => { %>
+            <% if (designSections[key]) { %>
+              <div class="design-item <%= fullWidthSections.includes(key) ? 'full-width' : '' %>">
+                <h4><%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></h4>
+                <div class="section-body"><%- designSections[key].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br/>').replace(/\[ASSUMPTION\]/g,'<span style="background:#fef3c7;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;color:#92400e;">ASSUMPTION</span>') %></div>
+              </div>
+            <% } %>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div><%- design.designHtml || '<p>No design content available.</p>' %></div>
+      <% } %>
+    </div>
+
+    <!-- Customer Questions -->
+    <div class="card">
+      <h3 style="margin-bottom:12px;">❓ Questions for You</h3>
+      <%
+        const customerQuestions = (design.questions || []).filter(q => {
+          return (typeof q === 'object' && q.assignedTo === 'customer');
+        });
+      %>
+      <% if (customerQuestions.length === 0) { %>
+        <div style="text-align:center;padding:24px;color:#94a3b8;font-size:14px;">No questions assigned to you at this time.</div>
+      <% } else { %>
+        <% customerQuestions.forEach(function(q, i) { %>
+          <%
+            const qText = q.text || String(q);
+            const qId = q.id || (i+1);
+            const qAssumption = q.assumption || '';
+            const custAnswered = (design.customerAnswers || []).find(a => a.question === qText);
+          %>
+          <div class="question-card">
+            <div>
+              <span class="q-id"><%= qId %></span>
+              <span class="q-text"><%= qText %></span>
+            </div>
+            <% if (qAssumption) { %>
+              <div class="q-assumption">💡 <%= qAssumption %></div>
+            <% } %>
+            <% if (custAnswered) { %>
+              <div class="q-answer">✅ <strong>Your answer:</strong> <%= custAnswered.answer %> <span style="font-size:11px;color:#6b7280">— <%= new Date(custAnswered.ts).toLocaleString() %></span></div>
+            <% } else { %>
+              <form method="POST" action="/customer/projects/<%= projectId %>/design/answer" class="answer-form">
+                <input type="hidden" name="designId" value="<%= design.id %>" />
+                <input type="hidden" name="question" value="<%= qText %>" />
+                <input type="text" name="answer" placeholder="Type your answer…" required />
+                <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+              </form>
+            <% } %>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

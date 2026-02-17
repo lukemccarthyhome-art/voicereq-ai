@@ -87,6 +87,9 @@
         <% } else { %>
             <a href="/projects/<%= project.id %>/session" class="btn btn-success">🎙️ Start New Session</a>
         <% } %>
+        <% if (typeof hasPublishedDesign !== 'undefined' && hasPublishedDesign) { %>
+          <a href="/customer/projects/<%= project.id %>/design" class="btn" style="background:#10b981;">📐 View Design</a>
+        <% } %>
         <button onclick="exportProject()" class="btn">📦 Export</button>
         <form method="POST" action="/projects/<%= project.id %>/delete" onsubmit="return confirm('Delete this project and all its data? This cannot be undone.')" style="display:inline;">
             <button type="submit" class="btn" style="background: #dc3545;">🗑️ Delete Project</button>

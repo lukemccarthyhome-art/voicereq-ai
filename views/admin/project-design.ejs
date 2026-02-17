@@ -30,7 +30,8 @@
     .design-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
     .design-item { padding:16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; }
     .design-item h4 { font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:#667eea; margin-bottom:6px; }
-    .design-item p { font-size:13px; color:#475569; line-height:1.6; }
+    .design-item p, .design-item .section-body { font-size:13px; color:#475569; line-height:1.7; }
+    .design-item .section-body p { margin-bottom:8px; }
     .full-width { grid-column: 1 / -1; }
     .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border:none; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer; transition:all 0.15s; text-decoration:none; }
     .btn:hover { transform:translateY(-1px); box-shadow:0 2px 4px rgba(0,0,0,0.1); }
@@ -82,17 +83,19 @@
     </div>
 
     <%
-      // Parse design sections from JSON-in-markdown if available
-      let designSections = null;
-      let designSummary = '';
-      try {
-        if (design.designMarkdown && design.designMarkdown.trim().startsWith('```json')) {
-          const jsonText = design.designMarkdown.replace(/```json\s*|```/g, '').trim();
-          const parsed = JSON.parse(jsonText);
-          if (parsed.design) designSections = parsed.design;
-          if (parsed.summary) designSummary = parsed.summary;
-        }
-      } catch(e) {}
+      // Use pre-parsed sections from server if available, otherwise try parsing markdown
+      let designSections = design.sections || null;
+      let designSummary = design.summary || '';
+      if (!designSections) {
+        try {
+          if (design.designMarkdown && design.designMarkdown.trim().startsWith('```json')) {
+            const jsonText = design.designMarkdown.replace(/```json\s*|```/g, '').trim();
+            const parsed = JSON.parse(jsonText);
+            if (parsed.design) designSections = parsed.design;
+            if (parsed.summary) designSummary = parsed.summary;
+          }
+        } catch(e) {}
+      }
     %>
 
     <!-- Header Card -->
@@ -112,6 +115,12 @@
             <button type="submit" class="btn btn-amber btn-sm">🔄 Refresh</button>
           </form>
           <button id="generateFlowchart" class="btn btn-cyan btn-sm">🗺️ Flowchart</button>
+          <form method="POST" action="/admin/projects/<%= projectId %>/design/publish" style="margin:0">
+            <button type="submit" class="btn btn-sm" style="background:#10b981;color:white;">📤 Publish to Customer</button>
+          </form>
+          <% if (design.published) { %>
+            <span class="badge badge-final" style="font-size:10px;">Published <%= design.publishedAt ? new Date(design.publishedAt).toLocaleDateString() : '' %></span>
+          <% } %>
         </div>
       </div>
 
@@ -123,14 +132,21 @@
 
       <% if (designSections) { %>
         <div class="design-grid">
-          <% const sectionOrder = ['Summary','Dependencies','ClientResponsibilities','Architecture','Components','DataFlow','APIs','Security','Integrations','AcceptanceCriteria','Risks']; %>
-          <% const sectionLabels = { Summary:'Summary', Dependencies:'Dependencies', ClientResponsibilities:'Client Responsibilities', Architecture:'Architecture', Components:'Components', DataFlow:'Data Flow', APIs:'APIs', Security:'Security', Integrations:'Integrations', AcceptanceCriteria:'Acceptance Criteria', Risks:'Risks' }; %>
-          <% const fullWidthSections = ['Summary','Architecture','AcceptanceCriteria']; %>
-          <% sectionOrder.forEach(key => { %>
+          <% const sectionOrder = ['BusinessContext','Scope','UserPersonas','UserJourneys','Architecture','DataModel','Components','APIs','Integrations','DataFlow','Security','Infrastructure','AcceptanceCriteria','Risks','Dependencies','ClientResponsibilities']; %>
+          <% const sectionLabels = { BusinessContext:'Business Context', Scope:'Scope & Phasing', UserPersonas:'User Personas', UserJourneys:'User Journeys', Architecture:'Architecture', DataModel:'Data Model', Components:'Components', APIs:'APIs & Endpoints', Integrations:'Integrations', DataFlow:'Data Flow', Security:'Security', Infrastructure:'Infrastructure', AcceptanceCriteria:'Acceptance Criteria', Risks:'Risks & Mitigations', Dependencies:'Dependencies', ClientResponsibilities:'Client Responsibilities' }; %>
+          <% const fullWidthSections = ['BusinessContext','Scope','UserJourneys','Architecture','DataModel','AcceptanceCriteria','Infrastructure']; %>
+          <%
+            // Also render any sections not in the predefined order
+            const allKeys = Object.keys(designSections);
+            const orderedKeys = sectionOrder.filter(k => designSections[k]);
+            const extraKeys = allKeys.filter(k => !sectionOrder.includes(k));
+            const renderKeys = orderedKeys.concat(extraKeys);
+          %>
+          <% renderKeys.forEach(key => { %>
             <% if (designSections[key]) { %>
               <div class="design-item <%= fullWidthSections.includes(key) ? 'full-width' : '' %>">
-                <h4><%= sectionLabels[key] || key %></h4>
-                <p><%= designSections[key] %></p>
+                <h4><%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></h4>
+                <div class="section-body"><%- designSections[key].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br/>').replace(/\[ASSUMPTION\]/g,'<span style="background:#fef3c7;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;color:#92400e;">ASSUMPTION</span>') %></div>
               </div>
             <% } %>
           <% }) %>
@@ -172,47 +188,126 @@
             <% if (qAssumption) { %>
               <div class="q-assumption">💡 <%= qAssumption %></div>
             <% } %>
+            <%
+              const customerAnswered = (design.customerAnswers || []).find(a => a.question === qText);
+              const assignedTo = isObj && q.assignedTo ? q.assignedTo : 'admin';
+            %>
             <% if (answered) { %>
               <div class="q-answer">✅ <strong>Answer:</strong> <%= answered.answer %> <span style="font-size:11px;color:#6b7280">— <%= answered.from %>, <%= new Date(answered.ts).toLocaleString() %></span></div>
+            <% } else if (customerAnswered) { %>
+              <div class="q-answer">✅ <strong>Customer Answer:</strong> <%= customerAnswered.answer %> <span style="font-size:11px;color:#6b7280">— <%= customerAnswered.from %>, <%= new Date(customerAnswered.ts).toLocaleString() %></span></div>
             <% } else { %>
-              <form method="POST" action="/admin/projects/<%= projectId %>/design/answer" class="answer-form">
-                <input type="hidden" name="designId" value="<%= design.id %>" />
-                <input type="hidden" name="question" value="<%= qText %>" />
-                <input type="text" name="answer" placeholder="Type your answer…" />
-                <button type="submit" class="btn btn-primary btn-sm">Save</button>
-              </form>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <form method="POST" action="/admin/projects/<%= projectId %>/design/answer" class="answer-form" style="flex:1;margin-top:0;">
+                  <input type="hidden" name="designId" value="<%= design.id %>" />
+                  <input type="hidden" name="question" value="<%= qText %>" />
+                  <input type="text" name="answer" placeholder="Type your answer…" />
+                  <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                </form>
+                <button onclick="assignQuestion(this, '<%= qText.replace(/'/g, "\\'") %>')" class="btn btn-sm" style="background:<%= assignedTo === 'customer' ? '#f59e0b' : '#94a3b8' %>;color:white;white-space:nowrap;font-size:11px;" title="<%= assignedTo === 'customer' ? 'Assigned to customer' : 'Click to assign to customer' %>">
+                  👤 <%= assignedTo === 'customer' ? 'Customer ✓' : 'Assign to Customer' %>
+                </button>
+              </div>
             <% } %>
           </div>
         <% }) %>
       <% } %>
     </div>
 
-    <!-- Admin Chat -->
+    <!-- AI Chat -->
     <div class="card">
-      <h3 style="margin-bottom:12px;">💬 Design Discussion</h3>
-      <div style="max-height:300px;overflow-y:auto;">
+      <h3 style="margin-bottom:12px;">🤖 AI Design Chat</h3>
+      <div id="chatMessages" style="max-height:400px;overflow-y:auto;">
         <% if (!design.chat || design.chat.length === 0) { %>
-          <div class="empty-state">No messages yet. Start a conversation about this design below.</div>
+          <div class="empty-state" id="chatEmpty">Ask the AI anything about this design — refine sections, explore alternatives, or prepare for customer review.</div>
         <% } else { %>
           <% design.chat.forEach(function(c) { %>
-            <div class="chat-bubble">
-              <div class="chat-meta"><strong><%= c.from %></strong> — <%= new Date(c.ts).toLocaleString() %></div>
-              <div class="chat-text"><%= c.text %></div>
+            <div class="chat-bubble" style="<%= c.from === 'AI Assistant' ? 'background:#eef2ff;border-left:3px solid #667eea;' : '' %>">
+              <div class="chat-meta"><strong><%= c.from === 'AI Assistant' ? '🤖 AI' : '👤 ' + c.from %></strong> — <%= new Date(c.ts).toLocaleString() %></div>
+              <div class="chat-text" style="white-space:pre-wrap;"><%= c.text %></div>
             </div>
           <% }) %>
         <% } %>
       </div>
-      <form method="POST" action="/admin/projects/<%= projectId %>/design/chat" class="chat-input">
-        <input type="hidden" name="designId" value="<%= design.id %>" />
-        <textarea name="text" placeholder="Type a message about this design…" rows="2"></textarea>
-        <button type="submit" class="btn btn-primary" style="align-self:flex-end;">Send</button>
-      </form>
+      <div class="chat-input">
+        <textarea id="chatInput" placeholder="Ask about the design, request changes, or discuss before publishing…" rows="2"></textarea>
+        <button id="chatSendBtn" onclick="sendChat()" class="btn btn-primary" style="align-self:flex-end;">Send</button>
+      </div>
     </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>
     mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+    // AI Chat
+    async function sendChat() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      const btn = document.getElementById('chatSendBtn');
+      btn.disabled = true; btn.textContent = '⏳…';
+      input.value = '';
+
+      // Remove empty state
+      const empty = document.getElementById('chatEmpty');
+      if (empty) empty.remove();
+
+      // Show user message immediately
+      const msgs = document.getElementById('chatMessages');
+      const userBubble = document.createElement('div');
+      userBubble.className = 'chat-bubble';
+      userBubble.innerHTML = '<div class="chat-meta"><strong>👤 You</strong> — just now</div><div class="chat-text">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+      msgs.appendChild(userBubble);
+
+      // Show typing indicator
+      const typing = document.createElement('div');
+      typing.className = 'chat-bubble';
+      typing.style.background = '#eef2ff';
+      typing.style.borderLeft = '3px solid #667eea';
+      typing.innerHTML = '<div class="chat-meta"><strong>🤖 AI</strong></div><div class="chat-text" style="color:#64748b;">Thinking…</div>';
+      msgs.appendChild(typing);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      try {
+        const res = await fetch('/admin/projects/<%= projectId %>/design/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ designId: '<%= design.id %>', text })
+        });
+        if (!res.ok) throw new Error('Server returned ' + res.status);
+        const data = await res.json();
+        typing.querySelector('.chat-text').style.whiteSpace = 'pre-wrap';
+        typing.querySelector('.chat-text').style.color = '#0f172a';
+        typing.querySelector('.chat-text').textContent = data.aiMessage.text;
+      } catch (e) {
+        typing.querySelector('.chat-text').textContent = 'Error: ' + e.message;
+      } finally {
+        btn.disabled = false; btn.textContent = 'Send';
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+    }
+
+    document.getElementById('chatInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+    });
+
+    // Assign question to customer
+    async function assignQuestion(btn, questionText) {
+      try {
+        const res = await fetch('/admin/projects/<%= projectId %>/design/assign-question', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ designId: '<%= design.id %>', questionText, assignedTo: 'customer' })
+        });
+        if (res.ok) {
+          btn.style.background = '#f59e0b';
+          btn.textContent = '👤 Customer ✓';
+        } else {
+          alert('Failed to assign question');
+        }
+      } catch (e) { alert('Error: ' + e.message); }
+    }
 
     document.getElementById('generateFlowchart').addEventListener('click', async function() {
       const btn = this;

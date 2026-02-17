@@ -607,44 +607,143 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
     let llmQuestions = generateFollowupQuestions(summarizeRequirements(reqText));
     let designVersion = 1;
     let designStatus = 'draft';
+    let designParsedSections = null;
+    let designSummary = '';
 
     // Build structured prompt asking for JSON with explicit fields
     const buildPrompt = (context, prevAnswers) => {
-      return `You are an expert software architect. Given the project conversation and uploaded files below, produce a SOLUTION DESIGN document.
+      return `You are a senior solutions architect producing a COMPREHENSIVE SOLUTION DESIGN from a client requirements conversation. This design should be detailed enough that a development team could begin implementation from it — short of writing actual code.
 
-INSTRUCTIONS:
-- Output valid JSON only.
-- JSON keys: "design" (string, markdown with sections: Summary, Architecture, Components, Data Flow, APIs, Security, Integrations, Acceptance Criteria, Risks), "questions" (array of strings, outstanding clarifying questions), "summary" (2-3 sentence summary).
-- Do NOT include raw chat transcript in the design. Distill requirements into decisions and assumptions.
+OUTPUT FORMAT: Valid JSON only. No markdown wrapping. Structure:
+{
+  "summary": "3-5 sentence executive summary of what's being built, for whom, and why",
+  "design": {
+    "BusinessContext": "Problem statement, target users, business goals, success metrics, competitive landscape if discussed",
+    "Scope": "What's IN scope for this build (with specifics), what's explicitly OUT of scope, phasing/MVP vs future",
+    "UserPersonas": "Who uses this system? Roles, permissions, workflows per persona. Be specific.",
+    "UserJourneys": "Step-by-step flows for each key user action. E.g. 'Sales rep opens dashboard → sees prioritized contacts → clicks contact → sees LinkedIn activity timeline → chooses outreach template → sends via GHL'. Cover happy path AND edge cases discussed.",
+    "Architecture": "System architecture: frontend/backend/services/databases/queues/cron jobs. Deployment model. How components communicate. Include specific technology recommendations with reasoning.",
+    "DataModel": "Key entities, their attributes, and relationships. E.g. 'Contact: {name, email, linkedin_url, company, last_activity_date, engagement_score, source}. Relationship: Contact belongs_to Company, has_many Interactions'. Cover all entities discussed.",
+    "Components": "Each major system component with: purpose, inputs, outputs, key logic/rules, dependencies. Not just names — describe what each component DOES.",
+    "APIs": "Every API endpoint or integration point: method, path, request/response shape, auth, rate limits. For third-party APIs: which specific endpoints you'll use, what data you get, known limitations.",
+    "Integrations": "For EACH external system: what data flows in/out, sync frequency, error handling, authentication method, fallback if unavailable. Be specific about LinkedIn/CRM/etc integration mechanics.",
+    "DataFlow": "How data moves through the system end-to-end. Ingestion → processing → storage → retrieval → presentation. Include automation triggers, scheduled jobs, real-time vs batch.",
+    "Security": "Authentication method, authorization model (RBAC details), data encryption (at rest + in transit), API key management, PII handling, audit logging, compliance requirements discussed.",
+    "Infrastructure": "Hosting, deployment pipeline, environments (dev/staging/prod), monitoring, logging, backup strategy, scaling approach.",
+    "AcceptanceCriteria": "Specific, testable acceptance criteria grouped by feature. Format: 'GIVEN [context] WHEN [action] THEN [expected result]'. At least 3-5 per major feature.",
+    "Risks": "Technical risks, dependency risks, timeline risks, adoption risks. For each: likelihood, impact, mitigation strategy.",
+    "Dependencies": "External dependencies: third-party services, APIs, libraries, hardware, data sources. For each: what happens if it's unavailable?",
+    "ClientResponsibilities": "What the client needs to provide: API keys, access, content, decisions, test data, feedback cycles."
+  },
+  "questions": [
+    {"id": 1, "text": "Specific question about a gap or ambiguity in the requirements", "assumption": "What we'll assume if unanswered"}
+  ]
+}
 
-CONTEXT:
+RULES:
+- Extract EVERY concrete detail from the conversation. Names, tools, workflows, numbers, preferences — all of it.
+- Where the conversation is vague, make a reasonable assumption and STATE it clearly. Mark assumptions with [ASSUMPTION].
+- Questions should ONLY be about genuinely missing critical information, not generic "have you considered X?" padding.
+- Each design section should be multiple paragraphs with real substance. If a section has only 1-2 sentences, you haven't extracted enough.
+- ALL section values MUST be plain text strings (no nested JSON objects, no code blocks). Use bullet points with "- " for lists. Use numbered steps with "1. " for sequences.
+- Write for a product owner / business stakeholder — clear, specific, but not overly technical. Explain WHY, not just WHAT. Avoid jargon where plain language works. A non-developer should understand every section.
+- Do NOT include raw chat transcript. Synthesize and organize.
+- Do NOT be generic. Reference the specific tools, platforms, and workflows the client mentioned.
+
+CONVERSATION & FILES:
 ${context}
 
-PREVIOUS_ANSWERS:
-${prevAnswers || 'None'}`;
+PREVIOUS ANSWERS TO QUESTIONS:
+${prevAnswers || 'None yet'}`;
     };
 
-    const prevAnswersText = '';// include any existing answers if available
+    // Include existing answers (admin + customer) from previous design version
+    let prevAnswersText = '';
+    try {
+      const prevResult = loadNewestDesign(projectId);
+      if (prevResult && prevResult.design) {
+        const prev = prevResult.design;
+        if (prev.answers && prev.answers.length > 0) {
+          prevAnswersText += prev.answers.map(a => `Q: ${a.question}\nA (admin): ${a.answer}`).join('\n\n');
+        }
+        if (prev.customerAnswers && prev.customerAnswers.length > 0) {
+          prevAnswersText += '\n\n' + prev.customerAnswers.map(a => `Q: ${a.question}\nA (customer - ${a.from}): ${a.answer}`).join('\n\n');
+        }
+      }
+    } catch(e) { console.warn('Failed to load previous answers:', e.message); }
     if (OPENAI_KEY) {
       try {
-        const prompt = buildPrompt(reqText.substring(0,15000), prevAnswersText);
-        const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+        const prompt = buildPrompt(reqText.substring(0,60000), prevAnswersText);
+        const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'chatgpt-4o-latest';
         const resp = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-          body: JSON.stringify({ model: model, max_completion_tokens: 2000, messages: [{ role: 'system', content: 'You are an expert software architect and business analyst.' }, { role: 'user', content: prompt }] })
+          body: JSON.stringify({ model: model, max_completion_tokens: 8000, messages: [{ role: 'system', content: 'You are a senior solutions architect and business analyst. You produce detailed, actionable solution designs.' }, { role: 'user', content: prompt }] })
         });
         if (resp.ok) {
           const data = await resp.json();
           let content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
           // Parse JSON safely: try to extract JSON substring
           try {
-            const jsonStart = content.indexOf('{');
-            const jsonText = jsonStart >=0 ? content.slice(jsonStart) : content;
+            // Strip markdown code fences if present
+            let cleanContent = content;
+            if (cleanContent.includes('```json')) {
+              cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```/g, '');
+            }
+            const jsonStart = cleanContent.indexOf('{');
+            const jsonText = jsonStart >=0 ? cleanContent.slice(jsonStart) : cleanContent;
             const parsed = JSON.parse(jsonText);
-            llmDesignMarkdown = parsed.design || parsed.design_md || parsed.designText || parsed.design_html || '';
-            llmQuestions = parsed.questions || llmQuestions;
+            
+            // Store raw parsed design object for structured rendering
+            if (parsed.design && typeof parsed.design === 'object') {
+              // Flatten any nested objects to readable text
+              const flatDesign = {};
+              for (const [key, val] of Object.entries(parsed.design)) {
+                if (typeof val === 'string') {
+                  flatDesign[key] = val;
+                } else if (typeof val === 'object') {
+                  // Convert nested objects/arrays to readable bullet points
+                  const flatten = (obj, prefix = '') => {
+                    let out = '';
+                    if (Array.isArray(obj)) {
+                      obj.forEach((item, i) => {
+                        if (typeof item === 'object') out += flatten(item, `${i+1}. `);
+                        else out += `- ${item}\n`;
+                      });
+                    } else {
+                      for (const [k, v] of Object.entries(obj)) {
+                        if (typeof v === 'object') { out += `\n${prefix}${k}:\n${flatten(v, '  ')}`; }
+                        else { out += `${prefix}- ${k}: ${v}\n`; }
+                      }
+                    }
+                    return out;
+                  };
+                  flatDesign[key] = flatten(val);
+                } else {
+                  flatDesign[key] = String(val);
+                }
+              }
+              // Convert to markdown
+              let md = '';
+              for (const [section, body] of Object.entries(flatDesign)) {
+                const title = section.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+                md += `## ${title}\n\n${body}\n\n`;
+              }
+              llmDesignMarkdown = md;
+              designParsedSections = flatDesign;
+            } else if (typeof parsed.design === 'string') {
+              llmDesignMarkdown = parsed.design;
+            }
+            
+            if (parsed.summary) {
+              designSummary = parsed.summary;
+            }
+            
+            if (parsed.questions && Array.isArray(parsed.questions)) {
+              llmQuestions = parsed.questions;
+            }
           } catch (e) {
+            console.warn('JSON parse failed, using raw content:', e.message);
             // fallback: treat entire content as markdown
             llmDesignMarkdown = content || '';
           }
@@ -732,8 +831,10 @@ ${summarizeRequirements(reqText)}
       owner: req.user.email,
       version: designVersion,
       status: designStatus,
+      summary: designSummary,
       designMarkdown: llmDesignMarkdown,
       designHtml: mdToHtml(llmDesignMarkdown),
+      sections: designParsedSections,
       questions: llmQuestions,
       chat: [],
       answers: [],
@@ -817,44 +918,80 @@ app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, asyn
     res.status(500).send('Failed to load design');
   }
 });
-// Generate a simple mermaid flowchart from the design and return as text
+// Helper: load newest design for a project
+function loadNewestDesign(projectId) {
+  const designsDir = path.join(__dirname, 'data', 'designs');
+  if (!fs.existsSync(designsDir)) return null;
+  const candidates = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
+  if (candidates.length === 0) return null;
+  let newest = candidates[0];
+  let newestMtime = fs.statSync(path.join(designsDir, newest)).mtimeMs;
+  for (const c of candidates) {
+    const m = fs.statSync(path.join(designsDir, c)).mtimeMs;
+    if (m > newestMtime) { newest = c; newestMtime = m; }
+  }
+  return { design: JSON.parse(fs.readFileSync(path.join(designsDir, newest), 'utf8')), file: newest };
+}
+
+function saveDesign(design) {
+  const designsDir = path.join(__dirname, 'data', 'designs');
+  fs.mkdirSync(designsDir, { recursive: true });
+  fs.writeFileSync(path.join(designsDir, design.id + '.json'), JSON.stringify(design, null, 2));
+}
+
+// Generate mermaid flowchart via OpenAI
 app.post('/admin/projects/:id/design/flowchart', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
-    const projectId = req.params.id;
-    const designsDir = path.join(__dirname, 'data', 'designs');
-    if (!fs.existsSync(designsDir)) return res.status(404).json({ error: 'No designs found' });
-    const candidates = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
-    if (candidates.length === 0) return res.status(404).json({ error: 'No design for project' });
-    // pick newest
-    let newest = candidates[0];
-    let newestMtime = fs.statSync(path.join(designsDir, newest)).mtimeMs;
-    for (const c of candidates) {
-      const m = fs.statSync(path.join(designsDir, c)).mtimeMs;
-      if (m > newestMtime) { newest = c; newestMtime = m; }
-    }
-    const design = JSON.parse(fs.readFileSync(path.join(designsDir, newest), 'utf8'));
-    // Build mermaid flow: list top components and simple arrows
-    let components = [];
-    try {
-      if (design.designMarkdown && design.designMarkdown.trim().startsWith('```json')) {
-        const jsonText = design.designMarkdown.replace(/```json\s*|```/g, '').trim();
-        try { const parsed = JSON.parse(jsonText); if (parsed.design && parsed.design.Components) {
-            const comps = String(parsed.design.Components).split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
-            components = comps;
-        } }
-        catch(e){}
-      }
-    } catch (e) {}
-    if (components.length === 0) {
-      // fallback: use a default set
-      components = ['Proposal Generator', 'Morti Projects', 'Customer Portal', 'Signing Service'];
-    }
-    let mermaid = 'flowchart LR\n';
-    const ids = components.map((c,i)=> `C${i+1}`);
-    components.forEach((c,i)=>{ mermaid += `${ids[i]}["${c.replace(/\"/g,'')}"]\n`; });
-    for (let i=0;i<ids.length-1;i++) mermaid += `${ids[i]} --> ${ids[i+1]}\n`;
+    const result = loadNewestDesign(req.params.id);
+    if (!result) return res.status(404).json({ error: 'No design found' });
+    const { design } = result;
+
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    if (!OPENAI_KEY) return res.status(500).json({ error: 'OpenAI API key not configured' });
+
+    // Build context from sections
+    const sections = design.sections || {};
+    const designContext = JSON.stringify({ summary: design.summary, sections }, null, 2);
+
+    const prompt = `You are a diagramming expert. Given the following solution design JSON, generate a Mermaid flowchart that shows the system architecture and data flow.
+
+Requirements:
+- Use \`flowchart TD\` (top-down)
+- Use proper Mermaid node shapes: ([Start/End]) for entry/exit points, [Process] for processes, {Decision} for decision points, [(Database)] for data stores
+- Show how users interact with the system, how data flows between components, and key decision points
+- Use labeled edges with |label| syntax, e.g. A -->|sends data| B
+- Include multiple paths showing different user journeys or data flows
+- Use subgraphs to group related components (e.g. Frontend, Backend, External Services)
+- Keep node IDs short (A, B, C... or meaningful abbreviations)
+- Make it comprehensive but readable (15-30 nodes is ideal)
+
+IMPORTANT: Return ONLY the mermaid code, no markdown fences, no explanation. Start with "flowchart TD".
+
+Design JSON:
+${designContext.substring(0, 12000)}`;
+
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
+      body: JSON.stringify({
+        model: 'chatgpt-4o-latest',
+        max_completion_tokens: 2000,
+        messages: [
+          { role: 'system', content: 'You generate Mermaid flowchart diagrams. Return only valid mermaid syntax.' },
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
+
+    if (!resp.ok) throw new Error('OpenAI API returned ' + resp.status);
+    const data = await resp.json();
+    let mermaid = (data.choices[0].message.content || '').trim();
+    // Strip any markdown fences
+    mermaid = mermaid.replace(/^```(?:mermaid)?\s*/i, '').replace(/```\s*$/, '').trim();
+    if (!mermaid.startsWith('flowchart')) mermaid = 'flowchart TD\n' + mermaid;
+
     res.json({ mermaid });
-  } catch (e) { console.error('Flowchart error', e); res.status(500).json({ error: 'Failed to generate flowchart' }); }
+  } catch (e) { console.error('Flowchart error', e); res.status(500).json({ error: 'Failed to generate flowchart: ' + e.message }); }
 });
 
 
@@ -864,23 +1001,58 @@ app.post('/admin/projects/:id/design/chat', auth.authenticate, auth.requireAdmin
     const { designId, text } = req.body;
     const designsDir = path.join(__dirname, 'data', 'designs');
     const filePath = path.join(designsDir, designId + '.json');
-    if (!fs.existsSync(filePath)) return res.status(404).send('Design not found');
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Design not found' });
     const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const entry = { from: req.user.email, text, ts: new Date().toISOString() };
-    design.chat.push(entry);
-    fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
 
-    // append to latest session safely
-    try {
-      await db.appendSessionMessageSafe(projectId, { role: 'admin', text });
-    } catch (e) {
-      console.warn('appendSessionMessageSafe failed:', e.message);
+    // Save user message
+    const userEntry = { from: req.user.email, text, ts: new Date().toISOString() };
+    design.chat = design.chat || [];
+    design.chat.push(userEntry);
+
+    // Call OpenAI gpt-5-mini with design context
+    let aiText = '';
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    if (OPENAI_KEY) {
+      try {
+        const designContext = JSON.stringify({ summary: design.summary, sections: design.sections, questions: design.questions, answers: design.answers }, null, 2).substring(0, 10000);
+        const chatHistory = (design.chat || []).slice(-10).map(c => ({
+          role: c.from === 'AI Assistant' ? 'assistant' : 'user',
+          content: c.text
+        }));
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
+          body: JSON.stringify({
+            model: 'gpt-5-mini',
+            max_completion_tokens: 1500,
+            messages: [
+              { role: 'system', content: `You are a helpful solutions architect assistant. The user is discussing a solution design before publishing it to a customer. Help them refine, clarify, or improve the design. Be concise and actionable.\n\nDesign context:\n${designContext}` },
+              ...chatHistory
+            ]
+          })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          aiText = (data.choices[0].message.content || '').trim();
+        } else {
+          aiText = '(AI response failed — status ' + resp.status + ')';
+        }
+      } catch (e) {
+        aiText = '(AI error: ' + e.message + ')';
+      }
+    } else {
+      aiText = '(OpenAI API key not configured)';
     }
 
-    res.redirect(`/admin/projects/${projectId}/design`);
+    // Save AI response
+    const aiEntry = { from: 'AI Assistant', text: aiText, ts: new Date().toISOString() };
+    design.chat.push(aiEntry);
+    fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
+
+    res.json({ userMessage: userEntry, aiMessage: aiEntry });
   } catch (e) {
     console.error('Design chat error:', e);
-    res.redirect(`/admin/projects/${req.params.id}/design?error=Chat+failed`);
+    res.status(500).json({ error: 'Chat failed: ' + e.message });
   }
 });
 
@@ -907,6 +1079,94 @@ app.post('/admin/projects/:id/design/answer', auth.authenticate, auth.requireAdm
   } catch (e) {
     console.error('Design answer error:', e);
     res.redirect(`/admin/projects/${req.params.id}/design?error=Save+failed`);
+  }
+});
+
+// Publish design to customer
+app.post('/admin/projects/:id/design/publish', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const result = loadNewestDesign(req.params.id);
+    if (!result) return res.status(404).send('No design found');
+    const { design } = result;
+    design.published = true;
+    design.publishedAt = new Date().toISOString();
+    saveDesign(design);
+    res.redirect(`/admin/projects/${req.params.id}/design?message=Design+published`);
+  } catch (e) {
+    console.error('Publish error:', e);
+    res.redirect(`/admin/projects/${req.params.id}/design?error=Publish+failed`);
+  }
+});
+
+// Assign question to customer
+app.post('/admin/projects/:id/design/assign-question', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const { designId, questionText, assignedTo } = req.body;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    const filePath = path.join(designsDir, designId + '.json');
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Design not found' });
+    const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    // Update question assignment
+    if (design.questions && Array.isArray(design.questions)) {
+      design.questions = design.questions.map(q => {
+        const qText = (typeof q === 'object') ? q.text : String(q);
+        if (qText === questionText) {
+          if (typeof q === 'object') { q.assignedTo = assignedTo || 'customer'; return q; }
+          else return { text: qText, id: 0, assignedTo: assignedTo || 'customer' };
+        }
+        return q;
+      });
+    }
+    fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Assign question error:', e);
+    res.status(500).json({ error: 'Failed to assign question' });
+  }
+});
+
+// Customer: view published design
+app.get('/customer/projects/:id/design', auth.authenticate, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const project = await db.getProject(projectId);
+    if (!project) return res.status(404).send('Project not found');
+    // Customers can only see their own projects
+    if (req.user.role === 'customer' && project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+
+    const result = loadNewestDesign(projectId);
+    if (!result || !result.design.published) return res.status(404).send('No published design available');
+    const { design } = result;
+
+    res.render('customer/project-design', { user: req.user, projectId, project, design, title: project.name + ' - Design' });
+  } catch (e) {
+    console.error('Customer design view error:', e);
+    res.status(500).send('Failed to load design');
+  }
+});
+
+// Customer: answer assigned question
+app.post('/customer/projects/:id/design/answer', auth.authenticate, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const project = await db.getProject(projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (req.user.role === 'customer' && project.user_id !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
+
+    const { designId, question, answer } = req.body;
+    const designsDir = path.join(__dirname, 'data', 'designs');
+    const filePath = path.join(designsDir, designId + '.json');
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Design not found' });
+    const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+    design.customerAnswers = design.customerAnswers || [];
+    design.customerAnswers.push({ question, answer, from: req.user.email, ts: new Date().toISOString() });
+    fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
+
+    res.redirect(`/customer/projects/${projectId}/design`);
+  } catch (e) {
+    console.error('Customer answer error:', e);
+    res.status(500).send('Failed to save answer');
   }
 });
 
@@ -1030,12 +1290,20 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
   const files = await db.getFilesByProject(req.params.id);
   const activeSession = await db.getLatestSessionForProject(req.params.id);
   
+  // Check for published design
+  let hasPublishedDesign = false;
+  try {
+    const designResult = loadNewestDesign(req.params.id);
+    if (designResult && designResult.design && designResult.design.published) hasPublishedDesign = true;
+  } catch(e) {}
+
   res.render('customer/project', {
     user: req.user,
     project,
     sessions,
     files,
     activeSession,
+    hasPublishedDesign,
     title: project.name,
     currentPage: 'customer-projects',
     breadcrumbs: [
