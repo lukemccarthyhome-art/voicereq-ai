@@ -1585,6 +1585,32 @@ app.post('/admin/projects/:id/generate-proposal', auth.authenticate, auth.requir
   }
 });
 
+// Proposal chat - save feedback
+app.post('/admin/projects/:id/proposal/chat', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { text } = req.body;
+    if (!text || !text.trim()) return res.status(400).json({ error: 'Empty message' });
+    
+    // Find newest proposal
+    const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${projectId}-`)).sort().reverse();
+    if (files.length === 0) return res.status(404).json({ error: 'No proposal found' });
+    
+    const filePath = path.join(PROPOSALS_DIR, files[0]);
+    const proposal = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    
+    proposal.chat = proposal.chat || [];
+    const userMsg = { from: req.user.email, text: text.trim(), ts: new Date().toISOString() };
+    proposal.chat.push(userMsg);
+    
+    fs.writeFileSync(filePath, JSON.stringify(proposal, null, 2));
+    res.json({ ok: true, messages: [userMsg] });
+  } catch(e) {
+    console.error('Proposal chat error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 async function generateProposalAsync(projectId, project, design, OPENAI_KEY, user) {
   try {
     
@@ -1608,7 +1634,21 @@ async function generateProposalAsync(projectId, project, design, OPENAI_KEY, use
       extraContext += '\n\nADMIN ANSWERS:\n' + design.answers.map(a => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n');
     }
     
-    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    // Include feedback from previous proposal
+    const prevProposal = loadNewestProposal(projectId);
+    if (prevProposal && prevProposal.chat && prevProposal.chat.length > 0) {
+      extraContext += '\n\nPREVIOUS PROPOSAL FEEDBACK (CRITICAL — you MUST address every point below in the new proposal):\n';
+      extraContext += prevProposal.chat.map(m => `${m.from}: ${m.text}`).join('\n');
+      extraContext += '\n\nThe previous proposal had these values — adjust based on feedback:\n';
+      extraContext += `- Total Upfront: $${prevProposal.totalUpfront || 'N/A'}\n`;
+      extraContext += `- Annual Maintenance: $${prevProposal.annualMaintenance || 'N/A'}\n`;
+      if (prevProposal.fees) {
+        extraContext += `- Discovery: $${prevProposal.fees.discovery?.amount || 'N/A'}\n`;
+        extraContext += `- Implementation: $${prevProposal.fees.implementation?.amount || 'N/A'}\n`;
+        extraContext += `- Monthly: $${prevProposal.fees.monthly_maintenance?.amount || 'N/A'}\n`;
+      }
+    }
+    
     const model = process.env.LLM_MODEL || 'chatgpt-4o-latest';
     
     const prompt = `You are a commercially minded product strategist and pricing advisor for Morti Pty Ltd, an AI consultancy based in Melbourne, Australia. You are given a project design. Your task is to determine a value-based pricing proposal.

@@ -329,6 +329,24 @@
             </div>
         </div>
 
+        <!-- Feedback Chat -->
+        <div class="card">
+            <h3 style="margin-bottom: 16px;">💬 Proposal Feedback</h3>
+            <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 16px;">Add feedback below. When you regenerate, all feedback will be incorporated.</p>
+            <div id="chatMessages" style="max-height: 400px; overflow-y: auto; margin-bottom: 16px;">
+                <% (proposal.chat || []).forEach(msg => { %>
+                    <div style="margin-bottom: 12px; padding: 10px 14px; border-radius: 8px; <%= msg.from === 'ai' ? 'background: #f0f4ff; border-left: 3px solid #667eea;' : 'background: #f8fafc; border-left: 3px solid #10b981;' %>">
+                        <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;"><%= msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from %> · <%= new Date(msg.ts).toLocaleString() %></div>
+                        <div style="font-size: 14px; color: #334155; white-space: pre-wrap;"><%= msg.text %></div>
+                    </div>
+                <% }) %>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="chatInput" placeholder="Add feedback on pricing, scope, assumptions..." style="flex: 1; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none;" />
+                <button id="chatSend" class="btn" style="background: #10b981;">Send</button>
+            </div>
+        </div>
+
         <div class="card" style="text-align: center; color: #94a3b8; font-size: 0.85rem;">
             Valid until: <%= proposal.validUntil || '30 days from generation' %>
             &nbsp;·&nbsp; Proposal ID: <%= proposal.id %>
@@ -343,6 +361,43 @@ document.querySelectorAll('form[action*="generate-proposal"]').forEach(f => {
         setTimeout(() => { btn.disabled = true; btn.textContent = '⏳ Generating proposal...'; }, 50);
     });
 });
+
+// Chat send
+const chatInput = document.getElementById('chatInput');
+const chatSend = document.getElementById('chatSend');
+if (chatInput && chatSend) {
+    const sendMsg = async () => {
+        const text = chatInput.value.trim();
+        if (!text) return;
+        chatSend.disabled = true;
+        chatInput.disabled = true;
+        try {
+            const res = await fetch('/admin/projects/<%= project.id %>/proposal/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            if (!res.ok) throw new Error('Failed');
+            const data = await res.json();
+            // Append message to chat
+            const container = document.getElementById('chatMessages');
+            data.messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.style.cssText = 'margin-bottom: 12px; padding: 10px 14px; border-radius: 8px; ' +
+                    (msg.from === 'ai' ? 'background: #f0f4ff; border-left: 3px solid #667eea;' : 'background: #f8fafc; border-left: 3px solid #10b981;');
+                div.innerHTML = `<div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">${msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from} · ${new Date(msg.ts).toLocaleString()}</div><div style="font-size:14px;color:#334155;white-space:pre-wrap;">${msg.text}</div>`;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+            chatInput.value = '';
+        } catch(e) { alert('Failed to send: ' + e.message); }
+        chatSend.disabled = false;
+        chatInput.disabled = false;
+        chatInput.focus();
+    };
+    chatSend.addEventListener('click', sendMsg);
+    chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
+}
 
 // Poll for generation status if generating
 <% if (locals.generating) { %>
