@@ -1575,7 +1575,8 @@ app.post('/admin/projects/:id/generate-proposal', auth.authenticate, auth.requir
     // Generate in background
     const design = designResult.design;
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
-    generateProposalAsync(projectId, project, design, OPENAI_KEY, req.user).catch(err => {
+    const discount = req.body.discount ? parseFloat(req.body.discount) : null;
+    generateProposalAsync(projectId, project, design, OPENAI_KEY, req.user, discount).catch(err => {
       console.error('Background proposal generation failed:', err);
       generationStatus[projectId] = { type: 'proposal', status: 'error', error: err.message };
     });
@@ -1670,7 +1671,7 @@ app.post('/customer/projects/:id/proposal/approve', auth.authenticate, async (re
   res.redirect(`/customer/projects/${req.params.id}/proposal`);
 });
 
-async function generateProposalAsync(projectId, project, design, OPENAI_KEY, user) {
+async function generateProposalAsync(projectId, project, design, OPENAI_KEY, user, discount) {
   try {
     
     // Build context
@@ -1693,25 +1694,27 @@ async function generateProposalAsync(projectId, project, design, OPENAI_KEY, use
       extraContext += '\n\nADMIN ANSWERS:\n' + design.answers.map(a => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n');
     }
     
-    // Include feedback from previous proposal
+    // Include full previous proposal for carry-forward
     const prevProposal = loadNewestProposal(projectId);
-    if (prevProposal && prevProposal.chat && prevProposal.chat.length > 0) {
-      extraContext += '\n\nPREVIOUS PROPOSAL FEEDBACK (CRITICAL — you MUST address every point below in the new proposal):\n';
-      extraContext += prevProposal.chat.map(m => `${m.from}: ${m.text}`).join('\n');
-      extraContext += '\n\nThe previous proposal had these values — adjust based on feedback:\n';
-      if (prevProposal.upfrontFee) {
-        extraContext += `- Upfront Fee: $${prevProposal.upfrontFee.total || 'N/A'} (${prevProposal.upfrontFee.totalHours || '?'} hrs)\n`;
-      } else {
-        extraContext += `- Total Upfront: $${prevProposal.totalUpfront || 'N/A'}\n`;
+    if (prevProposal) {
+      // Strip metadata, keep content
+      const prevContent = { ...prevProposal };
+      delete prevContent.id; delete prevContent.projectId; delete prevContent.createdAt;
+      delete prevContent.designId; delete prevContent.status; delete prevContent.chat;
+      delete prevContent.published; delete prevContent.publishedAt;
+      delete prevContent.approvedAt; delete prevContent.approvedBy;
+      extraContext += '\n\nEXISTING PROPOSAL (carry forward — preserve ALL content unless specifically asked to change):\n';
+      extraContext += JSON.stringify(prevContent, null, 2);
+      
+      if (prevProposal.chat && prevProposal.chat.length > 0) {
+        extraContext += '\n\nADMIN FEEDBACK (CRITICAL — address every point, adjust the existing proposal accordingly):\n';
+        extraContext += prevProposal.chat.map(m => `${m.from}: ${m.text}`).join('\n');
       }
-      if (prevProposal.annualFee) {
-        extraContext += `- Annual Fee: $${prevProposal.annualFee.total || 'N/A'} ($${prevProposal.annualFee.monthlyEquivalent || '?'}/mo)\n`;
-      } else {
-        extraContext += `- Annual Maintenance: $${prevProposal.annualMaintenance || 'N/A'}\n`;
-      }
-      if (prevProposal.labourAnalysis) {
-        extraContext += `- Labour Savings Used: $${prevProposal.labourAnalysis.totalAnnualSavings || 'N/A'}/yr\n`;
-      }
+    }
+    
+    // Handle discount
+    if (discount && discount > 0 && discount <= 100) {
+      extraContext += `\n\nDISCOUNT: Apply a ${discount}% discount to BOTH the upfront fee and the annual fee. Show the original price struck through in the JSON using "originalTotal" fields alongside the discounted "total". Add a "discount" field to the root: { "percentage": ${discount}, "reason": "Promotional/negotiated discount" }. Recalculate ROI based on discounted prices.`;
     }
     
     const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1-mini';

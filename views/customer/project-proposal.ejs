@@ -146,16 +146,35 @@
     </div>
     <% } %>
 
-    <!-- Two Fee Cards -->
+    <!-- Discount Banner -->
+    <% if (proposal.discount && proposal.discount.percentage) { %>
+    <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 10px; padding: 12px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 24px;">🏷️</span>
+        <div>
+            <strong style="color: #92400e; font-size: 16px;"><%= proposal.discount.percentage %>% Discount Applied</strong>
+            <% if (proposal.discount.reason) { %><div style="color: #a16207; font-size: 13px;"><%= proposal.discount.reason %></div><% } %>
+        </div>
+    </div>
+    <% } %>
+
+<!-- Two Fee Cards -->
     <div class="fee-grid" style="grid-template-columns: 1fr 1fr;">
         <div class="fee-card highlight">
             <div class="fee-label">1. Upfront Fee</div>
-            <div class="fee-amount">$<%= ((proposal.upfrontFee && proposal.upfrontFee.total) || proposal.totalUpfront || 0).toLocaleString() %></div>
+            <% if (proposal.upfrontFee && proposal.upfrontFee.originalTotal && proposal.upfrontFee.originalTotal !== proposal.upfrontFee.total) { %>
+                <div class="fee-amount"><span style="text-decoration: line-through; color: #94a3b8; font-size: 0.7em;">$<%= proposal.upfrontFee.originalTotal.toLocaleString() %></span> $<%= (proposal.upfrontFee.total || 0).toLocaleString() %></div>
+            <% } else { %>
+                <div class="fee-amount">$<%= ((proposal.upfrontFee && proposal.upfrontFee.total) || proposal.totalUpfront || 0).toLocaleString() %></div>
+            <% } %>
             <div class="fee-desc">Discovery, design, development, testing, and deployment — everything to get you live.</div>
         </div>
         <div class="fee-card highlight" style="border-color: #10b981;">
             <div class="fee-label" style="color: #10b981;">2. Annual Fee</div>
-            <div class="fee-amount">$<%= ((proposal.annualFee && proposal.annualFee.total) || proposal.annualMaintenance || 0).toLocaleString() %> <small>/yr</small></div>
+            <% if (proposal.annualFee && proposal.annualFee.originalTotal && proposal.annualFee.originalTotal !== proposal.annualFee.total) { %>
+                <div class="fee-amount"><span style="text-decoration: line-through; color: #94a3b8; font-size: 0.7em;">$<%= proposal.annualFee.originalTotal.toLocaleString() %></span> $<%= (proposal.annualFee.total || 0).toLocaleString() %> <small>/yr</small></div>
+            <% } else { %>
+                <div class="fee-amount">$<%= ((proposal.annualFee && proposal.annualFee.total) || proposal.annualMaintenance || 0).toLocaleString() %> <small>/yr</small></div>
+            <% } %>
             <% if (proposal.annualFee) { %>
             <div style="font-size: 0.9rem; color: #475569; background: #f0fdf4; padding: 8px 12px; border-radius: 6px; margin: 8px 0;">
                 $<%= (proposal.annualFee.monthlyEquivalent || 0).toLocaleString() %>/month

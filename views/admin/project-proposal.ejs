@@ -96,7 +96,8 @@
         <div style="display: flex; gap: 8px;">
             <a href="/admin/projects/<%= project.id %>" class="btn" style="background: #64748b;">← Back to Project</a>
             <% if (design) { %>
-            <form method="POST" action="/admin/projects/<%= project.id %>/generate-proposal" style="margin:0;" id="genForm">
+            <form method="POST" action="/admin/projects/<%= project.id %>/generate-proposal" style="margin:0; display:flex; gap:6px; align-items:center;" id="genForm">
+                <input type="number" name="discount" min="0" max="100" step="1" placeholder="Discount %" style="width:90px; padding:8px 10px; border:2px solid #e2e8f0; border-radius:8px; font-size:13px;" title="Optional discount percentage" value="<%= proposal && proposal.discount ? proposal.discount.percentage : '' %>">
                 <button type="submit" class="btn" style="background: #8b5cf6;">
                     <%= proposal ? '🔄 Regenerate' : '⚡ Generate Proposal' %>
                 </button>
@@ -211,11 +212,26 @@
         </div>
         <% } %>
 
-        <!-- Two Fee Cards -->
+        <!-- Discount Banner -->
+        <% if (proposal.discount && proposal.discount.percentage) { %>
+        <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 10px; padding: 12px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 24px;">🏷️</span>
+            <div>
+                <strong style="color: #92400e; font-size: 16px;"><%= proposal.discount.percentage %>% Discount Applied</strong>
+                <% if (proposal.discount.reason) { %><div style="color: #a16207; font-size: 13px;"><%= proposal.discount.reason %></div><% } %>
+            </div>
+        </div>
+        <% } %>
+
+<!-- Two Fee Cards -->
         <div class="fee-grid" style="grid-template-columns: 1fr 1fr;">
             <div class="fee-card highlight">
                 <div class="fee-label">1. Upfront Fee</div>
-                <div class="fee-amount">$<%= ((proposal.upfrontFee && proposal.upfrontFee.total) || proposal.totalUpfront || 0).toLocaleString() %></div>
+                <% if (proposal.upfrontFee && proposal.upfrontFee.originalTotal && proposal.upfrontFee.originalTotal !== proposal.upfrontFee.total) { %>
+                    <div class="fee-amount"><span style="text-decoration: line-through; color: #94a3b8; font-size: 0.7em;">$<%= proposal.upfrontFee.originalTotal.toLocaleString() %></span> $<%= (proposal.upfrontFee.total || 0).toLocaleString() %></div>
+                <% } else { %>
+                    <div class="fee-amount">$<%= ((proposal.upfrontFee && proposal.upfrontFee.total) || proposal.totalUpfront || 0).toLocaleString() %></div>
+                <% } %>
                 <div class="fee-desc" style="text-align: left; margin-top: 12px;">
                     <% if (proposal.upfrontFee && proposal.upfrontFee.breakdown) { %>
                         <% proposal.upfrontFee.breakdown.forEach(item => { %>
@@ -234,7 +250,11 @@
             </div>
             <div class="fee-card highlight" style="border-color: #10b981;">
                 <div class="fee-label" style="color: #10b981;">2. Annual Fee</div>
-                <div class="fee-amount">$<%= ((proposal.annualFee && proposal.annualFee.total) || proposal.annualMaintenance || 0).toLocaleString() %> <small>/yr</small></div>
+                <% if (proposal.annualFee && proposal.annualFee.originalTotal && proposal.annualFee.originalTotal !== proposal.annualFee.total) { %>
+                    <div class="fee-amount"><span style="text-decoration: line-through; color: #94a3b8; font-size: 0.7em;">$<%= proposal.annualFee.originalTotal.toLocaleString() %></span> $<%= (proposal.annualFee.total || 0).toLocaleString() %> <small>/yr</small></div>
+                <% } else { %>
+                    <div class="fee-amount">$<%= ((proposal.annualFee && proposal.annualFee.total) || proposal.annualMaintenance || 0).toLocaleString() %> <small>/yr</small></div>
+                <% } %>
                 <% if (proposal.annualFee) { %>
                     <div style="font-size: 0.85rem; color: #64748b; margin: 8px 0;"><%= proposal.annualFee.calculation %></div>
                     <div style="font-size: 0.9rem; color: #475569; background: #f0fdf4; padding: 8px 12px; border-radius: 6px; margin: 8px 0;">
