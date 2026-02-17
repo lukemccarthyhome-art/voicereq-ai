@@ -94,7 +94,45 @@
             <% if (designSections[key]) { %>
               <div class="design-item <%= fullWidthSections.includes(key) ? 'full-width' : '' %>">
                 <h4><%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></h4>
-                <div class="section-body"><%- designSections[key].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br/>').replace(/\[ASSUMPTION\]/g,'<span style="background:#fef3c7;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;color:#92400e;">ASSUMPTION</span>') %></div>
+                <div class="section-body"><%- (function(txt) {
+                  let s = txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                  s = s.replace(/\[ASSUMPTION\]/g,'<span style="background:#fef3c7;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;color:#92400e;">ASSUMPTION</span>');
+                  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                  const lines = s.split('\n');
+                  let html = '';
+                  let inList = false;
+                  let listType = '';
+                  for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) {
+                      if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
+                      html += '<div style="height:8px"></div>';
+                      continue;
+                    }
+                    const bullet = line.match(/^[-•]\s+(.+)/);
+                    const numbered = line.match(/^(\d+)\.\s+(.+)/);
+                    if (bullet) {
+                      if (!inList || listType !== 'ul') {
+                        if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
+                        html += '<ul style="margin:4px 0 4px 20px;padding:0;">';
+                        inList = true; listType = 'ul';
+                      }
+                      html += '<li style="margin-bottom:3px;">' + bullet[1] + '</li>';
+                    } else if (numbered) {
+                      if (!inList || listType !== 'ol') {
+                        if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
+                        html += '<ol style="margin:4px 0 4px 20px;padding:0;">';
+                        inList = true; listType = 'ol';
+                      }
+                      html += '<li style="margin-bottom:3px;">' + numbered[2] + '</li>';
+                    } else {
+                      if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
+                      html += '<p style="margin:0 0 4px 0;">' + line + '</p>';
+                    }
+                  }
+                  if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
+                  return html;
+                })(designSections[key]) %></div>
               </div>
             <% } %>
           <% }) %>
