@@ -1553,51 +1553,72 @@ app.post('/admin/projects/:id/generate-proposal', auth.authenticate, auth.requir
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
     const model = process.env.LLM_MODEL || 'chatgpt-4o-latest';
     
-    const prompt = `You are a commercial proposal writer for an AI consultancy (Morti Pty Ltd, Melbourne, Australia). Generate a fee proposal based on the project design below.
+    const prompt = `You are a commercially minded product strategist and pricing advisor for Morti Pty Ltd, an AI consultancy based in Melbourne, Australia. You are given a project design. Your task is to determine a value-based pricing proposal.
+
+This is NOT a cost-plus estimate. You must:
+- Estimate the likely financial impact of the solution for the client: direct cost savings, time savings (convert to salary equivalents), revenue upside, risk reduction value, strategic leverage.
+- Estimate the order-of-magnitude annual economic value created.
+- Propose a pricing structure based on value share — not fixed hourly pricing.
+- Use commercial judgement to determine what is reasonable and credible.
+
+CONSTRAINT: Assume the client is commercially intelligent and will evaluate ROI. The pricing must feel justified, not opportunistic.
+
+PRICING PRINCIPLES:
+- Capture 10-30% of credible economic value in early stage.
+- Ensure client ROI > 3x in moderate scenario.
+- Do not underprice strategic leverage. Do not overprice unproven automation.
+- Align risk with pricing (more risk → lower upfront, more performance-based).
+- Avoid: hourly rate breakdowns, "dev days" costing, overly precise numbers with no reasoning.
+- Prices in AUD.
 
 OUTPUT FORMAT: Valid JSON only. Structure:
 {
   "projectName": "Name",
   "clientCompany": "Company name from context or 'TBD'",
-  "executiveSummary": "2-3 sentence summary of what we're building and why it matters to the client",
-  "valueProposition": "Clear statement of the business value: cost savings, efficiency gains, revenue impact. Use specific numbers from the cost-benefit analysis if available.",
+  "commercialContext": "Summarise the likely economic impact of the solution. What does this change for the client's business?",
+  "estimatedValue": {
+    "annualSavings": "Estimated direct cost savings per year with reasoning",
+    "revenueUplift": "Estimated revenue impact if applicable, or 'N/A'",
+    "efficiencyGains": "Time/resource efficiency gains converted to dollar value",
+    "strategicValue": "Intangible strategic value: competitive advantage, risk reduction, market positioning",
+    "conservativeAnnual": 0,
+    "moderateAnnual": 0,
+    "optimisticAnnual": 0
+  },
+  "pricingLogic": "Explain how pricing is derived from value created. What % of value is captured and why that % is reasonable. Why the client still achieves strong ROI.",
   "fees": {
     "discovery": {
       "description": "What's included in discovery & design phase",
       "amount": 0,
-      "rationale": "Why this price — based on complexity, consultation time, platform usage"
+      "rationale": "Justification tied to value and complexity"
     },
     "implementation": {
       "description": "What's included in the build phase",
       "amount": 0,
-      "rationale": "Based on build effort, team size, timeline"
+      "rationale": "Justification tied to value delivered"
     },
     "monthly_maintenance": {
-      "description": "Ongoing support, updates, monitoring",
+      "description": "Ongoing optimisation, support, updates",
       "amount": 0,
-      "rationale": "Based on system complexity and support level needed"
+      "rationale": "Justification tied to ongoing value protection"
     }
   },
+  "performanceComponents": "Where appropriate: performance-linked components, revenue-share models, tiered scaling based on realised value. Or 'None recommended for this engagement' if not applicable.",
   "totalUpfront": 0,
   "annualMaintenance": 0,
-  "roi": {
-    "estimatedAnnualValue": "Value or savings per year based on cost-benefit data",
+  "roiIllustration": {
+    "totalAnnualCost": 0,
+    "moderateAnnualValue": 0,
+    "roiMultiple": "e.g. 4.2x",
     "paybackPeriod": "How quickly the investment pays for itself",
-    "summary": "1-2 sentence ROI statement"
+    "summary": "1-2 sentence ROI statement demonstrating strong client upside"
   },
+  "sensitivity": "How pricing adjusts if: scope shrinks, scope expands, client is enterprise vs mid-market",
   "timeline": "Estimated delivery timeline",
   "assumptions": ["Key assumptions that affect pricing"],
   "exclusions": ["What's NOT included"],
   "validUntil": "30 days from generation"
 }
-
-PRICING GUIDELINES:
-- Discovery & Design: $2,500 - $8,000 depending on complexity (Low=$2,500-3,500, Medium=$4,000-5,500, High=$6,000-8,000)
-- Implementation: $8,000 - $50,000 depending on build effort (simple=$8,000-15,000, moderate=$15,000-30,000, complex=$30,000-50,000)
-- Monthly Maintenance: 10-15% of implementation cost annually, divided by 12
-- Prices in AUD
-- If cost-benefit data shows strong ROI, price can be at the higher end of range
-- If limited cost data available, be conservative and note the assumption
 
 PROJECT DESIGN:
 Executive Summary: ${executiveSummary}
@@ -1610,7 +1631,7 @@ Phase 2 Enhancements: ${phase2}
 Risks: ${risks}
 ${extraContext}
 
-Generate a realistic, commercially credible proposal. Be specific about what's included in each phase.`;
+Use commercial judgement. Produce a sophisticated, value-anchored proposal.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -1619,7 +1640,7 @@ Generate a realistic, commercially credible proposal. Be specific about what's i
         model,
         max_completion_tokens: 4096,
         messages: [
-          { role: 'system', content: 'You are a commercial proposal writer. Return valid JSON only.' },
+          { role: 'system', content: 'You are a commercially minded product strategist and value-based pricing advisor. Return valid JSON only. Think in enterprise value terms, anchor price to impact, justify pricing rationally.' },
           { role: 'user', content: prompt }
         ],
         response_format: { type: 'json_object' }
