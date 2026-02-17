@@ -92,30 +92,43 @@
     <% } %>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2>💰 Proposal — <%= project.name %></h2>
-        <div style="display: flex; gap: 8px;">
-            <a href="/admin/projects/<%= project.id %>" class="btn" style="background: #64748b;">← Back to Project</a>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+            <h2 style="margin: 0;">💰 Proposal — <%= project.name %></h2>
+            <a href="/admin/projects/<%= project.id %>" class="btn btn-sm" style="background: #64748b;">← Back</a>
+        </div>
+        
+        <!-- Action bar -->
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
             <% if (design) { %>
-            <form method="POST" action="/admin/projects/<%= project.id %>/generate-proposal" style="margin:0; display:flex; gap:6px; align-items:center;" id="genForm">
-                <input type="number" name="discount" min="0" max="100" step="1" placeholder="Discount %" style="width:90px; padding:8px 10px; border:2px solid #e2e8f0; border-radius:8px; font-size:13px;" title="Optional discount percentage" value="<%= proposal && proposal.discount ? proposal.discount.percentage : '' %>">
-                <button type="submit" class="btn" style="background: #8b5cf6;">
-                    <%= proposal ? '🔄 Regenerate' : '⚡ Generate Proposal' %>
+            <form method="POST" action="/admin/projects/<%= project.id %>/generate-proposal" style="margin:0; display:flex; flex-wrap:wrap; gap:8px; align-items:center;" id="genForm">
+                <div style="display:flex; gap:4px; align-items:center;">
+                    <label style="font-size:12px; color:#64748b; font-weight:600;">Upfront</label>
+                    <input type="number" name="discountUpfront" min="0" max="100" step="1" placeholder="%" style="width:60px; padding:6px 8px; border:2px solid #e2e8f0; border-radius:6px; font-size:13px; text-align:center;" title="Upfront fee discount %" value="<%= proposal && proposal.discount && proposal.discount.upfront ? proposal.discount.upfront : '' %>">
+                </div>
+                <div style="display:flex; gap:4px; align-items:center;">
+                    <label style="font-size:12px; color:#64748b; font-weight:600;">Annual</label>
+                    <input type="number" name="discountAnnual" min="0" max="100" step="1" placeholder="%" style="width:60px; padding:6px 8px; border:2px solid #e2e8f0; border-radius:6px; font-size:13px; text-align:center;" title="Annual fee discount %" value="<%= proposal && proposal.discount && proposal.discount.annual ? proposal.discount.annual : '' %>">
+                </div>
+                <button type="submit" class="btn btn-sm" style="background: #8b5cf6;">
+                    <%= proposal ? '🔄 Regenerate' : '⚡ Generate' %>
                 </button>
             </form>
             <% } %>
             <% if (proposal) { %>
-                <% if (proposal.published) { %>
-                    <form method="POST" action="/admin/projects/<%= project.id %>/proposal/unpublish" style="margin:0;">
-                        <button type="submit" class="btn" style="background: #ef4444;">🔒 Unpublish</button>
+                <div style="display:flex; gap:8px; align-items:center; margin-left:auto;">
+                    <% if (proposal.published) { %>
+                        <form method="POST" action="/admin/projects/<%= project.id %>/proposal/unpublish" style="margin:0;">
+                            <button type="submit" class="btn btn-sm" style="background: #ef4444;">🔒 Unpublish</button>
+                        </form>
+                    <% } else { %>
+                        <form method="POST" action="/admin/projects/<%= project.id %>/proposal/publish" style="margin:0;">
+                            <button type="submit" class="btn btn-sm" style="background: #10b981;">📤 Publish</button>
+                        </form>
+                    <% } %>
+                    <form method="POST" action="/admin/projects/<%= project.id %>/proposal/delete" style="margin:0;" onsubmit="return confirm('Delete all proposals for this project? This cannot be undone.')">
+                        <button type="submit" class="btn btn-sm" style="background: #dc2626;">🗑️ Delete</button>
                     </form>
-                <% } else { %>
-                    <form method="POST" action="/admin/projects/<%= project.id %>/proposal/publish" style="margin:0;">
-                        <button type="submit" class="btn" style="background: #10b981;">📤 Publish to Customer</button>
-                    </form>
-                <% } %>
-                <form method="POST" action="/admin/projects/<%= project.id %>/proposal/delete" style="margin:0;" onsubmit="return confirm('Delete all proposals for this project? This cannot be undone.')">
-                    <button type="submit" class="btn" style="background: #dc2626;">🗑️ Delete</button>
-                </form>
+                </div>
             <% } %>
         </div>
     </div>
@@ -213,11 +226,11 @@
         <% } %>
 
         <!-- Discount Banner -->
-        <% if (proposal.discount && proposal.discount.percentage) { %>
+        <% if (proposal.discount && (proposal.discount.upfront || proposal.discount.annual || proposal.discount.percentage)) { %>
         <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 10px; padding: 12px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
             <span style="font-size: 24px;">🏷️</span>
             <div>
-                <strong style="color: #92400e; font-size: 16px;"><%= proposal.discount.percentage %>% Discount Applied</strong>
+                <strong style="color: #92400e; font-size: 16px;"><%= proposal.discount.upfront && proposal.discount.annual ? proposal.discount.upfront + '%/' + proposal.discount.annual + '% Discount (Upfront/Annual)' : (proposal.discount.upfront ? proposal.discount.upfront + '% Upfront Discount' : (proposal.discount.annual ? proposal.discount.annual + '% Annual Discount' : proposal.discount.percentage + '% Discount')) %></strong>
                 <% if (proposal.discount.reason) { %><div style="color: #a16207; font-size: 13px;"><%= proposal.discount.reason %></div><% } %>
             </div>
         </div>
@@ -367,6 +380,7 @@
         <div class="card" style="text-align: center; color: #94a3b8; font-size: 0.85rem;">
             Valid until: <%= proposal.validUntil || '30 days from generation' %>
             &nbsp;·&nbsp; Proposal ID: <%= proposal.id %>
+            <div style="margin-top: 8px; font-weight: 600; color: #64748b;">All prices are in AUD and exclude GST.</div>
         </div>
     <% } %>
 </div>

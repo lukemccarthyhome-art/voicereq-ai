@@ -147,11 +147,11 @@
     <% } %>
 
     <!-- Discount Banner -->
-    <% if (proposal.discount && proposal.discount.percentage) { %>
+    <% if (proposal.discount && (proposal.discount.upfront || proposal.discount.annual || proposal.discount.percentage)) { %>
     <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 10px; padding: 12px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
         <span style="font-size: 24px;">🏷️</span>
         <div>
-            <strong style="color: #92400e; font-size: 16px;"><%= proposal.discount.percentage %>% Discount Applied</strong>
+            <strong style="color: #92400e; font-size: 16px;"><%= proposal.discount.upfront && proposal.discount.annual ? proposal.discount.upfront + '%/' + proposal.discount.annual + '% Discount (Upfront/Annual)' : (proposal.discount.upfront ? proposal.discount.upfront + '% Upfront Discount' : (proposal.discount.annual ? proposal.discount.annual + '% Annual Discount' : proposal.discount.percentage + '% Discount')) %></strong>
             <% if (proposal.discount.reason) { %><div style="color: #a16207; font-size: 13px;"><%= proposal.discount.reason %></div><% } %>
         </div>
     </div>
@@ -264,6 +264,7 @@
 
     <div class="card" style="text-align: center; color: #94a3b8; font-size: 0.85rem;">
         Valid until: <%= proposal.validUntil || '30 days from generation' %>
+        <div style="margin-top: 8px; font-weight: 600; color: #64748b;">All prices are in AUD and exclude GST.</div>
     </div>
 </div>
 

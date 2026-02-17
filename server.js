@@ -1575,7 +1575,11 @@ app.post('/admin/projects/:id/generate-proposal', auth.authenticate, auth.requir
     // Generate in background
     const design = designResult.design;
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
-    const discount = req.body.discount ? parseFloat(req.body.discount) : null;
+    const discount = {
+      upfront: req.body.discountUpfront ? parseFloat(req.body.discountUpfront) : null,
+      annual: req.body.discountAnnual ? parseFloat(req.body.discountAnnual) : null
+    };
+    const hasDiscount = discount.upfront || discount.annual;
     generateProposalAsync(projectId, project, design, OPENAI_KEY, req.user, discount).catch(err => {
       console.error('Background proposal generation failed:', err);
       generationStatus[projectId] = { type: 'proposal', status: 'error', error: err.message };
@@ -1713,8 +1717,16 @@ async function generateProposalAsync(projectId, project, design, OPENAI_KEY, use
     }
     
     // Handle discount
-    if (discount && discount > 0 && discount <= 100) {
-      extraContext += `\n\nDISCOUNT: Apply a ${discount}% discount to BOTH the upfront fee and the annual fee. Show the original price struck through in the JSON using "originalTotal" fields alongside the discounted "total". Add a "discount" field to the root: { "percentage": ${discount}, "reason": "Promotional/negotiated discount" }. Recalculate ROI based on discounted prices.`;
+    if (discount && (discount.upfront || discount.annual)) {
+      let discountInstructions = '\n\nDISCOUNT INSTRUCTIONS:\n';
+      if (discount.upfront && discount.upfront > 0 && discount.upfront <= 100) {
+        discountInstructions += `- Apply ${discount.upfront}% discount to the UPFRONT fee. Include "originalTotal" field in upfrontFee showing pre-discount amount, and set "total" to the discounted amount.\n`;
+      }
+      if (discount.annual && discount.annual > 0 && discount.annual <= 100) {
+        discountInstructions += `- Apply ${discount.annual}% discount to the ANNUAL fee. Include "originalTotal" field in annualFee showing pre-discount amount, and set "total" to the discounted amount. Recalculate monthlyEquivalent.\n`;
+      }
+      discountInstructions += `Add a "discount" field to root JSON: { "upfront": ${discount.upfront || 0}, "annual": ${discount.annual || 0}, "reason": "Negotiated discount" }. Recalculate ROI based on discounted prices.`;
+      extraContext += discountInstructions;
     }
     
     const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1-mini';
