@@ -245,10 +245,15 @@
         <div class="fee-grid" style="grid-template-columns: 1fr 1fr;">
             <div class="fee-card highlight">
                 <div class="fee-label">1. Upfront Fee</div>
-                <% if (proposal.upfrontFee && proposal.upfrontFee.originalTotal && proposal.upfrontFee.originalTotal !== proposal.upfrontFee.total) { %>
-                    <div class="fee-amount"><span style="text-decoration: line-through; color: #94a3b8; font-size: 0.7em;">$<%= proposal.upfrontFee.originalTotal.toLocaleString() %></span> $<%= (proposal.upfrontFee.total || 0).toLocaleString() %></div>
+                <%
+                const headerPreDiscount = proposal.upfrontFee ? (proposal.upfrontFee.originalTotal || (proposal.upfrontFee.totalHours || 0) * (proposal.upfrontFee.hourlyRate || 400)) : 0;
+                const headerTotal = (proposal.upfrontFee && proposal.upfrontFee.total) || proposal.totalUpfront || 0;
+                const headerDiscounted = headerPreDiscount > 0 && Math.abs(headerPreDiscount - headerTotal) > 1;
+                %>
+                <% if (headerDiscounted) { %>
+                    <div class="fee-amount"><span style="text-decoration: line-through; color: #94a3b8; font-size: 0.7em;">$<%= headerPreDiscount.toLocaleString() %></span> $<%= headerTotal.toLocaleString() %></div>
                 <% } else { %>
-                    <div class="fee-amount">$<%= ((proposal.upfrontFee && proposal.upfrontFee.total) || proposal.totalUpfront || 0).toLocaleString() %></div>
+                    <div class="fee-amount">$<%= headerTotal.toLocaleString() %></div>
                 <% } %>
                 <div class="fee-desc" style="text-align: left; margin-top: 12px;">
                     <% if (proposal.upfrontFee && proposal.upfrontFee.breakdown) { %>
@@ -259,10 +264,20 @@
                             </div>
                             <div style="font-size: 0.8rem; color: #94a3b8; padding: 2px 0 6px;"><%= item.description %></div>
                         <% }) %>
+                        <%
+                        const upfrontPreDiscount = (proposal.upfrontFee.totalHours || 0) * (proposal.upfrontFee.hourlyRate || 400);
+                        const upfrontHasDiscount = proposal.upfrontFee.originalTotal || (upfrontPreDiscount > 0 && Math.abs(upfrontPreDiscount - (proposal.upfrontFee.total || 0)) > 1);
+                        %>
                         <div style="display: flex; justify-content: space-between; padding: 8px 0 0; font-weight: 700; border-top: 2px solid #667eea;">
                             <span>Total (<%= proposal.upfrontFee.totalHours || 0 %> hrs × $<%= (proposal.upfrontFee.hourlyRate || 400).toLocaleString() %>/hr)</span>
+                            <span>$<%= upfrontPreDiscount.toLocaleString() %></span>
+                        </div>
+                        <% if (upfrontHasDiscount) { %>
+                        <div style="display: flex; justify-content: space-between; padding: 6px 0 0; font-weight: 800; color: #059669; font-size: 1.1em;">
+                            <span>After Discount</span>
                             <span>$<%= (proposal.upfrontFee.total || 0).toLocaleString() %></span>
                         </div>
+                        <% } %>
                     <% } %>
                 </div>
             </div>
