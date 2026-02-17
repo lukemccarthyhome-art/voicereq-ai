@@ -1488,6 +1488,177 @@ app.get('/customer/projects/:id/design', auth.authenticate, async (req, res) => 
   }
 });
 
+// === PROPOSAL SYSTEM ===
+const PROPOSALS_DIR = path.join(process.env.DATA_DIR || path.join(__dirname, 'data'), 'proposals');
+if (!fs.existsSync(PROPOSALS_DIR)) fs.mkdirSync(PROPOSALS_DIR, { recursive: true });
+
+const loadNewestProposal = (projectId) => {
+  const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${projectId}-`)).sort().reverse();
+  if (files.length === 0) return null;
+  return JSON.parse(fs.readFileSync(path.join(PROPOSALS_DIR, files[0]), 'utf8'));
+};
+
+// View proposal
+app.get('/admin/projects/:id/proposal', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const project = await db.getProject(req.params.id);
+  if (!project) return res.status(404).send('Project not found');
+  
+  const proposal = loadNewestProposal(req.params.id);
+  const designResult = loadNewestDesign(req.params.id);
+  
+  res.render('admin/project-proposal', {
+    user: req.user,
+    project,
+    proposal,
+    design: designResult ? designResult.design : null,
+    query: req.query,
+    title: project.name + ' - Proposal',
+    currentPage: 'admin-projects'
+  });
+});
+
+// Generate proposal
+app.post('/admin/projects/:id/generate-proposal', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const project = await db.getProject(projectId);
+    if (!project) return res.status(404).send('Project not found');
+    
+    const designResult = loadNewestDesign(projectId);
+    if (!designResult || !designResult.design) {
+      return res.redirect(`/admin/projects/${projectId}/proposal?error=No design found. Extract a design first.`);
+    }
+    const design = designResult.design;
+    
+    // Build context
+    const sections = design.sections || {};
+    const costBenefit = sections.CostBenefitAnalysis || 'Not yet established';
+    const buildEffort = sections.BuildEffortEstimate || 'Not specified';
+    const executiveSummary = sections.ExecutiveSummary || design.summary || '';
+    const coreWorkflow = sections.CoreWorkflow || '';
+    const architecture = sections.SimplifiedArchitecture || '';
+    const assumptions = sections.Assumptions || '';
+    const phase2 = sections.Phase2Enhancements || '';
+    const risks = sections.RisksAndMitigations || '';
+    
+    // Include customer answers and admin notes
+    let extraContext = '';
+    if (design.customerAnswers && design.customerAnswers.length > 0) {
+      extraContext += '\n\nCUSTOMER ANSWERS:\n' + design.customerAnswers.map(a => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n');
+    }
+    if (design.answers && design.answers.length > 0) {
+      extraContext += '\n\nADMIN ANSWERS:\n' + design.answers.map(a => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n');
+    }
+    
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    const model = process.env.LLM_MODEL || 'chatgpt-4o-latest';
+    
+    const prompt = `You are a commercial proposal writer for an AI consultancy (Morti Pty Ltd, Melbourne, Australia). Generate a fee proposal based on the project design below.
+
+OUTPUT FORMAT: Valid JSON only. Structure:
+{
+  "projectName": "Name",
+  "clientCompany": "Company name from context or 'TBD'",
+  "executiveSummary": "2-3 sentence summary of what we're building and why it matters to the client",
+  "valueProposition": "Clear statement of the business value: cost savings, efficiency gains, revenue impact. Use specific numbers from the cost-benefit analysis if available.",
+  "fees": {
+    "discovery": {
+      "description": "What's included in discovery & design phase",
+      "amount": 0,
+      "rationale": "Why this price — based on complexity, consultation time, platform usage"
+    },
+    "implementation": {
+      "description": "What's included in the build phase",
+      "amount": 0,
+      "rationale": "Based on build effort, team size, timeline"
+    },
+    "monthly_maintenance": {
+      "description": "Ongoing support, updates, monitoring",
+      "amount": 0,
+      "rationale": "Based on system complexity and support level needed"
+    }
+  },
+  "totalUpfront": 0,
+  "annualMaintenance": 0,
+  "roi": {
+    "estimatedAnnualValue": "Value or savings per year based on cost-benefit data",
+    "paybackPeriod": "How quickly the investment pays for itself",
+    "summary": "1-2 sentence ROI statement"
+  },
+  "timeline": "Estimated delivery timeline",
+  "assumptions": ["Key assumptions that affect pricing"],
+  "exclusions": ["What's NOT included"],
+  "validUntil": "30 days from generation"
+}
+
+PRICING GUIDELINES:
+- Discovery & Design: $2,500 - $8,000 depending on complexity (Low=$2,500-3,500, Medium=$4,000-5,500, High=$6,000-8,000)
+- Implementation: $8,000 - $50,000 depending on build effort (simple=$8,000-15,000, moderate=$15,000-30,000, complex=$30,000-50,000)
+- Monthly Maintenance: 10-15% of implementation cost annually, divided by 12
+- Prices in AUD
+- If cost-benefit data shows strong ROI, price can be at the higher end of range
+- If limited cost data available, be conservative and note the assumption
+
+PROJECT DESIGN:
+Executive Summary: ${executiveSummary}
+Core Workflow: ${coreWorkflow}
+Architecture: ${architecture}
+Build Effort: ${buildEffort}
+Cost-Benefit Analysis: ${costBenefit}
+Assumptions: ${assumptions}
+Phase 2 Enhancements: ${phase2}
+Risks: ${risks}
+${extraContext}
+
+Generate a realistic, commercially credible proposal. Be specific about what's included in each phase.`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
+      body: JSON.stringify({
+        model,
+        max_completion_tokens: 4096,
+        messages: [
+          { role: 'system', content: 'You are a commercial proposal writer. Return valid JSON only.' },
+          { role: 'user', content: prompt }
+        ],
+        response_format: { type: 'json_object' }
+      })
+    });
+    
+    if (!response.ok) throw new Error('LLM request failed: ' + await response.text());
+    
+    const data = await response.json();
+    let proposalContent = data.choices[0].message.content;
+    
+    // Parse
+    let proposal;
+    try {
+      proposal = JSON.parse(proposalContent);
+    } catch(e) {
+      // Try extracting JSON from markdown
+      const match = proposalContent.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (match) proposal = JSON.parse(match[1]);
+      else throw new Error('Failed to parse proposal JSON');
+    }
+    
+    // Add metadata
+    proposal.id = `proposal-${projectId}-${Date.now()}`;
+    proposal.projectId = projectId;
+    proposal.createdAt = new Date().toISOString();
+    proposal.designId = design.id || 'unknown';
+    proposal.status = 'draft';
+    
+    // Save
+    fs.writeFileSync(path.join(PROPOSALS_DIR, proposal.id + '.json'), JSON.stringify(proposal, null, 2));
+    
+    res.redirect(`/admin/projects/${projectId}/proposal`);
+  } catch(e) {
+    console.error('Proposal generation error:', e);
+    res.redirect(`/admin/projects/${req.params.id}/proposal?error=${encodeURIComponent(e.message)}`);
+  }
+});
+
 // Customer: answer assigned question
 app.post('/customer/projects/:id/design/answer', auth.authenticate, async (req, res) => {
   try {

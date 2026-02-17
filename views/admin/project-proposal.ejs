@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= project.name %> - Proposal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .logo { font-size: 20px; font-weight: bold; text-decoration: none; color: white; }
+        .nav { display: flex; gap: 20px; align-items: center; }
+        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .main { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #5a6fd8; }
+        .breadcrumb { font-size: 13px; color: #666; margin-bottom: 20px; }
+        .breadcrumb a { color: #667eea; text-decoration: none; }
+
+        .fee-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
+        .fee-card { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center; }
+        .fee-card.highlight { border-color: #667eea; background: #f0f4ff; }
+        .fee-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #667eea; font-weight: 700; margin-bottom: 8px; }
+        .fee-amount { font-size: 2rem; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
+        .fee-amount small { font-size: 0.5em; color: #64748b; font-weight: 400; }
+        .fee-desc { font-size: 0.85rem; color: #64748b; line-height: 1.5; }
+        .fee-rationale { font-size: 0.8rem; color: #94a3b8; margin-top: 8px; font-style: italic; }
+
+        .total-bar { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 12px; padding: 24px; display: flex; justify-content: space-around; text-align: center; margin: 20px 0; }
+        .total-item h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
+        .total-item .amount { font-size: 1.5rem; font-weight: 800; }
+
+        .roi-card { background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 24px; margin: 20px 0; }
+        .roi-card h3 { color: #166534; margin-bottom: 12px; }
+        .roi-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #dcfce7; }
+        .roi-item:last-child { border: none; }
+        .roi-label { color: #166534; }
+        .roi-value { font-weight: 700; color: #166534; }
+
+        .section { margin-bottom: 20px; }
+        .section h3 { font-size: 1.1rem; color: #334155; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .section p { color: #475569; font-size: 0.95rem; }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag { background: #f1f5f9; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; color: #475569; }
+        .tag.excl { background: #fef2f2; color: #991b1b; }
+
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-draft { background: #fef3cd; color: #856404; }
+        .error-msg { background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px; padding: 12px 16px; color: #c53030; margin-bottom: 16px; }
+
+        @media (max-width: 768px) {
+            .fee-grid { grid-template-columns: 1fr; }
+            .total-bar { flex-direction: column; gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-container">
+        <a href="/admin" class="logo">🎙️ Morti Projects</a>
+        <nav class="nav">
+            <a href="/admin">Dashboard</a>
+            <a href="/admin/customers">Customers</a>
+            <a href="/admin/projects">Projects</a>
+            <a href="/admin/feature-requests">Feature Requests</a>
+        </nav>
+    </div>
+</div>
+
+<div class="main">
+    <div class="breadcrumb">
+        <a href="/admin">Dashboard</a> → <a href="/admin/projects">Projects</a> → <a href="/admin/projects/<%= project.id %>"><%= project.name %></a> → Proposal
+    </div>
+
+    <% if (locals.query && locals.query.error) { %>
+        <div class="error-msg"><%= locals.query.error %></div>
+    <% } %>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>💰 Proposal — <%= project.name %></h2>
+        <div style="display: flex; gap: 8px;">
+            <a href="/admin/projects/<%= project.id %>" class="btn" style="background: #64748b;">← Back to Project</a>
+            <form method="POST" action="/admin/projects/<%= project.id %>/generate-proposal" style="margin:0;">
+                <button type="submit" class="btn" style="background: #8b5cf6;" onclick="this.disabled=true;this.textContent='Generating...';">
+                    <%= proposal ? '🔄 Regenerate Proposal' : '⚡ Generate Proposal' %>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <% if (!design) { %>
+        <div class="card" style="text-align: center; padding: 60px;">
+            <div style="font-size: 3rem; margin-bottom: 16px;">📐</div>
+            <h3 style="color: #64748b; margin-bottom: 8px;">Design Required First</h3>
+            <p style="color: #94a3b8;">Extract a design before generating a proposal.</p>
+            <a href="/admin/projects/<%= project.id %>" class="btn" style="margin-top: 16px;">← Back to Project</a>
+        </div>
+    <% } else if (!proposal) { %>
+        <div class="card" style="text-align: center; padding: 60px;">
+            <div style="font-size: 3rem; margin-bottom: 16px;">💰</div>
+            <h3 style="color: #64748b; margin-bottom: 8px;">No Proposal Yet</h3>
+            <p style="color: #94a3b8; margin-bottom: 20px;">Generate a fee proposal based on the project design, estimated value, and cost savings.</p>
+            <form method="POST" action="/admin/projects/<%= project.id %>/generate-proposal">
+                <button type="submit" class="btn" style="background: #8b5cf6;" onclick="this.disabled=true;this.textContent='Generating...';">⚡ Generate Proposal</button>
+            </form>
+        </div>
+    <% } else { %>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <h3 style="margin-bottom: 4px;"><%= proposal.projectName || project.name %></h3>
+                    <div style="color: #64748b; font-size: 0.9rem;">
+                        Client: <strong><%= proposal.clientCompany || 'TBD' %></strong>
+                        &nbsp;·&nbsp; Generated: <%= new Date(proposal.createdAt).toLocaleDateString() %>
+                        &nbsp;·&nbsp; <span class="status-badge status-draft"><%= proposal.status || 'Draft' %></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📋 Executive Summary</h3>
+                <p><%= proposal.executiveSummary %></p>
+            </div>
+
+            <div class="section">
+                <h3>💎 Value Proposition</h3>
+                <p><%= proposal.valueProposition %></p>
+            </div>
+        </div>
+
+        <!-- Fee Cards -->
+        <div class="fee-grid">
+            <div class="fee-card">
+                <div class="fee-label">Phase 1 — Discovery & Design</div>
+                <div class="fee-amount">$<%= (proposal.fees.discovery.amount || 0).toLocaleString() %></div>
+                <div class="fee-desc"><%= proposal.fees.discovery.description %></div>
+                <div class="fee-rationale"><%= proposal.fees.discovery.rationale %></div>
+            </div>
+            <div class="fee-card highlight">
+                <div class="fee-label">Phase 2 — Implementation</div>
+                <div class="fee-amount">$<%= (proposal.fees.implementation.amount || 0).toLocaleString() %></div>
+                <div class="fee-desc"><%= proposal.fees.implementation.description %></div>
+                <div class="fee-rationale"><%= proposal.fees.implementation.rationale %></div>
+            </div>
+            <div class="fee-card">
+                <div class="fee-label">Phase 3 — Monthly Support</div>
+                <div class="fee-amount">$<%= (proposal.fees.monthly_maintenance.amount || 0).toLocaleString() %> <small>/mo</small></div>
+                <div class="fee-desc"><%= proposal.fees.monthly_maintenance.description %></div>
+                <div class="fee-rationale"><%= proposal.fees.monthly_maintenance.rationale %></div>
+            </div>
+        </div>
+
+        <!-- Totals -->
+        <div class="total-bar">
+            <div class="total-item">
+                <h4>Total Upfront</h4>
+                <div class="amount">$<%= (proposal.totalUpfront || 0).toLocaleString() %></div>
+            </div>
+            <div class="total-item">
+                <h4>Annual Maintenance</h4>
+                <div class="amount">$<%= (proposal.annualMaintenance || 0).toLocaleString() %> <small>/yr</small></div>
+            </div>
+            <div class="total-item">
+                <h4>Timeline</h4>
+                <div class="amount" style="font-size: 1.2rem;"><%= proposal.timeline %></div>
+            </div>
+        </div>
+
+        <!-- ROI -->
+        <% if (proposal.roi) { %>
+        <div class="roi-card">
+            <h3>📈 Return on Investment</h3>
+            <div class="roi-item">
+                <span class="roi-label">Estimated Annual Value</span>
+                <span class="roi-value"><%= proposal.roi.estimatedAnnualValue %></span>
+            </div>
+            <div class="roi-item">
+                <span class="roi-label">Payback Period</span>
+                <span class="roi-value"><%= proposal.roi.paybackPeriod %></span>
+            </div>
+            <div class="roi-item" style="border: none; padding-top: 12px;">
+                <span class="roi-label" style="font-style: italic;"><%= proposal.roi.summary %></span>
+            </div>
+        </div>
+        <% } %>
+
+        <!-- Assumptions & Exclusions -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="card">
+                <h3 style="margin-bottom: 12px;">📌 Assumptions</h3>
+                <div class="tag-list">
+                    <% (proposal.assumptions || []).forEach(a => { %>
+                        <span class="tag"><%= a %></span>
+                    <% }) %>
+                </div>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 12px;">🚫 Exclusions</h3>
+                <div class="tag-list">
+                    <% (proposal.exclusions || []).forEach(e => { %>
+                        <span class="tag excl"><%= e %></span>
+                    <% }) %>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="text-align: center; color: #94a3b8; font-size: 0.85rem;">
+            Valid until: <%= proposal.validUntil || '30 days from generation' %>
+            &nbsp;·&nbsp; Proposal ID: <%= proposal.id %>
+        </div>
+    <% } %>
+</div>
+
+</body>
+</html>

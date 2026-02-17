@@ -134,6 +134,7 @@
             <div style="display:flex;gap:8px;align-items:center">
                 <button onclick="exportProject()" class="btn btn-sm" style="flex:1">📦 Export</button>
                 <button onclick="document.getElementById('importModal').style.display='flex'" class="btn btn-sm" style="flex:1;background:#10b981">📥 Import ZIP</button>
+                <a href="/admin/projects/<%= project.id %>/proposal" class="btn btn-sm" style="background:#8b5cf6;color:white;padding:8px;border-radius:6px;flex:1;text-align:center;">💰 Proposal</a>
                 <% if (typeof designExists !== "undefined" && designExists) { %>
                   <div style="display:flex;gap:8px;align-items:center">
                     <a href="/admin/projects/<%= project.id %>/design" class="btn btn-sm" style="background:#10b981;color:white;padding:8px;border-radius:6px;">🔎 View Latest Design</a>
