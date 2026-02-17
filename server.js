@@ -542,7 +542,7 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
   const files = await db.getFilesByProject(req.params.id);
   
   // check for existing design
-  const designsDir = path.join(__dirname, 'data', 'designs');
+  const designsDir = DESIGNS_DIR;
   let designExists = false;
   try {
     if (fs.existsSync(designsDir)) {
@@ -897,7 +897,7 @@ ${summarizeRequirements(reqText)}
 
     // versioning: if there is already a design, increment version
     try {
-      const designsDirCheck = path.join(__dirname, 'data', 'designs');
+      const designsDirCheck = DESIGNS_DIR;
       if (fs.existsSync(designsDirCheck)) {
         const existing = fs.readdirSync(designsDirCheck).filter(f => f.startsWith(`design-${projectId}-`));
         if (existing.length > 0) {
@@ -969,7 +969,7 @@ ${summarizeRequirements(reqText)}
       }
     } catch(e) {}
 
-    const designsDir = path.join(__dirname, 'data', 'designs');
+    const designsDir = DESIGNS_DIR;
     fs.mkdirSync(designsDir, { recursive: true });
     fs.writeFileSync(path.join(designsDir, design.id + '.json'), JSON.stringify(design, null, 2));
 
@@ -988,7 +988,7 @@ ${summarizeRequirements(reqText)}
 app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
     const projectId = req.params.id;
-    const designsDir = path.join(__dirname, 'data', 'designs');
+    const designsDir = DESIGNS_DIR;
     if (!fs.existsSync(designsDir)) return res.status(404).send('No designs found');
     const candidates = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
     if (candidates.length === 0) return res.status(404).send('No design for project');
@@ -1026,8 +1026,10 @@ app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, asyn
   }
 });
 // Helper: load newest design for a project
+const DESIGNS_DIR = path.join(process.env.DATA_DIR || path.join(__dirname, 'data'), 'designs');
+
 function loadNewestDesign(projectId) {
-  const designsDir = path.join(__dirname, 'data', 'designs');
+  const designsDir = DESIGNS_DIR;
   if (!fs.existsSync(designsDir)) return null;
   const candidates = fs.readdirSync(designsDir).filter(f => f.startsWith(`design-${projectId}-`));
   if (candidates.length === 0) return null;
@@ -1041,7 +1043,7 @@ function loadNewestDesign(projectId) {
 }
 
 function saveDesign(design) {
-  const designsDir = path.join(__dirname, 'data', 'designs');
+  const designsDir = DESIGNS_DIR;
   fs.mkdirSync(designsDir, { recursive: true });
   fs.writeFileSync(path.join(designsDir, design.id + '.json'), JSON.stringify(design, null, 2));
 }
@@ -1115,7 +1117,7 @@ app.post('/admin/projects/:id/design/chat', auth.authenticate, auth.requireAdmin
   try {
     const projectId = req.params.id;
     const { designId, text } = req.body;
-    const designsDir = path.join(__dirname, 'data', 'designs');
+    const designsDir = DESIGNS_DIR;
     const filePath = path.join(designsDir, designId + '.json');
     if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Design not found' });
     const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -1177,7 +1179,7 @@ app.post('/admin/projects/:id/design/answer', auth.authenticate, auth.requireAdm
   try {
     const projectId = req.params.id;
     const { designId, question, answer } = req.body;
-    const designsDir = path.join(__dirname, 'data', 'designs');
+    const designsDir = DESIGNS_DIR;
     const filePath = path.join(designsDir, designId + '.json');
     if (!fs.existsSync(filePath)) return res.status(404).send('Design not found');
     const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -1267,7 +1269,7 @@ app.post('/admin/projects/:id/design/unpublish', auth.authenticate, auth.require
 app.post('/admin/projects/:id/design/accept-assumption', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
     const { designId, questionText, assumption } = req.body;
-    const designsDir = path.join(__dirname, 'data', 'designs');
+    const designsDir = DESIGNS_DIR;
     const filePath = path.join(designsDir, designId + '.json');
     if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Design not found' });
     const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -1296,7 +1298,7 @@ app.post('/admin/projects/:id/design/accept-assumption', auth.authenticate, auth
 app.post('/admin/projects/:id/design/assign-question', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
     const { designId, questionText, assignedTo } = req.body;
-    const designsDir = path.join(__dirname, 'data', 'designs');
+    const designsDir = DESIGNS_DIR;
     const filePath = path.join(designsDir, designId + '.json');
     if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Design not found' });
     const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -1348,7 +1350,7 @@ app.post('/customer/projects/:id/design/answer', auth.authenticate, async (req, 
     if (req.user.role === 'customer' && project.user_id !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
 
     const { designId, question, answer } = req.body;
-    const designsDir = path.join(__dirname, 'data', 'designs');
+    const designsDir = DESIGNS_DIR;
     const filePath = path.join(designsDir, designId + '.json');
     if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Design not found' });
     const design = JSON.parse(fs.readFileSync(filePath, 'utf8'));
