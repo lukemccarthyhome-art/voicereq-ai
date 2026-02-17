@@ -899,7 +899,7 @@ ${context}`;
     if (OPENAI_KEY) {
       try {
         const prompt = buildPrompt(promptContext, prevAnswersText, previousDesign);
-        const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'chatgpt-4o-latest';
+        const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1';
         const resp = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
@@ -1231,7 +1231,7 @@ ${designContext.substring(0, 12000)}`;
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
       body: JSON.stringify({
-        model: 'chatgpt-4o-latest',
+        model: 'gpt-4.1',
         max_completion_tokens: 2000,
         messages: [
           { role: 'system', content: 'You generate Mermaid flowchart diagrams. Return only valid mermaid syntax.' },
@@ -1714,7 +1714,7 @@ async function generateProposalAsync(projectId, project, design, OPENAI_KEY, use
       }
     }
     
-    const model = process.env.LLM_MODEL || 'chatgpt-4o-latest';
+    const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1';
     
     const prompt = `You are a commercially minded product strategist and pricing advisor for Morti Pty Ltd, an AI consultancy based in Melbourne, Australia. You are given a project design. Your task is to produce a clear, honest pricing proposal with exactly TWO fees the client will sign off on.
 
@@ -2138,7 +2138,7 @@ app.post('/api/upload', apiAuth, uploadLimiter, upload.single('file'), async (re
                 'Authorization': 'Bearer ' + OPENAI_KEY
               },
               body: JSON.stringify({
-                model: process.env.LLM_MODEL || 'chatgpt-4o-latest',
+                model: process.env.LLM_MODEL || 'gpt-4.1',
         
                 messages: [{
                   role: 'system',
@@ -2195,7 +2195,7 @@ app.post('/api/analyze', apiAuth, express.json({ limit: '10mb' }), async (req, r
         'Authorization': 'Bearer ' + OPENAI_KEY
       },
       body: JSON.stringify({
-        model: process.env.LLM_MODEL || 'chatgpt-4o-latest',
+        model: process.env.LLM_MODEL || 'gpt-4.1',
 
         messages: [{
           role: 'system',
@@ -2334,7 +2334,7 @@ app.post('/api/analyze-session', apiAuth, express.json({ limit: '20mb' }), async
         'Authorization': 'Bearer ' + OPENAI_KEY
       },
       body: JSON.stringify({
-        model: process.env.LLM_MODEL || 'chatgpt-4o-latest',
+        model: process.env.LLM_MODEL || 'gpt-4.1',
 
         max_completion_tokens: 4096,
         messages: [{
@@ -2461,7 +2461,7 @@ app.post('/api/chat', apiAuth, express.json({ limit: '10mb' }), async (req, res)
         'Authorization': 'Bearer ' + OPENAI_KEY
       },
       body: JSON.stringify({
-        model: process.env.LLM_MODEL || 'chatgpt-4o-latest',
+        model: process.env.LLM_MODEL || 'gpt-4.1',
 
         messages: [{
           role: 'system',
