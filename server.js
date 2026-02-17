@@ -1066,25 +1066,24 @@ app.post('/admin/projects/:id/design/flowchart', auth.authenticate, auth.require
     const sections = design.sections || {};
     const designContext = JSON.stringify({ summary: design.summary, sections }, null, 2);
 
-    const prompt = `You are a diagramming expert. Given the following solution design JSON, generate a Mermaid flowchart that shows the system architecture and data flow.
+    const prompt = `You are a systems architect creating a HIGH-LEVEL COMPONENT DIAGRAM. Given the solution design below, generate a Mermaid flowchart showing ONLY the system components and their first-level connections.
 
-Requirements:
-- Use \`flowchart TD\` (top-down)
-- Use proper Mermaid node shapes: ([Start/End]) for entry/exit points, [Process] for processes, {Decision} for decision points, [(Database)] for data stores
-- Show how users interact with the system, how data flows between components, and key decision points
-- Use labeled edges with |label| syntax, e.g. A -->|sends data| B
-- Include multiple paths showing different user journeys or data flows
-- Use subgraphs to group related components (e.g. Frontend, Backend, External Services)
-- Keep node IDs short (A, B, C... or meaningful abbreviations)
-- Make it comprehensive but readable (15-30 nodes is ideal)
+Rules:
+- Use \`flowchart LR\` (left-to-right)
+- Show ONLY system components being built and external services they connect to
+- DO NOT show user actions, decision points, or user journeys
+- This is a systems architecture diagram, not a process flow
+- Each node = a system component, service, database, or external API
+- Each edge = a data connection or integration between components
+- Use labeled edges: A -->|"API call"| B
+- Keep it simple: 8-15 nodes maximum
+- Use subgraphs to group: "Our System" for components we build, "External" for third-party services
+- Node shapes: [Component] for services, [(Database)] for data stores, [[External API]] for third-party
+- ALWAYS wrap node labels in double quotes: A["Component Name"]
+- Keep node IDs simple: A, B, C1, etc.
+- Return ONLY mermaid code. No markdown fences, no explanation. Start with "flowchart LR".
 
-IMPORTANT: 
-- Return ONLY the mermaid code, no markdown fences, no explanation. Start with "flowchart TD".
-- ALWAYS wrap node labels in double quotes if they contain special characters like parentheses, slashes, ampersands, or pipes. Example: A["Automation Tool (Airtable/Notion)"]
-- Keep node IDs simple alphanumeric (A, B, C1, etc.)
-- Use simple edge labels: A -->|"label"| B
-
-Design JSON:
+Design:
 ${designContext.substring(0, 12000)}`;
 
     const resp = await fetch('https://api.openai.com/v1/chat/completions', {
