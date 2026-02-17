@@ -1636,6 +1636,13 @@ app.post('/admin/projects/:id/proposal/unpublish', auth.authenticate, auth.requi
   res.redirect(`/admin/projects/${req.params.id}/proposal`);
 });
 
+// Delete all proposals for a project
+app.post('/admin/projects/:id/proposal/delete', auth.authenticate, auth.requireAdmin, (req, res) => {
+  const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${req.params.id}-`));
+  files.forEach(f => fs.unlinkSync(path.join(PROPOSALS_DIR, f)));
+  res.redirect(`/admin/projects/${req.params.id}/proposal`);
+});
+
 // Customer: view published proposal
 app.get('/customer/projects/:id/proposal', auth.authenticate, async (req, res) => {
   const project = await db.getProject(req.params.id);

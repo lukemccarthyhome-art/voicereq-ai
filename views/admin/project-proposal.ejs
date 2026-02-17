@@ -112,6 +112,9 @@
                         <button type="submit" class="btn" style="background: #10b981;">📤 Publish to Customer</button>
                     </form>
                 <% } %>
+                <form method="POST" action="/admin/projects/<%= project.id %>/proposal/delete" style="margin:0;" onsubmit="return confirm('Delete all proposals for this project? This cannot be undone.')">
+                    <button type="submit" class="btn" style="background: #dc2626;">🗑️ Delete</button>
+                </form>
             <% } %>
         </div>
     </div>
