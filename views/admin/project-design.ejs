@@ -421,10 +421,18 @@
         container.style.display = 'block';
 
         // Use mermaid.render for reliable rendering
-        const { svg } = await mermaid.render('flowchart-svg', data.mermaid);
+        // Sanitize labels with special chars
+        let code = data.mermaid.replace(/(\w+)(\[|\(|\{)([^\]})]+)(\]|\)|\})/g, (m, id, open, label, close) => {
+          if (/[\/\\(){}|<>#&]/.test(label) && !label.startsWith('"')) {
+            return id + open + '"' + label.replace(/"/g, "'") + '"' + close;
+          }
+          return m;
+        });
+        const { svg } = await mermaid.render('flowchart-svg', code);
         render.innerHTML = svg;
       } catch (e) {
-        alert('Failed to generate flowchart: ' + e.message);
+        render.innerHTML = '<div style="color:#ef4444;padding:12px;">Flowchart rendering failed: ' + e.message + '<br><br><pre style="font-size:11px;background:#f8fafc;padding:8px;border-radius:4px;overflow-x:auto;">' + (data && data.mermaid ? data.mermaid : '') + '</pre></div>';
+        container.style.display = 'block';
       } finally {
         btn.disabled = false;
         btn.textContent = '🗺️ Flowchart';

@@ -1078,7 +1078,11 @@ Requirements:
 - Keep node IDs short (A, B, C... or meaningful abbreviations)
 - Make it comprehensive but readable (15-30 nodes is ideal)
 
-IMPORTANT: Return ONLY the mermaid code, no markdown fences, no explanation. Start with "flowchart TD".
+IMPORTANT: 
+- Return ONLY the mermaid code, no markdown fences, no explanation. Start with "flowchart TD".
+- ALWAYS wrap node labels in double quotes if they contain special characters like parentheses, slashes, ampersands, or pipes. Example: A["Automation Tool (Airtable/Notion)"]
+- Keep node IDs simple alphanumeric (A, B, C1, etc.)
+- Use simple edge labels: A -->|"label"| B
 
 Design JSON:
 ${designContext.substring(0, 12000)}`;
@@ -1102,6 +1106,16 @@ ${designContext.substring(0, 12000)}`;
     // Strip any markdown fences
     mermaid = mermaid.replace(/^```(?:mermaid)?\s*/i, '').replace(/```\s*$/, '').trim();
     if (!mermaid.startsWith('flowchart')) mermaid = 'flowchart TD\n' + mermaid;
+    
+    // Sanitize node labels: wrap any label containing special chars in quotes
+    // Match node definitions like A[Label] or A([Label]) or A{Label} etc.
+    mermaid = mermaid.replace(/(\w+)(\[|\(|\{|\(\[|\[\()([^\]})]+)(\]|\)|\}|\]\)|\)\])/g, (match, id, open, label, close) => {
+      // If label contains characters that break mermaid parsing, wrap in quotes
+      if (/[\/\\(){}|<>#&]/.test(label) && !label.startsWith('"')) {
+        label = '"' + label.replace(/"/g, "'") + '"';
+      }
+      return id + open + label + close;
+    });
 
     // Save flowchart to design JSON
     try {
