@@ -149,12 +149,19 @@
             </div>
             <% if (locals.designsList && locals.designsList.length > 0) { %>
               <div style="margin-top:8px">
-                <label style="font-size:12px;color:#666;margin-right:8px">Design versions:</label>
-                <select onchange="location = this.value" style="padding:6px;border-radius:6px">
+                <label style="font-size:12px;color:#666;display:block;margin-bottom:6px">Design versions:</label>
+                <div style="max-height:200px;overflow-y:auto;">
                   <% locals.designsList.forEach(d => { %>
-                    <option value="/admin/projects/<%= project.id %>/design?design=<%= d.id %>">v<%= d.version %> — <%= new Date(d.createdAt).toLocaleString() %> — <%= d.status %></option>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:4px;font-size:12px;">
+                      <a href="/admin/projects/<%= project.id %>/design?design=<%= d.id %>" style="color:#667eea;text-decoration:none;font-weight:500;">
+                        v<%= d.version %> — <%= new Date(d.createdAt).toLocaleString() %> — <%= d.status %>
+                      </a>
+                      <form method="POST" action="/admin/projects/<%= project.id %>/design/<%= d.id %>/delete" onsubmit="return confirm('Delete design v<%= d.version %>? This cannot be undone.')" style="margin:0;">
+                        <button type="submit" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:13px;" title="Delete this version">✕</button>
+                      </form>
+                    </div>
                   <% }) %>
-                </select>
+                </div>
               </div>
             <% } %>
             <% if (locals.latestDesign) { %>

@@ -1269,6 +1269,20 @@ app.post('/admin/projects/:id/design/unpublish', auth.authenticate, auth.require
   }
 });
 
+// Delete a design version
+app.post('/admin/projects/:id/design/:designId/delete', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const filePath = path.join(DESIGNS_DIR, req.params.designId + '.json');
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    res.redirect(`/admin/projects/${req.params.id}?message=Design+deleted`);
+  } catch (e) {
+    console.error('Delete design error:', e);
+    res.redirect(`/admin/projects/${req.params.id}?error=Delete+failed`);
+  }
+});
+
 // Accept assumption (move question to assumptions)
 app.post('/admin/projects/:id/design/accept-assumption', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
