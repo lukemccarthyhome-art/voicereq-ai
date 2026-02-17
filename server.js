@@ -630,24 +630,18 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
     let designSummary = '';
 
     const DESIGN_SECTIONS_SCHEMA = `{
-  "summary": "3-5 sentence executive summary of what's being built, for whom, and why",
+  "summary": "3-5 sentence executive summary: what this system actually is, the core operating loop, what problem it solves, and what it is NOT.",
   "design": {
-    "BusinessContext": "Problem statement, target users, business goals, success metrics, competitive landscape if discussed",
-    "Scope": "What's IN scope for this build (with specifics), what's explicitly OUT of scope, phasing/MVP vs future",
-    "UserPersonas": "Who uses this system? Roles, permissions, workflows per persona. Be specific.",
-    "UserJourneys": "Step-by-step flows for each key user action. Cover happy path AND edge cases discussed.",
-    "Architecture": "System architecture: frontend/backend/services/databases/queues/cron jobs. Deployment model. How components communicate. Include specific technology recommendations with reasoning.",
-    "DataModel": "Key entities, their attributes, and relationships. Cover all entities discussed.",
-    "Components": "Each major system component with: purpose, inputs, outputs, key logic/rules, dependencies.",
-    "APIs": "Every API endpoint or integration point: method, path, request/response shape, auth, rate limits.",
-    "Integrations": "For EACH external system: what data flows in/out, sync frequency, error handling, authentication method, fallback if unavailable.",
-    "DataFlow": "How data moves through the system end-to-end. Include automation triggers, scheduled jobs, real-time vs batch.",
-    "Security": "Authentication method, authorization model (RBAC details), data encryption, API key management, PII handling, audit logging.",
-    "Infrastructure": "Hosting, deployment pipeline, environments, monitoring, logging, backup strategy, scaling approach.",
-    "AcceptanceCriteria": "Specific, testable acceptance criteria grouped by feature. Format: 'GIVEN [context] WHEN [action] THEN [expected result]'.",
-    "Risks": "Technical risks, dependency risks, timeline risks, adoption risks. For each: likelihood, impact, mitigation strategy.",
-    "Dependencies": "External dependencies: third-party services, APIs, libraries, hardware, data sources.",
-    "ClientResponsibilities": "What the client needs to provide: API keys, access, content, decisions, test data, feedback cycles."
+    "ExecutiveSummary": "Plain English explanation of what this system is. The core operating loop. What problem it solves and what it is not. Keep it commercially credible.",
+    "CoreWorkflow": "Step-by-step operational flow in practical terms. For each step: why it exists, what value it adds, where human control remains. Avoid technical jargon.",
+    "SimplifiedArchitecture": "Minimal viable architecture to deliver the workflow. Recommended tool categories (database, automation layer, LLM, external APIs) with rationale for each. Explicitly state what is NOT required for MVP. Avoid microservices, enterprise cloud discussions, advanced DevOps unless absolutely necessary.",
+    "MinimalDataModel": "Only essential data structures. For each entity: name, key fields, purpose in the system, why it is needed. Keep it lean.",
+    "ManualVsAutomated": "Clearly separate what remains manual by design vs what is automated, and why. Comment on strategic control and risk management.",
+    "Assumptions": "Assumptions made in designing this MVP: user volume, budget constraints, data sensitivity, platform compliance, operational maturity. These justify architectural simplifications.",
+    "Dependencies": "External dependencies: APIs, third-party tools, data sources, access credentials, user-provided inputs. Clarify which are critical vs optional.",
+    "Phase2Enhancements": "OUT OF SCOPE for MVP. List enhancements that improve scale, analytics, automation, resilience. Make clear these are future considerations, not required for launch.",
+    "RisksAndMitigations": "Realistic risks only — no theatrical or enterprise-only risks. For each: impact and lightweight mitigation suitable for MVP stage.",
+    "BuildEffortEstimate": "Complexity rating (Low/Medium/High), rough timeline, key build phases. Be practical."
   },
   "questions": [
     {"id": 1, "text": "Specific question about a gap or ambiguity", "assumption": "What we'll assume if unanswered"}
@@ -655,18 +649,29 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
 }`;
 
     const DESIGN_RULES = `RULES:
-- Extract EVERY concrete detail. Names, tools, workflows, numbers, preferences — all of it.
-- Where vague, make a reasonable assumption and mark it with [ASSUMPTION].
+- You are a pragmatic product architect. The requirements may be verbose, repetitive, or over-engineered. Your job is to SYNTHESIZE them into a commercially credible MVP design.
+- Extract the true business objective. Preserve critical strategic control points (human decisions, approval loops, segmentation logic).
+- Remove premature scaling, infrastructure complexity, and architectural over-design.
+- Focus on a system that can realistically be built by a small team in under 4 weeks.
+- Use off-the-shelf tools where possible. Assume early-stage deployment with limited users unless otherwise specified.
+- Do NOT restate the requirements. Interpret them and produce a buildable design.
 - ALL section values MUST be plain text strings (no nested JSON objects). Use "- " for lists, "1. " for sequences.
-- Write for a product owner / business stakeholder — clear, specific, not overly technical.
-- Do NOT include raw chat transcript. Synthesize and organize.
-- Do NOT be generic. Reference the specific tools, platforms, and workflows mentioned.`;
+- Reference the specific tools, platforms, and workflows mentioned in the conversation.
+- Where vague, make a reasonable assumption and mark it with [ASSUMPTION].
+
+TONE: Clear, pragmatic, commercially credible. Avoid hype. Avoid enterprise theatre. Avoid unnecessary technical depth. Prioritize clarity and decision rationale. Write as if this document will be reviewed by a founder or commercial stakeholder, not an infrastructure committee.
+
+DESIGN PRINCIPLES:
+- Humans steer; systems automate repetition.
+- Prove the loop before scaling.
+- Use simplicity as a strategic advantage.
+- Remove anything that does not directly create user value in MVP.`;
 
     // Build different prompts for first-run vs refresh
     const buildPrompt = (context, prevAnswers, previousDesign) => {
       if (!previousDesign) {
         // FIRST RUN: full extraction from conversation
-        return `You are a senior solutions architect producing a COMPREHENSIVE SOLUTION DESIGN from a client requirements conversation. This design should be detailed enough that a development team could begin implementation — short of writing actual code.
+        return `You are a pragmatic product architect and systems designer. You are given a raw requirements dataset from a client conversation. Your task is to synthesize those requirements into a commercially credible MVP design document.
 
 OUTPUT FORMAT: Valid JSON only. No markdown wrapping. Structure:
 ${DESIGN_SECTIONS_SCHEMA}
@@ -674,44 +679,43 @@ ${DESIGN_SECTIONS_SCHEMA}
 ${DESIGN_RULES}
 
 QUESTIONS RULES (FIRST EXTRACTION):
-- Generate questions ONLY for genuinely missing critical information that would block implementation.
+- Generate questions ONLY for genuinely missing critical information that would block a small team from building this in 4 weeks.
 - Questions MUST reference specific details from the conversation.
 - BAD: "Any branding guidelines?", "What data sources?" — generic filler.
-- GOOD: "You mentioned LinkedIn Sales Navigator — do you need real-time monitoring or daily batch sync?"
-- Maximum 5 questions. If the conversation covers everything, return an EMPTY array [].
+- GOOD: "You mentioned LinkedIn Sales Navigator — do you need real-time monitoring or is a daily batch sync sufficient for MVP?"
+- Maximum 5 questions. If the conversation covers everything needed for MVP, return an EMPTY array [].
 - Each question needs a unique sequential id starting from 1.
 
-CONVERSATION & FILES:
+RAW REQUIREMENTS (conversation & files):
 ${context}`;
       } else {
         // REFRESH: update existing design with new information only
-        return `You are a senior solutions architect UPDATING an existing solution design. A previous design already exists. Your job is to:
+        return `You are a pragmatic product architect UPDATING an existing MVP design. A previous design already exists. Your job is to:
 
-1. START with the previous design as the baseline — preserve all existing content and detail.
-2. INCORPORATE new information: answered questions, new admin notes, updated requirements, new conversation messages.
-3. REFINE sections that are affected by the new information.
-4. DO NOT regenerate sections that haven't changed — keep them as-is.
-5. DO NOT ask new questions unless the new information reveals a genuinely critical gap.
+1. START with the previous design as the baseline — preserve all existing content.
+2. INCORPORATE new information: answered questions, new admin notes, updated requirements.
+3. REFINE sections affected by the new information.
+4. DO NOT regenerate sections that haven't changed.
+5. DO NOT ask new questions unless the new information reveals a genuinely critical gap for MVP delivery.
 
-OUTPUT FORMAT: Valid JSON only. No markdown wrapping. Same structure as before:
+OUTPUT FORMAT: Valid JSON only. No markdown wrapping. Same structure:
 ${DESIGN_SECTIONS_SCHEMA}
 
 ${DESIGN_RULES}
 
 QUESTIONS RULES (REFRESH — STRICT):
-- Only ask NEW questions if the new information since last design reveals a critical gap.
-- Do NOT re-ask questions that have already been answered (see ANSWERED QUESTIONS below).
-- Do NOT ask follow-up questions to already-answered questions unless the answer was explicitly incomplete or contradictory.
+- Only ask NEW questions if the new information reveals a critical gap that blocks MVP build.
+- Do NOT re-ask answered questions. Do NOT ask follow-ups to satisfactory answers.
 - Prefer making an [ASSUMPTION] over asking another question.
-- Maximum 3 new questions on refresh. Return EMPTY array [] if nothing critical is missing.
+- Maximum 3 new questions. Return EMPTY array [] if nothing critical is missing.
 - If previous questions were answered satisfactorily, there should be ZERO new questions.
 
-PREVIOUS DESIGN (baseline — preserve this content, update where new info applies):
+PREVIOUS DESIGN (baseline — preserve, update where new info applies):
 ${JSON.stringify(previousDesign.sections || {}, null, 2).substring(0, 20000)}
 
 Previous Summary: ${previousDesign.summary || 'None'}
 
-ANSWERED QUESTIONS (incorporate these into the design, do NOT re-ask):
+ANSWERED QUESTIONS (incorporate into design, do NOT re-ask):
 ${prevAnswers || 'None'}
 
 NEW INFORMATION SINCE LAST DESIGN:

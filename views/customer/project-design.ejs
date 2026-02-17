@@ -81,8 +81,8 @@
 
       <% if (designSections) { %>
         <div class="design-grid">
-          <% const sectionOrder = ['BusinessContext','Scope','UserPersonas','UserJourneys','Architecture','DataModel','Components','APIs','Integrations','DataFlow','Security','Infrastructure','AcceptanceCriteria','Risks','Dependencies','ClientResponsibilities']; %>
-          <% const sectionLabels = { BusinessContext:'Business Context', Scope:'Scope & Phasing', UserPersonas:'User Personas', UserJourneys:'User Journeys', Architecture:'Architecture', DataModel:'Data Model', Components:'Components', APIs:'APIs & Endpoints', Integrations:'Integrations', DataFlow:'Data Flow', Security:'Security', Infrastructure:'Infrastructure', AcceptanceCriteria:'Acceptance Criteria', Risks:'Risks & Mitigations', Dependencies:'Dependencies', ClientResponsibilities:'Client Responsibilities' }; %>
+          <% const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate']; %>
+          <% const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements (Out of Scope)', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate' }; %>
           <% const fullWidthSections = ['BusinessContext','Scope','UserJourneys','Architecture','DataModel','AcceptanceCriteria','Infrastructure']; %>
           <%
             const allKeys = Object.keys(designSections);
