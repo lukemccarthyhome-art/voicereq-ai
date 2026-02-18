@@ -75,7 +75,10 @@
                 <h1>📋 My Projects</h1>
                 <p style="color: #666; margin-top: 8px;">Manage your requirements gathering projects</p>
             </div>
-            <a href="/projects/new" class="btn btn-success">➕ New Project</a>
+            <div style="display:flex;gap:12px;align-items:center;">
+                <a href="/projects/archived" style="color:#667eea;text-decoration:none;font-size:14px;">📦 View Archived</a>
+                <a href="/projects/new" class="btn btn-success">➕ New Project</a>
+            </div>
         </div>
 
         <% if (isNewProject) { %>

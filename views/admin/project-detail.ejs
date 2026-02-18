@@ -134,6 +134,7 @@
             <div style="display:flex;gap:8px;align-items:center">
                 <button onclick="exportProject()" class="btn btn-sm" style="flex:1">📦 Export</button>
                 <button onclick="document.getElementById('importModal').style.display='flex'" class="btn btn-sm" style="flex:1;background:#10b981">📥 Import ZIP</button>
+                <a href="/admin/projects/<%= project.id %>/requirements" class="btn btn-sm" style="background:#3b82f6;color:white;padding:8px;border-radius:6px;flex:1;text-align:center;">📋 Requirements</a>
                 <a href="/admin/projects/<%= project.id %>/proposal" class="btn btn-sm" style="background:#8b5cf6;color:white;padding:8px;border-radius:6px;flex:1;text-align:center;">💰 Proposal</a>
                 <% if (typeof designExists !== "undefined" && designExists) { %>
                   <div style="display:flex;gap:8px;align-items:center">
@@ -192,10 +193,75 @@
               </div>
             <% } %>
 
-            <form method="POST" action="/admin/projects/<%= project.id %>/delete" onsubmit="return confirm('Delete this project and all its sessions/files? This cannot be undone.')" style="margin-top: 8px;">
-                <button type="submit" class="btn btn-sm" style="width: 100%; background: #dc3545; color: white;">🗑️ Delete Project</button>
-            </form>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+                <% if (project.status !== 'archived') { %>
+                <form method="POST" action="/admin/projects/<%= project.id %>/archive" onsubmit="return confirm('Archive this project?')" style="flex:1;margin:0;">
+                    <button type="submit" class="btn btn-sm" style="width:100%;background:#6c757d;color:white;">📦 Archive</button>
+                </form>
+                <% } else { %>
+                <form method="POST" action="/admin/projects/<%= project.id %>/unarchive" style="flex:1;margin:0;">
+                    <button type="submit" class="btn btn-sm" style="width:100%;background:#667eea;color:white;">📦 Unarchive</button>
+                </form>
+                <% } %>
+                <form method="POST" action="/admin/projects/<%= project.id %>/delete" onsubmit="return confirm('Delete this project and all its sessions/files? This cannot be undone.')" style="flex:1;margin:0;">
+                    <button type="submit" class="btn btn-sm" style="width:100%;background:#dc3545;color:white;">🗑️ Delete</button>
+                </form>
+            </div>
         </div>
+    </div>
+</div>
+
+<!-- Milestone Progress Tracker -->
+<%
+const hasSession = sessions.length > 0;
+let totalMessagesAdmin = 0;
+sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '[]').length; } catch {} });
+// hasDesignPublished, hasDesignApproved, hasProposalPublished, hasProposalApproved, hasReqs are passed from server.js
+%>
+<div class="card">
+    <h3 style="margin-bottom:12px;">Project Progress</h3>
+    <div style="display:flex;align-items:center;gap:0;margin-bottom:4px;">
+        <div style="flex:1;text-align:center;">
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasSession ? '#28a745' : '#e0e0e0' %>;background:<%= hasSession ? '#28a745' : '#f8f9fa' %>;opacity:<%= hasSession ? 1 : 0.4 %>;">🎙️</div>
+            <div style="font-size:12px;font-weight:600;color:<%= hasSession ? '#28a745' : '#aaa' %>;"><%= hasSession ? '✓ Session' : 'Session' %></div>
+        </div>
+        <div style="height:3px;width:40px;background:<%= hasSession ? '#28a745' : '#e0e0e0' %>;margin-top:-20px;"></div>
+        <div style="flex:1;text-align:center;">
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasDesignPublished ? '#28a745' : '#e0e0e0' %>;background:<%= hasDesignPublished ? '#28a745' : '#f8f9fa' %>;opacity:<%= hasDesignPublished ? 1 : 0.4 %>;">📐</div>
+            <div style="font-size:12px;font-weight:600;color:<%= hasDesignPublished ? '#28a745' : '#aaa' %>;"><%= hasDesignPublished ? '✓ Design' : 'Design' %></div>
+        </div>
+        <div style="height:3px;width:40px;background:<%= hasDesignPublished ? '#28a745' : '#e0e0e0' %>;margin-top:-20px;"></div>
+        <div style="flex:1;text-align:center;">
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasProposalPublished ? '#28a745' : '#e0e0e0' %>;background:<%= hasProposalPublished ? '#28a745' : '#f8f9fa' %>;opacity:<%= hasProposalPublished ? 1 : 0.4 %>;">💰</div>
+            <div style="font-size:12px;font-weight:600;color:<%= hasProposalPublished ? '#28a745' : '#aaa' %>;"><%= hasProposalPublished ? '✓ Proposal' : 'Proposal' %></div>
+        </div>
+        <div style="height:3px;width:40px;background:<%= hasProposalApproved ? '#28a745' : '#e0e0e0' %>;margin-top:-20px;"></div>
+        <div style="flex:1;text-align:center;">
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasProposalApproved ? '#28a745' : '#e0e0e0' %>;background:<%= hasProposalApproved ? '#28a745' : '#f8f9fa' %>;opacity:<%= hasProposalApproved ? 1 : 0.4 %>;">✅</div>
+            <div style="font-size:12px;font-weight:600;color:<%= hasProposalApproved ? '#28a745' : '#aaa' %>;"><%= hasProposalApproved ? '✓ Approved' : 'Approved' %></div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px;">
+    <% if (hasReqs) { %>
+    <div style="background:white;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:20px;margin-bottom:2px;">📋</div><div style="font-weight:600;font-size:14px;">Requirements</div></div>
+        <a href="/admin/projects/<%= project.id %>/requirements" class="btn btn-sm" style="background:#3b82f6;color:white;">View</a>
+    </div>
+    <% } %>
+    <div style="background:white;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid <%= designExists ? '#d1fae5' : '#e2e8f0' %>;display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:20px;margin-bottom:2px;">📐</div><div style="font-weight:600;font-size:14px;"><%= designExists ? (hasDesignApproved ? 'Design Approved ✓' : 'Design Ready') : 'Design' %></div></div>
+        <% if (designExists) { %>
+        <a href="/admin/projects/<%= project.id %>/design" class="btn btn-sm" style="background:#10b981;color:white;">View</a>
+        <% } else { %>
+        <form method="POST" action="/admin/projects/<%= project.id %>/extract-design" style="margin:0;"><button type="submit" class="btn btn-sm">Extract</button></form>
+        <% } %>
+    </div>
+    <div style="background:white;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid <%= hasProposalPublished ? '#d1fae5' : '#e2e8f0' %>;display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:20px;margin-bottom:2px;">💰</div><div style="font-weight:600;font-size:14px;"><%= hasProposalApproved ? 'Proposal Approved ✓' : (hasProposalPublished ? 'Proposal Published' : 'Proposal') %></div></div>
+        <a href="/admin/projects/<%= project.id %>/proposal" class="btn btn-sm" style="background:#8b5cf6;color:white;">View</a>
     </div>
 </div>
 

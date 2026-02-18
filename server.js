@@ -621,6 +621,63 @@ app.post('/projects/:id/delete', auth.authenticate, auth.requireCustomer, async 
   }
 });
 
+// === ARCHIVED PROJECTS (admin) ===
+app.get('/admin/projects/archived', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const projects = await db.getAllArchivedProjects();
+  res.render('admin/projects-archived', {
+    user: req.user,
+    projects,
+    title: 'Archived Projects',
+    currentPage: 'admin-projects'
+  });
+});
+
+// Archive/Unarchive project (admin)
+app.post('/admin/projects/:id/archive', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).send('Project not found');
+    db.getDb().prepare('UPDATE projects SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run('archived', req.params.id);
+    res.redirect('/admin/projects?message=Project+archived');
+  } catch (e) {
+    console.error('Archive error:', e);
+    res.redirect(`/admin/projects/${req.params.id}?error=Archive+failed`);
+  }
+});
+
+app.post('/admin/projects/:id/unarchive', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    db.getDb().prepare('UPDATE projects SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run('active', req.params.id);
+    res.redirect('/admin/projects/archived?message=Project+unarchived');
+  } catch (e) {
+    console.error('Unarchive error:', e);
+    res.redirect('/admin/projects/archived?error=Unarchive+failed');
+  }
+});
+
+// Requirements page (admin)
+app.get('/admin/projects/:id/requirements', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).send('Project not found');
+    const sessions = await db.getSessionsByProject(req.params.id);
+    const allRequirements = {};
+    sessions.forEach(s => {
+      try {
+        const reqs = JSON.parse(s.requirements || '{}');
+        for (const [cat, items] of Object.entries(reqs)) {
+          if (!allRequirements[cat]) allRequirements[cat] = [];
+          if (Array.isArray(items)) allRequirements[cat] = allRequirements[cat].concat(items);
+        }
+      } catch {}
+    });
+    res.render('admin/project-requirements', { user: req.user, project, requirements: allRequirements, title: project.name + ' - Requirements', currentPage: 'admin-projects' });
+  } catch (e) {
+    console.error('Requirements error:', e);
+    res.status(500).send('Failed to load requirements');
+  }
+});
+
 app.get('/admin/projects', auth.authenticate, auth.requireAdmin, async (req, res) => {
   const projects = await db.getAllProjects();
   res.render('admin/projects', {
@@ -677,9 +734,35 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
     }
   } catch(e) {}
 
+  // Compute design/proposal status for milestone tracker
+  let hasDesignPublished = false, hasDesignApproved = false;
+  let hasProposalPublished = false, hasProposalApproved = false;
+  try {
+    const designResult = loadNewestDesign(req.params.id);
+    if (designResult && designResult.design) {
+      hasDesignPublished = !!designResult.design.published;
+      hasDesignApproved = !!designResult.design.approvedAt;
+    }
+  } catch {}
+  try {
+    const prop = loadNewestProposal(req.params.id);
+    if (prop) {
+      hasProposalPublished = !!prop.published;
+      hasProposalApproved = !!prop.approvedAt;
+    }
+  } catch {}
+  const hasReqs = sessions.some(s => {
+    try { const r = JSON.parse(s.requirements || '{}'); return Object.values(r).some(a => Array.isArray(a) && a.length > 0); } catch { return false; }
+  });
+
   res.render('admin/project-detail', {
     customerAnswers,
     designExists: designExists,
+    hasDesignPublished,
+    hasDesignApproved,
+    hasProposalPublished,
+    hasProposalApproved,
+    hasReqs,
     user: req.user,
     project,
     sessions,
@@ -1851,6 +1934,77 @@ Be realistic and commercially credible. Show your working.`;
   }
 }
 
+// Customer: approve design
+app.post('/customer/projects/:id/design/approve', auth.authenticate, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).send('Project not found');
+    if (req.user.role === 'customer' && project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+    const result = loadNewestDesign(req.params.id);
+    if (!result || !result.design.published) return res.status(404).send('No published design');
+    result.design.approvedAt = new Date().toISOString();
+    result.design.approvedBy = req.user.email;
+    saveDesign(result.design);
+    res.redirect(`/customer/projects/${req.params.id}/design`);
+  } catch (e) {
+    console.error('Design approve error:', e);
+    res.redirect(`/customer/projects/${req.params.id}/design?error=Approve+failed`);
+  }
+});
+
+// Customer: archive/unarchive project
+app.post('/customer/projects/:id/archive', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project || project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+    db.getDb().prepare('UPDATE projects SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run('archived', req.params.id);
+    res.redirect('/projects?message=Project+archived');
+  } catch (e) {
+    res.redirect(`/projects/${req.params.id}?error=Archive+failed`);
+  }
+});
+
+app.post('/customer/projects/:id/unarchive', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project || project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+    db.getDb().prepare('UPDATE projects SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run('active', req.params.id);
+    res.redirect('/projects/archived?message=Project+unarchived');
+  } catch (e) {
+    res.redirect('/projects/archived?error=Unarchive+failed');
+  }
+});
+
+// Customer: archived projects
+app.get('/projects/archived', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  const projects = await db.getArchivedProjectsByUser(req.user.id);
+  res.render('customer/projects-archived', { user: req.user, projects, title: 'Archived Projects', currentPage: 'customer-projects' });
+});
+
+// Customer: requirements page
+app.get('/customer/projects/:id/requirements', auth.authenticate, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).send('Project not found');
+    if (req.user.role === 'customer' && project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+    const sessions = await db.getSessionsByProject(req.params.id);
+    const allRequirements = {};
+    sessions.forEach(s => {
+      try {
+        const reqs = JSON.parse(s.requirements || '{}');
+        for (const [cat, items] of Object.entries(reqs)) {
+          if (!allRequirements[cat]) allRequirements[cat] = [];
+          if (Array.isArray(items)) allRequirements[cat] = allRequirements[cat].concat(items);
+        }
+      } catch {}
+    });
+    res.render('customer/project-requirements', { user: req.user, project, requirements: allRequirements, title: project.name + ' - Requirements', currentPage: 'customer-projects' });
+  } catch (e) {
+    console.error('Requirements error:', e);
+    res.status(500).send('Failed to load requirements');
+  }
+});
+
 // Customer: answer assigned question
 app.post('/customer/projects/:id/design/answer', auth.authenticate, async (req, res) => {
   try {
@@ -2014,21 +2168,31 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
   
   // Check for published design and customer questions
   let hasPublishedDesign = false;
+  let designApproved = false;
   let customerQuestions = [];
   let customerDesignId = '';
   let customerAnswers = [];
   let hasPublishedProposal = false;
   let proposalApproved = false;
+  let hasRequirements = false;
   try {
     const designResult = loadNewestDesign(req.params.id);
     if (designResult && designResult.design) {
       if (designResult.design.published) hasPublishedDesign = true;
+      if (designResult.design.approvedAt) designApproved = true;
       customerDesignId = designResult.design.id || '';
       customerAnswers = designResult.design.customerAnswers || [];
       if (designResult.design.questions && Array.isArray(designResult.design.questions)) {
         customerQuestions = designResult.design.questions.filter(q => q.assignedTo === 'customer');
       }
     }
+  } catch(e) {}
+  // Check if sessions have requirements
+  try {
+    sessions.forEach(s => {
+      const reqs = JSON.parse(s.requirements || '{}');
+      if (Object.values(reqs).some(arr => Array.isArray(arr) && arr.length > 0)) hasRequirements = true;
+    });
   } catch(e) {}
   try {
     const proposal = loadNewestProposal(req.params.id);
@@ -2042,8 +2206,10 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
     files,
     activeSession,
     hasPublishedDesign,
+    designApproved,
     hasPublishedProposal,
     proposalApproved,
+    hasRequirements,
     customerQuestions,
     customerDesignId,
     customerAnswers,

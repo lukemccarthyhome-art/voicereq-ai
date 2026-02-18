@@ -91,6 +91,7 @@
         // Determine milestone states
         const hasSession = sessions.length > 0;
         const designReady = typeof hasPublishedDesign !== 'undefined' && hasPublishedDesign;
+        const designApprovedState = typeof designApproved !== 'undefined' && designApproved;
         const proposalReady = typeof hasPublishedProposal !== 'undefined' && hasPublishedProposal;
         const isApproved = typeof proposalApproved !== 'undefined' && proposalApproved;
         
@@ -150,16 +151,28 @@
             </div>
         </div>
 
-        <!-- Design & Proposal status cards -->
-        <% if (designReady || proposalReady) { %>
+        <!-- Design, Requirements & Proposal status cards -->
+        <% if (designReady || proposalReady || hasRequirements) { %>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px;">
-            <% if (designReady) { %>
+            <% if (hasRequirements) { %>
                 <div class="milestone-card ready">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <div style="font-size: 24px; margin-bottom: 4px;">📐</div>
-                            <h3 style="margin-bottom: 4px; color: #065f46;">Your Solution Design is ready</h3>
-                            <p style="font-size: 13px; color: #047857;">Review the proposed solution for your project</p>
+                            <div style="font-size: 24px; margin-bottom: 4px;">📋</div>
+                            <h3 style="margin-bottom: 4px; color: #065f46;">Requirements</h3>
+                            <p style="font-size: 13px; color: #047857;">View gathered requirements for your project</p>
+                        </div>
+                        <a href="/customer/projects/<%= project.id %>/requirements" class="btn" style="background: #10b981;">View</a>
+                    </div>
+                </div>
+            <% } %>
+            <% if (designReady) { %>
+                <div class="milestone-card <%= designApprovedState ? 'approved' : 'ready' %>">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 24px; margin-bottom: 4px;"><%= designApprovedState ? '✅' : '📐' %></div>
+                            <h3 style="margin-bottom: 4px; color: #065f46;"><%= designApprovedState ? 'Design Approved ✓' : 'Your Solution Design is ready' %></h3>
+                            <p style="font-size: 13px; color: #047857;"><%= designApprovedState ? 'You approved this design' : 'Review the proposed solution for your project' %></p>
                         </div>
                         <a href="/customer/projects/<%= project.id %>/design" class="btn" style="background: #10b981;">View Design</a>
                     </div>
@@ -331,8 +344,17 @@
             </div>
         </div>
 
-        <!-- Delete project (subtle, at bottom) -->
-        <div style="text-align: center; margin-top: 40px; padding: 20px;">
+        <!-- Archive / Delete project (subtle, at bottom) -->
+        <div style="text-align: center; margin-top: 40px; padding: 20px; display: flex; justify-content: center; gap: 24px;">
+            <% if (project.status !== 'archived') { %>
+            <form method="POST" action="/customer/projects/<%= project.id %>/archive" onsubmit="return confirm('Archive this project? You can unarchive it later.');" style="display: inline;">
+                <button type="submit" style="background: none; border: none; color: #999; font-size: 13px; cursor: pointer; text-decoration: underline;">📦 Archive this project</button>
+            </form>
+            <% } else { %>
+            <form method="POST" action="/customer/projects/<%= project.id %>/unarchive" style="display: inline;">
+                <button type="submit" style="background: none; border: none; color: #667eea; font-size: 13px; cursor: pointer; text-decoration: underline;">📦 Unarchive this project</button>
+            </form>
+            <% } %>
             <form method="POST" action="/projects/<%= project.id %>/delete" onsubmit="return confirm('Delete this project and all its data? This cannot be undone.');" style="display: inline;">
                 <button type="submit" style="background: none; border: none; color: #999; font-size: 13px; cursor: pointer; text-decoration: underline;">Delete this project</button>
             </form>

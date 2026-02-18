@@ -189,7 +189,19 @@ const getProjectsByUser = (userId) => {
     FROM projects p
     LEFT JOIN sessions s ON s.project_id = p.id
     LEFT JOIN files f ON f.project_id = p.id
-    WHERE p.user_id = ?
+    WHERE p.user_id = ? AND (p.status IS NULL OR p.status != 'archived')
+    GROUP BY p.id
+    ORDER BY p.updated_at DESC
+  `).all(userId));
+};
+
+const getArchivedProjectsByUser = (userId) => {
+  return Promise.resolve(db.prepare(`
+    SELECT p.*, COUNT(s.id) as session_count, COUNT(f.id) as file_count
+    FROM projects p
+    LEFT JOIN sessions s ON s.project_id = p.id
+    LEFT JOIN files f ON f.project_id = p.id
+    WHERE p.user_id = ? AND p.status = 'archived'
     GROUP BY p.id
     ORDER BY p.updated_at DESC
   `).all(userId));
@@ -203,6 +215,21 @@ const getAllProjects = () => {
     JOIN users u ON u.id = p.user_id
     LEFT JOIN sessions s ON s.project_id = p.id
     LEFT JOIN files f ON f.project_id = p.id
+    WHERE (p.status IS NULL OR p.status != 'archived')
+    GROUP BY p.id
+    ORDER BY p.updated_at DESC
+  `).all());
+};
+
+const getAllArchivedProjects = () => {
+  return Promise.resolve(db.prepare(`
+    SELECT p.*, u.name as user_name, u.company, u.email,
+           COUNT(s.id) as session_count, COUNT(f.id) as file_count
+    FROM projects p
+    JOIN users u ON u.id = p.user_id
+    LEFT JOIN sessions s ON s.project_id = p.id
+    LEFT JOIN files f ON f.project_id = p.id
+    WHERE p.status = 'archived'
     GROUP BY p.id
     ORDER BY p.updated_at DESC
   `).all());
@@ -405,7 +432,9 @@ module.exports = {
   // Projects
   createProject,
   getProjectsByUser,
+  getArchivedProjectsByUser,
   getAllProjects,
+  getAllArchivedProjects,
   getProject,
   updateProjectDesignQuestions: (id, json) => {
     const stmt = db.prepare('UPDATE projects SET design_questions = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
