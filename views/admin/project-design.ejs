@@ -71,6 +71,7 @@
         <a href="/admin">Dashboard</a>
         <a href="/admin/customers">Customers</a>
         <a href="/admin/projects">Projects</a>
+                <a href="/admin/sessions">Sessions</a>
                 <a href="/admin/feature-requests">Feature Requests</a>
         <a href="/profile">Profile</a>
         <a href="/logout">🚪 Logout</a>
@@ -81,6 +82,7 @@
   <main class="main">
     <div class="breadcrumb">
       <a href="/admin">Dashboard</a> › <a href="/admin/projects">Projects</a>
+                <a href="/admin/sessions">Sessions</a>
                 <a href="/admin/feature-requests">Feature Requests</a> › <a href="/admin/projects/<%= projectId %>">Project <%= projectId %></a> › Design
     </div>
 
@@ -196,6 +198,17 @@
             <form method="POST" action="/admin/projects/<%= projectId %>/design/publish" style="margin:0">
               <button type="submit" class="btn btn-sm" style="background:#10b981;color:white;">📤 Publish to Customer</button>
             </form>
+          <% } %>
+
+          <% if (design.approvedAt) { %>
+            <% if (design.sentToEngineAt) { %>
+              <span class="badge badge-final" style="font-size:10px;">✅ Sent to Engine <%= new Date(design.sentToEngineAt).toLocaleDateString() %></span>
+              <% if (design.enginePlanId) { %>
+                <a href="<%= (process.env.ENGINE_API_URL || 'http://localhost:3100') %>/builds/<%= design.enginePlanId %>" target="_blank" class="btn btn-sm" style="background:#06b6d4;color:white;font-size:11px;">🔗 View Build</a>
+              <% } %>
+            <% } else { %>
+              <button id="sendToEngineBtn" onclick="sendToEngine()" class="btn btn-sm" style="background:#059669;color:white;">🚀 Send to Engine</button>
+            <% } %>
           <% } %>
         </div>
       </div>
@@ -438,6 +451,30 @@
     document.getElementById('chatInput').addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
     });
+
+    // Send to Engine
+    async function sendToEngine() {
+      const btn = document.getElementById('sendToEngineBtn');
+      if (!btn) return;
+      if (!confirm('Send this approved design to Morti Engine for build planning?')) return;
+      btn.disabled = true;
+      btn.textContent = '⏳ Sending...';
+      try {
+        const res = await fetch('/admin/projects/<%= projectId %>/send-to-engine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed');
+        btn.textContent = '✅ Sent!';
+        btn.style.background = '#10b981';
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = '🚀 Send to Engine';
+        alert('Failed to send to engine: ' + e.message);
+      }
+    }
 
     // Assign question to customer
     async function acceptAssumption(btn, questionText, assumption) {

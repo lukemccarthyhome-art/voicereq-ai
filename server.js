@@ -778,6 +778,70 @@ app.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (req,
 });
 
 
+// === ADMIN SESSION MANAGEMENT ===
+
+// List all sessions across all projects
+app.get('/admin/sessions', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const sessions = await db.getAllSessions();
+  // Parse transcript to get message count
+  const enriched = sessions.map(s => {
+    let messageCount = 0;
+    try { messageCount = JSON.parse(s.transcript || '[]').length; } catch {}
+    return { ...s, message_count: messageCount };
+  });
+  res.render('admin/sessions', {
+    user: req.user,
+    sessions: enriched,
+    title: 'All Sessions',
+    currentPage: 'admin-sessions',
+    query: req.query
+  });
+});
+
+// Admin: view/access project session (same UI as customer)
+app.get('/admin/projects/:id/session', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const project = await db.getProject(req.params.id);
+  if (!project) return res.status(404).send('Project not found');
+
+  // Check for existing active session
+  let activeSession = await db.getLatestSessionForProject(req.params.id);
+  if (!activeSession || activeSession.status === 'completed') {
+    // Create new session
+    const result = await db.createSession(req.params.id);
+    activeSession = { id: result.lastInsertRowid };
+  }
+
+  res.redirect(`/voice-session?project=${req.params.id}&session=${activeSession.id}`);
+});
+
+// Admin: create a new session for a project
+app.post('/admin/projects/:id/session/create', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const project = await db.getProject(req.params.id);
+  if (!project) return res.status(404).send('Project not found');
+  const result = await db.createSession(req.params.id);
+  res.redirect(`/voice-session?project=${req.params.id}&session=${result.lastInsertRowid}`);
+});
+
+// Admin: view session transcript (standalone page)
+app.get('/admin/sessions/:id/view', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const session = await db.getSession(req.params.id);
+  if (!session) return res.status(404).send('Session not found');
+  const project = await db.getProject(session.project_id);
+  let transcript = [];
+  let requirements = {};
+  try { transcript = JSON.parse(session.transcript || '[]'); } catch {}
+  try { requirements = JSON.parse(session.requirements || '{}'); } catch {}
+  res.render('admin/session-view', {
+    user: req.user,
+    session,
+    project,
+    transcript,
+    requirements,
+    title: `Session #${session.id} - ${project ? project.name : 'Unknown'}`,
+    currentPage: 'admin-sessions'
+  });
+});
+
 // Morti Projects: Design extraction and admin design view
 app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAdmin, async (req, res) => {
   const projectId = req.params.id;
@@ -1952,6 +2016,69 @@ app.post('/customer/projects/:id/design/approve', auth.authenticate, async (req,
   }
 });
 
+// ─── Send to Morti Engine ──────────────────────────────────
+// NOTE: In production, ENGINE_API_URL should use HTTPS
+app.post('/admin/projects/:id/send-to-engine', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const project = await db.getProject(projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const result = loadNewestDesign(projectId);
+    if (!result || !result.design) return res.status(400).json({ error: 'No design found for this project' });
+    if (!result.design.approvedAt) return res.status(400).json({ error: 'Design must be approved before sending to engine' });
+
+    const engineUrl = process.env.ENGINE_API_URL;
+    const engineSecret = process.env.ENGINE_API_SECRET;
+    if (!engineUrl || !engineSecret) return res.status(500).json({ error: 'Engine API not configured (ENGINE_API_URL / ENGINE_API_SECRET)' });
+
+    // Build the payload — only design JSON, project name, project ID, design ID. No credentials or sensitive data.
+    const design = result.design;
+    const designPayload = design.sections || {};
+    if (design.summary) designPayload.summary = design.summary;
+    if (design.designMarkdown) designPayload.designMarkdown = design.designMarkdown;
+
+    const payload = {
+      design: designPayload,
+      projectName: project.name,
+      projectId: projectId,
+      designId: design.id
+    };
+
+    const response = await fetch(`${engineUrl}/api/planner/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${engineSecret}`
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30000)
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      return res.status(response.status).json({ error: errData.error || `Engine returned ${response.status}` });
+    }
+
+    const engineResult = await response.json();
+
+    // Track sent status on the design
+    design.sentToEngineAt = new Date().toISOString();
+    design.enginePlanId = engineResult.planId || null;
+    design.engineBuildId = engineResult.buildId || null;
+    saveDesign(design);
+
+    res.json({ 
+      success: true, 
+      planId: engineResult.planId,
+      sentAt: design.sentToEngineAt
+    });
+  } catch (e) {
+    console.error('Send to engine error:', e);
+    res.status(500).json({ error: 'Failed to send to engine: ' + e.message });
+  }
+});
+
 // Customer: archive/unarchive project
 app.post('/customer/projects/:id/archive', auth.authenticate, auth.requireCustomer, async (req, res) => {
   try {
@@ -2712,6 +2839,21 @@ app.post('/api/chat', apiAuth, express.json({ limit: '10mb' }), async (req, res)
   } catch (e) {
     console.error('Chat error:', e);
     res.status(500).json({ error: 'Chat failed: ' + e.message });
+  }
+});
+
+// Project info API (for session page to show project name/description)
+app.get('/api/projects/:id', apiAuth, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Not found' });
+    // Only return if user owns the project or is admin
+    if (req.user.role !== 'admin' && project.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    res.json({ id: project.id, name: project.name, description: project.description || '', status: project.status });
+  } catch(e) {
+    res.status(500).json({ error: 'Failed to get project' });
   }
 });
 

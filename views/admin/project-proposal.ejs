@@ -77,6 +77,7 @@
             <a href="/admin">Dashboard</a>
             <a href="/admin/customers">Customers</a>
             <a href="/admin/projects">Projects</a>
+                <a href="/admin/sessions">Sessions</a>
             <a href="/admin/feature-requests">Feature Requests</a>
         </nav>
     </div>
@@ -84,7 +85,8 @@
 
 <div class="main">
     <div class="breadcrumb">
-        <a href="/admin">Dashboard</a> → <a href="/admin/projects">Projects</a> → <a href="/admin/projects/<%= project.id %>"><%= project.name %></a> → Proposal
+        <a href="/admin">Dashboard</a> → <a href="/admin/projects">Projects</a>
+                <a href="/admin/sessions">Sessions</a> → <a href="/admin/projects/<%= project.id %>"><%= project.name %></a> → Proposal
     </div>
 
     <% if (locals.query && locals.query.error) { %>

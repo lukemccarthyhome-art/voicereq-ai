@@ -33,6 +33,7 @@
                 <a href="/admin">Dashboard</a>
                 <a href="/admin/customers">Customers</a>
                 <a href="/admin/projects" class="active">Projects</a>
+                <a href="/admin/sessions">Sessions</a>
                 <a href="/profile">Profile</a>
                 <div class="user-name">👤 <%= user.name %></div>
                 <a href="/logout">🚪 Logout</a>
@@ -41,7 +42,8 @@
     </div>
     <main class="main">
         <div class="breadcrumb">
-            <a href="/admin">Dashboard</a> › <a href="/admin/projects">Projects</a> › <a href="/admin/projects/<%= project.id %>"><%= project.name %></a> › Requirements
+            <a href="/admin">Dashboard</a> › <a href="/admin/projects">Projects</a>
+                <a href="/admin/sessions">Sessions</a> › <a href="/admin/projects/<%= project.id %>"><%= project.name %></a> › Requirements
         </div>
         <div class="card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">

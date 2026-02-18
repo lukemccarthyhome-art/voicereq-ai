@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Sessions - Morti Projects Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
+        
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
+        .nav { display: flex; gap: 20px; align-items: center; }
+        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.3); }
+        .user-name { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 6px; font-weight: 500; }
+        
+        .main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 200px); }
+        
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        
+        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-success { background: #28a745; }
+        
+        .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid #e0e0e0; }
+        .table th { background: #f8f9fa; font-weight: 600; color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .table tbody tr:hover { background: #f8f9ff; }
+        
+        .filters { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .filters input, .filters select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+        
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        .status-active { background: #28a745; }
+        .status-completed { background: #6c757d; }
+        .status-paused { background: #dc3545; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
+        
+        @media (max-width: 768px) {
+            .header-container { flex-direction: column; gap: 12px; text-align: center; }
+            .nav { flex-wrap: wrap; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-container">
+            <a href="/admin" class="logo">🎙️ Morti Projects</a>
+            <nav class="nav">
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/customers">Customers</a>
+                <a href="/admin/projects">Projects</a>
+                <a href="/admin/sessions" class="active">Sessions</a>
+                <a href="/profile">Profile</a>
+                <div class="user-name">👤 <%= user.name %></div>
+                <a href="/logout">🚪 Logout</a>
+            </nav>
+        </div>
+    </div>
+
+    <main class="main">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2>💬 All Sessions</h2>
+                <span style="color: #666; font-size: 14px;"><%= sessions.length %> total</span>
+            </div>
+
+            <div class="filters">
+                <input type="text" id="filterSearch" placeholder="🔍 Search project or customer..." oninput="filterTable()" style="min-width: 250px;">
+                <select id="filterStatus" onchange="filterTable()">
+                    <option value="">All statuses</option>
+                    <option value="active">Active</option>
+                    <option value="paused">Paused</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+
+            <% if (sessions.length > 0) { %>
+                <table class="table" id="sessionsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Project</th>
+                            <th>Customer</th>
+                            <th>Messages</th>
+                            <th>Files</th>
+                            <th>Status</th>
+                            <th>Last Activity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% sessions.forEach(session => { %>
+                            <tr data-project="<%= (session.project_name || '').toLowerCase() %>" data-customer="<%= (session.user_name || '').toLowerCase() %>" data-status="<%= session.status %>">
+                                <td><strong>#<%= session.id %></strong></td>
+                                <td>
+                                    <a href="/admin/projects/<%= session.project_id %>" style="color: #667eea; text-decoration: none; font-weight: 500;">
+                                        <%= session.project_name %>
+                                    </a>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 500;"><%= session.user_name %></div>
+                                    <div style="font-size: 12px; color: #888;"><%= session.user_email %></div>
+                                </td>
+                                <td><%= session.message_count %></td>
+                                <td><%= session.file_count %></td>
+                                <td>
+                                    <span class="status-dot status-<%= session.status %>"></span>
+                                    <%= session.status %>
+                                </td>
+                                <td style="font-size: 13px; color: #666;">
+                                    <%= new Date(session.updated_at).toLocaleString() %>
+                                </td>
+                                <td>
+                                    <a href="/admin/sessions/<%= session.id %>/view" class="btn btn-sm" style="margin-right: 4px;">👁️ View</a>
+                                    <a href="/voice-session?project=<%= session.project_id %>&session=<%= session.id %>" class="btn btn-sm btn-success">🎙️ Open</a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="empty-state">
+                    <span class="emoji">💬</span>
+                    <h3>No sessions yet</h3>
+                    <p>Sessions will appear here when customers start voice conversations</p>
+                </div>
+            <% } %>
+        </div>
+    </main>
+
+    <script>
+    function filterTable() {
+        const search = document.getElementById('filterSearch').value.toLowerCase();
+        const status = document.getElementById('filterStatus').value;
+        const rows = document.querySelectorAll('#sessionsTable tbody tr');
+        rows.forEach(row => {
+            const project = row.dataset.project;
+            const customer = row.dataset.customer;
+            const rowStatus = row.dataset.status;
+            const matchSearch = !search || project.includes(search) || customer.includes(search);
+            const matchStatus = !status || rowStatus === status;
+            row.style.display = (matchSearch && matchStatus) ? '' : 'none';
+        });
+    }
+    </script>
+</body>
+</html>

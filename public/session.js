@@ -32,6 +32,31 @@ class VoiceSession {
     }
 
     async loadSessionData() {
+        // Fetch and display project info
+        if (this.projectId) {
+            try {
+                const projRes = await fetch(`/api/projects/${this.projectId}`);
+                if (projRes.ok) {
+                    const proj = await projRes.json();
+                    this.sessionContext.projectName = proj.name || '';
+                    // Update header with project name and description
+                    const logo = document.querySelector('.logo');
+                    if (logo) {
+                        logo.innerHTML = `🎙️ ${proj.name || 'Morti Projects'}`;
+                    }
+                    // Add project info bar below header
+                    const header = document.querySelector('.header');
+                    if (header && proj.name) {
+                        const infoBar = document.createElement('div');
+                        infoBar.style.cssText = 'background: rgba(102,126,234,0.08); padding: 10px 20px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 12px;';
+                        infoBar.innerHTML = `<span style="font-weight:600; color:#667eea;">📁 ${proj.name}</span>` +
+                            (proj.description ? `<span style="color:#888; font-size:13px;">— ${proj.description}</span>` : '');
+                        header.insertAdjacentElement('afterend', infoBar);
+                    }
+                }
+            } catch(e) { console.log('Could not load project info:', e); }
+        }
+
         if (!this.sessionId) return;
         
         try {

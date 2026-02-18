@@ -487,6 +487,17 @@ module.exports = {
   // Sessions (extended)
   appendSessionMessage,
   appendSessionMessageSafe,
+  // All sessions (admin)
+  getAllSessions: () => {
+    return Promise.resolve(db.prepare(`
+      SELECT s.*, p.name as project_name, p.id as project_id, u.name as user_name, u.email as user_email,
+             (SELECT COUNT(*) FROM files f WHERE f.session_id = s.id) as file_count
+      FROM sessions s
+      JOIN projects p ON p.id = s.project_id
+      JOIN users u ON u.id = p.user_id
+      ORDER BY s.updated_at DESC
+    `).all());
+  },
   // Stats
   getStats
 };

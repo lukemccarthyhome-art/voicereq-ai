@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Morti Projects Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
+        
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
+        .nav { display: flex; gap: 20px; align-items: center; }
+        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.3); }
+        .user-name { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 6px; font-weight: 500; }
+        
+        .main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        
+        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .btn:hover { background: #5a6fd8; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-success { background: #28a745; }
+        
+        .admin-badge { display: inline-block; background: #667eea; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 8px; }
+        
+        .t-msg { padding: 12px 16px; border-radius: 12px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; max-width: 80%; }
+        .t-msg.ai { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-bottom-left-radius: 4px; }
+        .t-msg.user { background: white; border: 1px solid #e0e0e0; margin-left: auto; border-bottom-right-radius: 4px; }
+        .t-msg .t-role { font-size: 11px; font-weight: 600; opacity: 0.7; margin-bottom: 4px; }
+        
+        .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .meta-item { text-align: center; padding: 12px; background: #f8f9ff; border-radius: 8px; }
+        .meta-item .value { font-size: 24px; font-weight: bold; color: #667eea; }
+        .meta-item .label { font-size: 12px; color: #666; text-transform: uppercase; margin-top: 4px; }
+        
+        @media (max-width: 768px) {
+            .header-container { flex-direction: column; gap: 12px; }
+            .nav { flex-wrap: wrap; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-container">
+            <a href="/admin" class="logo">🎙️ Morti Projects</a>
+            <nav class="nav">
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/customers">Customers</a>
+                <a href="/admin/projects">Projects</a>
+                <a href="/admin/sessions" class="active">Sessions</a>
+                <a href="/profile">Profile</a>
+                <div class="user-name">👤 <%= user.name %></div>
+                <a href="/logout">🚪 Logout</a>
+            </nav>
+        </div>
+    </div>
+
+    <main class="main">
+        <div style="margin-bottom: 16px;">
+            <a href="/admin/sessions" style="color: #667eea; text-decoration: none; font-size: 14px;">← Back to Sessions</a>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h2>Session #<%= session.id %> <span class="admin-badge">Admin View</span></h2>
+                    <% if (project) { %>
+                        <p style="color: #666; margin-top: 4px;">
+                            Project: <a href="/admin/projects/<%= project.id %>" style="color: #667eea;"><%= project.name %></a>
+                            <% if (project.user_name) { %> · Customer: <%= project.user_name %><% } %>
+                        </p>
+                    <% } %>
+                </div>
+                <a href="/voice-session?project=<%= session.project_id %>&session=<%= session.id %>" class="btn btn-success">🎙️ Open Live Session</a>
+            </div>
+
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <div class="value"><%= transcript.length %></div>
+                    <div class="label">Messages</div>
+                </div>
+                <div class="meta-item">
+                    <div class="value"><%= Object.values(requirements).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0) %></div>
+                    <div class="label">Requirements</div>
+                </div>
+                <div class="meta-item">
+                    <div class="value" style="font-size: 16px;"><%= session.status %></div>
+                    <div class="label">Status</div>
+                </div>
+                <div class="meta-item">
+                    <div class="value" style="font-size: 14px;"><%= new Date(session.updated_at).toLocaleString() %></div>
+                    <div class="label">Last Updated</div>
+                </div>
+            </div>
+        </div>
+
+        <% if (Object.keys(requirements).length > 0) { %>
+        <div class="card">
+            <h3 style="margin-bottom: 16px;">📋 Requirements</h3>
+            <% for (const [category, items] of Object.entries(requirements)) { %>
+                <% if (Array.isArray(items) && items.length > 0) { %>
+                    <div style="margin-bottom: 16px;">
+                        <h4 style="color: #667eea; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;"><%= category %></h4>
+                        <ul style="margin-left: 16px;">
+                            <% items.forEach(item => { %>
+                                <li style="margin-bottom: 4px; color: #444;"><%= item %></li>
+                            <% }) %>
+                        </ul>
+                    </div>
+                <% } %>
+            <% } %>
+        </div>
+        <% } %>
+
+        <div class="card">
+            <h3 style="margin-bottom: 16px;">💬 Full Transcript</h3>
+            <% if (transcript.length > 0) { %>
+                <div style="max-height: 600px; overflow-y: auto; padding: 8px;">
+                    <% transcript.forEach(msg => { %>
+                        <div class="t-msg <%= msg.role === 'ai' ? 'ai' : 'user' %>">
+                            <div class="t-role"><%= msg.role === 'ai' ? '🤖 AI' : '👤 User' %></div>
+                            <div><%= msg.text %></div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <p style="color: #999; text-align: center; padding: 40px;">No transcript available</p>
+            <% } %>
+        </div>
+    </main>
+</body>
+</html>

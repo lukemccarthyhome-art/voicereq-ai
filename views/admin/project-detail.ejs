@@ -58,6 +58,7 @@
                 <a href="/admin">Dashboard</a>
                 <a href="/admin/customers">Customers</a>
                 <a href="/admin/projects" class="active">Projects</a>
+                <a href="/admin/sessions">Sessions</a>
                 <a href="/profile">Profile</a>
                 <div class="user-name">👤 <%= user.name %></div>
                 <a href="/logout">🚪 Logout</a>
@@ -316,7 +317,15 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
     <div class="card">
-        <h3>💬 Voice Sessions</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="margin-bottom: 0;">💬 Voice Sessions</h3>
+            <div style="display: flex; gap: 8px;">
+                <a href="/admin/projects/<%= project.id %>/session" class="btn btn-sm btn-success">🎙️ Open Session</a>
+                <form method="POST" action="/admin/projects/<%= project.id %>/session/create" style="margin: 0;">
+                    <button type="submit" class="btn btn-sm">➕ New Session</button>
+                </form>
+            </div>
+        </div>
         <% if (sessions.length > 0) { %>
             <div style="max-height: 400px; overflow-y: auto;">
                 <% sessions.forEach(session => { %>
