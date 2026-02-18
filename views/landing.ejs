@@ -3,419 +3,459 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Morti Projects — Requirements to Reality</title>
+    <title>Morti — AI Consulting & Automation for Australian SMBs</title>
+    <meta name="description" content="From idea to live automation. Morti delivers AI-powered requirements gathering, solution design, and managed automation for small and medium businesses across Australia.">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #333;
-            overflow-x: hidden;
+        :root {
+            --brand: #4f46e5;
+            --brand-light: #6366f1;
+            --brand-dark: #3730a3;
+            --accent: #10b981;
+            --accent-dark: #059669;
+            --text: #1e293b;
+            --text-mid: #475569;
+            --text-light: #64748b;
+            --bg: #ffffff;
+            --bg-alt: #f8fafc;
+            --bg-dark: #0f172a;
+            --border: #e2e8f0;
+            --radius: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); overflow-x: hidden; }
         a { text-decoration: none; color: inherit; }
+        html { scroll-behavior: smooth; }
 
         /* Nav */
         nav {
             position: fixed; top: 0; width: 100%; z-index: 100;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 16px 40px;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+            padding: 14px 40px;
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
         }
-        .nav-brand { font-size: 1.25rem; font-weight: 700; color: #667eea; }
+        .nav-brand { font-size: 1.25rem; font-weight: 800; color: var(--brand); letter-spacing: -0.02em; }
         .nav-links { display: flex; gap: 28px; align-items: center; }
-        .nav-links a.nav-text { font-size: 0.9rem; color: #555; transition: color 0.2s; }
-        .nav-links a.nav-text:hover { color: #667eea; }
-        .btn {
-            display: inline-block; padding: 10px 24px; border-radius: 8px;
-            font-weight: 600; font-size: 0.9rem; transition: all 0.25s; cursor: pointer; border: none;
-        }
-        .btn-login {
-            background: #10b981; color: #fff;
-            box-shadow: 0 4px 14px rgba(16,185,129,0.3);
-            font-size: 0.95rem; padding: 10px 28px;
-        }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); background: #059669; }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
-            box-shadow: 0 4px 14px rgba(102,126,234,0.4);
-        }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
-        .btn-outline {
-            border: 2px solid #fff; color: #fff; background: transparent;
-        }
-        .btn-outline:hover { background: #fff; color: #667eea; }
-        .btn-white {
-            background: #fff; color: #667eea;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-        }
-        .btn-white:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+        .nav-links a.nav-text { font-size: 0.88rem; color: var(--text-mid); transition: color 0.2s; font-weight: 500; }
+        .nav-links a.nav-text:hover { color: var(--brand); }
+        .btn { display: inline-block; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; cursor: pointer; border: none; }
+        .btn-cta { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.25); padding: 10px 28px; font-size: 0.92rem; }
+        .btn-cta:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
+        .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,0.3); }
+        .btn-primary:hover { background: var(--brand-light); transform: translateY(-1px); }
+        .btn-outline-white { border: 2px solid rgba(255,255,255,0.7); color: #fff; background: transparent; }
+        .btn-outline-white:hover { background: #fff; color: var(--brand); }
+        .btn-white { background: #fff; color: var(--brand); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .btn-white:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+        .btn-ghost { background: transparent; border: 2px solid var(--brand); color: var(--brand); }
+        .btn-ghost:hover { background: var(--brand); color: #fff; }
 
         /* Hero */
         .hero {
             min-height: 100vh; display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 120px 40px 80px; text-align: center; color: #fff;
+            background: linear-gradient(160deg, var(--bg-dark) 0%, #1e1b4b 50%, var(--brand-dark) 100%);
+            padding: 140px 40px 100px; text-align: center; color: #fff;
+            position: relative; overflow: hidden;
         }
-        .hero h1 {
-            font-size: 3.2rem; font-weight: 800; margin-bottom: 20px;
-            animation: fadeUp 0.8s ease-out;
+        .hero::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 30% 80%, rgba(99,102,241,0.15) 0%, transparent 60%),
+                        radial-gradient(ellipse at 70% 20%, rgba(16,185,129,0.1) 0%, transparent 50%);
         }
-        .hero p {
-            font-size: 1.25rem; max-width: 640px; margin: 0 auto 36px;
-            opacity: 0.92; line-height: 1.7;
-            animation: fadeUp 0.8s ease-out 0.15s both;
+        .hero-inner { position: relative; z-index: 1; max-width: 800px; }
+        .hero-badge {
+            display: inline-block; padding: 6px 16px; border-radius: 20px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+            font-size: 0.8rem; font-weight: 600; letter-spacing: 0.03em;
+            margin-bottom: 24px; color: rgba(255,255,255,0.85);
         }
-        .hero-buttons {
-            display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
-            animation: fadeUp 0.8s ease-out 0.3s both;
+        .hero h1 { font-size: 3.4rem; font-weight: 800; margin-bottom: 20px; line-height: 1.15; letter-spacing: -0.03em; animation: fadeUp 0.7s ease-out; }
+        .hero p { font-size: 1.2rem; max-width: 620px; margin: 0 auto 36px; opacity: 0.88; line-height: 1.7; animation: fadeUp 0.7s ease-out 0.12s both; }
+        .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; animation: fadeUp 0.7s ease-out 0.24s both; }
+
+        /* Pipeline */
+        .pipeline-section { background: var(--bg); padding: 80px 40px; }
+        .pipeline {
+            display: flex; justify-content: center; align-items: center; gap: 0;
+            max-width: 900px; margin: 0 auto; flex-wrap: wrap;
         }
+        .pipeline-step {
+            text-align: center; padding: 16px 20px; flex: 1; min-width: 120px;
+        }
+        .pipeline-icon {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand), var(--brand-light));
+            color: #fff; font-size: 1.1rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px;
+        }
+        .pipeline-step h4 { font-size: 0.85rem; color: var(--text); font-weight: 700; margin-bottom: 2px; }
+        .pipeline-step p { font-size: 0.78rem; color: var(--text-light); }
+        .pipeline-arrow { color: var(--border); font-size: 1.3rem; flex-shrink: 0; margin: 0 -4px; padding-bottom: 20px; }
 
         /* Sections */
         section { padding: 100px 40px; }
-        .section-title { text-align: center; font-size: 2rem; font-weight: 700; margin-bottom: 16px; color: #2d3748; }
-        .section-sub { text-align: center; color: #718096; max-width: 600px; margin: 0 auto 60px; line-height: 1.6; }
+        .section-label { text-align: center; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--brand); font-weight: 700; margin-bottom: 12px; }
+        .section-title { text-align: center; font-size: 2.2rem; font-weight: 800; margin-bottom: 14px; color: var(--text); letter-spacing: -0.02em; }
+        .section-sub { text-align: center; color: var(--text-light); max-width: 600px; margin: 0 auto 56px; line-height: 1.65; font-size: 1.05rem; }
 
-        /* Services */
-        .services-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 32px; max-width: 1000px; margin: 0 auto;
+        /* Products */
+        .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1000px; margin: 0 auto; }
+        .product-card {
+            background: var(--bg); border-radius: 16px; padding: 40px 32px;
+            border: 1px solid var(--border); transition: all 0.25s;
+            position: relative; overflow: hidden;
         }
-        .service-card {
-            background: #fff; border-radius: 16px; padding: 36px 28px;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
-            transition: transform 0.25s, box-shadow 0.25s;
-            border-top: 4px solid #667eea;
+        .product-card:hover { border-color: var(--brand); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+        .product-tag {
+            display: inline-block; padding: 4px 12px; border-radius: 6px;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+            margin-bottom: 16px;
         }
-        .service-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
-        .service-icon { font-size: 2.4rem; margin-bottom: 16px; }
-        .service-card h3 { font-size: 1.15rem; margin-bottom: 10px; color: #2d3748; }
-        .service-card p { font-size: 0.95rem; color: #718096; line-height: 1.6; }
+        .product-tag.consult { background: #ede9fe; color: #5b21b6; }
+        .product-tag.auto { background: #d1fae5; color: #065f46; }
+        .product-card h3 { font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+        .product-card > p { font-size: 0.95rem; color: var(--text-mid); line-height: 1.65; margin-bottom: 20px; }
+        .product-features { list-style: none; padding: 0; }
+        .product-features li { font-size: 0.9rem; color: var(--text-mid); padding: 5px 0 5px 24px; position: relative; line-height: 1.5; }
+        .product-features li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+        /* Trust / Portability */
+        .trust-section { background: var(--bg-alt); }
+        .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; max-width: 1000px; margin: 0 auto; }
+        .trust-card { background: var(--bg); border-radius: var(--radius); padding: 32px 24px; border: 1px solid var(--border); text-align: center; }
+        .trust-icon { font-size: 2rem; margin-bottom: 14px; }
+        .trust-card h3 { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+        .trust-card p { font-size: 0.88rem; color: var(--text-light); line-height: 1.6; }
+
+        /* Handover highlight */
+        .handover-banner {
+            max-width: 800px; margin: 56px auto 0; padding: 32px 36px;
+            background: linear-gradient(135deg, #ede9fe, #dbeafe);
+            border-radius: 16px; border: 1px solid #c7d2fe;
+            display: flex; gap: 20px; align-items: flex-start;
+        }
+        .handover-banner .hb-icon { font-size: 2.4rem; flex-shrink: 0; }
+        .handover-banner h3 { font-size: 1.1rem; font-weight: 700; color: var(--brand-dark); margin-bottom: 6px; }
+        .handover-banner p { font-size: 0.92rem; color: var(--text-mid); line-height: 1.6; }
 
         /* How it works */
-        .steps-bg { background: #f7f8fc; }
-        .steps {
-            display: flex; justify-content: center; gap: 24px; max-width: 1000px;
-            margin: 0 auto; flex-wrap: wrap; align-items: flex-start;
-        }
-        .step { text-align: center; flex: 1; min-width: 200px; position: relative; padding: 0 12px; }
+        .steps-bg { background: var(--bg); }
+        .steps { display: flex; justify-content: center; gap: 24px; max-width: 1040px; margin: 0 auto; flex-wrap: wrap; align-items: flex-start; }
+        .step { text-align: center; flex: 1; min-width: 180px; position: relative; padding: 0 10px; }
         .step-num {
-            width: 56px; height: 56px; border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff; font-size: 1.4rem; font-weight: 700;
+            width: 52px; height: 52px; border-radius: 50%;
+            background: var(--brand); color: #fff; font-size: 1.2rem; font-weight: 700;
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 18px;
+            margin: 0 auto 14px;
         }
-        .step h3 { font-size: 1.15rem; margin-bottom: 8px; color: #2d3748; }
-        .step p { font-size: 0.9rem; color: #718096; line-height: 1.5; }
-        .step-arrow {
-            position: absolute; right: -18px; top: 18px;
-            font-size: 1.5rem; color: #cbd5e0;
-        }
+        .step h3 { font-size: 1rem; margin-bottom: 6px; color: var(--text); }
+        .step p { font-size: 0.88rem; color: var(--text-light); line-height: 1.5; }
+        .step-arrow { position: absolute; right: -16px; top: 16px; font-size: 1.3rem; color: var(--border); }
 
-        /* Features */
-        .features-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 32px; max-width: 1000px; margin: 0 auto;
+        /* Pricing */
+        .pricing-bg { background: var(--bg-alt); }
+        .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 800px; margin: 0 auto; }
+        .pricing-card {
+            background: var(--bg); border-radius: 16px; padding: 36px 28px;
+            border: 1px solid var(--border); transition: all 0.25s;
         }
-        .feature-card {
-            background: #fff; border-radius: 16px; padding: 32px 24px;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
-            transition: transform 0.25s, box-shadow 0.25s;
-        }
-        .feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
-        .feature-icon { font-size: 2rem; margin-bottom: 12px; }
-        .feature-card h3 { font-size: 1.05rem; margin-bottom: 8px; color: #2d3748; }
-        .feature-card p { font-size: 0.9rem; color: #718096; line-height: 1.6; }
+        .pricing-card:hover { border-color: var(--brand); box-shadow: var(--shadow-md); }
+        .pricing-phase { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--brand); font-weight: 700; margin-bottom: 8px; }
+        .pricing-card h3 { font-size: 1.2rem; margin-bottom: 8px; color: var(--text); }
+        .pricing-card .pricing-desc { font-size: 0.9rem; color: var(--text-light); line-height: 1.6; margin-bottom: 18px; }
+        .pricing-includes { list-style: none; padding: 0; }
+        .pricing-includes li { font-size: 0.88rem; color: var(--text-mid); padding: 5px 0 5px 22px; position: relative; line-height: 1.5; }
+        .pricing-includes li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+        .pricing-note { text-align: center; max-width: 640px; margin: 40px auto 0; color: var(--text-light); font-size: 0.92rem; line-height: 1.7; }
+        .pricing-note strong { color: var(--text-mid); }
 
         /* CTA */
         .cta-section { padding: 80px 40px; }
         .cta {
             text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff; border-radius: 24px; max-width: 800px;
-            margin: 0 auto; padding: 60px 40px;
+            background: linear-gradient(160deg, var(--bg-dark) 0%, #1e1b4b 60%, var(--brand-dark) 100%);
+            color: #fff; border-radius: 20px; max-width: 800px;
+            margin: 0 auto; padding: 64px 40px; position: relative; overflow: hidden;
         }
-        .cta h2 { font-size: 2rem; margin-bottom: 16px; }
-        .cta p { opacity: 0.9; margin-bottom: 32px; font-size: 1.05rem; line-height: 1.6; }
-
-        /* Pricing */
-        .pricing-bg { background: #f7f8fc; }
-        .pricing-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 28px; max-width: 960px; margin: 0 auto;
+        .cta::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 50% 100%, rgba(99,102,241,0.2) 0%, transparent 60%);
         }
-        .pricing-card {
-            background: #fff; border-radius: 16px; padding: 36px 28px;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
-            transition: transform 0.25s, box-shadow 0.25s;
-            position: relative; overflow: hidden;
-        }
-        .pricing-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
-        .pricing-card.featured {
-            border: 2px solid #667eea;
-        }
-        .pricing-card.featured::before {
-            content: 'Most Popular'; position: absolute; top: 16px; right: -32px;
-            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
-            font-size: 0.7rem; font-weight: 700; padding: 4px 40px;
-            transform: rotate(45deg); text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .pricing-phase { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #667eea; font-weight: 700; margin-bottom: 8px; }
-        .pricing-card h3 { font-size: 1.3rem; margin-bottom: 8px; color: #2d3748; }
-        .pricing-card .pricing-desc { font-size: 0.9rem; color: #718096; line-height: 1.6; margin-bottom: 20px; }
-        .pricing-includes { list-style: none; padding: 0; }
-        .pricing-includes li {
-            font-size: 0.9rem; color: #4a5568; padding: 6px 0; padding-left: 24px;
-            position: relative; line-height: 1.5;
-        }
-        .pricing-includes li::before {
-            content: '✓'; position: absolute; left: 0; color: #10b981; font-weight: 700;
-        }
-        .pricing-note {
-            text-align: center; max-width: 640px; margin: 40px auto 0;
-            color: #718096; font-size: 0.95rem; line-height: 1.7;
-        }
-        .pricing-note strong { color: #4a5568; }
+        .cta > * { position: relative; }
+        .cta h2 { font-size: 2rem; margin-bottom: 14px; font-weight: 800; }
+        .cta p { opacity: 0.85; margin-bottom: 28px; font-size: 1.05rem; line-height: 1.6; max-width: 540px; margin-left: auto; margin-right: auto; }
 
         /* Footer */
-        footer {
-            text-align: center; padding: 40px; color: #a0aec0; font-size: 0.85rem;
-            border-top: 1px solid #e2e8f0;
-        }
-        footer a { color: #667eea; }
+        footer { text-align: center; padding: 40px; color: var(--text-light); font-size: 0.85rem; border-top: 1px solid var(--border); }
+        footer a { color: var(--brand); }
 
-        /* Animations */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Mobile */
-        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #667eea; }
-
+        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: var(--brand); }
         @media (max-width: 768px) {
             nav { padding: 12px 20px; }
             .hamburger { display: block; }
-            .nav-links {
-                display: none; flex-direction: column; position: absolute;
-                top: 100%; left: 0; right: 0; background: #fff;
-                padding: 16px 20px; gap: 4px;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-            }
+            .nav-links { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: #fff; padding: 16px 20px; gap: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border-top: 1px solid var(--border); }
             .nav-links.open { display: flex; }
             .nav-links a.nav-text { padding: 10px 0; font-size: 1rem; }
-            .btn-login { text-align: center; margin-top: 8px; }
-            .hero { padding: 100px 20px 60px; }
-            .hero h1 { font-size: 2rem; }
+            .btn-cta { text-align: center; margin-top: 8px; }
+            .hero { padding: 110px 20px 70px; }
+            .hero h1 { font-size: 2.1rem; }
             .hero p { font-size: 1rem; }
             .hero-buttons { flex-direction: column; align-items: center; }
-            section { padding: 60px 20px; }
+            section { padding: 64px 20px; }
             .section-title { font-size: 1.6rem; }
+            .products-grid, .pricing-grid { grid-template-columns: 1fr; }
+            .trust-grid { grid-template-columns: 1fr; }
             .step-arrow { display: none; }
-            .steps { gap: 32px; }
-            .steps .step { min-width: unset; }
-            .services-grid, .features-grid, .pricing-grid { grid-template-columns: 1fr; }
-            .pricing-note { font-size: 0.85rem; }
+            .steps { gap: 28px; }
+            .pipeline { flex-direction: column; gap: 0; }
+            .pipeline-arrow { transform: rotate(90deg); padding: 0; margin: -4px 0; }
+            .handover-banner { flex-direction: column; text-align: center; }
             .cta { padding: 40px 24px; }
             .cta h2 { font-size: 1.5rem; }
         }
-
-        html { scroll-behavior: smooth; }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="/" class="nav-brand">✦ Morti Projects</a>
+    <a href="/" class="nav-brand">◆ Morti</a>
     <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
     <div class="nav-links">
-        <a href="#services" class="nav-text">Services</a>
+        <a href="#products" class="nav-text">What We Do</a>
         <a href="#how-it-works" class="nav-text">How It Works</a>
         <a href="/about" class="nav-text">About</a>
         <a href="#pricing" class="nav-text">Pricing</a>
         <a href="/contact" class="nav-text">Contact</a>
         <a href="/login" class="nav-text">Login</a>
-        <a href="/signup" class="btn btn-login">Sign Up Free</a>
+        <a href="/signup" class="btn btn-cta">Get Started</a>
     </div>
 </nav>
 
+<!-- Hero -->
 <section class="hero">
-    <div>
-        <h1>AI That Works for Your Business</h1>
-        <p>Practical, affordable AI services built for small and medium businesses. We help you capture requirements, design solutions, and deliver real products — without the enterprise price tag or complexity.</p>
+    <div class="hero-inner">
+        <div class="hero-badge">Melbourne-based AI consulting · morti.com.au</div>
+        <h1>From Idea to<br>Live Automation</h1>
+        <p>Morti takes your business idea through requirements, design, and proposal — then builds and runs the automation. End-to-end. No lock-in. You own everything.</p>
         <div class="hero-buttons">
             <a href="/signup" class="btn btn-white">Get Started Free</a>
-            <a href="#how-it-works" class="btn btn-outline">How It Works</a>
+            <a href="#how-it-works" class="btn btn-outline-white">See How It Works</a>
         </div>
     </div>
 </section>
 
-<section id="ai-adoption" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);">
-    <h2 class="section-title">AI Isn't Just for Big Enterprise Anymore</h2>
-    <p class="section-sub">Your competitors are already exploring AI. The businesses that adopt now will have a significant head start — and the gap only widens with time.</p>
-    <div style="max-width: 800px; margin: 0 auto; display: grid; gap: 24px;">
-        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); border-left: 4px solid #10b981;">
-            <h3 style="color: #2d3748; margin-bottom: 8px;">🎯 The efficiencies are available right now</h3>
-            <p style="color: #718096; line-height: 1.6;">AI can automate repetitive work, extract insights from documents, and accelerate project delivery today — not in some distant future. Every month you wait is a month your competitors gain ground.</p>
+<!-- Pipeline -->
+<div class="pipeline-section">
+    <div class="pipeline">
+        <div class="pipeline-step">
+            <div class="pipeline-icon">💬</div>
+            <h4>Requirements</h4>
+            <p>Capture the idea</p>
         </div>
-        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); border-left: 4px solid #667eea;">
-            <h3 style="color: #2d3748; margin-bottom: 8px;">💰 Practical and affordable</h3>
-            <p style="color: #718096; line-height: 1.6;">You don't need a dedicated data science team or a six-figure budget. We make AI accessible — reliable services scoped to what your business actually needs, at prices that make sense for SMBs.</p>
+        <span class="pipeline-arrow">→</span>
+        <div class="pipeline-step">
+            <div class="pipeline-icon">📐</div>
+            <h4>Design</h4>
+            <p>Architecture & plan</p>
         </div>
-        <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); border-left: 4px solid #764ba2;">
-            <h3 style="color: #2d3748; margin-bottom: 8px;">🤝 We guide you through it</h3>
-            <p style="color: #718096; line-height: 1.6;">Not sure where to start? That's exactly what we're here for. We help you identify where AI delivers real value for your specific business, then build and support the solution end to end.</p>
+        <span class="pipeline-arrow">→</span>
+        <div class="pipeline-step">
+            <div class="pipeline-icon">📋</div>
+            <h4>Proposal</h4>
+            <p>Scope & pricing</p>
+        </div>
+        <span class="pipeline-arrow">→</span>
+        <div class="pipeline-step">
+            <div class="pipeline-icon">🔨</div>
+            <h4>Build</h4>
+            <p>We implement it</p>
+        </div>
+        <span class="pipeline-arrow">→</span>
+        <div class="pipeline-step">
+            <div class="pipeline-icon">⚡</div>
+            <h4>Live</h4>
+            <p>Running & managed</p>
+        </div>
+    </div>
+</div>
+
+<!-- Products -->
+<section id="products">
+    <div class="section-label">What We Do</div>
+    <h2 class="section-title">Two services, one seamless experience</h2>
+    <p class="section-sub">Requirements gathering and solution design, plus managed automation that runs your workflows — all from one team.</p>
+    <div class="products-grid">
+        <div class="product-card">
+            <div class="product-tag consult">Consulting</div>
+            <h3>Morti Projects</h3>
+            <p>AI-powered requirements gathering, solution design, and proposals. Talk about your project naturally — we capture, structure, and design the solution.</p>
+            <ul class="product-features">
+                <li>Voice &amp; document requirements capture</li>
+                <li>AI-generated solution designs</li>
+                <li>Smart follow-up questions for gaps</li>
+                <li>Detailed proposals with build estimates</li>
+                <li>Customer portal to review &amp; approve</li>
+                <li>Human oversight at every stage</li>
+            </ul>
+        </div>
+        <div class="product-card">
+            <div class="product-tag auto">Automation</div>
+            <h3>Mortomation</h3>
+            <p>The engine that builds and runs your workflows. Once the design is approved, we implement it as a managed automation — your own dedicated instance, running 24/7.</p>
+            <ul class="product-features">
+                <li>Dedicated per-customer automation instance</li>
+                <li>Pre-built module library for fast deployment</li>
+                <li>Fully exportable — take it anywhere, anytime</li>
+                <li>Human-approved, AI-designed workflows</li>
+                <li>Monitoring, maintenance &amp; updates included</li>
+                <li>No lock-in — you own your automations</li>
+            </ul>
         </div>
     </div>
 </section>
 
-<section id="services">
-    <h2 class="section-title">End-to-end project delivery</h2>
-    <p class="section-sub">We don't just capture requirements — we design the solution, build it, and keep it running.</p>
-    <div class="services-grid">
-        <div class="service-card">
-            <div class="service-icon">🎙️</div>
-            <h3>Requirements Gathering</h3>
-            <p>Talk naturally about your project. Our AI captures every detail from voice sessions, uploaded documents, and conversations — no requirement falls through the cracks.</p>
+<!-- Trust & Portability -->
+<section class="trust-section" id="trust">
+    <div class="section-label">Built on Trust</div>
+    <h2 class="section-title">Your business, your IP, your choice</h2>
+    <p class="section-sub">We believe the best way to earn your trust is to make it easy to leave. That's why portability is built into everything we do.</p>
+    <div class="trust-grid">
+        <div class="trust-card">
+            <div class="trust-icon">🔓</div>
+            <h3>No Lock-in</h3>
+            <p>Every automation we build is exportable. Workflow configs, documentation, and setup guides — all yours.</p>
         </div>
-        <div class="service-card">
-            <div class="service-icon">📐</div>
-            <h3>Solution Design</h3>
-            <p>We produce a comprehensive MVP design document — architecture, workflows, data models, and build estimates. You review, we refine, until it's exactly right.</p>
+        <div class="trust-card">
+            <div class="trust-icon">🔑</div>
+            <h3>Full Handover</h3>
+            <p>Request a complete export at any time. Run it yourself or take it to another provider. We hand over the keys.</p>
         </div>
-        <div class="service-card">
-            <div class="service-icon">🚀</div>
-            <h3>Implementation</h3>
-            <p>Once you accept the proposal, our team builds it. Regular check-ins, transparent progress, and delivery on time. From design to working product.</p>
+        <div class="trust-card">
+            <div class="trust-icon">🛡️</div>
+            <h3>Human Oversight</h3>
+            <p>AI designs, humans approve. No black boxes. You see exactly what's being built and how it works.</p>
         </div>
-        <div class="service-card">
-            <div class="service-icon">🛡️</div>
-            <h3>Ongoing Support</h3>
-            <p>Post-launch maintenance, updates, and improvements. We stay with your project to ensure it continues to deliver value as your needs evolve.</p>
+        <div class="trust-card">
+            <div class="trust-icon">🏠</div>
+            <h3>Per-Customer Isolation</h3>
+            <p>Your automation runs on its own dedicated instance. No shared infrastructure, no cross-contamination.</p>
+        </div>
+        <div class="trust-card">
+            <div class="trust-icon">📦</div>
+            <h3>Module Library</h3>
+            <p>Pre-built, tested components that compound learnings across deployments. Faster setup, fewer bugs.</p>
+        </div>
+        <div class="trust-card">
+            <div class="trust-icon">🇦🇺</div>
+            <h3>Melbourne-Based</h3>
+            <p>Morti Pty Ltd. Australian company, Australian data practices, built for Australian SMBs.</p>
+        </div>
+    </div>
+    <div class="handover-banner">
+        <div class="hb-icon">🤝</div>
+        <div>
+            <h3>The Handover Guarantee</h3>
+            <p>At any point, you can request a full export of your automation — workflow configs, documentation, credentials guide, and deployment instructions. You can run it yourself, take it to another provider, or keep it with us. The choice is always yours. We succeed when you stay because the service is good, not because you're trapped.</p>
         </div>
     </div>
 </section>
 
+<!-- How it Works -->
 <section id="how-it-works" class="steps-bg">
+    <div class="section-label">Process</div>
     <h2 class="section-title">How it works</h2>
-    <p class="section-sub">Four steps from idea to live product.</p>
+    <p class="section-sub">Five steps from idea to running automation.</p>
     <div class="steps">
         <div class="step">
             <div class="step-num">1</div>
             <h3>Talk</h3>
-            <p>Tell us about your project through voice sessions, documents, or chat. We capture everything.</p>
+            <p>Tell us about your project through voice, documents, or chat. AI captures everything.</p>
             <span class="step-arrow">→</span>
         </div>
         <div class="step">
             <div class="step-num">2</div>
             <h3>Design</h3>
-            <p>We produce a detailed solution design with smart follow-up questions to fill any gaps.</p>
+            <p>We produce a detailed solution design with architecture, workflows, and smart questions.</p>
             <span class="step-arrow">→</span>
         </div>
         <div class="step">
             <div class="step-num">3</div>
             <h3>Propose</h3>
-            <p>Review the design, answer any remaining questions, and accept our proposal to proceed.</p>
+            <p>Review the design, resolve any questions, and accept the proposal to proceed.</p>
             <span class="step-arrow">→</span>
         </div>
         <div class="step">
             <div class="step-num">4</div>
-            <h3>Build & Support</h3>
-            <p>We implement the solution and provide ongoing maintenance to keep it running smoothly.</p>
+            <h3>Build</h3>
+            <p>We implement your automation with regular check-ins and transparent progress.</p>
+            <span class="step-arrow">→</span>
+        </div>
+        <div class="step">
+            <div class="step-num">5</div>
+            <h3>Live</h3>
+            <p>Your automation goes live on a dedicated instance. We manage, monitor, and improve it.</p>
         </div>
     </div>
 </section>
 
-<section id="platform">
-    <h2 class="section-title">Powered by smart technology</h2>
-    <p class="section-sub">Our platform keeps you in the loop at every stage.</p>
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon">🎤</div>
-            <h3>Voice-First Capture</h3>
-            <p>Talk naturally — AI transcribes, categorises, and structures your requirements automatically.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">🤖</div>
-            <h3>AI Design Engine</h3>
-            <p>Generates pragmatic, buildable solution designs focused on MVP delivery — not enterprise theatre.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">❓</div>
-            <h3>Smart Questions</h3>
-            <p>AI identifies gaps and routes clarifying questions directly to the right stakeholders.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">📊</div>
-            <h3>Customer Portal</h3>
-            <p>View your designs, answer questions, track progress, and approve proposals — all in one place.</p>
-        </div>
-    </div>
-</section>
-
+<!-- Pricing -->
 <section id="pricing" class="pricing-bg">
-    <h2 class="section-title">Simple, transparent pricing</h2>
-    <p class="section-sub">Three phases, each priced to the scope of your project. No surprises.</p>
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Value-based, not time-based</h2>
+    <p class="section-sub">You pay based on the value delivered, not hours spent. Two components, both transparent.</p>
     <div class="pricing-grid">
         <div class="pricing-card">
-            <div class="pricing-phase">Phase 1</div>
-            <h3>Discovery & Design</h3>
-            <p class="pricing-desc">We capture your requirements and produce a detailed, build-ready solution design — including architecture, workflows, and effort estimates.</p>
+            <div class="pricing-phase">Upfront</div>
+            <h3>Build Fee</h3>
+            <p class="pricing-desc">Covers discovery, design, and implementation. Scoped and quoted based on the agreed solution — you know exactly what you're paying for before we start.</p>
             <ul class="pricing-includes">
-                <li>Unlimited voice & document sessions</li>
-                <li>AI-powered requirements analysis</li>
-                <li>Human consultation to refine the design</li>
-                <li>Full solution design document</li>
-                <li>Clarifying questions & assumptions resolved</li>
-                <li>Fee based on organisation size & needs</li>
+                <li>Requirements capture &amp; analysis</li>
+                <li>Solution design &amp; proposal</li>
+                <li>Full implementation &amp; testing</li>
+                <li>Deployment to your dedicated instance</li>
+                <li>Handover documentation included</li>
             </ul>
         </div>
         <div class="pricing-card">
-            <div class="pricing-phase">Phase 2</div>
-            <h3>Implementation</h3>
-            <p class="pricing-desc">Once you approve the design, we build it. Scoped and quoted based on the agreed solution — you know exactly what you're getting.</p>
+            <div class="pricing-phase">Ongoing</div>
+            <h3>Annual Automation Fee</h3>
+            <p class="pricing-desc">Keeps your automation running, maintained, and improving. Priced as a share of the value it delivers — you keep the majority of savings.</p>
             <ul class="pricing-includes">
-                <li>Development based on approved design</li>
-                <li>Regular progress check-ins</li>
-                <li>Testing & quality assurance</li>
-                <li>Deployment & launch support</li>
-                <li>Quoted per project based on scope</li>
-            </ul>
-        </div>
-        <div class="pricing-card">
-            <div class="pricing-phase">Phase 3</div>
-            <h3>Ongoing Support</h3>
-            <p class="pricing-desc">Software isn't "set and forget." We keep things running, fix issues, and ship improvements as your needs evolve.</p>
-            <ul class="pricing-includes">
-                <li>Bug fixes & maintenance</li>
-                <li>Feature updates & enhancements</li>
-                <li>Performance monitoring</li>
+                <li>24/7 managed hosting &amp; monitoring</li>
+                <li>Bug fixes &amp; maintenance</li>
+                <li>Feature updates &amp; improvements</li>
                 <li>Priority support</li>
-                <li>Simple monthly fee</li>
+                <li>You keep 50%+ of savings delivered</li>
+                <li>Cancel anytime — full export included</li>
             </ul>
         </div>
     </div>
     <p class="pricing-note">
-        Every project is different, so we price based on what you actually need — not a one-size-fits-all plan.
-        Discovery & Design fees are based on your organisation's size and platform utilisation requirements.
-        Implementation and support are quoted per project based on the agreed scope.
+        Every project is different, so we price based on what you actually need. No lock-in on the annual fee — if you cancel, you get a full export of your automation, documentation, and setup guide. You own your IP. Always.
         <br><br>
-        <a href="/signup" style="color: #667eea; font-weight: 600;">Sign up</a> to get started, or <a href="/contact" style="color: #667eea; font-weight: 600;">get in touch</a> to discuss your project.
+        <a href="/signup" style="color: var(--brand); font-weight: 600;">Sign up</a> to get started, or <a href="/contact" style="color: var(--brand); font-weight: 600;">get in touch</a> to discuss your project.
     </p>
 </section>
 
+<!-- CTA -->
 <section class="cta-section">
     <div class="cta">
-        <h2>Ready to put AI to work for your business?</h2>
-        <p>Don't let your competitors get ahead. Let's explore how AI can make your business more efficient — starting today.</p>
-        <a href="/signup" class="btn btn-white" style="margin-right:12px;">Sign Up Free</a>
-        <a href="/contact" class="btn btn-outline">Get in Touch</a>
+        <h2>Ready to automate what matters?</h2>
+        <p>From idea to live automation — with full ownership and no lock-in. Let's talk about what Morti can do for your business.</p>
+        <a href="/signup" class="btn btn-white" style="margin-right: 12px;">Get Started Free</a>
+        <a href="/contact" class="btn btn-outline-white">Get in Touch</a>
     </div>
 </section>
 
 <footer>
-    <p>&copy; <%= new Date().getFullYear() %> Morti Projectscopy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> &nbsp;·&nbsp; <a href="/about">About</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/signup">Sign Up</a> &nbsp;·&nbsp; <a href="/login">Login</a></p>
+    <p>&copy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> · Melbourne, Australia &nbsp;·&nbsp; <a href="/about">About</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/signup">Sign Up</a> &nbsp;·&nbsp; <a href="/login">Login</a></p>
 </footer>
 
 </body>

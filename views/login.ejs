@@ -3,93 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — Morti Projects</title>
+    <title>Login — Morti</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #333; background: #f7f8fc; min-height: 100vh;
+        :root {
+            --brand: #4f46e5; --brand-light: #6366f1; --brand-dark: #3730a3;
+            --accent: #10b981; --text: #1e293b; --text-mid: #475569; --text-light: #64748b;
+            --bg: #ffffff; --bg-alt: #f8fafc; --border: #e2e8f0;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg-alt); min-height: 100vh; }
         a { text-decoration: none; color: inherit; }
 
         nav {
             position: fixed; top: 0; width: 100%; z-index: 100;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 16px 40px;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+            padding: 14px 40px; background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
         }
-        .nav-brand { font-size: 1.25rem; font-weight: 700; color: #667eea; }
+        .nav-brand { font-size: 1.25rem; font-weight: 800; color: var(--brand); }
         .nav-links { display: flex; gap: 28px; align-items: center; }
-        .nav-links a.nav-text { font-size: 0.9rem; color: #555; transition: color 0.2s; }
-        .nav-links a.nav-text:hover { color: #667eea; }
-        .btn-login {
-            display: inline-block; padding: 10px 28px; border-radius: 8px;
-            font-weight: 600; font-size: 0.95rem; transition: all 0.25s;
-            background: #10b981; color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.3);
-        }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); background: #059669; }
+        .nav-links a.nav-text { font-size: 0.88rem; color: var(--text-mid); transition: color 0.2s; font-weight: 500; }
+        .nav-links a.nav-text:hover { color: var(--brand); }
+        .btn-cta { display: inline-block; padding: 10px 28px; border-radius: 8px; font-weight: 600; font-size: 0.92rem; background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.25); transition: all 0.2s; }
+        .btn-cta:hover { background: #059669; transform: translateY(-1px); }
 
-        .login-container {
-            max-width: 440px; margin: 140px auto 60px; padding: 0 20px;
-        }
-        .login-card {
-            background: #fff; border-radius: 16px; padding: 48px 40px;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
-        }
+        .login-container { max-width: 440px; margin: 140px auto 60px; padding: 0 20px; }
+        .login-card { background: var(--bg); border-radius: 16px; padding: 48px 40px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); border: 1px solid var(--border); }
         .login-card .logo { text-align: center; margin-bottom: 32px; }
-        .login-card .logo h1 { font-size: 1.6rem; color: #2d3748; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .login-card .logo p { color: #718096; margin-top: 8px; font-size: 0.9rem; }
-
+        .login-card .logo h1 { font-size: 1.5rem; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; }
+        .login-card .logo h1 span { color: var(--brand); }
+        .login-card .logo p { color: var(--text-light); margin-top: 8px; font-size: 0.9rem; }
         .form-group { margin-bottom: 20px; }
-        .form-group label {
-            display: block; font-size: 0.9rem; font-weight: 600;
-            color: #4a5568; margin-bottom: 6px;
-        }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-mid); margin-bottom: 6px; }
         .form-control {
-            width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0;
-            border-radius: 10px; font-size: 0.95rem; font-family: inherit;
-            transition: border-color 0.2s;
+            width: 100%; padding: 12px 16px; border: 2px solid var(--border);
+            border-radius: 10px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.2s;
         }
-        .form-control:focus { outline: none; border-color: #667eea; }
-
+        .form-control:focus { outline: none; border-color: var(--brand); }
         .btn-submit {
             display: inline-block; padding: 14px 36px; border-radius: 10px;
             font-weight: 600; font-size: 1rem; border: none; cursor: pointer;
-            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
-            box-shadow: 0 4px 14px rgba(102,126,234,0.4);
-            transition: all 0.25s; width: 100%;
+            background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+            transition: all 0.2s; width: 100%;
         }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .btn-submit:hover { background: var(--brand-light); transform: translateY(-1px); }
+        .alert-error { background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px; padding: 12px 16px; color: #c53030; margin-bottom: 20px; font-size: 0.9rem; text-align: center; }
+        .login-footer { text-align: center; margin-top: 24px; color: var(--text-light); font-size: 0.9rem; }
+        .login-footer a { color: var(--brand); font-weight: 600; }
 
-        .alert-error {
-            background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px;
-            padding: 12px 16px; color: #c53030; margin-bottom: 20px; font-size: 0.9rem; text-align: center;
-        }
-        .login-footer { text-align: center; margin-top: 24px; color: #718096; font-size: 0.9rem; }
-        .login-footer a { color: #667eea; font-weight: 600; }
+        footer { text-align: center; padding: 40px; color: var(--text-light); font-size: 0.85rem; border-top: 1px solid var(--border); }
+        footer a { color: var(--brand); }
 
-        footer {
-            text-align: center; padding: 40px; color: #a0aec0; font-size: 0.85rem;
-            border-top: 1px solid #e2e8f0;
-        }
-        footer a { color: #667eea; }
-
-        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #667eea; }
-
+        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: var(--brand); }
         @media (max-width: 768px) {
             nav { padding: 12px 20px; }
             .hamburger { display: block; }
-            .nav-links {
-                display: none; flex-direction: column; position: absolute;
-                top: 100%; left: 0; right: 0; background: #fff;
-                padding: 16px 20px; gap: 4px;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-            }
+            .nav-links { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: #fff; padding: 16px 20px; gap: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
             .nav-links.open { display: flex; }
             .nav-links a.nav-text { padding: 10px 0; font-size: 1rem; }
-            .btn-login { text-align: center; margin-top: 8px; }
+            .btn-cta { text-align: center; margin-top: 8px; }
             .login-container { margin-top: 80px; }
             .login-card { padding: 32px 24px; }
         }
@@ -98,21 +70,21 @@
 <body>
 
 <nav>
-    <a href="/" class="nav-brand">✦ Morti Projects</a>
+    <a href="/" class="nav-brand">◆ Morti</a>
     <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
     <div class="nav-links">
-        <a href="/#services" class="nav-text">Services</a>
+        <a href="/#products" class="nav-text">What We Do</a>
         <a href="/about" class="nav-text">About</a>
         <a href="/#pricing" class="nav-text">Pricing</a>
         <a href="/contact" class="nav-text">Contact</a>
-        <a href="/signup" class="btn-login">Sign Up Free</a>
+        <a href="/signup" class="btn-cta">Get Started</a>
     </div>
 </nav>
 
 <div class="login-container">
     <div class="login-card">
         <div class="logo">
-            <h1>✦ Morti Projects</h1>
+            <h1><span>◆</span> Morti</h1>
             <p>Sign in to your account</p>
         </div>
 
@@ -139,7 +111,7 @@
 </div>
 
 <footer>
-    <p>&copy; <%= new Date().getFullYear() %> Morti Projectscopy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/contact">Contact</a></p>
+    <p>&copy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> · Melbourne, Australia &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/contact">Contact</a></p>
 </footer>
 
 </body>

@@ -3,102 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact — Morti Projects</title>
+    <title>Contact — Morti</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #333; background: #f7f8fc; min-height: 100vh;
+        :root {
+            --brand: #4f46e5; --brand-light: #6366f1; --brand-dark: #3730a3;
+            --accent: #10b981; --text: #1e293b; --text-mid: #475569; --text-light: #64748b;
+            --bg: #ffffff; --bg-alt: #f8fafc; --border: #e2e8f0;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg-alt); min-height: 100vh; }
         a { text-decoration: none; color: inherit; }
 
         nav {
             position: fixed; top: 0; width: 100%; z-index: 100;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 16px 40px;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+            padding: 14px 40px; background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
         }
-        .nav-brand { font-size: 1.25rem; font-weight: 700; color: #667eea; }
+        .nav-brand { font-size: 1.25rem; font-weight: 800; color: var(--brand); }
         .nav-links { display: flex; gap: 28px; align-items: center; }
-        .nav-links a.nav-text { font-size: 0.9rem; color: #555; transition: color 0.2s; }
-        .nav-links a.nav-text:hover { color: #667eea; }
-        .btn-login {
-            display: inline-block; padding: 10px 28px; border-radius: 8px;
-            font-weight: 600; font-size: 0.95rem; transition: all 0.25s;
-            background: #10b981; color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.3);
-        }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); background: #059669; }
+        .nav-links a.nav-text { font-size: 0.88rem; color: var(--text-mid); transition: color 0.2s; font-weight: 500; }
+        .nav-links a.nav-text:hover { color: var(--brand); }
+        .nav-links a.active { color: var(--brand); font-weight: 600; }
+        .btn-cta { display: inline-block; padding: 10px 28px; border-radius: 8px; font-weight: 600; font-size: 0.92rem; background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.25); transition: all 0.2s; }
+        .btn-cta:hover { background: #059669; transform: translateY(-1px); }
 
-        .contact-container {
-            max-width: 640px; margin: 120px auto 60px; padding: 0 20px;
-        }
-        .contact-card {
-            background: #fff; border-radius: 16px; padding: 48px 40px;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
-        }
-        .contact-card h1 {
-            font-size: 2rem; font-weight: 700; color: #2d3748; margin-bottom: 8px;
-        }
-        .contact-card .subtitle {
-            color: #718096; margin-bottom: 32px; line-height: 1.6;
-        }
+        .contact-container { max-width: 640px; margin: 120px auto 60px; padding: 0 20px; }
+        .contact-card { background: var(--bg); border-radius: 16px; padding: 48px 40px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); border: 1px solid var(--border); }
+        .contact-card h1 { font-size: 2rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+        .contact-card .subtitle { color: var(--text-light); margin-bottom: 32px; line-height: 1.6; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .form-group { margin-bottom: 20px; }
-        .form-group label {
-            display: block; font-size: 0.9rem; font-weight: 600;
-            color: #4a5568; margin-bottom: 6px;
-        }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-mid); margin-bottom: 6px; }
         .form-group input, .form-group textarea, .form-group select {
-            width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0;
-            border-radius: 10px; font-size: 0.95rem; font-family: inherit;
-            transition: border-color 0.2s; background: #fff;
+            width: 100%; padding: 12px 16px; border: 2px solid var(--border);
+            border-radius: 10px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.2s; background: var(--bg);
         }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-            outline: none; border-color: #667eea;
-        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--brand); }
         .form-group textarea { resize: vertical; min-height: 140px; }
         .btn-submit {
             display: inline-block; padding: 14px 36px; border-radius: 10px;
             font-weight: 600; font-size: 1rem; border: none; cursor: pointer;
-            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
-            box-shadow: 0 4px 14px rgba(102,126,234,0.4);
-            transition: all 0.25s; width: 100%;
+            background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+            transition: all 0.2s; width: 100%;
         }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .btn-submit:hover { background: var(--brand-light); transform: translateY(-1px); }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-        .success-msg {
-            background: #f0fff4; border: 2px solid #c6f6d5; border-radius: 12px;
-            padding: 24px; text-align: center; color: #276749;
-        }
+        .success-msg { background: #f0fff4; border: 2px solid #c6f6d5; border-radius: 12px; padding: 24px; text-align: center; color: #276749; }
         .success-msg h2 { margin-bottom: 8px; }
-        .error-msg {
-            background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px;
-            padding: 12px 16px; color: #c53030; margin-bottom: 16px; font-size: 0.9rem;
-        }
+        .error-msg { background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px; padding: 12px 16px; color: #c53030; margin-bottom: 16px; font-size: 0.9rem; }
+        .contact-info { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); text-align: center; font-size: 0.9rem; color: var(--text-light); }
+        .contact-info a { color: var(--brand); font-weight: 500; }
 
-        footer {
-            text-align: center; padding: 40px; color: #a0aec0; font-size: 0.85rem;
-            border-top: 1px solid #e2e8f0;
-        }
-        footer a { color: #667eea; }
+        footer { text-align: center; padding: 40px; color: var(--text-light); font-size: 0.85rem; border-top: 1px solid var(--border); }
+        footer a { color: var(--brand); }
 
-        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #667eea; }
-
+        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: var(--brand); }
         @media (max-width: 768px) {
             nav { padding: 12px 20px; }
             .hamburger { display: block; }
-            .nav-links {
-                display: none; flex-direction: column; position: absolute;
-                top: 100%; left: 0; right: 0; background: #fff;
-                padding: 16px 20px; gap: 4px;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-            }
+            .nav-links { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: #fff; padding: 16px 20px; gap: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
             .nav-links.open { display: flex; }
             .nav-links a.nav-text { padding: 10px 0; font-size: 1rem; }
-            .btn-login { text-align: center; margin-top: 8px; }
+            .btn-cta { text-align: center; margin-top: 8px; }
             .contact-container { margin-top: 80px; }
             .contact-card { padding: 32px 24px; }
             .contact-card h1 { font-size: 1.6rem; }
@@ -109,16 +76,16 @@
 <body>
 
 <nav>
-    <a href="/" class="nav-brand">✦ Morti Projects</a>
+    <a href="/" class="nav-brand">◆ Morti</a>
     <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
     <div class="nav-links">
-        <a href="/#services" class="nav-text">Services</a>
+        <a href="/#products" class="nav-text">What We Do</a>
         <a href="/#how-it-works" class="nav-text">How It Works</a>
         <a href="/about" class="nav-text">About</a>
         <a href="/#pricing" class="nav-text">Pricing</a>
-        <a href="/contact" class="nav-text" style="color: #667eea; font-weight: 600;">Contact</a>
+        <a href="/contact" class="nav-text active">Contact</a>
         <a href="/login" class="nav-text">Login</a>
-        <a href="/signup" class="btn-login">Sign Up Free</a>
+        <a href="/signup" class="btn-cta">Get Started</a>
     </div>
 </nav>
 
@@ -129,11 +96,11 @@
                 <h2>✅ Message Sent!</h2>
                 <p>Thanks for reaching out. We'll get back to you shortly.</p>
                 <br>
-                <a href="/" style="color: #667eea; font-weight: 600;">← Back to Home</a>
+                <a href="/" style="color: var(--brand); font-weight: 600;">← Back to Home</a>
             </div>
         <% } else { %>
             <h1>Get in Touch</h1>
-            <p class="subtitle">Have a project idea? Want to learn more about how we work? Drop us a message and we'll get back to you.</p>
+            <p class="subtitle">Have a project idea or want to explore what automation could do for your business? Drop us a message — no pressure, no sales pitch.</p>
 
             <% if (locals.error) { %>
                 <div class="error-msg"><%= error %></div>
@@ -158,19 +125,23 @@
                     <div class="form-group">
                         <label for="subject">What can we help with?</label>
                         <select id="subject" name="subject">
-                        <option value="general" <%= locals.formData && formData.subject === 'general' ? 'selected' : '' %>>General Enquiry</option>
-                        <option value="new-project" <%= locals.formData && formData.subject === 'new-project' ? 'selected' : '' %>>New Project</option>
-                        <option value="quote" <%= locals.formData && formData.subject === 'quote' ? 'selected' : '' %>>Request a Quote</option>
-                        <option value="support" <%= locals.formData && formData.subject === 'support' ? 'selected' : '' %>>Existing Project Support</option>
-                    </select>
+                            <option value="general" <%= locals.formData && formData.subject === 'general' ? 'selected' : '' %>>General Enquiry</option>
+                            <option value="new-project" <%= locals.formData && formData.subject === 'new-project' ? 'selected' : '' %>>New Project / Automation</option>
+                            <option value="quote" <%= locals.formData && formData.subject === 'quote' ? 'selected' : '' %>>Request a Quote</option>
+                            <option value="support" <%= locals.formData && formData.subject === 'support' ? 'selected' : '' %>>Existing Project Support</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="message">Message *</label>
-                    <textarea id="message" name="message" required placeholder="Tell us about your project or question..."><%= locals.formData ? formData.message || '' : '' %></textarea>
+                    <textarea id="message" name="message" required placeholder="Tell us about your project or what you'd like to automate..."><%= locals.formData ? formData.message || '' : '' %></textarea>
                 </div>
                 <button type="submit" class="btn-submit" id="submitBtn">Send Message</button>
             </form>
+
+            <div class="contact-info">
+                Or email directly: <a href="mailto:luke.mccarthy.home@gmail.com">luke.mccarthy.home@gmail.com</a>
+            </div>
 
             <script>
                 document.getElementById('contactForm').addEventListener('submit', function() {
@@ -184,7 +155,7 @@
 </div>
 
 <footer>
-    <p>&copy; <%= new Date().getFullYear() %> Morti Projectscopy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/login">Customer Login</a></p>
+    <p>&copy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> · Melbourne, Australia &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/login">Customer Login</a></p>
 </footer>
 
 </body>

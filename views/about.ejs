@@ -3,93 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About — Morti Projects</title>
+    <title>About — Morti</title>
+    <meta name="description" content="Morti is a Melbourne-based AI consultancy helping Australian SMBs turn ideas into working automations. Founded by Luke McCarthy.">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #333; background: #fff; min-height: 100vh;
+        :root {
+            --brand: #4f46e5; --brand-light: #6366f1; --brand-dark: #3730a3;
+            --accent: #10b981; --text: #1e293b; --text-mid: #475569; --text-light: #64748b;
+            --bg: #ffffff; --bg-alt: #f8fafc; --bg-dark: #0f172a; --border: #e2e8f0;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); }
         a { text-decoration: none; color: inherit; }
 
         nav {
             position: fixed; top: 0; width: 100%; z-index: 100;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 16px 40px;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+            padding: 14px 40px; background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
         }
-        .nav-brand { font-size: 1.25rem; font-weight: 700; color: #667eea; }
+        .nav-brand { font-size: 1.25rem; font-weight: 800; color: var(--brand); }
         .nav-links { display: flex; gap: 28px; align-items: center; }
-        .nav-links a.nav-text { font-size: 0.9rem; color: #555; transition: color 0.2s; }
-        .nav-links a.nav-text:hover { color: #667eea; }
-        .btn-login {
-            display: inline-block; padding: 10px 28px; border-radius: 8px;
-            font-weight: 600; font-size: 0.95rem; transition: all 0.25s;
-            background: #10b981; color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.3);
-        }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); background: #059669; }
+        .nav-links a.nav-text { font-size: 0.88rem; color: var(--text-mid); transition: color 0.2s; font-weight: 500; }
+        .nav-links a.nav-text:hover { color: var(--brand); }
+        .nav-links a.active { color: var(--brand); font-weight: 600; }
+        .btn-cta { display: inline-block; padding: 10px 28px; border-radius: 8px; font-weight: 600; font-size: 0.92rem; background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.25); transition: all 0.2s; }
+        .btn-cta:hover { background: #059669; transform: translateY(-1px); }
 
         .about-hero {
             padding: 140px 40px 80px; text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(160deg, var(--bg-dark) 0%, #1e1b4b 60%, var(--brand-dark) 100%);
             color: #fff;
         }
-        .about-hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 16px; }
-        .about-hero p { font-size: 1.2rem; max-width: 600px; margin: 0 auto; opacity: 0.92; line-height: 1.7; }
+        .about-hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.02em; }
+        .about-hero p { font-size: 1.15rem; max-width: 600px; margin: 0 auto; opacity: 0.88; line-height: 1.7; }
 
-        .about-content { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
-        .about-content h2 { font-size: 1.6rem; font-weight: 700; color: #2d3748; margin: 40px 0 16px; }
+        .about-content { max-width: 760px; margin: 0 auto; padding: 64px 40px; }
+        .about-content h2 { font-size: 1.5rem; font-weight: 700; color: var(--text); margin: 44px 0 14px; }
         .about-content h2:first-child { margin-top: 0; }
-        .about-content p { font-size: 1.05rem; color: #4a5568; line-height: 1.8; margin-bottom: 16px; }
+        .about-content p { font-size: 1.02rem; color: var(--text-mid); line-height: 1.8; margin-bottom: 16px; }
 
-        .values-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 24px; margin: 32px 0;
+        .values-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 32px 0; }
+        .value-card { background: var(--bg-alt); border-radius: 12px; padding: 24px 20px; border-left: 3px solid var(--brand); }
+        .value-card .icon { font-size: 1.6rem; margin-bottom: 8px; }
+        .value-card h3 { font-size: 1rem; color: var(--text); margin-bottom: 4px; font-weight: 700; }
+        .value-card p { font-size: 0.88rem; color: var(--text-light); line-height: 1.6; margin: 0; }
+
+        .founder-section {
+            background: var(--bg-alt); border-radius: 16px; padding: 36px 32px;
+            margin: 40px 0; border: 1px solid var(--border);
         }
-        .value-card {
-            background: #f7f8fc; border-radius: 12px; padding: 28px 24px;
-            border-left: 4px solid #667eea;
-        }
-        .value-card .icon { font-size: 1.8rem; margin-bottom: 10px; }
-        .value-card h3 { font-size: 1.05rem; color: #2d3748; margin-bottom: 6px; }
-        .value-card p { font-size: 0.9rem; color: #718096; line-height: 1.6; margin: 0; }
+        .founder-section h3 { font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+        .founder-section .role { font-size: 0.88rem; color: var(--brand); font-weight: 600; margin-bottom: 12px; }
+        .founder-section p { font-size: 0.95rem; color: var(--text-mid); line-height: 1.7; margin-bottom: 10px; }
 
         .cta-bar {
-            text-align: center; padding: 60px 40px;
-            background: #f7f8fc; border-top: 1px solid #e2e8f0;
+            text-align: center; padding: 64px 40px;
+            background: var(--bg-alt); border-top: 1px solid var(--border);
         }
-        .cta-bar h2 { font-size: 1.6rem; color: #2d3748; margin-bottom: 12px; }
-        .cta-bar p { color: #718096; margin-bottom: 24px; }
-        .btn-primary {
-            display: inline-block; padding: 14px 36px; border-radius: 10px;
-            font-weight: 600; font-size: 1rem; border: none; cursor: pointer;
-            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
-            box-shadow: 0 4px 14px rgba(102,126,234,0.4); transition: all 0.25s;
-        }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.5); }
+        .cta-bar h2 { font-size: 1.5rem; color: var(--text); margin-bottom: 10px; font-weight: 700; }
+        .cta-bar p { color: var(--text-light); margin-bottom: 24px; }
+        .btn-primary { display: inline-block; padding: 14px 36px; border-radius: 10px; font-weight: 600; font-size: 1rem; border: none; cursor: pointer; background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,0.3); transition: all 0.2s; }
+        .btn-primary:hover { background: var(--brand-light); transform: translateY(-1px); }
+        .btn-ghost { display: inline-block; padding: 14px 36px; border-radius: 10px; font-weight: 600; font-size: 1rem; border: 2px solid var(--brand); color: var(--brand); background: transparent; transition: all 0.2s; }
+        .btn-ghost:hover { background: var(--brand); color: #fff; }
 
-        footer {
-            text-align: center; padding: 40px; color: #a0aec0; font-size: 0.85rem;
-            border-top: 1px solid #e2e8f0;
-        }
-        footer a { color: #667eea; }
+        footer { text-align: center; padding: 40px; color: var(--text-light); font-size: 0.85rem; border-top: 1px solid var(--border); }
+        footer a { color: var(--brand); }
 
-        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #667eea; }
-
+        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: var(--brand); }
         @media (max-width: 768px) {
             nav { padding: 12px 20px; }
             .hamburger { display: block; }
-            .nav-links {
-                display: none; flex-direction: column; position: absolute;
-                top: 100%; left: 0; right: 0; background: #fff;
-                padding: 16px 20px; gap: 4px;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-            }
+            .nav-links { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: #fff; padding: 16px 20px; gap: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
             .nav-links.open { display: flex; }
             .nav-links a.nav-text { padding: 10px 0; font-size: 1rem; }
-            .btn-login { text-align: center; margin-top: 8px; }
+            .btn-cta { text-align: center; margin-top: 8px; }
             .about-hero { padding: 110px 20px 60px; }
             .about-hero h1 { font-size: 2rem; }
             .about-content { padding: 40px 20px; }
@@ -100,72 +88,89 @@
 <body>
 
 <nav>
-    <a href="/" class="nav-brand">✦ Morti Projects</a>
+    <a href="/" class="nav-brand">◆ Morti</a>
     <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
     <div class="nav-links">
-        <a href="/#services" class="nav-text">Services</a>
+        <a href="/#products" class="nav-text">What We Do</a>
         <a href="/#how-it-works" class="nav-text">How It Works</a>
-        <a href="/about" class="nav-text" style="color: #667eea; font-weight: 600;">About</a>
+        <a href="/about" class="nav-text active">About</a>
         <a href="/#pricing" class="nav-text">Pricing</a>
         <a href="/contact" class="nav-text">Contact</a>
         <a href="/login" class="nav-text">Login</a>
-        <a href="/signup" class="btn-login">Sign Up Free</a>
+        <a href="/signup" class="btn-cta">Get Started</a>
     </div>
 </nav>
 
 <section class="about-hero">
     <h1>About Morti</h1>
-    <p>An AI consultancy helping Australian businesses turn ideas into working software — without the enterprise overhead.</p>
+    <p>A Melbourne AI consultancy turning business ideas into working automations — without the enterprise overhead or vendor lock-in.</p>
 </section>
 
 <div class="about-content">
     <h2>Who we are</h2>
-    <p>Morti is a Melbourne-based AI consultancy that works with small to medium businesses across Australia. We specialise in turning complex ideas into practical, buildable solutions using the latest in artificial intelligence and modern software development.</p>
-    <p>We started Morti because we saw too many businesses being priced out of quality technology consulting, or worse — paying enterprise rates for cookie-cutter solutions. We believe every business deserves access to leading-edge AI capabilities, delivered by people who actually listen to what you need.</p>
+    <p>Morti is a Melbourne-based AI consultancy that works with small to medium businesses across Australia. We specialise in taking complex business ideas and turning them into practical, running automations — from initial concept through to managed operation.</p>
+    <p>We started Morti because we saw too many businesses either priced out of quality technology consulting, or locked into solutions they couldn't leave. We believe every business deserves access to leading-edge AI, delivered by people who actually listen — and who'll hand over the keys when you ask.</p>
+
+    <h2>The vision</h2>
+    <p>Morti is building an AI-native consulting infrastructure. Not just advice — we build and run the solution. Our two services work together: <strong>Morti Projects</strong> handles requirements, design, and proposals; <strong>Mortomation</strong> builds and operates the automation. End-to-end, from idea to live system.</p>
+    <p>We're not interested in creating dependency. Everything we build is exportable, documented, and portable. If you want to run your automation yourself or take it to another provider, we make that easy. We succeed when you stay because the service is good, not because you're stuck.</p>
 
     <h2>What makes us different</h2>
-    <p>We don't do twelve-month discovery phases or 200-page documents nobody reads. We use AI-powered tools to capture your requirements through natural conversation, generate pragmatic solution designs, and get to building faster — without cutting corners.</p>
-    <p>Our platform handles the heavy lifting of requirements gathering and design, which means we spend less time on admin and more time on the work that actually matters. That efficiency gets passed on to you.</p>
-
     <div class="values-grid">
+        <div class="value-card">
+            <div class="icon">🔓</div>
+            <h3>No lock-in, ever</h3>
+            <p>Full export at any time. Workflow configs, documentation, setup guides. You own your IP — period.</p>
+        </div>
+        <div class="value-card">
+            <div class="icon">🤝</div>
+            <h3>Handover capability</h3>
+            <p>Request a complete handover whenever you want. Run it yourself, switch providers, or stay with us. Your call.</p>
+        </div>
+        <div class="value-card">
+            <div class="icon">🧠</div>
+            <h3>AI-native, not AI-bolted</h3>
+            <p>We don't bolt AI onto old processes. We rethink how work gets done with AI at the core.</p>
+        </div>
+        <div class="value-card">
+            <div class="icon">👁️</div>
+            <h3>Human oversight</h3>
+            <p>AI designs, humans approve. No black boxes. You see and control what's being built.</p>
+        </div>
         <div class="value-card">
             <div class="icon">🎯</div>
             <h3>Practical over perfect</h3>
             <p>We build MVPs that work and iterate from there. No over-engineering, no enterprise theatre.</p>
         </div>
         <div class="value-card">
-            <div class="icon">🤝</div>
-            <h3>Genuine partnership</h3>
-            <p>We work with you, not at you. Your input shapes the solution at every stage.</p>
-        </div>
-        <div class="value-card">
-            <div class="icon">🧠</div>
-            <h3>AI-native thinking</h3>
-            <p>We don't just bolt AI onto old processes. We rethink how work gets done from the ground up.</p>
-        </div>
-        <div class="value-card">
             <div class="icon">💬</div>
             <h3>Plain language</h3>
-            <p>No jargon, no buzzwords. We explain what we're building and why in terms that make sense.</p>
+            <p>No jargon. We explain what we're building and why in terms that actually make sense.</p>
         </div>
     </div>
 
-    <h2>Who we work with</h2>
-    <p>Our clients are typically founders, operators, and teams at small to medium businesses who have a clear idea of what they want to build but need the technical expertise to make it happen. Whether it's automating a manual process, building a customer-facing app, or integrating AI into your existing workflows — we've got you covered.</p>
+    <h2>Founder</h2>
+    <div class="founder-section">
+        <h3>Luke McCarthy</h3>
+        <div class="role">Founder & Principal Consultant</div>
+        <p>Luke has spent years working at the intersection of technology and business operations. He founded Morti to make AI consulting accessible to the businesses that need it most — SMBs that have clear ideas but need the technical expertise to make them real.</p>
+        <p>Based in Melbourne, Luke works directly with every client to ensure the solution actually solves the problem — not just looks good on paper.</p>
+    </div>
 
     <h2>Based in Melbourne, working across Australia</h2>
-    <p>We're proudly based in Melbourne and work with clients right across Australia. Most of our collaboration happens remotely through our platform, but we're always happy to meet in person when it makes sense.</p>
+    <p>Morti Pty Ltd is proudly based in Melbourne and works with clients right across Australia. Most collaboration happens remotely through our platform, but we're always happy to meet in person when it makes sense.</p>
+    <p>Contact: <a href="mailto:luke.mccarthy.home@gmail.com" style="color: var(--brand); font-weight: 500;">luke.mccarthy.home@gmail.com</a></p>
 </div>
 
 <section class="cta-bar">
     <h2>Got a project in mind?</h2>
-    <p>We'd love to hear about it. No pressure, no sales pitch — just a conversation.</p>
-    <a href="/signup" class="btn-primary" style="margin-right: 12px;">Sign Up Free</a>
-    <a href="/contact" class="btn-primary" style="background: transparent; border: 2px solid #667eea; color: #667eea;">Get in Touch</a>
+    <p>No pressure, no sales pitch — just a conversation about what's possible.</p>
+    <a href="/signup" class="btn-primary" style="margin-right: 12px;">Get Started Free</a>
+    <a href="/contact" class="btn-ghost">Get in Touch</a>
 </section>
 
 <footer>
-    <p>&copy; <%= new Date().getFullYear() %> Morti Projectscopy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/login">Customer Login</a></p>
+    <p>&copy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> · Melbourne, Australia &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/login">Customer Login</a></p>
 </footer>
 
 </body>
