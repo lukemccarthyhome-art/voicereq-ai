@@ -254,9 +254,10 @@ const updateProject = (id, name, description, status) => {
 };
 
 const deleteProject = (id) => {
-  // Delete sessions and files first
+  // Delete sessions, files, and shares first
   db.prepare('DELETE FROM files WHERE project_id = ?').run(id);
   db.prepare('DELETE FROM sessions WHERE project_id = ?').run(id);
+  try { db.prepare('DELETE FROM project_shares WHERE project_id = ?').run(id); } catch(e) {}
   return Promise.resolve(db.prepare('DELETE FROM projects WHERE id = ?').run(id));
 };
 
@@ -404,6 +405,24 @@ const getStats = () => {
 // Initialize database on startup
 initDB();
 
+// Project shares table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS project_shares (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    user_id INTEGER,
+    email TEXT NOT NULL,
+    permission TEXT NOT NULL DEFAULT 'readonly' CHECK (permission IN ('admin', 'user', 'readonly')),
+    invited_by INTEGER NOT NULL,
+    invited_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    accepted_at TEXT,
+    invite_token TEXT,
+    FOREIGN KEY (project_id) REFERENCES projects(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (invited_by) REFERENCES users(id)
+  )
+`);
+
 // Add project.design_questions column if missing
 try {
   db.exec(`ALTER TABLE projects ADD COLUMN design_questions TEXT`);
@@ -416,6 +435,80 @@ try {
   console.log('✅ Added admin_notes column to projects table');
 } catch (e) {}
 
+
+// === Project Sharing Functions ===
+const shareProject = (projectId, email, permission, invitedBy, inviteToken) => {
+  // Check for duplicate
+  const existing = db.prepare('SELECT id FROM project_shares WHERE project_id = ? AND email = ?').get(projectId, email);
+  if (existing) throw new Error('Already shared with this email');
+  // Check share limit
+  const count = db.prepare('SELECT COUNT(*) as c FROM project_shares WHERE project_id = ?').get(projectId).c;
+  if (count >= 20) throw new Error('Maximum 20 shares per project');
+  // Check if email matches existing user
+  const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  const stmt = db.prepare('INSERT INTO project_shares (project_id, user_id, email, permission, invited_by, invite_token) VALUES (?, ?, ?, ?, ?, ?)');
+  const result = stmt.run(projectId, user ? user.id : null, email, permission, invitedBy, inviteToken || null);
+  return Promise.resolve(result);
+};
+
+const getProjectShares = (projectId) => {
+  return Promise.resolve(db.prepare(`
+    SELECT ps.*, u.name as user_name, inv.name as inviter_name
+    FROM project_shares ps
+    LEFT JOIN users u ON u.id = ps.user_id
+    LEFT JOIN users inv ON inv.id = ps.invited_by
+    WHERE ps.project_id = ?
+    ORDER BY ps.invited_at DESC
+  `).all(projectId));
+};
+
+const getSharedProjects = (userId, email) => {
+  return Promise.resolve(db.prepare(`
+    SELECT p.*, ps.permission, ps.accepted_at as share_accepted_at, 
+           u.name as owner_name, u.email as owner_email, u.company as owner_company,
+           COUNT(s.id) as session_count, COUNT(f.id) as file_count
+    FROM project_shares ps
+    JOIN projects p ON p.id = ps.project_id
+    JOIN users u ON u.id = p.user_id
+    LEFT JOIN sessions s ON s.project_id = p.id
+    LEFT JOIN files f ON f.project_id = p.id
+    WHERE (ps.user_id = ? OR ps.email = ?) AND (p.status IS NULL OR p.status != 'archived')
+    GROUP BY p.id
+    ORDER BY p.updated_at DESC
+  `).all(userId, email));
+};
+
+const updateSharePermission = (shareId, permission) => {
+  return Promise.resolve(db.prepare('UPDATE project_shares SET permission = ? WHERE id = ?').run(permission, shareId));
+};
+
+const removeShare = (shareId) => {
+  return Promise.resolve(db.prepare('DELETE FROM project_shares WHERE id = ?').run(shareId));
+};
+
+const acceptShare = (shareId, userId) => {
+  return Promise.resolve(db.prepare('UPDATE project_shares SET user_id = ?, accepted_at = CURRENT_TIMESTAMP WHERE id = ?').run(userId, shareId));
+};
+
+const getShareByProjectAndUser = (projectId, userId) => {
+  return Promise.resolve(db.prepare('SELECT * FROM project_shares WHERE project_id = ? AND user_id = ?').get(projectId, userId));
+};
+
+const getShareByProjectAndEmail = (projectId, email) => {
+  return Promise.resolve(db.prepare('SELECT * FROM project_shares WHERE project_id = ? AND email = ?').get(projectId, email));
+};
+
+const getShareById = (shareId) => {
+  return Promise.resolve(db.prepare('SELECT * FROM project_shares WHERE id = ?').get(shareId));
+};
+
+const linkPendingShares = (userId, email) => {
+  return Promise.resolve(db.prepare('UPDATE project_shares SET user_id = ?, accepted_at = CURRENT_TIMESTAMP WHERE email = ? AND user_id IS NULL').run(userId, email));
+};
+
+const getShareByToken = (token) => {
+  return Promise.resolve(db.prepare('SELECT * FROM project_shares WHERE invite_token = ?').get(token));
+};
 
 module.exports = {
   ready: Promise.resolve(),
@@ -499,5 +592,17 @@ module.exports = {
     `).all());
   },
   // Stats
-  getStats
+  getStats,
+  // Sharing
+  shareProject,
+  getProjectShares,
+  getSharedProjects,
+  updateSharePermission,
+  removeShare,
+  acceptShare,
+  getShareByProjectAndUser,
+  getShareByProjectAndEmail,
+  getShareById,
+  linkPendingShares,
+  getShareByToken
 };

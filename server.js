@@ -208,6 +208,30 @@ const verifyProjectOwnership = async (req, res, next) => {
   next();
 };
 
+// Permission hierarchy: admin > user > readonly
+const PERMISSION_LEVELS = { readonly: 1, user: 2, admin: 3 };
+
+const verifyProjectAccess = (requiredPermission = 'readonly') => {
+  return async (req, res, next) => {
+    const projectId = req.params.id || req.params.projectId || req.body.projectId || req.body.project_id;
+    if (!projectId) return res.status(400).json({ error: 'Project ID required' });
+    // Admin role always allowed
+    if (req.user.role === 'admin') { req.projectAccess = 'owner'; return next(); }
+    const project = await db.getProject(projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    // Owner always allowed
+    if (project.user_id === req.user.id) { req.projectAccess = 'owner'; return next(); }
+    // Check share
+    const share = await db.getShareByProjectAndUser(projectId, req.user.id);
+    if (share && PERMISSION_LEVELS[share.permission] >= PERMISSION_LEVELS[requiredPermission]) {
+      req.projectAccess = share.permission;
+      req.projectShare = share;
+      return next();
+    }
+    return res.status(403).render ? res.status(403).send('Forbidden — you do not have access to this project') : res.status(403).json({ error: 'Forbidden' });
+  };
+};
+
 const verifyFileOwnership = async (req, res, next) => {
   if (req.user.role === 'admin') return next();
   const fileId = req.params.id;
@@ -234,7 +258,12 @@ app.use('/uploads', async (req, res, next) => {
     if (db.queryOne) {
       file = await db.queryOne('SELECT f.*, p.user_id FROM files f JOIN projects p ON f.project_id = p.id WHERE f.filename = $1 OR f.original_name = $2', [filename, filename]);
     }
-    if (!file || file.user_id !== user.id) return res.status(403).send('Forbidden');
+    if (!file) return res.status(403).send('Forbidden');
+    if (file.user_id !== user.id) {
+      // Check if user has shared access
+      const share = await db.getShareByProjectAndUser(file.project_id, user.id);
+      if (!share) return res.status(403).send('Forbidden');
+    }
     next();
   } catch { res.status(401).send('Unauthorized'); }
 }, express.static(uploadsDir));
@@ -1646,8 +1675,11 @@ app.get('/customer/projects/:id/design', auth.authenticate, async (req, res) => 
     const projectId = req.params.id;
     const project = await db.getProject(projectId);
     if (!project) return res.status(404).send('Project not found');
-    // Customers can only see their own projects
-    if (req.user.role === 'customer' && project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+    // Check access: owner or shared with readonly+
+    if (req.user.role === 'customer' && project.user_id !== req.user.id) {
+      const share = await db.getShareByProjectAndUser(projectId, req.user.id);
+      if (!share) return res.status(403).send('Forbidden');
+    }
 
     const result = loadNewestDesign(projectId);
     if (!result || !result.design.published) return res.status(404).send('No published design available');
@@ -1799,7 +1831,10 @@ app.post('/admin/projects/:id/proposal/delete', auth.authenticate, auth.requireA
 app.get('/customer/projects/:id/proposal', auth.authenticate, async (req, res) => {
   const project = await db.getProject(req.params.id);
   if (!project) return res.status(404).send('Project not found');
-  if (req.user.role === 'customer' && project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+  if (req.user.role === 'customer' && project.user_id !== req.user.id) {
+    const share = await db.getShareByProjectAndUser(req.params.id, req.user.id);
+    if (!share) return res.status(403).send('Forbidden');
+  }
   const proposal = loadNewestProposal(req.params.id);
   if (!proposal || !proposal.published) return res.status(404).send('No published proposal');
   res.render('customer/project-proposal', { user: req.user, project, proposal, title: project.name + ' - Proposal', currentPage: 'customer-projects' });
@@ -2080,6 +2115,148 @@ app.post('/admin/projects/:id/send-to-engine', auth.authenticate, auth.requireAd
 });
 
 // Customer: archive/unarchive project
+// === PROJECT SHARING ROUTES ===
+const crypto = require('crypto');
+
+// Helper: check if user can manage shares (owner or admin permission)
+const canManageShares = async (req, res) => {
+  const project = await db.getProject(req.params.id);
+  if (!project) { res.status(404).json({ error: 'Project not found' }); return null; }
+  if (req.user.role === 'admin') return project;
+  if (project.user_id === req.user.id) return project;
+  const share = await db.getShareByProjectAndUser(req.params.id, req.user.id);
+  if (share && share.permission === 'admin') return project;
+  res.status(403).json({ error: 'Only project owner or admin collaborators can manage sharing' });
+  return null;
+};
+
+// Email validation helper
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+// Send invite email (graceful without SMTP)
+const sendInviteEmail = async (to, inviterName, projectName, permission, signupLink, projectLink) => {
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  if (!smtpUser || !smtpPass) {
+    console.log(`[Invite] SMTP not configured. Invite for ${to} to "${projectName}" logged.`);
+    return { sent: false, reason: 'SMTP not configured' };
+  }
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: smtpUser, pass: smtpPass }
+    });
+    await transporter.sendMail({
+      from: `"Morti Projects" <${smtpUser}>`,
+      to,
+      subject: `You've been invited to a project on Morti Projects`,
+      text: `Hi,\n\n${inviterName} has shared the project "${projectName}" with you on Morti Projects.\n\nYour access level: ${permission}\n\nClick here to view the project: ${projectLink}\n\nIf you don't have an account yet, sign up here: ${signupLink}\n\nMorti Projects — AI-Powered Project Management`
+    });
+    return { sent: true };
+  } catch (e) {
+    console.error('Send invite email failed:', e.message);
+    return { sent: false, reason: e.message };
+  }
+};
+
+// Share a project (admin route)
+app.post('/admin/projects/:id/share', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    const { email, permission } = req.body;
+    if (!email || !isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' });
+    if (!['admin', 'user', 'readonly'].includes(permission)) return res.status(400).json({ error: 'Invalid permission' });
+    
+    const inviterUser = await db.getUserById(req.user.id);
+    if (inviterUser && inviterUser.email === email) return res.status(400).json({ error: 'Cannot share with yourself' });
+    
+    const token = crypto.randomBytes(32).toString('hex');
+    await db.shareProject(req.params.id, email, permission, req.user.id, token);
+    
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const signupLink = `${baseUrl}/signup?invite=${token}`;
+    const projectLink = `${baseUrl}/projects/${req.params.id}`;
+    const emailResult = await sendInviteEmail(email, req.user.name, project.name, permission, signupLink, projectLink);
+    
+    res.json({ success: true, emailSent: emailResult.sent, signupLink: emailResult.sent ? null : signupLink });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// List shares (admin)
+app.get('/admin/projects/:id/shares', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const shares = await db.getProjectShares(req.params.id);
+  res.json({ shares });
+});
+
+// Update share permission (admin)
+app.put('/admin/projects/:id/share/:shareId', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  const { permission } = req.body;
+  if (!['admin', 'user', 'readonly'].includes(permission)) return res.status(400).json({ error: 'Invalid permission' });
+  await db.updateSharePermission(req.params.shareId, permission);
+  res.json({ success: true });
+});
+
+// Remove share (admin)
+app.delete('/admin/projects/:id/share/:shareId', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  await db.removeShare(req.params.shareId);
+  res.json({ success: true });
+});
+
+// Share a project (customer route - must be owner or admin collaborator)
+app.post('/customer/projects/:id/share', auth.authenticate, async (req, res) => {
+  try {
+    const project = await canManageShares(req, res);
+    if (!project) return;
+    const { email, permission } = req.body;
+    if (!email || !isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' });
+    if (!['admin', 'user', 'readonly'].includes(permission)) return res.status(400).json({ error: 'Invalid permission' });
+    
+    const inviterUser = await db.getUserById(req.user.id);
+    if (inviterUser && inviterUser.email === email) return res.status(400).json({ error: 'Cannot share with yourself' });
+    
+    const token = crypto.randomBytes(32).toString('hex');
+    await db.shareProject(req.params.id, email, permission, req.user.id, token);
+    
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const signupLink = `${baseUrl}/signup?invite=${token}`;
+    const projectLink = `${baseUrl}/projects/${req.params.id}`;
+    const emailResult = await sendInviteEmail(email, req.user.name, project.name, permission, signupLink, projectLink);
+    
+    res.json({ success: true, emailSent: emailResult.sent, signupLink: emailResult.sent ? null : signupLink });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// List shares (customer)
+app.get('/customer/projects/:id/shares', auth.authenticate, async (req, res) => {
+  const project = await canManageShares(req, res);
+  if (!project) return;
+  const shares = await db.getProjectShares(req.params.id);
+  res.json({ shares });
+});
+
+// Update share permission (customer)
+app.put('/customer/projects/:id/share/:shareId', auth.authenticate, async (req, res) => {
+  const project = await canManageShares(req, res);
+  if (!project) return;
+  const { permission } = req.body;
+  if (!['admin', 'user', 'readonly'].includes(permission)) return res.status(400).json({ error: 'Invalid permission' });
+  await db.updateSharePermission(req.params.shareId, permission);
+  res.json({ success: true });
+});
+
+// Remove share (customer)
+app.delete('/customer/projects/:id/share/:shareId', auth.authenticate, async (req, res) => {
+  const project = await canManageShares(req, res);
+  if (!project) return;
+  await db.removeShare(req.params.shareId);
+  res.json({ success: true });
+});
+
 app.post('/customer/projects/:id/archive', auth.authenticate, auth.requireCustomer, async (req, res) => {
   try {
     const project = await db.getProject(req.params.id);
@@ -2113,7 +2290,10 @@ app.get('/customer/projects/:id/requirements', auth.authenticate, async (req, re
   try {
     const project = await db.getProject(req.params.id);
     if (!project) return res.status(404).send('Project not found');
-    if (req.user.role === 'customer' && project.user_id !== req.user.id) return res.status(403).send('Forbidden');
+    if (req.user.role === 'customer' && project.user_id !== req.user.id) {
+      const share = await db.getShareByProjectAndUser(req.params.id, req.user.id);
+      if (!share) return res.status(403).send('Forbidden');
+    }
     const sessions = await db.getSessionsByProject(req.params.id);
     const allRequirements = {};
     sessions.forEach(s => {
@@ -2225,6 +2405,8 @@ app.post('/profile/password', auth.authenticate, async (req, res) => {
 
 app.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, res) => {
   const projects = await db.getProjectsByUser(req.user.id);
+  const fullUser = await db.getUserById(req.user.id);
+  const sharedProjects = fullUser ? await db.getSharedProjects(req.user.id, fullUser.email) : [];
   
   // Enrich projects with stage info
   const enriched = projects.map(p => {
@@ -2244,6 +2426,7 @@ app.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, res) 
   res.render('customer/dashboard', {
     user: req.user,
     projects: enriched,
+    sharedProjects,
     title: 'Dashboard',
     currentPage: 'customer-dashboard',
     breadcrumbs: [{ name: 'Dashboard' }]
@@ -2252,11 +2435,14 @@ app.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, res) 
 
 app.get('/projects', auth.authenticate, auth.requireCustomer, async (req, res) => {
   const projects = await db.getProjectsByUser(req.user.id);
+  const user = await db.getUserById(req.user.id);
+  const sharedProjects = user ? await db.getSharedProjects(req.user.id, user.email) : [];
   const isNewProject = req.query.new === 'true';
   
   res.render('customer/projects', {
     user: req.user,
     projects,
+    sharedProjects,
     isNewProject,
     title: 'My Projects',
     currentPage: 'customer-projects',
@@ -2285,8 +2471,15 @@ app.post('/projects', auth.authenticate, auth.requireCustomer, async (req, res) 
 
 app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, res) => {
   const project = await db.getProject(req.params.id);
-  if (!project || project.user_id !== req.user.id) {
-    return res.status(404).send('Project not found');
+  if (!project) return res.status(404).send('Project not found');
+  // Check ownership or share access
+  let projectAccess = 'owner';
+  let isShared = false;
+  if (project.user_id !== req.user.id) {
+    const share = await db.getShareByProjectAndUser(req.params.id, req.user.id);
+    if (!share) return res.status(404).send('Project not found');
+    projectAccess = share.permission;
+    isShared = true;
   }
   
   const sessions = await db.getSessionsByProject(req.params.id);
@@ -2326,6 +2519,9 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
     if (proposal && proposal.published) { hasPublishedProposal = true; proposalApproved = !!proposal.approvedAt; }
   } catch(e) {}
 
+  // Check if current user can manage shares
+  const canShare = projectAccess === 'owner' || projectAccess === 'admin';
+  
   res.render('customer/project', {
     user: req.user,
     project,
@@ -2340,6 +2536,9 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
     customerQuestions,
     customerDesignId,
     customerAnswers,
+    projectAccess,
+    isShared,
+    canShare,
     title: project.name,
     currentPage: 'customer-projects',
     breadcrumbs: [
@@ -2352,7 +2551,13 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
 
 app.get('/projects/:id/session', auth.authenticate, auth.requireCustomer, async (req, res) => {
   const project = await db.getProject(req.params.id);
-  if (!project || project.user_id !== req.user.id) {
+  // Allow session access for owner or shared users with 'user' or 'admin' permission
+  let hasAccess = project && project.user_id === req.user.id;
+  if (project && !hasAccess) {
+    const share = await db.getShareByProjectAndUser(req.params.id, req.user.id);
+    hasAccess = share && PERMISSION_LEVELS[share.permission] >= PERMISSION_LEVELS['user'];
+  }
+  if (!hasAccess) {
     return res.status(404).send('Project not found');
   }
   
@@ -3212,7 +3417,12 @@ app.post('/signup', signupLimiter, async (req, res) => {
     // Create user with approved = 0 (pending)
     const bcrypt = require('bcryptjs');
     const hashedPassword = bcrypt.hashSync(password, 10);
-    await db.createPendingUser(email, name, company, phone, hashedPassword);
+    const signupResult = await db.createPendingUser(email, name, company, phone, hashedPassword);
+    
+    // Link any pending project shares to this new user
+    if (signupResult && signupResult.lastInsertRowid) {
+      await db.linkPendingShares(signupResult.lastInsertRowid, email);
+    }
 
     // Telegram notification
     const tgToken = process.env.TELEGRAM_BOT_TOKEN;

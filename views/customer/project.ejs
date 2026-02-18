@@ -344,6 +344,51 @@
             </div>
         </div>
 
+        <!-- Sharing Panel -->
+        <% if (typeof canShare !== 'undefined' && canShare) { %>
+        <div class="card" id="sharingCard">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2>👥 Share Project</h2>
+                <button onclick="document.getElementById('shareForm').style.display = document.getElementById('shareForm').style.display === 'none' ? 'block' : 'none'" class="btn btn-sm">+ Invite</button>
+            </div>
+            
+            <div id="shareForm" style="display: none; margin-bottom: 20px; padding: 16px; background: #f8f9ff; border-radius: 10px;">
+                <div style="display: flex; gap: 8px; align-items: flex-end;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: 600; color: #666; display: block; margin-bottom: 4px;">Email</label>
+                        <input type="email" id="shareEmail" placeholder="colleague@company.com" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; color: #666; display: block; margin-bottom: 4px;">Permission</label>
+                        <select id="sharePermission" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                            <option value="readonly">👁️ View Only</option>
+                            <option value="user">✏️ Contributor</option>
+                            <option value="admin">⚡ Admin</option>
+                        </select>
+                    </div>
+                    <button onclick="inviteShare()" class="btn btn-sm btn-success" style="padding: 8px 16px;">Invite</button>
+                </div>
+                <div id="shareStatus" style="margin-top: 8px; font-size: 13px; display: none;"></div>
+            </div>
+            
+            <div id="sharesList" style="min-height: 40px;">
+                <div style="color: #999; font-size: 13px; text-align: center; padding: 12px;">Loading shares...</div>
+            </div>
+        </div>
+        <% } %>
+
+        <% if (typeof isShared !== 'undefined' && isShared) { %>
+        <div style="background: #f0f8ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #1e40af;">
+            🔗 This project is shared with you 
+            <% if (typeof projectAccess !== 'undefined') { %>
+                <span style="background: <%= projectAccess === 'admin' ? '#8b5cf6' : projectAccess === 'user' ? '#3b82f6' : '#6b7280' %>; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 4px;">
+                    <%= projectAccess %>
+                </span>
+            <% } %>
+            by <%= project.user_name %>
+        </div>
+        <% } %>
+
         <!-- Archive / Delete project (subtle, at bottom) -->
         <div style="text-align: center; margin-top: 40px; padding: 20px; display: flex; justify-content: center; gap: 24px;">
             <% if (project.status !== 'archived') { %>
@@ -457,6 +502,78 @@
             if (e.target === document.getElementById('sessionModal')) closeSessionModal();
         });
         document.getElementById('fileInput').value = '';
+
+        // Sharing functions
+        async function loadShares() {
+            const el = document.getElementById('sharesList');
+            if (!el) return;
+            try {
+                const res = await fetch('/customer/projects/' + projectId + '/shares');
+                const data = await res.json();
+                if (!data.shares || data.shares.length === 0) {
+                    el.innerHTML = '<div style="color:#999;font-size:13px;text-align:center;padding:12px;">No one else has access yet</div>';
+                    return;
+                }
+                el.innerHTML = data.shares.map(s => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;" data-share-id="${s.id}">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:14px;">${s.user_name || s.email}</div>
+                            ${s.user_name ? '<div style="font-size:12px;color:#666;">' + s.email + '</div>' : ''}
+                            ${!s.user_id ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px;">⏳ Pending signup</span>' : ''}
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <select onchange="updatePermission(${s.id}, this.value)" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
+                                <option value="readonly" ${s.permission==='readonly'?'selected':''}>👁️ View Only</option>
+                                <option value="user" ${s.permission==='user'?'selected':''}>✏️ Contributor</option>
+                                <option value="admin" ${s.permission==='admin'?'selected':''}>⚡ Admin</option>
+                            </select>
+                            <button onclick="removeShareItem(${s.id})" style="background:none;border:none;cursor:pointer;color:#dc3545;font-size:16px;" title="Remove">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { el.innerHTML = '<div style="color:#dc3545;font-size:13px;">Failed to load shares</div>'; }
+        }
+
+        async function inviteShare() {
+            const email = document.getElementById('shareEmail').value.trim();
+            const permission = document.getElementById('sharePermission').value;
+            const status = document.getElementById('shareStatus');
+            if (!email) return;
+            status.style.display = 'block'; status.innerHTML = 'Sending invite...'; status.style.color = '#666';
+            try {
+                const res = await fetch('/customer/projects/' + projectId + '/share', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ email, permission })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                let msg = '✅ Invited ' + email;
+                if (data.signupLink) msg += '<br><span style="font-size:12px;color:#666;">Share this signup link: <a href="' + data.signupLink + '" style="word-break:break-all;">' + data.signupLink + '</a></span>';
+                status.innerHTML = msg; status.style.color = '#28a745';
+                document.getElementById('shareEmail').value = '';
+                loadShares();
+            } catch(e) { status.innerHTML = '❌ ' + e.message; status.style.color = '#dc3545'; }
+        }
+
+        async function updatePermission(shareId, permission) {
+            try {
+                await fetch('/customer/projects/' + projectId + '/share/' + shareId, {
+                    method: 'PUT', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ permission })
+                });
+            } catch(e) { alert('Failed to update: ' + e.message); }
+        }
+
+        async function removeShareItem(shareId) {
+            if (!confirm('Remove this collaborator?')) return;
+            try {
+                await fetch('/customer/projects/' + projectId + '/share/' + shareId, { method: 'DELETE' });
+                loadShares();
+            } catch(e) { alert('Failed to remove: ' + e.message); }
+        }
+
+        // Load shares on page load
+        if (document.getElementById('sharesList')) loadShares();
         </script>
     </main>
 
