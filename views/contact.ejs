@@ -4,59 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact — Morti</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --brand: #4f46e5; --brand-light: #6366f1; --brand-dark: #3730a3;
             --accent: #10b981; --text: #1e293b; --text-mid: #475569; --text-light: #64748b;
-            --bg: #ffffff; --bg-alt: #f8fafc; --border: #e2e8f0;
+            --bg: #ffffff; --bg-alt: #f8fafc; --bg-dark: #0f172a; --border: #e2e8f0;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg-alt); min-height: 100vh; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg-alt); min-height: 100vh; display: flex; flex-direction: column; }
         a { text-decoration: none; color: inherit; }
+        html { scroll-behavior: smooth; }
 
         nav {
             position: fixed; top: 0; width: 100%; z-index: 100;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 40px; background: rgba(255,255,255,0.97);
-            backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+            padding: 14px 40px; background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(16px); border-bottom: 1px solid rgba(226,232,240,0.6);
         }
         .nav-brand { font-size: 1.25rem; font-weight: 800; color: var(--brand); }
         .nav-links { display: flex; gap: 28px; align-items: center; }
         .nav-links a.nav-text { font-size: 0.88rem; color: var(--text-mid); transition: color 0.2s; font-weight: 500; }
         .nav-links a.nav-text:hover { color: var(--brand); }
         .nav-links a.active { color: var(--brand); font-weight: 600; }
-        .btn-cta { display: inline-block; padding: 10px 28px; border-radius: 8px; font-weight: 600; font-size: 0.92rem; background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.25); transition: all 0.2s; }
+        .btn-cta { display: inline-block; padding: 10px 28px; border-radius: 8px; font-weight: 600; font-size: 0.92rem; background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.25); transition: all 0.25s; }
         .btn-cta:hover { background: #059669; transform: translateY(-1px); }
 
-        .contact-container { max-width: 640px; margin: 120px auto 60px; padding: 0 20px; }
-        .contact-card { background: var(--bg); border-radius: 16px; padding: 48px 40px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); border: 1px solid var(--border); }
-        .contact-card h1 { font-size: 2rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-        .contact-card .subtitle { color: var(--text-light); margin-bottom: 32px; line-height: 1.6; }
+        .contact-container { max-width: 640px; margin: 130px auto 80px; padding: 0 20px; flex: 1; }
+        .contact-card {
+            background: var(--bg); border-radius: 20px; padding: 52px 44px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05); border: 1px solid var(--border);
+        }
+        .contact-card h1 { font-size: 2rem; font-weight: 700; color: var(--text); margin-bottom: 8px; letter-spacing: -0.02em; }
+        .contact-card .subtitle { color: var(--text-light); margin-bottom: 36px; line-height: 1.7; font-weight: 300; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-mid); margin-bottom: 6px; }
+        .form-group { margin-bottom: 22px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-mid); margin-bottom: 7px; letter-spacing: 0.01em; }
         .form-group input, .form-group textarea, .form-group select {
             width: 100%; padding: 12px 16px; border: 2px solid var(--border);
-            border-radius: 10px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.2s; background: var(--bg);
+            border-radius: 10px; font-size: 0.95rem; font-family: inherit; transition: all 0.25s; background: var(--bg);
         }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--brand); }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(79,70,229,0.08); }
         .form-group textarea { resize: vertical; min-height: 140px; }
         .btn-submit {
             display: inline-block; padding: 14px 36px; border-radius: 10px;
             font-weight: 600; font-size: 1rem; border: none; cursor: pointer;
             background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,0.3);
-            transition: all 0.2s; width: 100%;
+            transition: all 0.25s; width: 100%;
         }
-        .btn-submit:hover { background: var(--brand-light); transform: translateY(-1px); }
+        .btn-submit:hover { background: var(--brand-light); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.3); }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .success-msg { background: #f0fff4; border: 2px solid #c6f6d5; border-radius: 12px; padding: 24px; text-align: center; color: #276749; }
-        .success-msg h2 { margin-bottom: 8px; }
-        .error-msg { background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px; padding: 12px 16px; color: #c53030; margin-bottom: 16px; font-size: 0.9rem; }
-        .contact-info { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); text-align: center; font-size: 0.9rem; color: var(--text-light); }
+        .success-msg { background: #f0fff4; border: 2px solid #c6f6d5; border-radius: 14px; padding: 32px; text-align: center; color: #276749; }
+        .success-msg h2 { margin-bottom: 10px; }
+        .error-msg { background: #fff5f5; border: 2px solid #fed7d7; border-radius: 10px; padding: 12px 16px; color: #c53030; margin-bottom: 18px; font-size: 0.9rem; }
+        .contact-info { margin-top: 28px; padding-top: 28px; border-top: 1px solid var(--border); text-align: center; font-size: 0.9rem; color: var(--text-light); font-weight: 300; }
         .contact-info a { color: var(--brand); font-weight: 500; }
 
-        footer { text-align: center; padding: 40px; color: var(--text-light); font-size: 0.85rem; border-top: 1px solid var(--border); }
-        footer a { color: var(--brand); }
+        /* Footer */
+        .site-footer { background: var(--bg-dark); color: rgba(255,255,255,0.6); padding: 72px 40px 40px; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; max-width: 1000px; margin: 0 auto 48px; }
+        .footer-brand { font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 12px; }
+        .footer-brand-desc { font-size: 0.88rem; line-height: 1.7; color: rgba(255,255,255,0.45); max-width: 280px; }
+        .footer-col h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.35); font-weight: 700; margin-bottom: 16px; }
+        .footer-col a { display: block; font-size: 0.88rem; color: rgba(255,255,255,0.55); padding: 4px 0; transition: color 0.2s; }
+        .footer-col a:hover { color: #fff; }
+        .footer-bottom { text-align: center; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.82rem; color: rgba(255,255,255,0.3); max-width: 1000px; margin: 0 auto; }
 
         .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: var(--brand); }
         @media (max-width: 768px) {
@@ -66,11 +80,13 @@
             .nav-links.open { display: flex; }
             .nav-links a.nav-text { padding: 10px 0; font-size: 1rem; }
             .btn-cta { text-align: center; margin-top: 8px; }
-            .contact-container { margin-top: 80px; }
-            .contact-card { padding: 32px 24px; }
+            .contact-container { margin-top: 90px; }
+            .contact-card { padding: 36px 24px; }
             .contact-card h1 { font-size: 1.6rem; }
             .form-row { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
         }
+        @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; gap: 24px; } }
     </style>
 </head>
 <body>
@@ -154,8 +170,34 @@
     </div>
 </div>
 
-<footer>
-    <p>&copy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> · Melbourne, Australia &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/login">Customer Login</a></p>
+<footer class="site-footer">
+    <div class="footer-grid">
+        <div>
+            <div class="footer-brand">◆ Morti</div>
+            <p class="footer-brand-desc">AI-native consulting and managed automation for Australian small and medium businesses.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Product</h4>
+            <a href="/#products">What We Do</a>
+            <a href="/#how-it-works">How It Works</a>
+            <a href="/#pricing">Pricing</a>
+        </div>
+        <div class="footer-col">
+            <h4>Company</h4>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+            <a href="/signup">Get Started</a>
+        </div>
+        <div class="footer-col">
+            <h4>Contact</h4>
+            <a href="mailto:luke.mccarthy.home@gmail.com">Email Us</a>
+            <a>Melbourne, Australia</a>
+            <a href="https://morti.com.au">morti.com.au</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        &copy; <%= new Date().getFullYear() %> Morti Pty Ltd · Melbourne, Australia
+    </div>
 </footer>
 
 </body>

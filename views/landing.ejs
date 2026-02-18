@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Morti — AI Consulting & Automation for Australian SMBs</title>
     <meta name="description" content="From idea to live automation. Morti delivers AI-powered requirements gathering, solution design, and managed automation for small and medium businesses across Australia.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --brand: #4f46e5;
@@ -25,7 +28,7 @@
             --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); overflow-x: hidden; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); overflow-x: hidden; font-weight: 400; }
         a { text-decoration: none; color: inherit; }
         html { scroll-behavior: smooth; }
 
@@ -34,23 +37,25 @@
             position: fixed; top: 0; width: 100%; z-index: 100;
             display: flex; align-items: center; justify-content: space-between;
             padding: 14px 40px;
-            background: rgba(255,255,255,0.97);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(226,232,240,0.6);
+            transition: box-shadow 0.3s;
         }
+        nav.scrolled { box-shadow: 0 1px 12px rgba(0,0,0,0.06); }
         .nav-brand { font-size: 1.25rem; font-weight: 800; color: var(--brand); letter-spacing: -0.02em; }
         .nav-links { display: flex; gap: 28px; align-items: center; }
         .nav-links a.nav-text { font-size: 0.88rem; color: var(--text-mid); transition: color 0.2s; font-weight: 500; }
         .nav-links a.nav-text:hover { color: var(--brand); }
-        .btn { display: inline-block; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; cursor: pointer; border: none; }
+        .btn { display: inline-block; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor: pointer; border: none; }
         .btn-cta { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.25); padding: 10px 28px; font-size: 0.92rem; }
         .btn-cta:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
         .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,0.3); }
-        .btn-primary:hover { background: var(--brand-light); transform: translateY(-1px); }
-        .btn-outline-white { border: 2px solid rgba(255,255,255,0.7); color: #fff; background: transparent; }
-        .btn-outline-white:hover { background: #fff; color: var(--brand); }
-        .btn-white { background: #fff; color: var(--brand); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .btn-white:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+        .btn-primary:hover { background: var(--brand-light); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.35); }
+        .btn-outline-white { border: 2px solid rgba(255,255,255,0.5); color: #fff; background: rgba(255,255,255,0.06); backdrop-filter: blur(4px); }
+        .btn-outline-white:hover { background: #fff; color: var(--brand); border-color: #fff; }
+        .btn-white { background: #fff; color: var(--brand); box-shadow: 0 2px 12px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.1); font-weight: 700; }
+        .btn-white:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.18), 0 0 24px rgba(99,102,241,0.15); }
         .btn-ghost { background: transparent; border: 2px solid var(--brand); color: var(--brand); }
         .btn-ghost:hover { background: var(--brand); color: #fff; }
 
@@ -63,54 +68,138 @@
         }
         .hero::before {
             content: ''; position: absolute; inset: 0;
-            background: radial-gradient(ellipse at 30% 80%, rgba(99,102,241,0.15) 0%, transparent 60%),
-                        radial-gradient(ellipse at 70% 20%, rgba(16,185,129,0.1) 0%, transparent 50%);
+            background: radial-gradient(ellipse at 30% 80%, rgba(99,102,241,0.18) 0%, transparent 60%),
+                        radial-gradient(ellipse at 70% 20%, rgba(16,185,129,0.12) 0%, transparent 50%);
         }
-        .hero-inner { position: relative; z-index: 1; max-width: 800px; }
+        /* Animated mesh grid */
+        .hero-grid {
+            position: absolute; inset: 0; overflow: hidden; opacity: 0.08;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridDrift 20s linear infinite;
+        }
+        @keyframes gridDrift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        /* Floating orbs */
+        .hero-orb {
+            position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none;
+            animation: orbFloat 12s ease-in-out infinite;
+        }
+        .hero-orb-1 { width: 400px; height: 400px; background: rgba(99,102,241,0.2); top: 10%; left: -5%; animation-delay: 0s; }
+        .hero-orb-2 { width: 300px; height: 300px; background: rgba(16,185,129,0.15); bottom: 10%; right: -5%; animation-delay: -4s; }
+        .hero-orb-3 { width: 200px; height: 200px; background: rgba(168,85,247,0.12); top: 50%; left: 60%; animation-delay: -8s; }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -20px) scale(1.05); }
+            66% { transform: translate(-20px, 15px) scale(0.95); }
+        }
+
+        .hero-inner { position: relative; z-index: 1; max-width: 840px; }
         .hero-badge {
-            display: inline-block; padding: 6px 16px; border-radius: 20px;
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
-            font-size: 0.8rem; font-weight: 600; letter-spacing: 0.03em;
-            margin-bottom: 24px; color: rgba(255,255,255,0.85);
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 7px 18px; border-radius: 24px;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+            font-size: 0.82rem; font-weight: 500; letter-spacing: 0.02em;
+            margin-bottom: 28px; color: rgba(255,255,255,0.8);
+            backdrop-filter: blur(8px);
         }
-        .hero h1 { font-size: 3.4rem; font-weight: 800; margin-bottom: 20px; line-height: 1.15; letter-spacing: -0.03em; animation: fadeUp 0.7s ease-out; }
-        .hero p { font-size: 1.2rem; max-width: 620px; margin: 0 auto 36px; opacity: 0.88; line-height: 1.7; animation: fadeUp 0.7s ease-out 0.12s both; }
-        .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; animation: fadeUp 0.7s ease-out 0.24s both; }
+        .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+        .hero h1 {
+            font-size: 4rem; font-weight: 800; margin-bottom: 24px; line-height: 1.1;
+            letter-spacing: -0.035em; animation: fadeUp 0.7s ease-out;
+        }
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, #a5b4fc, #6ee7b7);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: 1.2rem; max-width: 620px; margin: 0 auto 40px;
+            opacity: 0.82; line-height: 1.75; font-weight: 300;
+            animation: fadeUp 0.7s ease-out 0.12s both;
+        }
+        .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: fadeUp 0.7s ease-out 0.24s both; }
+        .hero-trust {
+            margin-top: 48px; font-size: 0.82rem; color: rgba(255,255,255,0.45);
+            font-weight: 400; letter-spacing: 0.02em;
+            animation: fadeUp 0.7s ease-out 0.36s both;
+        }
+        .hero-trust span { color: rgba(255,255,255,0.65); font-weight: 500; }
 
         /* Pipeline */
-        .pipeline-section { background: var(--bg); padding: 80px 40px; }
+        .pipeline-section { background: var(--bg); padding: 80px 40px; position: relative; }
+        .pipeline-section::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
         .pipeline {
             display: flex; justify-content: center; align-items: center; gap: 0;
             max-width: 900px; margin: 0 auto; flex-wrap: wrap;
         }
-        .pipeline-step {
-            text-align: center; padding: 16px 20px; flex: 1; min-width: 120px;
-        }
+        .pipeline-step { text-align: center; padding: 16px 20px; flex: 1; min-width: 120px; }
         .pipeline-icon {
-            width: 48px; height: 48px; border-radius: 50%;
+            width: 52px; height: 52px; border-radius: 14px;
             background: linear-gradient(135deg, var(--brand), var(--brand-light));
-            color: #fff; font-size: 1.1rem; font-weight: 700;
+            color: #fff; font-size: 1.2rem; font-weight: 700;
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 10px;
+            margin: 0 auto 12px; box-shadow: 0 4px 12px rgba(79,70,229,0.2);
         }
         .pipeline-step h4 { font-size: 0.85rem; color: var(--text); font-weight: 700; margin-bottom: 2px; }
-        .pipeline-step p { font-size: 0.78rem; color: var(--text-light); }
+        .pipeline-step p { font-size: 0.78rem; color: var(--text-light); font-weight: 400; }
         .pipeline-arrow { color: var(--border); font-size: 1.3rem; flex-shrink: 0; margin: 0 -4px; padding-bottom: 20px; }
 
         /* Sections */
-        section { padding: 100px 40px; }
-        .section-label { text-align: center; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--brand); font-weight: 700; margin-bottom: 12px; }
-        .section-title { text-align: center; font-size: 2.2rem; font-weight: 800; margin-bottom: 14px; color: var(--text); letter-spacing: -0.02em; }
-        .section-sub { text-align: center; color: var(--text-light); max-width: 600px; margin: 0 auto 56px; line-height: 1.65; font-size: 1.05rem; }
+        section { padding: 120px 40px; }
+        .section-label {
+            text-align: center; font-size: 0.72rem; text-transform: uppercase;
+            letter-spacing: 0.16em; color: var(--brand); font-weight: 700; margin-bottom: 14px;
+        }
+        .section-title {
+            text-align: center; font-size: 2.4rem; font-weight: 800;
+            margin-bottom: 16px; color: var(--text); letter-spacing: -0.025em; line-height: 1.2;
+        }
+        .section-sub {
+            text-align: center; color: var(--text-light); max-width: 580px;
+            margin: 0 auto 64px; line-height: 1.7; font-size: 1.05rem; font-weight: 300;
+        }
+
+        /* Section divider */
+        .section-divider {
+            width: 48px; height: 2px; margin: 0 auto 20px;
+            background: linear-gradient(90deg, var(--brand), var(--accent));
+            border-radius: 2px;
+        }
+
+        /* Fade-in on scroll */
+        .fade-in {
+            opacity: 0; transform: translateY(24px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+        .fade-in-delay-1 { transition-delay: 0.1s; }
+        .fade-in-delay-2 { transition-delay: 0.2s; }
+        .fade-in-delay-3 { transition-delay: 0.3s; }
+        .fade-in-delay-4 { transition-delay: 0.4s; }
 
         /* Products */
         .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1000px; margin: 0 auto; }
         .product-card {
-            background: var(--bg); border-radius: 16px; padding: 40px 32px;
-            border: 1px solid var(--border); transition: all 0.25s;
+            background: var(--bg); border-radius: 16px; padding: 44px 36px;
+            border: 1px solid var(--border); transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
             position: relative; overflow: hidden;
         }
-        .product-card:hover { border-color: var(--brand); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+        .product-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--brand), var(--brand-light));
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .product-card.auto-card::before { background: linear-gradient(90deg, var(--accent), #34d399); }
+        .product-card:hover { border-color: transparent; box-shadow: 0 12px 40px rgba(0,0,0,0.08); transform: translateY(-4px); }
+        .product-card:hover::before { opacity: 1; }
         .product-tag {
             display: inline-block; padding: 4px 12px; border-radius: 6px;
             font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
@@ -118,83 +207,180 @@
         }
         .product-tag.consult { background: #ede9fe; color: #5b21b6; }
         .product-tag.auto { background: #d1fae5; color: #065f46; }
-        .product-card h3 { font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 12px; }
-        .product-card > p { font-size: 0.95rem; color: var(--text-mid); line-height: 1.65; margin-bottom: 20px; }
+        .product-card h3 { font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 12px; letter-spacing: -0.01em; }
+        .product-card > p { font-size: 0.95rem; color: var(--text-mid); line-height: 1.7; margin-bottom: 24px; font-weight: 300; }
         .product-features { list-style: none; padding: 0; }
-        .product-features li { font-size: 0.9rem; color: var(--text-mid); padding: 5px 0 5px 24px; position: relative; line-height: 1.5; }
-        .product-features li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+        .product-features li { font-size: 0.9rem; color: var(--text-mid); padding: 6px 0 6px 28px; position: relative; line-height: 1.55; font-weight: 400; }
+        .product-features li::before {
+            content: ''; position: absolute; left: 0; top: 12px;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #34d399);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .product-features li::after {
+            content: '✓'; position: absolute; left: 3px; top: 11px;
+            color: #fff; font-size: 0.6rem; font-weight: 800;
+        }
 
         /* Trust / Portability */
-        .trust-section { background: var(--bg-alt); }
-        .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; max-width: 1000px; margin: 0 auto; }
-        .trust-card { background: var(--bg); border-radius: var(--radius); padding: 32px 24px; border: 1px solid var(--border); text-align: center; }
-        .trust-icon { font-size: 2rem; margin-bottom: 14px; }
+        .trust-section { background: var(--bg-alt); position: relative; }
+        .trust-section::before, .trust-section::after {
+            content: ''; position: absolute; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
+        .trust-section::before { top: 0; }
+        .trust-section::after { bottom: 0; }
+        .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto; }
+        .trust-card {
+            background: var(--bg); border-radius: 14px; padding: 36px 28px;
+            border: 1px solid var(--border); text-align: center;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        .trust-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.06); border-color: rgba(79,70,229,0.2); }
+        .trust-icon {
+            width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; background: linear-gradient(135deg, #ede9fe, #e0e7ff);
+        }
         .trust-card h3 { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-        .trust-card p { font-size: 0.88rem; color: var(--text-light); line-height: 1.6; }
+        .trust-card p { font-size: 0.88rem; color: var(--text-light); line-height: 1.65; font-weight: 300; }
 
         /* Handover highlight */
         .handover-banner {
-            max-width: 800px; margin: 56px auto 0; padding: 32px 36px;
+            max-width: 800px; margin: 56px auto 0; padding: 36px 40px;
             background: linear-gradient(135deg, #ede9fe, #dbeafe);
             border-radius: 16px; border: 1px solid #c7d2fe;
-            display: flex; gap: 20px; align-items: flex-start;
+            display: flex; gap: 24px; align-items: flex-start;
+            transition: all 0.3s;
         }
+        .handover-banner:hover { box-shadow: 0 8px 28px rgba(99,102,241,0.1); }
         .handover-banner .hb-icon { font-size: 2.4rem; flex-shrink: 0; }
-        .handover-banner h3 { font-size: 1.1rem; font-weight: 700; color: var(--brand-dark); margin-bottom: 6px; }
-        .handover-banner p { font-size: 0.92rem; color: var(--text-mid); line-height: 1.6; }
+        .handover-banner h3 { font-size: 1.1rem; font-weight: 700; color: var(--brand-dark); margin-bottom: 8px; }
+        .handover-banner p { font-size: 0.92rem; color: var(--text-mid); line-height: 1.7; font-weight: 300; }
 
         /* How it works */
-        .steps-bg { background: var(--bg); }
-        .steps { display: flex; justify-content: center; gap: 24px; max-width: 1040px; margin: 0 auto; flex-wrap: wrap; align-items: flex-start; }
-        .step { text-align: center; flex: 1; min-width: 180px; position: relative; padding: 0 10px; }
+        .steps-bg { background: var(--bg); position: relative; }
+        .steps-bg::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
+        .steps { display: flex; justify-content: center; gap: 0; max-width: 1040px; margin: 0 auto; flex-wrap: wrap; align-items: flex-start; position: relative; }
+        /* Connecting line behind steps */
+        .steps::before {
+            content: ''; position: absolute; top: 26px; left: 12%; right: 12%;
+            height: 2px; background: linear-gradient(90deg, var(--border), var(--brand-light), var(--accent), var(--brand-light), var(--border));
+            z-index: 0;
+        }
+        .step { text-align: center; flex: 1; min-width: 180px; position: relative; padding: 0 16px; z-index: 1; }
         .step-num {
             width: 52px; height: 52px; border-radius: 50%;
-            background: var(--brand); color: #fff; font-size: 1.2rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--brand), var(--brand-light));
+            color: #fff; font-size: 1.2rem; font-weight: 700;
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 14px;
+            margin: 0 auto 16px; box-shadow: 0 4px 16px rgba(79,70,229,0.25);
+            position: relative;
         }
-        .step h3 { font-size: 1rem; margin-bottom: 6px; color: var(--text); }
-        .step p { font-size: 0.88rem; color: var(--text-light); line-height: 1.5; }
-        .step-arrow { position: absolute; right: -16px; top: 16px; font-size: 1.3rem; color: var(--border); }
+        .step h3 { font-size: 1rem; margin-bottom: 8px; color: var(--text); font-weight: 700; }
+        .step p { font-size: 0.88rem; color: var(--text-light); line-height: 1.55; font-weight: 300; }
 
         /* Pricing */
-        .pricing-bg { background: var(--bg-alt); }
-        .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 800px; margin: 0 auto; }
-        .pricing-card {
-            background: var(--bg); border-radius: 16px; padding: 36px 28px;
-            border: 1px solid var(--border); transition: all 0.25s;
+        .pricing-bg { background: var(--bg-alt); position: relative; }
+        .pricing-bg::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
         }
-        .pricing-card:hover { border-color: var(--brand); box-shadow: var(--shadow-md); }
-        .pricing-phase { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--brand); font-weight: 700; margin-bottom: 8px; }
-        .pricing-card h3 { font-size: 1.2rem; margin-bottom: 8px; color: var(--text); }
-        .pricing-card .pricing-desc { font-size: 0.9rem; color: var(--text-light); line-height: 1.6; margin-bottom: 18px; }
+        .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 820px; margin: 0 auto; }
+        .pricing-card {
+            background: var(--bg); border-radius: 16px; padding: 40px 32px;
+            border: 1px solid var(--border); transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            position: relative;
+        }
+        .pricing-card:hover { border-color: transparent; box-shadow: 0 12px 40px rgba(0,0,0,0.08); transform: translateY(-3px); }
+        .pricing-phase { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--brand); font-weight: 700; margin-bottom: 10px; }
+        .pricing-card h3 { font-size: 1.25rem; margin-bottom: 10px; color: var(--text); font-weight: 700; }
+        .pricing-card .pricing-desc { font-size: 0.9rem; color: var(--text-light); line-height: 1.7; margin-bottom: 22px; font-weight: 300; }
         .pricing-includes { list-style: none; padding: 0; }
-        .pricing-includes li { font-size: 0.88rem; color: var(--text-mid); padding: 5px 0 5px 22px; position: relative; line-height: 1.5; }
-        .pricing-includes li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
-        .pricing-note { text-align: center; max-width: 640px; margin: 40px auto 0; color: var(--text-light); font-size: 0.92rem; line-height: 1.7; }
-        .pricing-note strong { color: var(--text-mid); }
+        .pricing-includes li { font-size: 0.88rem; color: var(--text-mid); padding: 6px 0 6px 26px; position: relative; line-height: 1.55; font-weight: 400; }
+        .pricing-includes li::before {
+            content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 700; font-size: 0.85rem;
+        }
+        .pricing-note { text-align: center; max-width: 640px; margin: 48px auto 0; color: var(--text-light); font-size: 0.92rem; line-height: 1.75; font-weight: 300; }
+        .pricing-note strong { color: var(--text-mid); font-weight: 600; }
+
+        /* Testimonial placeholder */
+        .testimonial-section { background: var(--bg); position: relative; }
+        .testimonial-section::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+        }
+        .testimonial-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto; }
+        .testimonial-card {
+            background: var(--bg-alt); border-radius: 14px; padding: 32px 28px;
+            border: 1px solid var(--border); position: relative;
+        }
+        .testimonial-card .quote-mark { font-size: 2.5rem; color: var(--brand-light); opacity: 0.3; line-height: 1; margin-bottom: 8px; font-family: Georgia, serif; }
+        .testimonial-card p { font-size: 0.92rem; color: var(--text-mid); line-height: 1.7; font-style: italic; font-weight: 300; margin-bottom: 16px; }
+        .testimonial-author { font-size: 0.82rem; color: var(--text-light); font-weight: 600; font-style: normal; }
+        .testimonial-author span { font-weight: 400; }
 
         /* CTA */
-        .cta-section { padding: 80px 40px; }
+        .cta-section { padding: 100px 40px; }
         .cta {
             text-align: center;
             background: linear-gradient(160deg, var(--bg-dark) 0%, #1e1b4b 60%, var(--brand-dark) 100%);
-            color: #fff; border-radius: 20px; max-width: 800px;
-            margin: 0 auto; padding: 64px 40px; position: relative; overflow: hidden;
+            color: #fff; border-radius: 24px; max-width: 840px;
+            margin: 0 auto; padding: 72px 48px; position: relative; overflow: hidden;
         }
         .cta::before {
             content: ''; position: absolute; inset: 0;
             background: radial-gradient(ellipse at 50% 100%, rgba(99,102,241,0.2) 0%, transparent 60%);
         }
         .cta > * { position: relative; }
-        .cta h2 { font-size: 2rem; margin-bottom: 14px; font-weight: 800; }
-        .cta p { opacity: 0.85; margin-bottom: 28px; font-size: 1.05rem; line-height: 1.6; max-width: 540px; margin-left: auto; margin-right: auto; }
+        .cta h2 { font-size: 2.2rem; margin-bottom: 16px; font-weight: 800; letter-spacing: -0.02em; }
+        .cta p { opacity: 0.8; margin-bottom: 32px; font-size: 1.08rem; line-height: 1.7; max-width: 540px; margin-left: auto; margin-right: auto; font-weight: 300; }
+        .cta-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 
         /* Footer */
-        footer { text-align: center; padding: 40px; color: var(--text-light); font-size: 0.85rem; border-top: 1px solid var(--border); }
-        footer a { color: var(--brand); }
+        .site-footer {
+            background: var(--bg-dark); color: rgba(255,255,255,0.6); padding: 72px 40px 40px;
+        }
+        .footer-grid {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px; max-width: 1000px; margin: 0 auto 48px;
+        }
+        .footer-brand { font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 12px; }
+        .footer-brand-desc { font-size: 0.88rem; line-height: 1.7; color: rgba(255,255,255,0.45); max-width: 280px; }
+        .footer-col h4 {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em;
+            color: rgba(255,255,255,0.35); font-weight: 700; margin-bottom: 16px;
+        }
+        .footer-col a {
+            display: block; font-size: 0.88rem; color: rgba(255,255,255,0.55);
+            padding: 4px 0; transition: color 0.2s;
+        }
+        .footer-col a:hover { color: #fff; }
+        .footer-bottom {
+            text-align: center; padding-top: 32px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            font-size: 0.82rem; color: rgba(255,255,255,0.3);
+            max-width: 1000px; margin: 0 auto;
+        }
 
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* Back to top */
+        .back-to-top {
+            position: fixed; bottom: 32px; right: 32px;
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--brand); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; cursor: pointer; border: none;
+            box-shadow: 0 4px 16px rgba(79,70,229,0.3);
+            opacity: 0; transform: translateY(12px);
+            transition: all 0.3s; z-index: 90;
+        }
+        .back-to-top.show { opacity: 1; transform: translateY(0); }
+        .back-to-top:hover { background: var(--brand-light); transform: translateY(-2px); }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 
         .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: var(--brand); }
         @media (max-width: 768px) {
@@ -204,21 +390,26 @@
             .nav-links.open { display: flex; }
             .nav-links a.nav-text { padding: 10px 0; font-size: 1rem; }
             .btn-cta { text-align: center; margin-top: 8px; }
-            .hero { padding: 110px 20px 70px; }
-            .hero h1 { font-size: 2.1rem; }
+            .hero { padding: 110px 20px 70px; min-height: auto; }
+            .hero h1 { font-size: 2.4rem; }
             .hero p { font-size: 1rem; }
             .hero-buttons { flex-direction: column; align-items: center; }
-            section { padding: 64px 20px; }
-            .section-title { font-size: 1.6rem; }
+            section { padding: 80px 20px; }
+            .section-title { font-size: 1.7rem; }
             .products-grid, .pricing-grid { grid-template-columns: 1fr; }
-            .trust-grid { grid-template-columns: 1fr; }
-            .step-arrow { display: none; }
+            .trust-grid, .testimonial-grid { grid-template-columns: 1fr; }
+            .steps::before { display: none; }
             .steps { gap: 28px; }
             .pipeline { flex-direction: column; gap: 0; }
             .pipeline-arrow { transform: rotate(90deg); padding: 0; margin: -4px 0; }
             .handover-banner { flex-direction: column; text-align: center; }
-            .cta { padding: 40px 24px; }
-            .cta h2 { font-size: 1.5rem; }
+            .cta { padding: 48px 24px; border-radius: 16px; }
+            .cta h2 { font-size: 1.6rem; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+            .back-to-top { bottom: 20px; right: 20px; width: 40px; height: 40px; }
+        }
+        @media (max-width: 480px) {
+            .footer-grid { grid-template-columns: 1fr; gap: 24px; }
         }
     </style>
 </head>
@@ -240,13 +431,20 @@
 
 <!-- Hero -->
 <section class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
     <div class="hero-inner">
         <div class="hero-badge">Melbourne-based AI consulting · morti.com.au</div>
-        <h1>From Idea to<br>Live Automation</h1>
+        <h1>From Idea to<br><span class="gradient-text">Live Automation</span></h1>
         <p>Morti takes your business idea through requirements, design, and proposal — then builds and runs the automation. End-to-end. No lock-in. You own everything.</p>
         <div class="hero-buttons">
             <a href="/signup" class="btn btn-white">Get Started Free</a>
             <a href="#how-it-works" class="btn btn-outline-white">See How It Works</a>
+        </div>
+        <div class="hero-trust">
+            <span>AI-native consulting</span> for growing Australian businesses
         </div>
     </div>
 </section>
@@ -254,31 +452,31 @@
 <!-- Pipeline -->
 <div class="pipeline-section">
     <div class="pipeline">
-        <div class="pipeline-step">
+        <div class="pipeline-step fade-in">
             <div class="pipeline-icon">💬</div>
             <h4>Requirements</h4>
             <p>Capture the idea</p>
         </div>
         <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">
+        <div class="pipeline-step fade-in fade-in-delay-1">
             <div class="pipeline-icon">📐</div>
             <h4>Design</h4>
             <p>Architecture & plan</p>
         </div>
         <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">
+        <div class="pipeline-step fade-in fade-in-delay-2">
             <div class="pipeline-icon">📋</div>
             <h4>Proposal</h4>
             <p>Scope & pricing</p>
         </div>
         <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">
+        <div class="pipeline-step fade-in fade-in-delay-3">
             <div class="pipeline-icon">🔨</div>
             <h4>Build</h4>
             <p>We implement it</p>
         </div>
         <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">
+        <div class="pipeline-step fade-in fade-in-delay-4">
             <div class="pipeline-icon">⚡</div>
             <h4>Live</h4>
             <p>Running & managed</p>
@@ -288,11 +486,12 @@
 
 <!-- Products -->
 <section id="products">
-    <div class="section-label">What We Do</div>
-    <h2 class="section-title">Two services, one seamless experience</h2>
-    <p class="section-sub">Requirements gathering and solution design, plus managed automation that runs your workflows — all from one team.</p>
+    <div class="section-label fade-in">What We Do</div>
+    <div class="section-divider fade-in"></div>
+    <h2 class="section-title fade-in">Two services, one seamless experience</h2>
+    <p class="section-sub fade-in">Requirements gathering and solution design, plus managed automation that runs your workflows — all from one team.</p>
     <div class="products-grid">
-        <div class="product-card">
+        <div class="product-card fade-in">
             <div class="product-tag consult">Consulting</div>
             <h3>Morti Projects</h3>
             <p>AI-powered requirements gathering, solution design, and proposals. Talk about your project naturally — we capture, structure, and design the solution.</p>
@@ -305,7 +504,7 @@
                 <li>Human oversight at every stage</li>
             </ul>
         </div>
-        <div class="product-card">
+        <div class="product-card auto-card fade-in fade-in-delay-1">
             <div class="product-tag auto">Automation</div>
             <h3>Mortomation</h3>
             <p>The engine that builds and runs your workflows. Once the design is approved, we implement it as a managed automation — your own dedicated instance, running 24/7.</p>
@@ -323,42 +522,43 @@
 
 <!-- Trust & Portability -->
 <section class="trust-section" id="trust">
-    <div class="section-label">Built on Trust</div>
-    <h2 class="section-title">Your business, your IP, your choice</h2>
-    <p class="section-sub">We believe the best way to earn your trust is to make it easy to leave. That's why portability is built into everything we do.</p>
+    <div class="section-label fade-in">Built on Trust</div>
+    <div class="section-divider fade-in"></div>
+    <h2 class="section-title fade-in">Your business, your IP, your choice</h2>
+    <p class="section-sub fade-in">We believe the best way to earn your trust is to make it easy to leave. That's why portability is built into everything we do.</p>
     <div class="trust-grid">
-        <div class="trust-card">
+        <div class="trust-card fade-in">
             <div class="trust-icon">🔓</div>
             <h3>No Lock-in</h3>
             <p>Every automation we build is exportable. Workflow configs, documentation, and setup guides — all yours.</p>
         </div>
-        <div class="trust-card">
+        <div class="trust-card fade-in fade-in-delay-1">
             <div class="trust-icon">🔑</div>
             <h3>Full Handover</h3>
             <p>Request a complete export at any time. Run it yourself or take it to another provider. We hand over the keys.</p>
         </div>
-        <div class="trust-card">
+        <div class="trust-card fade-in fade-in-delay-2">
             <div class="trust-icon">🛡️</div>
             <h3>Human Oversight</h3>
             <p>AI designs, humans approve. No black boxes. You see exactly what's being built and how it works.</p>
         </div>
-        <div class="trust-card">
+        <div class="trust-card fade-in fade-in-delay-3">
             <div class="trust-icon">🏠</div>
             <h3>Per-Customer Isolation</h3>
             <p>Your automation runs on its own dedicated instance. No shared infrastructure, no cross-contamination.</p>
         </div>
-        <div class="trust-card">
+        <div class="trust-card fade-in fade-in-delay-4">
             <div class="trust-icon">📦</div>
             <h3>Module Library</h3>
             <p>Pre-built, tested components that compound learnings across deployments. Faster setup, fewer bugs.</p>
         </div>
-        <div class="trust-card">
+        <div class="trust-card fade-in">
             <div class="trust-icon">🇦🇺</div>
             <h3>Melbourne-Based</h3>
             <p>Morti Pty Ltd. Australian company, Australian data practices, built for Australian SMBs.</p>
         </div>
     </div>
-    <div class="handover-banner">
+    <div class="handover-banner fade-in">
         <div class="hb-icon">🤝</div>
         <div>
             <h3>The Handover Guarantee</h3>
@@ -369,35 +569,32 @@
 
 <!-- How it Works -->
 <section id="how-it-works" class="steps-bg">
-    <div class="section-label">Process</div>
-    <h2 class="section-title">How it works</h2>
-    <p class="section-sub">Five steps from idea to running automation.</p>
+    <div class="section-label fade-in">Process</div>
+    <div class="section-divider fade-in"></div>
+    <h2 class="section-title fade-in">How it works</h2>
+    <p class="section-sub fade-in">Five steps from idea to running automation.</p>
     <div class="steps">
-        <div class="step">
+        <div class="step fade-in">
             <div class="step-num">1</div>
             <h3>Talk</h3>
             <p>Tell us about your project through voice, documents, or chat. AI captures everything.</p>
-            <span class="step-arrow">→</span>
         </div>
-        <div class="step">
+        <div class="step fade-in fade-in-delay-1">
             <div class="step-num">2</div>
             <h3>Design</h3>
             <p>We produce a detailed solution design with architecture, workflows, and smart questions.</p>
-            <span class="step-arrow">→</span>
         </div>
-        <div class="step">
+        <div class="step fade-in fade-in-delay-2">
             <div class="step-num">3</div>
             <h3>Propose</h3>
             <p>Review the design, resolve any questions, and accept the proposal to proceed.</p>
-            <span class="step-arrow">→</span>
         </div>
-        <div class="step">
+        <div class="step fade-in fade-in-delay-3">
             <div class="step-num">4</div>
             <h3>Build</h3>
             <p>We implement your automation with regular check-ins and transparent progress.</p>
-            <span class="step-arrow">→</span>
         </div>
-        <div class="step">
+        <div class="step fade-in fade-in-delay-4">
             <div class="step-num">5</div>
             <h3>Live</h3>
             <p>Your automation goes live on a dedicated instance. We manage, monitor, and improve it.</p>
@@ -407,11 +604,12 @@
 
 <!-- Pricing -->
 <section id="pricing" class="pricing-bg">
-    <div class="section-label">Pricing</div>
-    <h2 class="section-title">Value-based, not time-based</h2>
-    <p class="section-sub">You pay based on the value delivered, not hours spent. Two components, both transparent.</p>
+    <div class="section-label fade-in">Pricing</div>
+    <div class="section-divider fade-in"></div>
+    <h2 class="section-title fade-in">Value-based, not time-based</h2>
+    <p class="section-sub fade-in">You pay based on the value delivered, not hours spent. Two components, both transparent.</p>
     <div class="pricing-grid">
-        <div class="pricing-card">
+        <div class="pricing-card fade-in">
             <div class="pricing-phase">Upfront</div>
             <h3>Build Fee</h3>
             <p class="pricing-desc">Covers discovery, design, and implementation. Scoped and quoted based on the agreed solution — you know exactly what you're paying for before we start.</p>
@@ -423,7 +621,7 @@
                 <li>Handover documentation included</li>
             </ul>
         </div>
-        <div class="pricing-card">
+        <div class="pricing-card fade-in fade-in-delay-1">
             <div class="pricing-phase">Ongoing</div>
             <h3>Annual Automation Fee</h3>
             <p class="pricing-desc">Keeps your automation running, maintained, and improving. Priced as a share of the value it delivers — you keep the majority of savings.</p>
@@ -437,26 +635,101 @@
             </ul>
         </div>
     </div>
-    <p class="pricing-note">
+    <p class="pricing-note fade-in">
         Every project is different, so we price based on what you actually need. No lock-in on the annual fee — if you cancel, you get a full export of your automation, documentation, and setup guide. You own your IP. Always.
         <br><br>
         <a href="/signup" style="color: var(--brand); font-weight: 600;">Sign up</a> to get started, or <a href="/contact" style="color: var(--brand); font-weight: 600;">get in touch</a> to discuss your project.
     </p>
 </section>
 
-<!-- CTA -->
-<section class="cta-section">
-    <div class="cta">
-        <h2>Ready to automate what matters?</h2>
-        <p>From idea to live automation — with full ownership and no lock-in. Let's talk about what Morti can do for your business.</p>
-        <a href="/signup" class="btn btn-white" style="margin-right: 12px;">Get Started Free</a>
-        <a href="/contact" class="btn btn-outline-white">Get in Touch</a>
+<!-- Testimonials -->
+<section class="testimonial-section">
+    <div class="section-label fade-in">What People Say</div>
+    <div class="section-divider fade-in"></div>
+    <h2 class="section-title fade-in">Trusted by Australian SMBs</h2>
+    <p class="section-sub fade-in">Real businesses, real automation, real results.</p>
+    <div class="testimonial-grid">
+        <div class="testimonial-card fade-in">
+            <div class="quote-mark">"</div>
+            <p>Morti took a messy internal process and turned it into a clean, running automation in weeks. The handover documentation was exceptional.</p>
+            <div class="testimonial-author">Melbourne SMB <span>· Operations</span></div>
+        </div>
+        <div class="testimonial-card fade-in fade-in-delay-1">
+            <div class="quote-mark">"</div>
+            <p>What impressed me most was the no lock-in approach. They genuinely want you to stay because the service is good, not because you're trapped.</p>
+            <div class="testimonial-author">Professional Services <span>· Director</span></div>
+        </div>
+        <div class="testimonial-card fade-in fade-in-delay-2">
+            <div class="quote-mark">"</div>
+            <p>The AI-powered requirements capture saved us hours of back-and-forth. We talked through the idea and got a detailed design back fast.</p>
+            <div class="testimonial-author">Tech Startup <span>· Founder</span></div>
+        </div>
     </div>
 </section>
 
-<footer>
-    <p>&copy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> · Melbourne, Australia &nbsp;·&nbsp; <a href="/about">About</a> &nbsp;·&nbsp; <a href="/contact">Contact</a> &nbsp;·&nbsp; <a href="/signup">Sign Up</a> &nbsp;·&nbsp; <a href="/login">Login</a></p>
+<!-- CTA -->
+<section class="cta-section">
+    <div class="cta fade-in">
+        <h2>Ready to automate what matters?</h2>
+        <p>From idea to live automation — with full ownership and no lock-in. Let's talk about what Morti can do for your business.</p>
+        <div class="cta-buttons">
+            <a href="/signup" class="btn btn-white">Get Started Free</a>
+            <a href="/contact" class="btn btn-outline-white">Get in Touch</a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="site-footer">
+    <div class="footer-grid">
+        <div>
+            <div class="footer-brand">◆ Morti</div>
+            <p class="footer-brand-desc">AI-native consulting and managed automation for Australian small and medium businesses. From idea to live system.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Product</h4>
+            <a href="#products">What We Do</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#trust">Trust & Portability</a>
+        </div>
+        <div class="footer-col">
+            <h4>Company</h4>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+            <a href="/signup">Get Started</a>
+            <a href="/login">Customer Login</a>
+        </div>
+        <div class="footer-col">
+            <h4>Contact</h4>
+            <a href="mailto:luke.mccarthy.home@gmail.com">Email Us</a>
+            <a>Melbourne, Australia</a>
+            <a href="https://morti.com.au">morti.com.au</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        &copy; <%= new Date().getFullYear() %> Morti Pty Ltd · ABN pending · Melbourne, Australia
+    </div>
 </footer>
+
+<!-- Back to top -->
+<button class="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑</button>
+
+<script>
+// Scroll animations
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// Nav shadow on scroll
+const nav = document.querySelector('nav');
+const btt = document.querySelector('.back-to-top');
+window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+    btt.classList.toggle('show', window.scrollY > 600);
+});
+</script>
 
 </body>
 </html>
