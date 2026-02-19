@@ -94,6 +94,7 @@
         const designApprovedState = typeof designApproved !== 'undefined' && designApproved;
         const proposalReady = typeof hasPublishedProposal !== 'undefined' && hasPublishedProposal;
         const isApproved = typeof proposalApproved !== 'undefined' && proposalApproved;
+        const hasBuild = typeof engineBuildId !== 'undefined' && !!engineBuildId;
         
         // Calculate total messages across sessions
         let totalMessages = 0;
@@ -148,6 +149,13 @@
                     <div class="milestone-icon <%= isApproved ? 'done' : (proposalReady ? 'current' : '') %>">✅</div>
                     <div class="milestone-label <%= isApproved ? 'done' : (proposalReady ? 'current' : '') %>"><%= isApproved ? '✓ Approved' : 'Approved' %></div>
                 </div>
+                <% if (hasBuild) { %>
+                <div class="milestone-connector <%= hasBuild ? 'done' : '' %>"></div>
+                <div class="milestone">
+                    <div class="milestone-icon <%= hasBuild ? 'current' : '' %>">🔧</div>
+                    <div class="milestone-label <%= hasBuild ? 'current' : '' %>">Build</div>
+                </div>
+                <% } %>
             </div>
         </div>
 
@@ -187,6 +195,18 @@
                             <p style="font-size: 13px; color: #047857;"><%= isApproved ? 'You approved this proposal' : 'Review pricing and scope details' %></p>
                         </div>
                         <a href="/customer/projects/<%= project.id %>/proposal" class="btn" style="background: #8b5cf6;"><%= isApproved ? 'View Proposal' : 'View & Approve' %></a>
+                    </div>
+                </div>
+            <% } %>
+            <% if (typeof engineBuildId !== 'undefined' && engineBuildId) { %>
+                <div class="milestone-card ready" style="border-color: #4f46e5;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 24px; margin-bottom: 4px;">🔧</div>
+                            <h3 style="margin-bottom: 4px; color: #1e40af;">Setup Required</h3>
+                            <p style="font-size: 13px; color: #3b82f6;">Provide credentials and configuration to start your build</p>
+                        </div>
+                        <a href="/customer/projects/<%= project.id %>/onboarding" class="btn" style="background: #4f46e5; color: white;">Complete Setup</a>
                     </div>
                 </div>
             <% } %>

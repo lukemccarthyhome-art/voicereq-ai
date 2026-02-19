@@ -16,6 +16,33 @@ const nodemailer = require('nodemailer');
 
 require('dotenv').config();
 
+// Reusable email sender
+async function sendMortiEmail(to, subject, html) {
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  if (!smtpUser || !smtpPass) {
+    console.log(`[Email] SMTP not configured — skipping email to ${to}: ${subject}`);
+    return false;
+  }
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: false,
+      auth: { user: smtpUser, pass: smtpPass }
+    });
+    await transporter.sendMail({
+      from: `"Morti Projects" <${smtpUser}>`,
+      to, subject, html
+    });
+    console.log(`[Email] Sent to ${to}: ${subject}`);
+    return true;
+  } catch (err) {
+    console.error(`[Email] Failed to send to ${to}:`, err.message);
+    return false;
+  }
+}
+
 // Import database and authentication
 const db = require('./database-adapter');
 const auth = require('./auth');
@@ -552,7 +579,27 @@ app.post('/admin/customers/:id/delete', auth.authenticate, auth.requireAdmin, as
 // Approve customer account
 app.post('/admin/customers/:id/approve', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
+    // Get user details before approving (for email)
+    const user = await db.getUserById(req.params.id);
     await db.approveUser(req.params.id);
+
+    // Send approval email
+    if (user && user.email) {
+      await sendMortiEmail(user.email, 'Your Morti Projects Account is Approved! 🎉', `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #1e293b;">You're in${user.name ? ', ' + user.name : ''}!</h2>
+          <p style="color: #475569; line-height: 1.6;">Your <strong>Morti Projects</strong> account has been approved and is ready to use.</p>
+          <p style="text-align: center; margin: 32px 0;">
+            <a href="https://projects.morti.com.au/login" style="background: #4f46e5; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Log In to Morti Projects</a>
+          </p>
+          <p style="color: #475569; line-height: 1.6;">Once logged in, you can create a project and start capturing your requirements through voice or chat — our AI will help structure everything into a clear solution design.</p>
+          <p style="color: #475569; line-height: 1.6;">Questions? Just reply to this email or contact us at <a href="mailto:info@morti.com.au">info@morti.com.au</a>.</p>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+          <p style="color: #94a3b8; font-size: 13px;">&copy; ${new Date().getFullYear()} Morti Pty Ltd · Australia · <a href="https://projects.morti.com.au" style="color: #4f46e5;">projects.morti.com.au</a></p>
+        </div>
+      `);
+    }
+
     res.redirect('/admin/customers?message=Customer approved successfully');
   } catch (e) {
     console.error('Approve customer error:', e);
@@ -666,7 +713,7 @@ app.post('/admin/projects/:id/archive', auth.authenticate, auth.requireAdmin, as
   try {
     const project = await db.getProject(req.params.id);
     if (!project) return res.status(404).send('Project not found');
-    db.getDb().prepare('UPDATE projects SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run('archived', req.params.id);
+    await db.updateProject(req.params.id, project.name, project.description, 'archived');
     res.redirect('/admin/projects?message=Project+archived');
   } catch (e) {
     console.error('Archive error:', e);
@@ -676,7 +723,9 @@ app.post('/admin/projects/:id/archive', auth.authenticate, auth.requireAdmin, as
 
 app.post('/admin/projects/:id/unarchive', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
-    db.getDb().prepare('UPDATE projects SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run('active', req.params.id);
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).send('Project not found');
+    await db.updateProject(req.params.id, project.name, project.description, 'active');
     res.redirect('/admin/projects/archived?message=Project+unarchived');
   } catch (e) {
     console.error('Unarchive error:', e);
@@ -1857,6 +1906,71 @@ app.post('/customer/projects/:id/proposal/approve', auth.authenticate, async (re
   res.redirect(`/customer/projects/${req.params.id}/proposal`);
 });
 
+// ─── Customer Onboarding (proxied to Morti Engine) ─────────
+
+// Helper to get engine build ID from project's design
+function getEngineBuildId(projectId) {
+  const result = loadNewestDesign(projectId);
+  if (!result || !result.design) return null;
+  return result.design.engineBuildId || null;
+}
+
+// Customer onboarding page
+app.get('/customer/projects/:id/onboarding', auth.authenticate, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).render('error', { message: 'Project not found' });
+
+    const buildId = getEngineBuildId(req.params.id);
+    if (!buildId) return res.render('customer/project-onboarding', { user: req.user, project, spec: null, state: null, buildId: null, error: 'No build has been created for this project yet.', title: project.name + ' - Onboarding' });
+
+    const engineUrl = process.env.ENGINE_API_URL;
+    const engineSecret = process.env.ENGINE_API_SECRET;
+    if (!engineUrl || !engineSecret) return res.render('customer/project-onboarding', { user: req.user, project, spec: null, state: null, buildId, error: 'Build engine not configured.', title: project.name + ' - Onboarding' });
+
+    const response = await fetch(`${engineUrl}/api/builds/${buildId}/onboarding`, {
+      headers: { 'Authorization': `Bearer ${engineSecret}` },
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!response.ok) throw new Error(`Engine returned ${response.status}`);
+    const data = await response.json();
+
+    res.render('customer/project-onboarding', {
+      user: req.user, project, spec: data.spec, state: data.state, buildId,
+      error: null, title: project.name + ' - Onboarding'
+    });
+  } catch (e) {
+    console.error('Customer onboarding error:', e);
+    res.render('customer/project-onboarding', { user: req.user, project: { name: 'Error' }, spec: null, state: null, buildId: null, error: 'Failed to load onboarding: ' + e.message, title: 'Onboarding Error' });
+  }
+});
+
+// Customer save onboarding data
+app.post('/customer/projects/:id/onboarding', auth.authenticate, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const buildId = getEngineBuildId(req.params.id);
+    if (!buildId) return res.status(400).json({ error: 'No build found' });
+
+    const engineUrl = process.env.ENGINE_API_URL;
+    const engineSecret = process.env.ENGINE_API_SECRET;
+
+    const response = await fetch(`${engineUrl}/api/builds/${buildId}/onboarding/external`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${engineSecret}` },
+      body: JSON.stringify(req.body),
+      signal: AbortSignal.timeout(10000)
+    });
+    const data = await response.json();
+    res.json(data);
+  } catch (e) {
+    console.error('Customer onboarding save error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 async function generateProposalAsync(projectId, project, design, OPENAI_KEY, user, discount) {
   try {
     
@@ -2067,15 +2181,64 @@ app.post('/admin/projects/:id/send-to-engine', auth.authenticate, auth.requireAd
     const engineSecret = process.env.ENGINE_API_SECRET;
     if (!engineUrl || !engineSecret) return res.status(500).json({ error: 'Engine API not configured (ENGINE_API_URL / ENGINE_API_SECRET)' });
 
-    // Build the payload — only design JSON, project name, project ID, design ID. No credentials or sensitive data.
+    // --- Gather full project data ---
     const design = result.design;
     const designPayload = design.sections || {};
     if (design.summary) designPayload.summary = design.summary;
     if (design.designMarkdown) designPayload.designMarkdown = design.designMarkdown;
 
+    // Requirements from project record
+    let requirements = {};
+    try { requirements = JSON.parse(project.requirements || '{}'); } catch (e) { /* empty */ }
+
+    // Session transcript
+    const sessions = await db.getSessionsByProject(projectId);
+    let transcript = [];
+    for (const sess of sessions) {
+      try {
+        const fullSession = await db.getSession(sess.id);
+        if (fullSession && fullSession.transcript) {
+          const msgs = JSON.parse(fullSession.transcript || '[]');
+          transcript = transcript.concat(msgs);
+        }
+      } catch (e) { /* skip */ }
+    }
+
+    // Files — include metadata + base64 content for text-based files, metadata-only for large binaries
+    const dbFiles = await db.getFilesByProject(projectId);
+    const files = [];
+    for (const f of dbFiles) {
+      const fileEntry = {
+        name: f.original_name || f.filename,
+        type: f.mime_type || f.type || 'unknown',
+        description: f.ai_description || f.description || '',
+        size: f.size || 0
+      };
+      // Include file content for text/small files (< 2MB)
+      try {
+        const filePath = path.join(uploadsDir, f.filename || f.original_name);
+        if (fs.existsSync(filePath)) {
+          const stats = fs.statSync(filePath);
+          if (stats.size < 2 * 1024 * 1024) {
+            const content = fs.readFileSync(filePath);
+            fileEntry.contentBase64 = content.toString('base64');
+            fileEntry.actualSize = stats.size;
+          } else {
+            fileEntry.contentBase64 = null;
+            fileEntry.note = 'File too large to transfer inline (> 2MB)';
+          }
+        }
+      } catch (e) { /* file not on disk, metadata only */ }
+      files.push(fileEntry);
+    }
+
     const payload = {
       design: designPayload,
+      requirements: requirements,
+      transcript: transcript,
+      files: files,
       projectName: project.name,
+      projectDescription: project.description || '',
       projectId: projectId,
       designId: design.id
     };
@@ -2087,7 +2250,7 @@ app.post('/admin/projects/:id/send-to-engine', auth.authenticate, auth.requireAd
         'Authorization': `Bearer ${engineSecret}`
       },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(60000)
     });
 
     if (!response.ok) {
@@ -2261,7 +2424,7 @@ app.post('/customer/projects/:id/archive', auth.authenticate, auth.requireCustom
   try {
     const project = await db.getProject(req.params.id);
     if (!project || project.user_id !== req.user.id) return res.status(403).send('Forbidden');
-    db.getDb().prepare('UPDATE projects SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run('archived', req.params.id);
+    await db.updateProject(req.params.id, project.name, project.description, 'archived');
     res.redirect('/projects?message=Project+archived');
   } catch (e) {
     res.redirect(`/projects/${req.params.id}?error=Archive+failed`);
@@ -2272,7 +2435,7 @@ app.post('/customer/projects/:id/unarchive', auth.authenticate, auth.requireCust
   try {
     const project = await db.getProject(req.params.id);
     if (!project || project.user_id !== req.user.id) return res.status(403).send('Forbidden');
-    db.getDb().prepare('UPDATE projects SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run('active', req.params.id);
+    await db.updateProject(req.params.id, project.name, project.description, 'active');
     res.redirect('/projects/archived?message=Project+unarchived');
   } catch (e) {
     res.redirect('/projects/archived?error=Unarchive+failed');
@@ -2521,6 +2684,9 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
 
   // Check if current user can manage shares
   const canShare = projectAccess === 'owner' || projectAccess === 'admin';
+
+  // Check if project has been sent to engine
+  const engineBuildId = getEngineBuildId(project.id);
   
   res.render('customer/project', {
     user: req.user,
@@ -2539,6 +2705,7 @@ app.get('/projects/:id', auth.authenticate, auth.requireCustomer, async (req, re
     projectAccess,
     isShared,
     canShare,
+    engineBuildId,
     title: project.name,
     currentPage: 'customer-projects',
     breadcrumbs: [
@@ -3440,6 +3607,18 @@ app.post('/signup', signupLimiter, async (req, res) => {
       }
     }
 
+    // Send confirmation email to user
+    await sendMortiEmail(email, 'Your Morti Projects Account is Under Review', `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1e293b;">Thanks for signing up, ${name}!</h2>
+        <p style="color: #475569; line-height: 1.6;">Your account for <strong>Morti Projects</strong> has been created and is currently under review.</p>
+        <p style="color: #475569; line-height: 1.6;">Our team will review your application and you'll receive an email once your account has been approved. This usually takes less than 24 hours.</p>
+        <p style="color: #475569; line-height: 1.6;">In the meantime, if you have any questions, reply to this email or contact us at <a href="mailto:info@morti.com.au">info@morti.com.au</a>.</p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+        <p style="color: #94a3b8; font-size: 13px;">&copy; ${new Date().getFullYear()} Morti Pty Ltd · Australia · <a href="https://projects.morti.com.au" style="color: #4f46e5;">projects.morti.com.au</a></p>
+      </div>
+    `);
+
     res.render('signup', { success: true });
   } catch (e) {
     console.error('Signup error:', e);
@@ -3478,7 +3657,7 @@ app.post('/contact', contactLimiter, async (req, res) => {
   // Send email if SMTP configured
   const smtpUser = process.env.SMTP_USER || process.env.CONTACT_EMAIL;
   const smtpPass = process.env.SMTP_PASS;
-  const contactTo = process.env.CONTACT_EMAIL || 'luke.mccarthy.home@gmail.com';
+  const contactTo = process.env.CONTACT_EMAIL || 'info@morti.com.au';
 
   if (smtpUser && smtpPass) {
     try {
