@@ -100,6 +100,31 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Request logging — write last N requests to ring buffer, dump on crash
+const REQUEST_LOG_SIZE = 20;
+const recentRequests = [];
+app.use((req, res, next) => {
+  const entry = `${new Date().toISOString()} ${req.method} ${req.url} IP:${req.ip} UA:${(req.headers['user-agent']||'').slice(0,80)} Cookies:${Object.keys(req.cookies||{}).join(',')}`;
+  recentRequests.push(entry);
+  if (recentRequests.length > REQUEST_LOG_SIZE) recentRequests.shift();
+  next();
+});
+
+// On crash, dump recent requests
+const origLogCrash = logCrash;
+const _logCrash = logCrash;
+function logCrashWithRequests(label, err) {
+  const reqDump = `\n--- Last ${recentRequests.length} requests ---\n${recentRequests.join('\n')}\n--- End requests ---\n`;
+  const msg = `[${new Date().toISOString()}] ${label}: ${err?.stack || err?.message || err}${reqDump}`;
+  console.error(msg);
+  if (CRASH_LOG) try { fs.appendFileSync(CRASH_LOG, msg); } catch {}
+}
+// Override the process handlers
+process.removeAllListeners('uncaughtException');
+process.removeAllListeners('unhandledRejection');
+process.on('uncaughtException', (err) => { logCrashWithRequests('UNCAUGHT', err); process.exit(1); });
+process.on('unhandledRejection', (err) => { logCrashWithRequests('UNHANDLED_REJECTION', err); });
+
 // Input Sanitization Middleware
 const sanitizeInput = (req, res, next) => {
   if (req.body) {
@@ -3942,11 +3967,18 @@ app.get('/', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).render('error', { 
-    message: 'Internal server error',
-    user: req.user || null 
-  });
+  const info = `[${new Date().toISOString()}] EXPRESS ERROR: ${req.method} ${req.url} | IP: ${req.ip} | UA: ${req.headers['user-agent']?.slice(0,100)} | Cookies: ${Object.keys(req.cookies||{}).join(',')} | Error: ${err?.stack || err?.message || err}\n`;
+  console.error(info);
+  if (CRASH_LOG) try { fs.appendFileSync(CRASH_LOG, info); } catch {}
+  try {
+    res.status(500).render('error', { 
+      message: 'Internal server error',
+      user: req.user || null 
+    });
+  } catch (renderErr) {
+    logCrash('ERROR_RENDER_FAIL', renderErr);
+    res.status(500).send('Internal server error');
+  }
 });
 
 // Wait for database to be ready, then start server
