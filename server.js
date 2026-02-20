@@ -948,14 +948,35 @@ async function extractDesignAsync(projectId, user) {
       } catch {}
     });
     const files = await db.getFilesByProject(projectId);
-    files.forEach(f => { 
-      const text = (f.extracted_text || '').trim();
-      if (text) {
-        reqText += `\n\nUPLOADED FILE: ${f.original_name}\n${f.description ? 'Description: ' + f.description + '\n' : ''}Content:\n${text.substring(0, 5000)}\n`;
+    for (const f of files) {
+      let text = '';
+      // Read full file from disk (not truncated DB text)
+      const fname = f.original_name || f.filename;
+      const diskPath = path.join(uploadsDir, fname);
+      if (fs.existsSync(diskPath)) {
+        try {
+          const ext = path.extname(fname).toLowerCase();
+          if (['.txt', '.md', '.csv', '.json', '.xml', '.yaml', '.yml', '.html', '.css', '.js', '.ts', '.py'].includes(ext)) {
+            text = fs.readFileSync(diskPath, 'utf8');
+          } else if (['.doc', '.docx'].includes(ext)) {
+            try { const mammoth = require('mammoth'); const r = await mammoth.extractRawText({ path: diskPath }); text = r.value; } catch(e) { text = (f.extracted_text || '').trim(); }
+          } else if (ext === '.pdf') {
+            try { const { PDFParse } = require('pdf-parse'); const buf = new Uint8Array(fs.readFileSync(diskPath)); const parser = new PDFParse(buf); await parser.load(); const r = await parser.getText(); text = r && r.pages ? r.pages.map(p => p.text).join('\n\n') : (typeof r === 'string' ? r : ''); } catch(e) { text = (f.extracted_text || '').trim(); }
+          } else {
+            text = (f.extracted_text || '').trim();
+          }
+        } catch(e) { text = (f.extracted_text || '').trim(); }
       } else {
-        reqText += `\nUPLOADED FILE: ${f.original_name} (no text extracted)\n`;
+        text = (f.extracted_text || '').trim();
       }
-    });
+      if (text) {
+        // Cap at 50K per file for context window safety
+        if (text.length > 50000) text = text.substring(0, 50000) + '\n\n[...truncated from ' + text.length + ' chars]';
+        reqText += `\n\nUPLOADED FILE: ${fname}\n${f.description ? 'Description: ' + f.description + '\n' : ''}Content:\n${text}\n`;
+      } else {
+        reqText += `\nUPLOADED FILE: ${fname} (no text extracted)\n`;
+      }
+    }
 
     // Include admin notes
     const project = await db.getProject(projectId);
@@ -980,16 +1001,18 @@ async function extractDesignAsync(projectId, user) {
   "summary": "3-5 sentence executive summary: what this system actually is, the core operating loop, what problem it solves, and what it is NOT.",
   "design": {
     "ExecutiveSummary": "Plain English explanation of what this system is. The core operating loop. What problem it solves and what it is not. Keep it commercially credible.",
-    "CoreWorkflow": "Step-by-step operational flow in practical terms. For each step: why it exists, what value it adds, where human control remains. Avoid technical jargon.",
-    "SimplifiedArchitecture": "Minimal viable architecture to deliver the workflow. Recommended tool categories (database, automation layer, LLM, external APIs) with rationale for each. Explicitly state what is NOT required for MVP. Avoid microservices, enterprise cloud discussions, advanced DevOps unless absolutely necessary.",
-    "MinimalDataModel": "Only essential data structures. For each entity: name, key fields, purpose in the system, why it is needed. Keep it lean.",
-    "ManualVsAutomated": "Clearly separate what remains manual by design vs what is automated, and why. Comment on strategic control and risk management.",
-    "Assumptions": "Assumptions made in designing this MVP: user volume, budget constraints, data sensitivity, platform compliance, operational maturity. These justify architectural simplifications.",
-    "Dependencies": "External dependencies: APIs, third-party tools, data sources, access credentials, user-provided inputs. Clarify which are critical vs optional.",
-    "Phase2Enhancements": "OUT OF SCOPE for MVP. List enhancements that improve scale, analytics, automation, resilience. Make clear these are future considerations, not required for launch.",
-    "RisksAndMitigations": "Realistic risks only — no theatrical or enterprise-only risks. For each: impact and lightweight mitigation suitable for MVP stage.",
-    "BuildEffortEstimate": "Complexity rating (Low/Medium/High), rough timeline, key build phases. Be practical.",
-    "CostBenefitAnalysis": "ROI analysis: current cost of the process being replaced (or human labour equivalent for new initiatives), expected value/savings the system delivers, simple payback calculation. If cost data was not provided in requirements, state this clearly and flag it as a required input before proposal generation."
+    "CoreWorkflow": "DETAILED step-by-step operational flow as a NUMBERED LIST. This is the most important section — be thorough and comprehensive. For EACH step include ALL of the following: (a) **Bold step name**, (b) Detailed description of what happens — inputs, processing, outputs, (c) WHY this step exists and what value it adds, (d) Where human control or review remains if applicable, (e) Data flow — what data comes in and what goes out, (f) Error handling — what happens if this step fails, (g) Specific tools/services used at this step, (h) Any business rules, conditions, or logic that apply. Do NOT summarise — expand fully. Each step should be a rich, self-contained specification. If a step has sub-steps, list them. There is NO length limit on this section — write as much detail as needed to fully specify the workflow.",
+    "SimplifiedArchitecture": "Architecture as a BULLETED LIST of components. For each: component name, specific tool/service recommended, rationale for choosing it, and how it connects to other components. End with a 'NOT required for MVP' list. Avoid microservices, enterprise cloud, advanced DevOps.",
+    "MinimalDataModel": "BULLETED LIST of entities. For each: **Entity Name** — all key fields with types/descriptions, relationships to other entities, purpose in the system. Include example values where helpful.",
+    "ManualVsAutomated": "TWO LISTS: 'Automated' and 'Remains Manual'. For each item: what it is, why it's in that category, and what happens if this decision changes later. Comment on strategic control and risk.",
+    "Assumptions": "BULLETED LIST of assumptions made in designing this MVP. For each: the assumption, why it was made, and what would change in the design if the assumption is wrong. Cover: user volume, budget, data sensitivity, platform compliance, operational maturity.",
+    "Dependencies": "BULLETED LIST of external dependencies. For each: name, what it's used for, version/tier if relevant, cost implications, and tag as (Critical) or (Optional). Include setup complexity notes.",
+    "Phase2Enhancements": "NUMBERED LIST of future enhancements — OUT OF SCOPE for MVP. Each item: what it is, what value it adds, rough effort to implement later, and any MVP decisions that would need revisiting. Make clear these are not required for launch.",
+    "RisksAndMitigations": "BULLETED LIST of realistic risks. For each: **Risk** — likelihood, impact, detailed mitigation strategy, and who is responsible. No theatrical or enterprise-only risks.",
+    "BuildEffortEstimate": "Complexity rating (Low/Medium/High), detailed timeline with phases and deliverables per phase, key dependencies between phases, recommended team composition. Be practical and specific.",
+    "CostBenefitAnalysis": "ROI analysis: current cost of the process being replaced (or human labour equivalent for new initiatives), expected value/savings the system delivers, simple payback calculation. If cost data was not provided in requirements, state this clearly and flag it as a required input before proposal generation.",
+    "TechnicalReadiness": "BULLETED LIST of the client's existing technical landscape relevant to this project. For each: tool/service name, how it connects to this project, credential/access status if mentioned. Include: current tools in use, data sources identified, integration points, technical constraints. If not discussed in requirements, state 'Not captured — probe during onboarding.'",
+    "TechnicalReference": "COMPREHENSIVE technical reference extracted from ALL sources — requirements conversation, uploaded documents, admin notes, and design chat feedback. This section is the build team's reference manual. Group by category and be EXHAUSTIVE. Include ALL of the following where mentioned: **Data & Fields** (exact field names, data types, formats, validation rules, example values), **APIs & Endpoints** (URLs, methods, auth requirements, request/response formats, rate limits), **Business Rules** (conditions, thresholds, logic flows, edge cases, exceptions), **Code & Patterns** (code snippets, regex patterns, naming conventions, ID formats), **URLs & Infrastructure** (domain structures, environment details, hosting specifics), **Compliance & Security** (regulatory requirements, data handling rules, access controls), **Integration Specifics** (webhook formats, callback URLs, polling intervals, retry logic), **Configuration** (environment variables, feature flags, default values). Quote directly from source material where possible. There is NO length limit — capture every technical detail available. If a category has no relevant details, omit it."
   },
   "questions": [
     {"id": 1, "text": "Specific question about a gap or ambiguity", "assumption": "What we'll assume if unanswered"}
@@ -1007,7 +1030,9 @@ async function extractDesignAsync(projectId, user) {
 - Reference the specific tools, platforms, and workflows mentioned in the conversation.
 - Where vague, make a reasonable assumption and mark it with [ASSUMPTION].
 
-TONE: Clear, pragmatic, commercially credible. Avoid hype. Avoid enterprise theatre. Avoid unnecessary technical depth. Prioritize clarity and decision rationale. Write as if this document will be reviewed by a founder or commercial stakeholder, not an infrastructure committee.
+TONE: Clear, pragmatic, commercially credible. Avoid hype. Avoid enterprise theatre. Prioritize clarity and decision rationale. Write as if this document will be reviewed by a founder or commercial stakeholder, not an infrastructure committee.
+
+LENGTH: There is NO length limit on any section. Be as detailed as the content requires. CoreWorkflow and TechnicalReference in particular should be comprehensive — these are the sections the build team relies on most. Do not summarise where detail exists. Do not compress information to save space.
 
 DESIGN PRINCIPLES:
 - Humans steer; systems automate repetition.
@@ -1045,11 +1070,12 @@ ${context}`;
         // REFRESH: update existing design with new information only
         return `You are a pragmatic product architect UPDATING an existing MVP design. A previous design already exists. Your job is to:
 
-1. START with the previous design as the baseline — preserve all existing content.
-2. INCORPORATE new information: answered questions, new admin notes, updated requirements.
-3. REFINE sections affected by the new information.
-4. DO NOT regenerate sections that haven't changed.
-5. DO NOT ask new questions unless the new information reveals a genuinely critical gap for MVP delivery.
+1. READ THE DESIGN CHAT FEEDBACK FIRST — this is the admin's explicit instructions for what to change. This is your #1 priority. Every piece of admin feedback MUST be reflected in the updated design.
+2. START with the previous design as the baseline — preserve all existing content that wasn't flagged for change.
+3. INCORPORATE new information: chat feedback, answered questions, admin notes, updated requirements.
+4. REFINE sections affected by the new information.
+5. DO NOT regenerate sections that haven't changed AND weren't discussed in chat feedback.
+6. DO NOT ask new questions unless the new information reveals a genuinely critical gap for MVP delivery.
 
 OUTPUT FORMAT: Valid JSON only. No markdown wrapping. Same structure:
 ${DESIGN_SECTIONS_SCHEMA}
@@ -1097,8 +1123,33 @@ ${context}`;
     // For refresh: build context of what's NEW since last design
     let promptContext = reqText.substring(0, 60000);
     if (previousDesign) {
-      // On refresh, focus on new information
+      // On refresh, focus on new information — PRIORITY ORDER matters
       const newInfo = [];
+
+      // HIGHEST PRIORITY: Design chat feedback — admin explicitly requested changes
+      if (previousDesign.chat && previousDesign.chat.length > 0) {
+        const chatFeedback = previousDesign.chat
+          .filter(c => (c.role === 'user' || c.role === 'assistant') || (c.from || c.text))
+          .map(c => {
+            const isAdmin = c.role === 'user' || (c.from && c.from !== 'ai' && c.from !== 'assistant');
+            const text = c.content || c.text || '';
+            return text ? `${isAdmin ? 'ADMIN FEEDBACK' : 'AI RESPONSE'}: ${text}` : '';
+          })
+          .filter(Boolean)
+          .join('\n\n');
+        if (chatFeedback) {
+          newInfo.push('⚠️ HIGHEST PRIORITY — DESIGN CHAT FEEDBACK (the admin explicitly discussed these changes and EXPECTS them in the refreshed design. You MUST incorporate every piece of admin feedback below. If admin said to change something, change it.):\n\n' + chatFeedback);
+        }
+      }
+
+      // Admin notes
+      try {
+        const adminNotes = JSON.parse(project.admin_notes || '[]');
+        if (adminNotes.length > 0) {
+          newInfo.push('ADMIN NOTES (incorporate these):\n' + adminNotes.map(n => `- ${n.text}`).join('\n'));
+        }
+      } catch(e) {}
+
       if (prevAnswersText) newInfo.push('ANSWERED QUESTIONS:\n' + prevAnswersText);
       
       // Include accepted assumptions
@@ -1107,16 +1158,8 @@ ${context}`;
           previousDesign.acceptedAssumptions.map(a => `- Q: ${a.question} → Assumption accepted: ${a.assumption}`).join('\n'));
       }
       
-      // Admin notes (all, since they may have been updated)
-      try {
-        const adminNotes = JSON.parse(project.admin_notes || '[]');
-        if (adminNotes.length > 0) {
-          newInfo.push('ADMIN NOTES:\n' + adminNotes.map(n => `- ${n.text}`).join('\n'));
-        }
-      } catch(e) {}
-      
-      // Include full transcript for context but mark it
-      newInfo.push('FULL PROJECT TRANSCRIPT (for reference):\n' + reqText.substring(0, 40000));
+      // Include full transcript for context but mark it as lower priority
+      newInfo.push('FULL PROJECT TRANSCRIPT (background reference only — chat feedback above takes priority over anything here):\n' + reqText.substring(0, 40000));
       
       promptContext = newInfo.join('\n\n---\n\n');
     }
@@ -1128,7 +1171,7 @@ ${context}`;
         const resp = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-          body: JSON.stringify({ model: model, max_completion_tokens: 8000, messages: [{ role: 'system', content: 'You are a senior solutions architect and business analyst. You produce detailed, actionable solution designs.' }, { role: 'user', content: prompt }] })
+          body: JSON.stringify({ model: model, max_completion_tokens: 16000, messages: [{ role: 'system', content: 'You are a senior solutions architect and business analyst. You produce detailed, actionable solution designs. The CoreWorkflow section should be your most detailed section — expand fully with no length limit.' }, { role: 'user', content: prompt }] })
         });
         if (resp.ok) {
           const data = await resp.json();
@@ -1303,6 +1346,7 @@ ${summarizeRequirements(reqText)}
         if (prev.published) { design.published = prev.published; design.publishedAt = prev.publishedAt; }
         if (prev.acceptedAssumptions && prev.acceptedAssumptions.length > 0) design.acceptedAssumptions = prev.acceptedAssumptions;
         if (prev.flowchart) design.flowchart = prev.flowchart;
+        if (prev.coreWorkflowFlowchart) design.coreWorkflowFlowchart = prev.coreWorkflowFlowchart;
       }
     } catch(e) {}
 
@@ -1389,6 +1433,29 @@ app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, asyn
         } catch(e) { /* ignore parse errors */ }
       }
     } catch(e) { /* ignore */ }
+    // Check if engine build still exists — revert button if deleted
+    if (design.sentToEngineAt && design.enginePlanId) {
+      try {
+        const engineUrl = process.env.ENGINE_API_URL;
+        const engineSecret = process.env.ENGINE_API_SECRET;
+        if (engineUrl && engineSecret) {
+          const checkRes = await fetch(`${engineUrl}/api/builds/${design.enginePlanId}/exists`, {
+            headers: { 'Authorization': `Bearer ${engineSecret}` },
+            signal: AbortSignal.timeout(3000)
+          });
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            if (!checkData.exists) {
+              // Build was deleted in Engine — clear build refs but keep sent status
+              delete design.enginePlanId;
+              delete design.engineBuildId;
+              saveDesign(design);
+            }
+          }
+        }
+      } catch (e) { /* Engine unreachable — leave as-is */ }
+    }
+
     res.render('admin/project-design', { user: req.user, projectId, design, generating: isGenerating, title: projectId + ' - Design' });
   } catch (e) {
     console.error('Get design error:', e);
@@ -1418,6 +1485,50 @@ function saveDesign(design) {
   fs.writeFileSync(path.join(designsDir, design.id + '.json'), JSON.stringify(design, null, 2));
 }
 
+// Sanitise mermaid syntax from LLM output
+function sanitiseMermaid(raw) {
+  let code = (raw || '').trim();
+  // Strip markdown code fences
+  code = code.replace(/^```(?:mermaid)?\s*/im, '').replace(/```\s*$/m, '').trim();
+  // Ensure header exists
+  if (!/^(flowchart|graph)\s+(TD|TB|LR|RL|BT)/i.test(code)) {
+    code = 'flowchart LR\n' + code;
+  }
+  // Fix single-dash arrows: -> to -->  (but not already -->)
+  code = code.replace(/([^\-])->/g, '$1-->');
+  // Fix lines — sanitise node labels containing special chars
+  const lines = code.split('\n');
+  const sanitised = lines.map(line => {
+    // Match node definitions: ID[Label], ID(Label), ID{Label}, ID([Label]), ID[[Label]], ID[(Label)]
+    return line.replace(/(\b\w+)((?:\[\[|\[\(|\(\[|\[|\(\(|\(|\{))(.*?)((?:\]\]|\)\]|\]\)|\]\)|\)|\}|\]))(?=\s|$|;)/g, (match, id, open, label, close) => {
+      // Strip existing quotes to re-wrap cleanly
+      let clean = label.replace(/^["']|["']$/g, '').trim();
+      // Always wrap in quotes for safety
+      clean = '"' + clean.replace(/"/g, "'") + '"';
+      return id + open + clean + close;
+    });
+  });
+  code = sanitised.join('\n');
+  // Remove empty lines that could cause parse issues
+  code = code.replace(/\n{3,}/g, '\n\n');
+  return code;
+}
+
+// Basic mermaid syntax validation
+function isMermaidValid(code) {
+  if (!code) return false;
+  if (!/^(flowchart|graph)\s+(TD|TB|LR|RL|BT)/i.test(code)) return false;
+  const lines = code.split('\n').filter(l => l.trim() && !l.trim().startsWith('%%'));
+  if (lines.length < 3) return false;
+  // Check for at least one arrow
+  if (!(/-->/.test(code))) return false;
+  // Check for balanced brackets
+  const opens = (code.match(/\[/g) || []).length;
+  const closes = (code.match(/\]/g) || []).length;
+  if (Math.abs(opens - closes) > 1) return false;
+  return true;
+}
+
 // Generate mermaid flowchart via OpenAI
 app.post('/admin/projects/:id/design/flowchart', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
@@ -1432,62 +1543,84 @@ app.post('/admin/projects/:id/design/flowchart', auth.authenticate, auth.require
     const sections = design.sections || {};
     const designContext = JSON.stringify({ summary: design.summary, sections }, null, 2);
 
-    const prompt = `You are a systems architect creating a HIGH-LEVEL COMPONENT DIAGRAM. Given the solution design below, generate a Mermaid flowchart showing ONLY the system components and their first-level connections.
+    const prompt = `You are a systems architect creating a HIGH-LEVEL COMPONENT DIAGRAM as a Mermaid flowchart.
 
-Rules:
-- Use \`flowchart LR\` (left-to-right)
-- Show ONLY system components being built and external services they connect to
-- DO NOT show user actions, decision points, or user journeys
-- This is a systems architecture diagram, not a process flow
-- Each node = a system component, service, database, or external API
-- Each edge = a data connection or integration between components
-- Use labeled edges: A -->|"API call"| B
-- Keep it simple: 8-15 nodes maximum
-- Use subgraphs to group: "Our System" for components we build, "External" for third-party services
-- Node shapes: [Component] for services, [(Database)] for data stores, [[External API]] for third-party
-- ALWAYS wrap node labels in double quotes: A["Component Name"]
-- Keep node IDs simple: A, B, C1, etc.
-- Return ONLY mermaid code. No markdown fences, no explanation. Start with "flowchart LR".
+STRICT MERMAID SYNTAX RULES — follow these exactly:
+1. First line MUST be: flowchart LR
+2. EVERY node label MUST be wrapped in double quotes: A["My Label"]
+3. Arrows MUST use -->  (two dashes + angle bracket). For labeled arrows: A -->|"label"| B
+4. Node shapes: ["Rectangle"], (["Stadium"]), [("Cylinder/DB")], {{"Hexagon"}}
+5. Subgraphs: subgraph Title\\n ... end
+6. Node IDs must be simple alphanumeric: A, B, C1, DB1 — no spaces or special chars in IDs
+7. NO semicolons at end of lines
+8. NO markdown fences — return raw mermaid code only
+
+VALID EXAMPLE:
+flowchart LR
+  subgraph Core["Our System"]
+    A["Web App"]
+    B["API Server"]
+    C[("PostgreSQL")]
+    A -->|"REST"| B
+    B -->|"queries"| C
+  end
+  subgraph Ext["External Services"]
+    D["Stripe API"]
+    E["SendGrid"]
+  end
+  B -->|"payments"| D
+  B -->|"emails"| E
+
+INVALID (do NOT do these):
+- A[My Label]  ← missing quotes around label
+- A -> B  ← wrong arrow, must be -->
+- \`\`\`mermaid  ← no code fences
+
+Rules for content:
+- Show ONLY system components and their connections (not user journeys)
+- 8-15 nodes maximum
+- Group into subgraphs: "Our System" and "External Services"
+- Node shapes: ["Component"] for services, [("Database")] for data stores
 
 Design:
 ${designContext.substring(0, 12000)}`;
 
-    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-      body: JSON.stringify({
-        model: 'gpt-4.1',
-        max_completion_tokens: 2000,
-        messages: [
-          { role: 'system', content: 'You generate Mermaid flowchart diagrams. Return only valid mermaid syntax.' },
-          { role: 'user', content: prompt }
-        ]
-      })
-    });
+    const generateFlowchart = async (extraContext = '') => {
+      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
+        body: JSON.stringify({
+          model: 'gpt-4.1',
+          max_completion_tokens: 2000,
+          messages: [
+            { role: 'system', content: 'You generate valid Mermaid flowchart syntax. Return ONLY raw mermaid code. No markdown, no explanation. Every node label must be in double quotes.' },
+            { role: 'user', content: prompt + extraContext }
+          ]
+        })
+      });
+      if (!resp.ok) throw new Error('OpenAI API returned ' + resp.status);
+      const data = await resp.json();
+      return (data.choices[0].message.content || '').trim();
+    };
 
-    if (!resp.ok) throw new Error('OpenAI API returned ' + resp.status);
-    const data = await resp.json();
-    let mermaid = (data.choices[0].message.content || '').trim();
-    // Strip any markdown fences
-    mermaid = mermaid.replace(/^```(?:mermaid)?\s*/i, '').replace(/```\s*$/, '').trim();
-    if (!mermaid.startsWith('flowchart')) mermaid = 'flowchart TD\n' + mermaid;
-    
-    // Sanitize node labels: wrap any label containing special chars in quotes
-    // Match node definitions like A[Label] or A([Label]) or A{Label} etc.
-    mermaid = mermaid.replace(/(\w+)(\[|\(|\{|\(\[|\[\()([^\]})]+)(\]|\)|\}|\]\)|\)\])/g, (match, id, open, label, close) => {
-      // If label contains characters that break mermaid parsing, wrap in quotes
-      if (/[\/\\(){}|<>#&]/.test(label) && !label.startsWith('"')) {
-        label = '"' + label.replace(/"/g, "'") + '"';
-      }
-      return id + open + label + close;
-    });
+    // First attempt
+    let raw = await generateFlowchart();
+    let mermaid = sanitiseMermaid(raw);
+
+    // Retry once if validation fails
+    if (!isMermaidValid(mermaid)) {
+      console.warn('Flowchart first attempt failed validation, retrying...');
+      const retryContext = `\n\nPREVIOUS ATTEMPT WAS INVALID. The output had syntax errors. Common issues: missing quotes around labels, wrong arrow syntax, or missing flowchart header. Please try again following the syntax rules exactly. Here was the broken output for reference:\n${raw.substring(0, 1000)}`;
+      raw = await generateFlowchart(retryContext);
+      mermaid = sanitiseMermaid(raw);
+    }
 
     // Save flowchart to design JSON
     try {
-      const result = loadNewestDesign(req.params.id);
-      if (result) {
-        result.design.flowchart = mermaid;
-        saveDesign(result.design);
+      const result2 = loadNewestDesign(req.params.id);
+      if (result2) {
+        result2.design.flowchart = mermaid;
+        saveDesign(result2.design);
       }
     } catch(e) { console.warn('Failed to save flowchart to design:', e.message); }
 
@@ -2259,11 +2392,37 @@ app.post('/admin/projects/:id/send-to-engine', auth.authenticate, auth.requireAd
     }
 
     const engineResult = await response.json();
+    const planId = engineResult.planId || projectId;
+
+    // Poll Engine until build is done (max 120s)
+    let buildId = engineResult.buildId || null;
+    if (!buildId && planId) {
+      const pollStart = Date.now();
+      const maxWait = 120000;
+      while (Date.now() - pollStart < maxWait) {
+        await new Promise(r => setTimeout(r, 3000));
+        try {
+          const statusRes = await fetch(`${engineUrl}/api/planner/status/${planId}`, {
+            headers: { 'Authorization': `Bearer ${engineSecret}` },
+            signal: AbortSignal.timeout(10000)
+          });
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            if (statusData.status === 'done') { buildId = statusData.buildId; break; }
+            if (statusData.status === 'error') throw new Error(statusData.error || 'Engine build failed');
+          }
+        } catch (pollErr) {
+          if (pollErr.message.includes('Engine build failed')) throw pollErr;
+          // transient error, keep polling
+        }
+      }
+      if (!buildId) throw new Error('Engine build timed out after 120s');
+    }
 
     // Track sent status on the design
     design.sentToEngineAt = new Date().toISOString();
-    design.enginePlanId = engineResult.planId || null;
-    design.engineBuildId = engineResult.buildId || null;
+    design.enginePlanId = planId;
+    design.engineBuildId = buildId;
     saveDesign(design);
 
     res.json({ 
@@ -2794,7 +2953,10 @@ app.post('/api/upload', apiAuth, uploadLimiter, upload.single('file'), async (re
     const savedPath = path.join(uploadsDir, file.originalname);
     fs.renameSync(filePath, savedPath);
 
-    // Truncate if very long
+    // Store full content length for reference
+    const fullContentLength = content.length;
+
+    // Truncate DB storage if very long (full file remains on disk)
     if (content.length > 8000) {
       content = content.substring(0, 8000) + '\n\n[...truncated, ' + content.length + ' total characters]';
     }
@@ -2978,20 +3140,53 @@ app.post('/api/analyze-session', apiAuth, express.json({ limit: '20mb' }), async
     // Add uploaded files content
     let filesToAnalyze = fileContents;
     
-    // Load files from DB for descriptions and as fallback for content
+    // Load files from DB for descriptions and metadata
     let dbFiles = [];
     if (sessionId) {
       dbFiles = await db.getFilesBySession(sessionId) || [];
     }
+    if ((!dbFiles || dbFiles.length === 0) && projectId) {
+      dbFiles = await db.getFilesByProject(projectId) || [];
+    }
     
-    // If no fileContents provided, use DB extracted text as fallback
+    // Read FULL file content from disk (not truncated DB text)
     if ((!fileContents || Object.keys(fileContents).length === 0) && dbFiles.length > 0) {
       filesToAnalyze = {};
-      dbFiles.forEach(file => {
-        if (file.extracted_text) {
-          filesToAnalyze[file.original_name] = file.extracted_text;
+      for (const file of dbFiles) {
+        const fname = file.original_name || file.filename;
+        const diskPath = path.join(uploadsDir, fname);
+        
+        // Try to read full file from disk first
+        if (fs.existsSync(diskPath)) {
+          try {
+            const ext = path.extname(fname).toLowerCase();
+            let fullContent = '';
+            if (['.txt', '.md', '.csv', '.json', '.xml', '.yaml', '.yml', '.html', '.css', '.js', '.ts', '.py'].includes(ext)) {
+              fullContent = fs.readFileSync(diskPath, 'utf8');
+            } else if (['.doc', '.docx'].includes(ext)) {
+              try { const mammoth = require('mammoth'); const r = await mammoth.extractRawText({ path: diskPath }); fullContent = r.value; } catch(e) { fullContent = file.extracted_text || ''; }
+            } else if (ext === '.pdf') {
+              try { const { PDFParse } = require('pdf-parse'); const buf = new Uint8Array(fs.readFileSync(diskPath)); const parser = new PDFParse(buf); await parser.load(); const r = await parser.getText(); fullContent = r && r.pages ? r.pages.map(p => p.text).join('\n\n') : (typeof r === 'string' ? r : ''); } catch(e) { fullContent = file.extracted_text || ''; }
+            } else {
+              fullContent = file.extracted_text || '';
+            }
+            // Cap at 50K per file to avoid blowing context window (still much better than old 8K truncation)
+            if (fullContent) {
+              if (fullContent.length > 50000) {
+                filesToAnalyze[fname] = fullContent.substring(0, 50000) + '\n\n[...truncated from ' + fullContent.length + ' chars — first 50,000 included]';
+              } else {
+                filesToAnalyze[fname] = fullContent;
+              }
+            }
+          } catch(e) {
+            // Fall back to DB extracted text
+            if (file.extracted_text) filesToAnalyze[fname] = file.extracted_text;
+          }
+        } else if (file.extracted_text) {
+          // File not on disk, use DB text
+          filesToAnalyze[fname] = file.extracted_text;
         }
-      });
+      }
     }
     
     if (filesToAnalyze && Object.keys(filesToAnalyze).length > 0) {
@@ -3182,6 +3377,17 @@ app.post('/api/chat', apiAuth, express.json({ limit: '10mb' }), async (req, res)
           - Frame these as helping understand priorities, not as an interrogation about budget.
           - The goal is to establish whether the project delivers clear ROI — this helps everyone make good decisions.
           - Don't ask all cost questions at once. Weave them in naturally over 2-3 exchanges.
+          
+          TECHNICAL READINESS DISCOVERY (after core business requirements are mostly captured):
+          - Once you understand WHAT they need, gently explore HOW their current tech landscape connects:
+          - Existing tools/services: "What tools do you currently use for this? CRM, spreadsheets, email platform, project management?"
+          - API access: "Do you have API access or login credentials for those services already?"
+          - Data sources: "Where does the data live today? What format is it in — spreadsheets, database, manual records?"
+          - Trigger frequency: "How often does this need to run — real-time, daily, weekly, or triggered by specific events?"
+          - Third-party budget: "Are there any paid services or subscriptions you'd be open to using, or do we need to keep it free/low-cost?"
+          - Technical comfort: "Who would be managing this day-to-day — do you have a dev team, an IT person, or would it just be you?"
+          - Do NOT lead with these questions. Only ask after the core business problem and workflows are clear.
+          - Weave these in naturally over 2-3 exchanges, don't dump them all at once.
           
           Context available:${contextContent}`
         }, {
@@ -3511,9 +3717,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy' });
 });
 
-// Protected backup endpoint — dumps all data as JSON
-app.get('/api/backup', apiAuth, async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+// Protected backup endpoint — dumps all data as JSON (key-based auth, no session required)
+app.get('/api/backup', async (req, res) => {
   const backupKey = req.query.key;
   if (!backupKey || backupKey !== (process.env.BACKUP_KEY || 'morti-backup-2026')) {
     return res.status(403).json({ error: 'Invalid backup key' });
