@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const emails = require('./emails');
 
 // Crash logging — write to persistent disk so we can diagnose Render crashes
 const CRASH_LOG = process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'crash.log') : null;
@@ -620,19 +621,8 @@ app.post('/admin/customers/:id/approve', auth.authenticate, auth.requireAdmin, a
 
     // Send approval email
     if (user && user.email) {
-      await sendMortiEmail(user.email, 'Your Morti Projects Account is Approved! 🎉', `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #1e293b;">You're in${user.name ? ', ' + user.name : ''}!</h2>
-          <p style="color: #475569; line-height: 1.6;">Your <strong>Morti Projects</strong> account has been approved and is ready to use.</p>
-          <p style="text-align: center; margin: 32px 0;">
-            <a href="https://projects.morti.com.au/login" style="background: #4f46e5; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Log In to Morti Projects</a>
-          </p>
-          <p style="color: #475569; line-height: 1.6;">Once logged in, you can create a project and start capturing your requirements through voice or chat — our AI will help structure everything into a clear solution design.</p>
-          <p style="color: #475569; line-height: 1.6;">Questions? Just reply to this email or contact us at <a href="mailto:info@morti.com.au">info@morti.com.au</a>.</p>
-          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-          <p style="color: #94a3b8; font-size: 13px;">&copy; ${new Date().getFullYear()} Morti Pty Ltd · Australia · <a href="https://projects.morti.com.au" style="color: #4f46e5;">projects.morti.com.au</a></p>
-        </div>
-      `);
+      const approved = emails.accountApprovedEmail(user.name);
+      sendMortiEmail(user.email, approved.subject, approved.html).catch(() => {});
     }
 
     res.redirect('/admin/customers?message=Customer approved successfully');
@@ -1426,6 +1416,8 @@ ${summarizeRequirements(reqText)}
 app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
     const projectId = req.params.id;
+    const project = await db.getProject(projectId);
+    const projectName = (project && project.name) || projectId;
     const genStatus = generationStatus[projectId];
     const isGenerating = genStatus && genStatus.type === 'design' && genStatus.status === 'generating';
     
@@ -1434,10 +1426,10 @@ app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, asyn
     
     if (candidates.length === 0) {
       if (isGenerating) {
-        return res.render('admin/project-design', { user: req.user, projectId, design: null, generating: true, title: projectId + ' - Design' });
+        return res.render('admin/project-design', { user: req.user, projectId, projectName, design: null, generating: true, title: projectName + ' - Design' });
       }
       if (genStatus && genStatus.status === 'error') {
-        return res.render('admin/project-design', { user: req.user, projectId, design: null, generating: false, genError: genStatus.error, title: projectId + ' - Design' });
+        return res.render('admin/project-design', { user: req.user, projectId, projectName, design: null, generating: false, genError: genStatus.error, title: projectName + ' - Design' });
       }
       return res.status(404).send('No design for project');
     }
@@ -1491,7 +1483,7 @@ app.get('/admin/projects/:id/design', auth.authenticate, auth.requireAdmin, asyn
       } catch (e) { /* Engine unreachable — leave as-is */ }
     }
 
-    res.render('admin/project-design', { user: req.user, projectId, design, generating: isGenerating, title: projectId + ' - Design' });
+    res.render('admin/project-design', { user: req.user, projectId, projectName, design, generating: isGenerating, title: projectName + ' - Design' });
   } catch (e) {
     console.error('Get design error:', e);
     res.status(500).send('Failed to load design');
@@ -1760,6 +1752,21 @@ app.post('/admin/projects/:id/design/publish', auth.authenticate, auth.requireAd
     design.published = true;
     design.publishedAt = new Date().toISOString();
     saveDesign(design);
+
+    // Send design-ready email to project owner
+    (async () => {
+      try {
+        const project = await db.getProject(req.params.id);
+        if (project) {
+          const owner = await db.getUserById(project.user_id);
+          if (owner && owner.email) {
+            const mail = emails.designReadyEmail(project.name, req.params.id);
+            await sendMortiEmail(owner.email, mail.subject, mail.html);
+          }
+        }
+      } catch (e) { console.error('[Email] Design ready notification failed:', e.message); }
+    })();
+
     res.redirect(`/admin/projects/${req.params.id}/design?message=Design+published`);
   } catch (e) {
     console.error('Publish error:', e);
@@ -2021,6 +2028,21 @@ app.post('/admin/projects/:id/proposal/publish', auth.authenticate, auth.require
   proposal.published = true;
   proposal.publishedAt = new Date().toISOString();
   fs.writeFileSync(filePath, JSON.stringify(proposal, null, 2));
+
+  // Send proposal-ready email to project owner
+  (async () => {
+    try {
+      const project = await db.getProject(req.params.id);
+      if (project) {
+        const owner = await db.getUserById(project.user_id);
+        if (owner && owner.email) {
+          const mail = emails.proposalReadyEmail(project.name, req.params.id);
+          await sendMortiEmail(owner.email, mail.subject, mail.html);
+        }
+      }
+    } catch (e) { console.error('[Email] Proposal ready notification failed:', e.message); }
+  })();
+
   res.redirect(`/admin/projects/${req.params.id}/proposal`);
 });
 
@@ -3860,17 +3882,9 @@ app.post('/signup', signupLimiter, async (req, res) => {
       }
     }
 
-    // Send confirmation email to user
-    await sendMortiEmail(email, 'Your Morti Projects Account is Under Review', `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #1e293b;">Thanks for signing up, ${name}!</h2>
-        <p style="color: #475569; line-height: 1.6;">Your account for <strong>Morti Projects</strong> has been created and is currently under review.</p>
-        <p style="color: #475569; line-height: 1.6;">Our team will review your application and you'll receive an email once your account has been approved. This usually takes less than 24 hours.</p>
-        <p style="color: #475569; line-height: 1.6;">In the meantime, if you have any questions, reply to this email or contact us at <a href="mailto:info@morti.com.au">info@morti.com.au</a>.</p>
-        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-        <p style="color: #94a3b8; font-size: 13px;">&copy; ${new Date().getFullYear()} Morti Pty Ltd · Australia · <a href="https://projects.morti.com.au" style="color: #4f46e5;">projects.morti.com.au</a></p>
-      </div>
-    `);
+    // Send welcome email to user
+    const welcome = emails.welcomeEmail(name);
+    sendMortiEmail(email, welcome.subject, welcome.html).catch(() => {});
 
     res.render('signup', { success: true });
   } catch (e) {

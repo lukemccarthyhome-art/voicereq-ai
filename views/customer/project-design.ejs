@@ -78,7 +78,7 @@
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div>
-          <h2>📐 Solution Design</h2>
+          <h2>📐 <%= project.name %> — Solution Design</h2>
           <div class="meta-row" style="margin-top:8px;">
             <span>📅 Published <%= design.publishedAt ? new Date(design.publishedAt).toLocaleString() : '' %></span>
             <% if (design.version) { %><span>v<%= design.version %></span><% } %>

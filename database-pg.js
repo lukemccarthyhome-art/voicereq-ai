@@ -2,7 +2,6 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
 // PostgreSQL connection pool using DATABASE_URL
-// Render internal PG doesn't need SSL; external does
 const dbUrl = process.env.DATABASE_URL || '';
 const needsSsl = dbUrl.includes('.render.com') ? false : 
                  (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false);
@@ -28,7 +27,6 @@ const initDB = async (retries = 3) => {
   }
   
   try {
-    // Users table
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -41,7 +39,6 @@ const initDB = async (retries = 3) => {
       )
     `);
 
-    // Projects table
     await client.query(`
       CREATE TABLE IF NOT EXISTS projects (
         id SERIAL PRIMARY KEY,
@@ -49,13 +46,14 @@ const initDB = async (retries = 3) => {
         name TEXT NOT NULL,
         description TEXT,
         status TEXT DEFAULT 'active' CHECK (status IN ('active', 'completed', 'archived')),
+        design_questions TEXT,
+        admin_notes TEXT DEFAULT '[]',
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW(),
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
     `);
 
-    // Sessions table
     await client.query(`
       CREATE TABLE IF NOT EXISTS sessions (
         id SERIAL PRIMARY KEY,
@@ -70,7 +68,6 @@ const initDB = async (retries = 3) => {
       )
     `);
 
-    // Files table
     await client.query(`
       CREATE TABLE IF NOT EXISTS files (
         id SERIAL PRIMARY KEY,
@@ -89,7 +86,6 @@ const initDB = async (retries = 3) => {
       )
     `);
 
-    // Audit Logs table
     await client.query(`
       CREATE TABLE IF NOT EXISTS audit_logs (
         id SERIAL PRIMARY KEY,
@@ -102,35 +98,45 @@ const initDB = async (retries = 3) => {
       )
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS feature_requests (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        user_name TEXT,
+        user_email TEXT,
+        text TEXT NOT NULL,
+        page TEXT,
+        status TEXT DEFAULT 'new',
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS project_shares (
+        id SERIAL PRIMARY KEY,
+        project_id INTEGER NOT NULL,
+        user_id INTEGER,
+        email TEXT NOT NULL,
+        permission TEXT NOT NULL DEFAULT 'readonly' CHECK (permission IN ('admin', 'user', 'readonly')),
+        invited_by INTEGER NOT NULL,
+        invited_at TIMESTAMP DEFAULT NOW(),
+        accepted_at TIMESTAMP,
+        invite_token TEXT,
+        FOREIGN KEY (project_id) REFERENCES projects(id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (invited_by) REFERENCES users(id)
+      )
+    `);
+
+    // Migrations
+    try { await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret TEXT'); } catch (e) {}
+    try { await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT'); } catch (e) {}
+    try { await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS approved INTEGER DEFAULT 1'); } catch (e) {}
+    try { await client.query('ALTER TABLE projects ADD COLUMN IF NOT EXISTS design_questions TEXT'); } catch (e) {}
+    try { await client.query('ALTER TABLE projects ADD COLUMN IF NOT EXISTS admin_notes TEXT DEFAULT \'[]\''); } catch (e) {}
+
     // Create seed admin user
     await createSeedUser();
-
-    // Migrations: Add mfa_secret if missing
-    try {
-      await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret TEXT');
-    } catch (e) {}
-    try {
-      await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT');
-    } catch (e) {}
-    try {
-      await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS approved INTEGER DEFAULT 1');
-    } catch (e) {}
-
-    // Feature requests table
-    try {
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS feature_requests (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER,
-          user_name TEXT,
-          user_email TEXT,
-          text TEXT NOT NULL,
-          page TEXT,
-          status TEXT DEFAULT 'new',
-          created_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-    } catch (e) {}
 
     console.log('✅ PostgreSQL database initialized');
   } finally {
@@ -142,16 +148,16 @@ const createSeedUser = async () => {
   const existingAdmin = await getUser('luke@voicereq.ai');
   if (!existingAdmin) {
     const hashedPassword = bcrypt.hashSync('admin123', 10);
-    const result = await pool.query(`
+    await pool.query(`
       INSERT INTO users (email, password_hash, name, company, role)
       VALUES ($1, $2, $3, $4, $5)
-      RETURNING id
     `, ['luke@voicereq.ai', hashedPassword, 'Luke McCarthy', 'Morti Projects', 'admin']);
     console.log('✅ Seed admin user created: luke@voicereq.ai / admin123');
   }
 };
 
-// User operations
+// ==================== User operations ====================
+
 const getUser = async (email) => {
   const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
   return result.rows[0];
@@ -166,8 +172,7 @@ const createUser = async (email, name, company, role, plainPassword) => {
   const hashedPassword = bcrypt.hashSync(plainPassword, 10);
   const result = await pool.query(`
     INSERT INTO users (email, password_hash, name, company, role)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING *
+    VALUES ($1, $2, $3, $4, $5) RETURNING *
   `, [email, hashedPassword, name, company, role]);
   return { lastInsertRowid: result.rows[0].id, changes: 1 };
 };
@@ -175,8 +180,7 @@ const createUser = async (email, name, company, role, plainPassword) => {
 const getAllUsers = async () => {
   const result = await pool.query(`
     SELECT id, email, name, company, phone, role, approved, created_at 
-    FROM users WHERE role = 'customer' 
-    ORDER BY created_at DESC
+    FROM users WHERE role = 'customer' ORDER BY created_at DESC
   `);
   return result.rows;
 };
@@ -195,7 +199,6 @@ const updateUserPassword = async (id, hashedPassword) => {
 };
 
 const deleteUser = async (id) => {
-  // Delete user's projects, sessions, and files first (cascade)
   const projects = await pool.query('SELECT id FROM projects WHERE user_id = $1', [id]);
   for (const project of projects.rows) {
     await deleteProject(project.id);
@@ -205,23 +208,35 @@ const deleteUser = async (id) => {
   return { changes: result.rowCount };
 };
 
-// Project operations
+// ==================== Project operations ====================
+
 const createProject = async (userId, name, description) => {
   const result = await pool.query(`
-    INSERT INTO projects (user_id, name, description)
-    VALUES ($1, $2, $3)
-    RETURNING *
+    INSERT INTO projects (user_id, name, description) VALUES ($1, $2, $3) RETURNING *
   `, [userId, name, description || '']);
   return { lastInsertRowid: result.rows[0].id, changes: 1 };
 };
 
 const getProjectsByUser = async (userId) => {
   const result = await pool.query(`
-    SELECT p.*, COUNT(s.id) as session_count, COUNT(f.id) as file_count
+    SELECT p.*, COUNT(DISTINCT s.id) as session_count, COUNT(DISTINCT f.id) as file_count
     FROM projects p
     LEFT JOIN sessions s ON s.project_id = p.id
     LEFT JOIN files f ON f.project_id = p.id
-    WHERE p.user_id = $1
+    WHERE p.user_id = $1 AND (p.status IS NULL OR p.status != 'archived')
+    GROUP BY p.id
+    ORDER BY p.updated_at DESC
+  `, [userId]);
+  return result.rows;
+};
+
+const getArchivedProjectsByUser = async (userId) => {
+  const result = await pool.query(`
+    SELECT p.*, COUNT(DISTINCT s.id) as session_count, COUNT(DISTINCT f.id) as file_count
+    FROM projects p
+    LEFT JOIN sessions s ON s.project_id = p.id
+    LEFT JOIN files f ON f.project_id = p.id
+    WHERE p.user_id = $1 AND p.status = 'archived'
     GROUP BY p.id
     ORDER BY p.updated_at DESC
   `, [userId]);
@@ -231,11 +246,27 @@ const getProjectsByUser = async (userId) => {
 const getAllProjects = async () => {
   const result = await pool.query(`
     SELECT p.*, u.name as user_name, u.company, u.email,
-           COUNT(s.id) as session_count, COUNT(f.id) as file_count
+           COUNT(DISTINCT s.id) as session_count, COUNT(DISTINCT f.id) as file_count
     FROM projects p
     JOIN users u ON u.id = p.user_id
     LEFT JOIN sessions s ON s.project_id = p.id
     LEFT JOIN files f ON f.project_id = p.id
+    WHERE (p.status IS NULL OR p.status != 'archived')
+    GROUP BY p.id, u.name, u.company, u.email
+    ORDER BY p.updated_at DESC
+  `);
+  return result.rows;
+};
+
+const getAllArchivedProjects = async () => {
+  const result = await pool.query(`
+    SELECT p.*, u.name as user_name, u.company, u.email,
+           COUNT(DISTINCT s.id) as session_count, COUNT(DISTINCT f.id) as file_count
+    FROM projects p
+    JOIN users u ON u.id = p.user_id
+    LEFT JOIN sessions s ON s.project_id = p.id
+    LEFT JOIN files f ON f.project_id = p.id
+    WHERE p.status = 'archived'
     GROUP BY p.id, u.name, u.company, u.email
     ORDER BY p.updated_at DESC
   `);
@@ -254,27 +285,41 @@ const getProject = async (id) => {
 
 const updateProject = async (id, name, description, status) => {
   const result = await pool.query(`
-    UPDATE projects 
-    SET name = $1, description = $2, status = $3, updated_at = NOW() 
-    WHERE id = $4
+    UPDATE projects SET name = $1, description = $2, status = $3, updated_at = NOW() WHERE id = $4
   `, [name, description, status, id]);
   return { changes: result.rowCount };
 };
 
+const updateProjectDesignQuestions = async (id, json) => {
+  const result = await pool.query(
+    'UPDATE projects SET design_questions = $1, updated_at = NOW() WHERE id = $2',
+    [json, id]
+  );
+  return { changes: result.rowCount };
+};
+
+const updateProjectAdminNotes = async (id, json) => {
+  const result = await pool.query(
+    'UPDATE projects SET admin_notes = $1, updated_at = NOW() WHERE id = $2',
+    [json, id]
+  );
+  return { changes: result.rowCount };
+};
+
 const deleteProject = async (id) => {
-  // Delete sessions and files first
   await pool.query('DELETE FROM files WHERE project_id = $1', [id]);
   await pool.query('DELETE FROM sessions WHERE project_id = $1', [id]);
+  try { await pool.query('DELETE FROM project_shares WHERE project_id = $1', [id]); } catch(e) {}
   const result = await pool.query('DELETE FROM projects WHERE id = $1', [id]);
   return { changes: result.rowCount };
 };
 
-// Session operations
+// ==================== Session operations ====================
+
 const createSession = async (projectId) => {
   const result = await pool.query(`
     INSERT INTO sessions (project_id, transcript, requirements, context)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *
+    VALUES ($1, $2, $3, $4) RETURNING *
   `, [projectId, '[]', '{}', '{}']);
   return { lastInsertRowid: result.rows[0].id, changes: 1 };
 };
@@ -298,37 +343,63 @@ const getSession = async (id) => {
 
 const updateSession = async (id, transcript, requirements, context, status) => {
   const result = await pool.query(`
-    UPDATE sessions 
-    SET transcript = $1, requirements = $2, context = $3, status = $4, updated_at = NOW()
+    UPDATE sessions SET transcript = $1, requirements = $2, context = $3, status = $4, updated_at = NOW()
     WHERE id = $5
-  `, [
-    JSON.stringify(transcript), 
-    JSON.stringify(requirements), 
-    JSON.stringify(context), 
-    status, 
-    id
-  ]);
+  `, [JSON.stringify(transcript), JSON.stringify(requirements), JSON.stringify(context), status, id]);
   return { changes: result.rowCount };
 };
 
 const getLatestSessionForProject = async (projectId) => {
   const result = await pool.query(`
-    SELECT * FROM sessions 
-    WHERE project_id = $1 AND status != 'completed'
-    ORDER BY updated_at DESC 
-    LIMIT 1
+    SELECT * FROM sessions WHERE project_id = $1 AND status != 'completed'
+    ORDER BY updated_at DESC LIMIT 1
   `, [projectId]);
   return result.rows[0];
 };
 
-// File operations
+const appendSessionMessage = async (sessionId, message) => {
+  if (!sessionId) throw new Error('sessionId required');
+  const s = await pool.query('SELECT * FROM sessions WHERE id = $1', [sessionId]);
+  if (!s.rows[0]) throw new Error('session not found');
+  let transcript = [];
+  try { transcript = JSON.parse(s.rows[0].transcript || '[]'); } catch { transcript = []; }
+  transcript.push(message);
+  await pool.query('UPDATE sessions SET transcript = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(transcript), sessionId]);
+  return sessionId;
+};
+
+const appendSessionMessageSafe = async (projectId, message) => {
+  const s = await pool.query(
+    `SELECT * FROM sessions WHERE project_id = $1 AND status != 'completed' ORDER BY updated_at DESC LIMIT 1`,
+    [projectId]
+  );
+  if (!s.rows[0]) {
+    const res = await pool.query(
+      'INSERT INTO sessions (project_id, transcript, requirements, context) VALUES ($1, $2, $3, $4) RETURNING id',
+      [projectId, JSON.stringify([message]), '{}', '{}']
+    );
+    return res.rows[0].id;
+  } else {
+    const transcript = JSON.parse(s.rows[0].transcript || '[]');
+    transcript.push(message);
+    await pool.query('UPDATE sessions SET transcript = $1, updated_at = NOW() WHERE id = $2', [JSON.stringify(transcript), s.rows[0].id]);
+    return s.rows[0].id;
+  }
+};
+
+// ==================== File operations ====================
+
 const createFile = async (projectId, sessionId, filename, originalName, mimeType, size, extractedText, analysis) => {
   const result = await pool.query(`
     INSERT INTO files (project_id, session_id, filename, original_name, mime_type, size, extracted_text, analysis)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    RETURNING *
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
   `, [projectId, sessionId, filename, originalName, mimeType, size, extractedText, analysis ? JSON.stringify(analysis) : null]);
   return { lastInsertRowid: result.rows[0].id, changes: 1 };
+};
+
+const getFileById = async (id) => {
+  const result = await pool.query('SELECT * FROM files WHERE id = $1', [id]);
+  return result.rows[0];
 };
 
 const getFilesByProject = async (projectId) => {
@@ -362,25 +433,26 @@ const updateFileDescription = async (fileId, description) => {
   return { changes: result.rowCount };
 };
 
-// Audit logging
+// ==================== Audit logging ====================
+
 const logAction = async (userId, action, details, ipAddress) => {
   try {
-    await pool.query(`
-      INSERT INTO audit_logs (user_id, action, details, ip_address)
-      VALUES ($1, $2, $3, $4)
-    `, [userId, action, JSON.stringify(details), ipAddress]);
+    await pool.query(
+      'INSERT INTO audit_logs (user_id, action, details, ip_address) VALUES ($1, $2, $3, $4)',
+      [userId, action, JSON.stringify(details), ipAddress]
+    );
   } catch (e) {
     console.error('❌ Failed to write audit log:', e.message);
   }
 };
 
-// Stats for admin dashboard
+// ==================== Stats ====================
+
 const getStats = async () => {
   const totalUsersResult = await pool.query(`SELECT COUNT(*) as count FROM users WHERE role = 'customer'`);
   const totalProjectsResult = await pool.query('SELECT COUNT(*) as count FROM projects');
   const totalSessionsResult = await pool.query('SELECT COUNT(*) as count FROM sessions');
   const companiesResult = await pool.query(`SELECT DISTINCT company FROM users WHERE role = 'customer'`);
-  
   return {
     totalUsers: parseInt(totalUsersResult.rows[0].count),
     totalProjects: parseInt(totalProjectsResult.rows[0].count),
@@ -389,42 +461,115 @@ const getStats = async () => {
   };
 };
 
-// Initialize database on startup
-const ready = initDB().catch(err => { 
-  console.error('❌ PostgreSQL init failed:', err.message);
-  console.error('Retrying in 5 seconds...');
-  return new Promise(r => setTimeout(r, 5000)).then(() => initDB(3));
-}).catch(err => {
-  console.error('❌ PostgreSQL init failed permanently:', err.message);
-  process.exit(1);
-});
+// ==================== Sharing ====================
+
+const shareProject = async (projectId, email, permission, invitedBy, inviteToken) => {
+  const existing = await pool.query('SELECT id FROM project_shares WHERE project_id = $1 AND email = $2', [projectId, email]);
+  if (existing.rows[0]) throw new Error('Already shared with this email');
+  const countResult = await pool.query('SELECT COUNT(*) as c FROM project_shares WHERE project_id = $1', [projectId]);
+  if (parseInt(countResult.rows[0].c) >= 20) throw new Error('Maximum 20 shares per project');
+  const user = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+  const result = await pool.query(
+    'INSERT INTO project_shares (project_id, user_id, email, permission, invited_by, invite_token) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+    [projectId, user.rows[0] ? user.rows[0].id : null, email, permission, invitedBy, inviteToken || null]
+  );
+  return { lastInsertRowid: result.rows[0].id, changes: 1 };
+};
+
+const getProjectShares = async (projectId) => {
+  const result = await pool.query(`
+    SELECT ps.*, u.name as user_name, inv.name as inviter_name
+    FROM project_shares ps
+    LEFT JOIN users u ON u.id = ps.user_id
+    LEFT JOIN users inv ON inv.id = ps.invited_by
+    WHERE ps.project_id = $1
+    ORDER BY ps.invited_at DESC
+  `, [projectId]);
+  return result.rows;
+};
+
+const getSharedProjects = async (userId, email) => {
+  const result = await pool.query(`
+    SELECT p.*, ps.permission, ps.accepted_at as share_accepted_at,
+           u.name as owner_name, u.email as owner_email, u.company as owner_company,
+           COUNT(DISTINCT s.id) as session_count, COUNT(DISTINCT f.id) as file_count
+    FROM project_shares ps
+    JOIN projects p ON p.id = ps.project_id
+    JOIN users u ON u.id = p.user_id
+    LEFT JOIN sessions s ON s.project_id = p.id
+    LEFT JOIN files f ON f.project_id = p.id
+    WHERE (ps.user_id = $1 OR ps.email = $2) AND (p.status IS NULL OR p.status != 'archived')
+    GROUP BY p.id, ps.permission, ps.accepted_at, u.name, u.email, u.company
+    ORDER BY p.updated_at DESC
+  `, [userId, email]);
+  return result.rows;
+};
+
+const updateSharePermission = async (shareId, permission) => {
+  const result = await pool.query('UPDATE project_shares SET permission = $1 WHERE id = $2', [permission, shareId]);
+  return { changes: result.rowCount };
+};
+
+const removeShare = async (shareId) => {
+  const result = await pool.query('DELETE FROM project_shares WHERE id = $1', [shareId]);
+  return { changes: result.rowCount };
+};
+
+const acceptShare = async (shareId, userId) => {
+  const result = await pool.query('UPDATE project_shares SET user_id = $1, accepted_at = NOW() WHERE id = $2', [userId, shareId]);
+  return { changes: result.rowCount };
+};
+
+const getShareByProjectAndUser = async (projectId, userId) => {
+  const result = await pool.query('SELECT * FROM project_shares WHERE project_id = $1 AND user_id = $2', [projectId, userId]);
+  return result.rows[0];
+};
+
+const getShareByProjectAndEmail = async (projectId, email) => {
+  const result = await pool.query('SELECT * FROM project_shares WHERE project_id = $1 AND email = $2', [projectId, email]);
+  return result.rows[0];
+};
+
+const getShareById = async (shareId) => {
+  const result = await pool.query('SELECT * FROM project_shares WHERE id = $1', [shareId]);
+  return result.rows[0];
+};
+
+const linkPendingShares = async (userId, email) => {
+  const result = await pool.query(
+    'UPDATE project_shares SET user_id = $1, accepted_at = NOW() WHERE email = $2 AND user_id IS NULL',
+    [userId, email]
+  );
+  return { changes: result.rowCount };
+};
+
+const getShareByToken = async (token) => {
+  const result = await pool.query('SELECT * FROM project_shares WHERE invite_token = $1', [token]);
+  return result.rows[0];
+};
+
+// ==================== MFA ====================
 
 const updateUserMfaSecret = async (userId, secret) => {
   await pool.query('UPDATE users SET mfa_secret = $1 WHERE id = $2', [secret, userId]);
 };
 
-// Signup: create user with pending approval
+// ==================== Signup/Approval ====================
+
 const createPendingUser = async (email, name, company, phone, hashedPassword) => {
   const result = await pool.query(`
     INSERT INTO users (email, password_hash, name, company, phone, role, approved)
-    VALUES ($1, $2, $3, $4, $5, 'customer', 0)
-    RETURNING *
+    VALUES ($1, $2, $3, $4, $5, 'customer', 0) RETURNING *
   `, [email, hashedPassword, name, company, phone]);
   return result.rows[0];
 };
 
-// Approve user
 const approveUser = async (id) => {
   await pool.query('UPDATE users SET approved = 1 WHERE id = $1', [id]);
 };
 
-// File by ID
-const getFileById = async (id) => {
-  const result = await pool.query('SELECT * FROM files WHERE id = $1', [id]);
-  return result.rows[0];
-};
+// ==================== Feature requests ====================
 
-// Feature requests
 const createFeatureRequest = async (userId, userName, userEmail, text, page) => {
   await pool.query(
     'INSERT INTO feature_requests (user_id, user_name, user_email, text, page) VALUES ($1, $2, $3, $4, $5)',
@@ -437,11 +582,37 @@ const getAllFeatureRequests = async () => {
   return result.rows;
 };
 
-// Query helper for ownership checks
+// ==================== Query helper ====================
+
 const queryOne = async (sql, params) => {
   const result = await pool.query(sql, params);
   return result.rows[0];
 };
+
+// ==================== All sessions (admin) ====================
+
+const getAllSessions = async () => {
+  const result = await pool.query(`
+    SELECT s.*, p.name as project_name, p.id as project_id, u.name as user_name, u.email as user_email,
+           (SELECT COUNT(*) FROM files f WHERE f.session_id = s.id) as file_count
+    FROM sessions s
+    JOIN projects p ON p.id = s.project_id
+    JOIN users u ON u.id = p.user_id
+    ORDER BY s.updated_at DESC
+  `);
+  return result.rows;
+};
+
+// ==================== Init ====================
+
+const ready = initDB().catch(err => { 
+  console.error('❌ PostgreSQL init failed:', err.message);
+  console.error('Retrying in 5 seconds...');
+  return new Promise(r => setTimeout(r, 5000)).then(() => initDB(3));
+}).catch(err => {
+  console.error('❌ PostgreSQL init failed permanently:', err.message);
+  process.exit(1);
+});
 
 module.exports = {
   ready,
@@ -457,9 +628,13 @@ module.exports = {
   // Projects
   createProject,
   getProjectsByUser,
+  getArchivedProjectsByUser,
   getAllProjects,
+  getAllArchivedProjects,
   getProject,
   updateProject,
+  updateProjectDesignQuestions,
+  updateProjectAdminNotes,
   deleteProject,
   // Sessions
   createSession,
@@ -467,33 +642,42 @@ module.exports = {
   getSession,
   updateSession,
   getLatestSessionForProject,
+  appendSessionMessage,
+  appendSessionMessageSafe,
   // Files
   createFile,
+  getFileById,
   getFilesByProject,
   getFilesBySession,
   getFile,
   deleteFile,
   updateFileDescription,
+  // Audit
   logAction,
+  // MFA
   updateUserMfaSecret,
+  // Signup/Approval
   createPendingUser,
   approveUser,
-  getFileById,
+  // Feature requests
   createFeatureRequest,
   getAllFeatureRequests,
+  // Query helper
   queryOne,
   // All sessions (admin)
-  getAllSessions: async () => {
-    const result = await pool.query(`
-      SELECT s.*, p.name as project_name, p.id as project_id, u.name as user_name, u.email as user_email,
-             (SELECT COUNT(*) FROM files f WHERE f.session_id = s.id) as file_count
-      FROM sessions s
-      JOIN projects p ON p.id = s.project_id
-      JOIN users u ON u.id = p.user_id
-      ORDER BY s.updated_at DESC
-    `);
-    return result.rows;
-  },
+  getAllSessions,
   // Stats
-  getStats
+  getStats,
+  // Sharing
+  shareProject,
+  getProjectShares,
+  getSharedProjects,
+  updateSharePermission,
+  removeShare,
+  acceptShare,
+  getShareByProjectAndUser,
+  getShareByProjectAndEmail,
+  getShareById,
+  linkPendingShares,
+  getShareByToken,
 };
