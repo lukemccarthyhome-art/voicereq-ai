@@ -67,6 +67,15 @@ async function sendMortiEmail(to, subject, html) {
 // Import database and authentication
 const db = require('./database-adapter');
 const auth = require('./auth');
+const Hashids = require('hashids');
+const hashids = new Hashids('morti-projects-2026', 8);
+function encodeProjectId(id) { return hashids.encode(Number(id)); }
+function resolveProjectId(val) {
+  if (!val) return val;
+  if (/^\d+$/.test(val)) return val;
+  const decoded = hashids.decode(val);
+  return decoded.length ? decoded[0].toString() : val;
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -230,6 +239,13 @@ app.set('views', path.join(__dirname, 'views'));
 app.use((req, res, next) => {
   res.locals.melb = melb;
   res.locals.melbDate = melbDate;
+  res.locals.encodeId = encodeProjectId;
+  next();
+});
+
+// Decode hashed IDs in route params (backward compatible with numeric IDs)
+app.param('id', (req, res, next, val) => {
+  req.params.id = resolveProjectId(val);
   next();
 });
 
@@ -281,7 +297,7 @@ const verifySessionOwnership = async (req, res, next) => {
 
 const verifyProjectOwnership = async (req, res, next) => {
   if (req.user.role === 'admin') return next();
-  const projectId = req.body.projectId || req.body.project_id || req.params.projectId;
+  const projectId = resolveProjectId(req.body.projectId || req.body.project_id || req.params.projectId);
   if (!projectId) return res.status(400).json({ error: 'Project ID required' });
   const project = await db.getProject(projectId);
   if (!project || project.user_id !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
@@ -293,7 +309,7 @@ const PERMISSION_LEVELS = { readonly: 1, user: 2, admin: 3 };
 
 const verifyProjectAccess = (requiredPermission = 'readonly') => {
   return async (req, res, next) => {
-    const projectId = req.params.id || req.params.projectId || req.body.projectId || req.body.project_id;
+    const projectId = resolveProjectId(req.params.id || req.params.projectId || req.body.projectId || req.body.project_id);
     if (!projectId) return res.status(400).json({ error: 'Project ID required' });
     // Admin role always allowed
     if (req.user.role === 'admin') { req.projectAccess = 'owner'; return next(); }
@@ -759,7 +775,7 @@ app.post('/admin/projects/:id/archive', auth.authenticate, auth.requireAdmin, as
     res.redirect('/admin/projects?message=Project+archived');
   } catch (e) {
     console.error('Archive error:', e);
-    res.redirect(`/admin/projects/${req.params.id}?error=Archive+failed`);
+    res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}?error=Archive+failed`);
   }
 });
 
@@ -931,7 +947,7 @@ app.get('/admin/projects/:id/session', auth.authenticate, auth.requireAdmin, asy
     activeSession = { id: result.lastInsertRowid };
   }
 
-  res.redirect(`/voice-session?project=${req.params.id}&session=${activeSession.id}`);
+  res.redirect(`/voice-session?project=${encodeProjectId(req.params.id)}&session=${activeSession.id}`);
 });
 
 // Admin: create a new session for a project
@@ -939,7 +955,7 @@ app.post('/admin/projects/:id/session/create', auth.authenticate, auth.requireAd
   const project = await db.getProject(req.params.id);
   if (!project) return res.status(404).send('Project not found');
   const result = await db.createSession(req.params.id);
-  res.redirect(`/voice-session?project=${req.params.id}&session=${result.lastInsertRowid}`);
+  res.redirect(`/voice-session?project=${encodeProjectId(req.params.id)}&session=${result.lastInsertRowid}`);
 });
 
 // Admin: view session transcript (standalone page)
@@ -968,7 +984,7 @@ app.post('/admin/projects/:id/extract-design', auth.authenticate, auth.requireAd
   
   // Mark as generating and redirect immediately
   generationStatus[projectId] = { type: 'design', status: 'generating', startedAt: Date.now() };
-  res.redirect(`/admin/projects/${projectId}/design`);
+  res.redirect(`/admin/projects/${encodeProjectId(projectId)}/design`);
   
   // Run extraction in background
   extractDesignAsync(projectId, req.user).catch(err => {
@@ -1753,10 +1769,10 @@ app.post('/admin/projects/:id/design/answer', auth.authenticate, auth.requireAdm
     try { await db.appendSessionMessageSafe(projectId, { role: 'admin', text: `Answer: ${question} -> ${answer}` }); } catch (e) { console.warn('appendSessionMessageSafe failed:', e.message); }
 
     // Redirect back to project detail so answers appear in the Design Questions area
-    res.redirect(`/admin/projects/${projectId}?message=Answer+saved`);
+    res.redirect(`/admin/projects/${encodeProjectId(projectId)}?message=Answer+saved`);
   } catch (e) {
     console.error('Design answer error:', e);
-    res.redirect(`/admin/projects/${req.params.id}/design?error=Save+failed`);
+    res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/design?error=Save+failed`);
   }
 });
 
@@ -1784,10 +1800,10 @@ app.post('/admin/projects/:id/design/publish', auth.authenticate, auth.requireAd
       } catch (e) { console.error('[Email] Design ready notification failed:', e.message); }
     })();
 
-    res.redirect(`/admin/projects/${req.params.id}/design?message=Design+published`);
+    res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/design?message=Design+published`);
   } catch (e) {
     console.error('Publish error:', e);
-    res.redirect(`/admin/projects/${req.params.id}/design?error=Publish+failed`);
+    res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/design?error=Publish+failed`);
   }
 });
 
@@ -1796,17 +1812,17 @@ app.post('/admin/projects/:id/notes', auth.authenticate, auth.requireAdmin, asyn
   try {
     const projectId = req.params.id;
     const { note } = req.body;
-    if (!note || !note.trim()) return res.redirect(`/admin/projects/${projectId}`);
+    if (!note || !note.trim()) return res.redirect(`/admin/projects/${encodeProjectId(projectId)}`);
     const project = await db.getProject(projectId);
     if (!project) return res.status(404).send('Project not found');
     let notes = [];
     try { notes = JSON.parse(project.admin_notes || '[]'); } catch(e) {}
     notes.push({ text: note.trim(), from: req.user.email, ts: new Date().toISOString() });
     await db.updateProjectAdminNotes(projectId, JSON.stringify(notes));
-    res.redirect(`/admin/projects/${projectId}?message=Note+added`);
+    res.redirect(`/admin/projects/${encodeProjectId(projectId)}?message=Note+added`);
   } catch (e) {
     console.error('Add note error:', e);
-    res.redirect(`/admin/projects/${req.params.id}?error=Failed+to+add+note`);
+    res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}?error=Failed+to+add+note`);
   }
 });
 
@@ -1819,9 +1835,9 @@ app.post('/admin/projects/:id/notes/:noteIndex/delete', auth.authenticate, auth.
     try { notes = JSON.parse(project.admin_notes || '[]'); } catch(e) {}
     notes.splice(noteIndex, 1);
     await db.updateProjectAdminNotes(projectId, JSON.stringify(notes));
-    res.redirect(`/admin/projects/${projectId}?message=Note+deleted`);
+    res.redirect(`/admin/projects/${encodeProjectId(projectId)}?message=Note+deleted`);
   } catch (e) {
-    res.redirect(`/admin/projects/${req.params.id}?error=Failed+to+delete+note`);
+    res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}?error=Failed+to+delete+note`);
   }
 });
 
@@ -1833,10 +1849,10 @@ app.post('/admin/projects/:id/design/unpublish', auth.authenticate, auth.require
     design.published = false;
     design.publishedAt = null;
     saveDesign(design);
-    res.redirect(`/admin/projects/${req.params.id}/design?message=Design+unpublished`);
+    res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/design?message=Design+unpublished`);
   } catch (e) {
     console.error('Unpublish error:', e);
-    res.redirect(`/admin/projects/${req.params.id}/design?error=Unpublish+failed`);
+    res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/design?error=Unpublish+failed`);
   }
 });
 
@@ -1847,10 +1863,10 @@ app.post('/admin/projects/:id/design/:designId/delete', auth.authenticate, auth.
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
-    res.redirect(`/admin/projects/${req.params.id}?message=Design+deleted`);
+    res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}?message=Design+deleted`);
   } catch (e) {
     console.error('Delete design error:', e);
-    res.redirect(`/admin/projects/${req.params.id}?error=Delete+failed`);
+    res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}?error=Delete+failed`);
   }
 });
 
@@ -1985,12 +2001,12 @@ app.post('/admin/projects/:id/generate-proposal', auth.authenticate, auth.requir
     
     const designResult = loadNewestDesign(projectId);
     if (!designResult || !designResult.design) {
-      return res.redirect(`/admin/projects/${projectId}/proposal?error=No design found. Extract a design first.`);
+      return res.redirect(`/admin/projects/${encodeProjectId(projectId)}/proposal?error=No design found. Extract a design first.`);
     }
     
     // Mark as generating and redirect immediately
     generationStatus[projectId] = { type: 'proposal', status: 'generating', startedAt: Date.now() };
-    res.redirect(`/admin/projects/${projectId}/proposal`);
+    res.redirect(`/admin/projects/${encodeProjectId(projectId)}/proposal`);
     
     // Generate in background
     const design = designResult.design;
@@ -2006,7 +2022,7 @@ app.post('/admin/projects/:id/generate-proposal', auth.authenticate, auth.requir
     });
   } catch(e) {
     console.error('Proposal generation error:', e);
-    res.redirect(`/admin/projects/${projectId}/proposal?error=${encodeURIComponent(e.message)}`);
+    res.redirect(`/admin/projects/${encodeProjectId(projectId)}/proposal?error=${encodeURIComponent(e.message)}`);
   }
 });
 
@@ -2039,7 +2055,7 @@ app.post('/admin/projects/:id/proposal/chat', auth.authenticate, auth.requireAdm
 // Publish/unpublish proposal
 app.post('/admin/projects/:id/proposal/publish', auth.authenticate, auth.requireAdmin, (req, res) => {
   const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${req.params.id}-`)).sort().reverse();
-  if (files.length === 0) return res.redirect(`/admin/projects/${req.params.id}/proposal?error=No proposal found`);
+  if (files.length === 0) return res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/proposal?error=No proposal found`);
   const filePath = path.join(PROPOSALS_DIR, files[0]);
   const proposal = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   proposal.published = true;
@@ -2060,12 +2076,12 @@ app.post('/admin/projects/:id/proposal/publish', auth.authenticate, auth.require
     } catch (e) { console.error('[Email] Proposal ready notification failed:', e.message); }
   })();
 
-  res.redirect(`/admin/projects/${req.params.id}/proposal`);
+  res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/proposal`);
 });
 
 app.post('/admin/projects/:id/proposal/unpublish', auth.authenticate, auth.requireAdmin, (req, res) => {
   const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${req.params.id}-`)).sort().reverse();
-  if (files.length === 0) return res.redirect(`/admin/projects/${req.params.id}/proposal?error=No proposal found`);
+  if (files.length === 0) return res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/proposal?error=No proposal found`);
   const filePath = path.join(PROPOSALS_DIR, files[0]);
   const proposal = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   proposal.published = false;
@@ -2073,14 +2089,14 @@ app.post('/admin/projects/:id/proposal/unpublish', auth.authenticate, auth.requi
   delete proposal.approvedAt;
   delete proposal.approvedBy;
   fs.writeFileSync(filePath, JSON.stringify(proposal, null, 2));
-  res.redirect(`/admin/projects/${req.params.id}/proposal`);
+  res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/proposal`);
 });
 
 // Delete all proposals for a project
 app.post('/admin/projects/:id/proposal/delete', auth.authenticate, auth.requireAdmin, (req, res) => {
   const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${req.params.id}-`));
   files.forEach(f => fs.unlinkSync(path.join(PROPOSALS_DIR, f)));
-  res.redirect(`/admin/projects/${req.params.id}/proposal`);
+  res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/proposal`);
 });
 
 // Customer: view published proposal
@@ -2110,7 +2126,7 @@ app.post('/customer/projects/:id/proposal/approve', auth.authenticate, async (re
   proposal.approvedBy = req.user.email;
   proposal.status = 'approved';
   fs.writeFileSync(filePath, JSON.stringify(proposal, null, 2));
-  res.redirect(`/customer/projects/${req.params.id}/proposal`);
+  res.redirect(`/customer/projects/${encodeProjectId(req.params.id)}/proposal`);
 });
 
 // ─── Customer Onboarding (proxied to Morti Engine) ─────────
@@ -2365,10 +2381,10 @@ app.post('/customer/projects/:id/design/approve', auth.authenticate, async (req,
     result.design.approvedAt = new Date().toISOString();
     result.design.approvedBy = req.user.email;
     saveDesign(result.design);
-    res.redirect(`/customer/projects/${req.params.id}/design`);
+    res.redirect(`/customer/projects/${encodeProjectId(req.params.id)}/design`);
   } catch (e) {
     console.error('Design approve error:', e);
-    res.redirect(`/customer/projects/${req.params.id}/design?error=Approve+failed`);
+    res.redirect(`/customer/projects/${encodeProjectId(req.params.id)}/design?error=Approve+failed`);
   }
 });
 
@@ -2660,7 +2676,7 @@ app.post('/customer/projects/:id/archive', auth.authenticate, auth.requireCustom
     await db.updateProject(req.params.id, project.name, project.description, 'archived');
     res.redirect('/projects?message=Project+archived');
   } catch (e) {
-    res.redirect(`/projects/${req.params.id}?error=Archive+failed`);
+    res.redirect(`/projects/${encodeProjectId(req.params.id)}?error=Archive+failed`);
   }
 });
 
@@ -2726,7 +2742,7 @@ app.post('/customer/projects/:id/design/answer', auth.authenticate, async (req, 
     design.customerAnswers.push({ question, answer, from: req.user.email, ts: new Date().toISOString() });
     fs.writeFileSync(filePath, JSON.stringify(design, null, 2));
 
-    res.redirect(`/projects/${projectId}`);
+    res.redirect(`/projects/${encodeProjectId(projectId)}`);
   } catch (e) {
     console.error('Customer answer error:', e);
     res.status(500).send('Failed to save answer');
@@ -2795,6 +2811,116 @@ app.post('/profile/password', auth.authenticate, async (req, res) => {
     console.error('Update password error:', e);
     res.redirect('/profile?error=Failed to update password');
   }
+});
+
+// === MOBILE CUSTOMER ROUTES ===
+
+app.get('/m', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  const projects = await db.getProjectsByUser(req.user.id);
+  const enriched = projects.map(p => {
+    const designFiles = fs.existsSync(DESIGNS_DIR) ? fs.readdirSync(DESIGNS_DIR).filter(f => f.startsWith(`design-${p.id}-`)).sort().reverse() : [];
+    const proposalFiles = fs.existsSync(PROPOSALS_DIR) ? fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${p.id}-`)).sort().reverse() : [];
+    let hasDesign = false, hasProposal = false, isApproved = false;
+    if (designFiles.length > 0) { try { const d = JSON.parse(fs.readFileSync(path.join(DESIGNS_DIR, designFiles[0]), 'utf8')); hasDesign = !!d.published; } catch {} }
+    if (proposalFiles.length > 0) { try { const pr = JSON.parse(fs.readFileSync(path.join(PROPOSALS_DIR, proposalFiles[0]), 'utf8')); hasProposal = !!pr.published; isApproved = !!pr.approvedAt; } catch {} }
+    const stage = isApproved ? 'approved' : hasProposal ? 'proposal' : hasDesign ? 'design' : (p.session_count > 0 ? 'session' : 'new');
+    return { ...p, stage };
+  });
+  res.render('customer/mobile/dashboard', { user: req.user, projects: enriched });
+});
+
+app.get('/m/projects', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  const projects = await db.getProjectsByUser(req.user.id);
+  const enriched = projects.map(p => {
+    const designFiles = fs.existsSync(DESIGNS_DIR) ? fs.readdirSync(DESIGNS_DIR).filter(f => f.startsWith(`design-${p.id}-`)).sort().reverse() : [];
+    const proposalFiles = fs.existsSync(PROPOSALS_DIR) ? fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${p.id}-`)).sort().reverse() : [];
+    let hasDesign = false, hasProposal = false, isApproved = false;
+    if (designFiles.length > 0) { try { const d = JSON.parse(fs.readFileSync(path.join(DESIGNS_DIR, designFiles[0]), 'utf8')); hasDesign = !!d.published; } catch {} }
+    if (proposalFiles.length > 0) { try { const pr = JSON.parse(fs.readFileSync(path.join(PROPOSALS_DIR, proposalFiles[0]), 'utf8')); hasProposal = !!pr.published; isApproved = !!pr.approvedAt; } catch {} }
+    const stage = isApproved ? 'approved' : hasProposal ? 'proposal' : hasDesign ? 'design' : (p.session_count > 0 ? 'session' : 'new');
+    return { ...p, stage };
+  });
+  res.render('customer/mobile/projects', { user: req.user, projects: enriched });
+});
+
+app.get('/m/projects/:id', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  const project = await db.getProject(req.params.id);
+  if (!project || project.user_id !== req.user.id) {
+    const share = project ? await db.getShareByProjectAndUser(req.params.id, req.user.id) : null;
+    if (!share) return res.status(404).send('Project not found');
+  }
+  const sessions = await db.getSessionsByProject(req.params.id);
+  const files = await db.getFilesByProject(req.params.id);
+  let hasPublishedDesign = false, designApproved = false, hasPublishedProposal = false, proposalApproved = false, hasRequirements = false, customerQuestions = [];
+  try {
+    const designResult = loadNewestDesign(req.params.id);
+    if (designResult && designResult.design) {
+      if (designResult.design.published) hasPublishedDesign = true;
+      if (designResult.design.approvedAt) designApproved = true;
+      if (designResult.design.questions && Array.isArray(designResult.design.questions)) {
+        customerQuestions = designResult.design.questions.filter(q => q.assignedTo === 'customer');
+      }
+    }
+  } catch(e) {}
+  try { sessions.forEach(s => { const reqs = JSON.parse(s.requirements || '{}'); if (Object.values(reqs).some(arr => Array.isArray(arr) && arr.length > 0)) hasRequirements = true; }); } catch(e) {}
+  try { const proposal = loadNewestProposal(req.params.id); if (proposal && proposal.published) { hasPublishedProposal = true; proposalApproved = !!proposal.approvedAt; } } catch(e) {}
+  res.render('customer/mobile/project', { user: req.user, project, sessions, files, hasPublishedDesign, designApproved, hasPublishedProposal, proposalApproved, hasRequirements, customerQuestions });
+});
+
+app.get('/m/projects/:id/design', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).send('Project not found');
+    if (project.user_id !== req.user.id) {
+      const share = await db.getShareByProjectAndUser(req.params.id, req.user.id);
+      if (!share) return res.status(403).send('Forbidden');
+    }
+    const result = loadNewestDesign(req.params.id);
+    if (!result || !result.design.published) return res.status(404).send('No published design available');
+    const { design } = result;
+    res.render('customer/mobile/design', { user: req.user, project, design });
+  } catch (e) {
+    console.error('Mobile design view error:', e);
+    res.status(500).send('Failed to load design');
+  }
+});
+
+app.get('/m/projects/:id/proposal', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).send('Project not found');
+    if (project.user_id !== req.user.id) {
+      const share = await db.getShareByProjectAndUser(req.params.id, req.user.id);
+      if (!share) return res.status(403).send('Forbidden');
+    }
+    const proposal = loadNewestProposal(req.params.id);
+    if (!proposal || !proposal.published) return res.status(404).send('No published proposal');
+    res.render('customer/mobile/proposal', { user: req.user, project, proposal });
+  } catch (e) {
+    console.error('Mobile proposal view error:', e);
+    res.status(500).send('Failed to load proposal');
+  }
+});
+
+app.get('/m/projects/:id/voice', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  const project = await db.getProject(req.params.id);
+  if (!project) return res.status(404).send('Project not found');
+  let hasAccess = project.user_id === req.user.id;
+  if (!hasAccess) {
+    const share = await db.getShareByProjectAndUser(req.params.id, req.user.id);
+    hasAccess = share && PERMISSION_LEVELS[share.permission] >= PERMISSION_LEVELS['user'];
+  }
+  if (!hasAccess) return res.status(404).send('Project not found');
+  let activeSession = await db.getLatestSessionForProject(req.params.id);
+  if (!activeSession || activeSession.status === 'completed') {
+    const result = await db.createSession(req.params.id);
+    activeSession = { id: result.lastInsertRowid };
+  }
+  res.render('customer/mobile/voice', { user: req.user, project, sessionId: activeSession.id });
+});
+
+app.get('/m/profile', auth.authenticate, auth.requireCustomer, async (req, res) => {
+  res.render('customer/mobile/profile', { user: req.user });
 });
 
 // === CUSTOMER ROUTES ===
@@ -2969,7 +3095,7 @@ app.get('/projects/:id/session', auth.authenticate, auth.requireCustomer, async 
     activeSession = { id: result.lastInsertRowid };
   }
   
-  res.redirect(`/voice-session?project=${req.params.id}&session=${activeSession.id}`);
+  res.redirect(`/voice-session?project=${encodeProjectId(req.params.id)}&session=${activeSession.id}`);
 });
 
 app.get('/voice-session', auth.authenticate, (req, res) => {
@@ -3694,7 +3820,7 @@ app.post('/admin/import-project', auth.authenticate, auth.requireAdmin, importUp
     }
 
     console.log(`📦 Imported project "${projectName}" (ID: ${projectId}) with ${assetFiles.length} assets`);
-    res.redirect('/admin/projects/' + projectId);
+    res.redirect('/admin/projects/' + encodeProjectId(projectId));
   } catch (e) {
     console.error('Import error:', e);
     res.status(500).send('Import failed: ' + e.message);
@@ -3780,7 +3906,7 @@ app.post('/admin/projects/:id/import', auth.authenticate, auth.requireAdmin, imp
       }
     }
 
-    res.redirect('/admin/projects/' + projectId);
+    res.redirect('/admin/projects/' + encodeProjectId(projectId));
   } catch (e) {
     console.error('Project import error:', e);
     res.status(500).send('Import failed: ' + e.message);
@@ -3804,9 +3930,9 @@ app.get('/api/crash-log', (req, res) => {
   res.type('text/plain').send(content.slice(-5000));
 });
 
-// Protected backup endpoint — dumps all data as JSON (key-based auth, no session required)
+// Protected backup endpoint — dumps all data as JSON (header-based auth, no session required)
 app.get('/api/backup', async (req, res) => {
-  const backupKey = req.query.key;
+  const backupKey = req.headers['x-backup-key'];
   if (!backupKey || backupKey !== (process.env.BACKUP_KEY || 'morti-backup-2026')) {
     return res.status(403).json({ error: 'Invalid backup key' });
   }
