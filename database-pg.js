@@ -482,6 +482,18 @@ module.exports = {
   createFeatureRequest,
   getAllFeatureRequests,
   queryOne,
+  // All sessions (admin)
+  getAllSessions: async () => {
+    const result = await pool.query(`
+      SELECT s.*, p.name as project_name, p.id as project_id, u.name as user_name, u.email as user_email,
+             (SELECT COUNT(*) FROM files f WHERE f.session_id = s.id) as file_count
+      FROM sessions s
+      JOIN projects p ON p.id = s.project_id
+      JOIN users u ON u.id = p.user_id
+      ORDER BY s.updated_at DESC
+    `);
+    return result.rows;
+  },
   // Stats
   getStats
 };
