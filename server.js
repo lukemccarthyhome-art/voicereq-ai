@@ -2763,7 +2763,7 @@ app.post('/profile/password', auth.authenticate, async (req, res) => {
 app.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, res) => {
   const projects = await db.getProjectsByUser(req.user.id);
   const fullUser = await db.getUserById(req.user.id);
-  const sharedProjects = fullUser ? await db.getSharedProjects(req.user.id, fullUser.email) : [];
+  const sharedProjects = (fullUser && typeof db.getSharedProjects === 'function') ? await db.getSharedProjects(req.user.id, fullUser.email) : [];
   
   // Enrich projects with stage info
   const enriched = projects.map(p => {
@@ -2793,7 +2793,7 @@ app.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, res) 
 app.get('/projects', auth.authenticate, auth.requireCustomer, async (req, res) => {
   const projects = await db.getProjectsByUser(req.user.id);
   const user = await db.getUserById(req.user.id);
-  const sharedProjects = user ? await db.getSharedProjects(req.user.id, user.email) : [];
+  const sharedProjects = (user && typeof db.getSharedProjects === 'function') ? await db.getSharedProjects(req.user.id, user.email) : [];
   const isNewProject = req.query.new === 'true';
   
   res.render('customer/projects', {
