@@ -110,30 +110,10 @@
             max-width: 800px; margin: 0 auto 48px; animation: fadeUp 0.7s ease-out 0.2s both;
         }
         .hero-video {
-            aspect-ratio: 16 / 9; border-radius: 16px; position: relative; overflow: hidden;
-            background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+            width: 100%; border-radius: 16px; overflow: hidden;
             border: 1px solid rgba(255,255,255,0.1);
-            display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
-        }
-        .hero-video::before {
-            content: ''; position: absolute; inset: 0;
-            background: radial-gradient(ellipse at center, rgba(99,102,241,0.12) 0%, transparent 70%);
-        }
-        .hero-video .play-btn {
-            width: 72px; height: 72px; border-radius: 50%; position: relative; z-index: 1;
-            background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.25);
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.3s; cursor: pointer; backdrop-filter: blur(8px);
-        }
-        .hero-video .play-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.08); }
-        .hero-video .play-btn::after {
-            content: ''; width: 0; height: 0;
-            border-left: 20px solid #fff; border-top: 12px solid transparent; border-bottom: 12px solid transparent;
-            margin-left: 4px;
-        }
-        .hero-video .video-label {
-            position: relative; z-index: 1; font-size: 0.85rem; color: rgba(255,255,255,0.4);
-            font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+            display: block;
         }
 
         .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: fadeUp 0.7s ease-out 0.3s both; }
@@ -353,12 +333,11 @@
         <h1>You Talk.<br><span class="gradient-text">Morti Builds.</span></h1>
         <p class="hero-sub">From a conversation to a complete project — requirements, design, proposal, and beyond. No templates. No jargon. Just results.</p>
 
-        <!-- HERO VIDEO PLACEHOLDER -->
+        <!-- HERO VIDEO -->
         <div class="hero-video-wrap">
-            <div class="hero-video">
-                <div class="play-btn"></div>
-                <span class="video-label">Video Coming Soon</span>
-            </div>
+            <video class="hero-video" autoplay muted loop playsinline>
+                <source src="/morti.mp4" type="video/mp4">
+            </video>
         </div>
 
         <div class="hero-buttons">
