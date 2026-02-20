@@ -37,7 +37,7 @@
     </div>
     <main class="main">
         <div class="breadcrumb">
-            <a href="/dashboard">Dashboard</a> › <a href="/projects">Projects</a> › <a href="/projects/<%= project.id %>"><%= project.name %></a> › Requirements
+            <a href="/dashboard">Dashboard</a> › <a href="/projects">Projects</a> › <a href="/projects/<%= encodeId(project.id) %>"><%= project.name %></a> › Requirements
         </div>
         <div class="card">
             <h2 style="margin-bottom: 16px;">📋 Project Requirements</h2>

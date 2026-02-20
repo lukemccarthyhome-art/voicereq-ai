@@ -57,7 +57,7 @@
 
   <main class="main">
     <div class="breadcrumb">
-      <a href="/dashboard">Dashboard</a> › <a href="/projects">Projects</a> › <a href="/projects/<%= projectId %>"><%= project.name %></a> › Design
+      <a href="/dashboard">Dashboard</a> › <a href="/projects">Projects</a> › <a href="/projects/<%= encodeId(projectId) %>"><%= project.name %></a> › Design
     </div>
 
     <%
@@ -87,7 +87,7 @@
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="badge badge-final">Published</span>
           <% if (!design.approvedAt) { %>
-          <form method="POST" action="/customer/projects/<%= projectId %>/design/approve" onsubmit="return confirm('Approve this design? This confirms you are happy with the proposed solution.');" style="margin:0;">
+          <form method="POST" action="/customer/projects/<%= encodeId(projectId) %>/design/approve" onsubmit="return confirm('Approve this design? This confirms you are happy with the proposed solution.');" style="margin:0;">
             <button type="submit" class="btn btn-primary" style="background:#10b981;">✅ Approve Design</button>
           </form>
           <% } %>
@@ -209,7 +209,7 @@
             <% if (custAnswered) { %>
               <div class="q-answer">✅ <strong>Your answer:</strong> <%= custAnswered.answer %> <span style="font-size:11px;color:#6b7280">— <%= melb(custAnswered.ts) %></span></div>
             <% } else { %>
-              <form method="POST" action="/customer/projects/<%= projectId %>/design/answer" class="answer-form">
+              <form method="POST" action="/customer/projects/<%= encodeId(projectId) %>/design/answer" class="answer-form">
                 <input type="hidden" name="designId" value="<%= design.id %>" />
                 <input type="hidden" name="question" value="<%= qText %>" />
                 <input type="text" name="answer" placeholder="Type your answer…" required />

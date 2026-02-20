@@ -1,0 +1,265 @@
+<%- include('layout-top', { 
+  title: 'Voice Session', 
+  headerTitle: project.name,
+  headerSubtitle: 'Voice Session',
+  backUrl: '/m/projects/' + encodeId(project.id),
+  showTabs: false,
+  bodyClass: 'voice-page',
+  headerAction: { url: '#', label: '📋' }
+}) %>
+
+<div class="voice-container">
+  <div class="voice-main">
+    <!-- Mic area -->
+    <div class="mic-area">
+      <button class="mic-button" id="micBtn" title="Start/Stop Call">🎙️</button>
+      <div class="mic-status" id="micStatus">Tap to start voice session</div>
+      <div class="waveform" id="waveform">
+        <div class="waveform-bar"></div>
+        <div class="waveform-bar"></div>
+        <div class="waveform-bar"></div>
+        <div class="waveform-bar"></div>
+        <div class="waveform-bar"></div>
+        <div class="waveform-bar"></div>
+        <div class="waveform-bar"></div>
+      </div>
+    </div>
+
+    <!-- Transcript -->
+    <div class="transcript-area" id="transcript">
+      <div class="text-center" style="color:#64748b;padding:20px;font-size:14px;">
+        Messages will appear here during your session.
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls bar -->
+  <div class="voice-controls">
+    <button class="voice-ctrl-btn" id="holdBtn" title="Hold/Resume AI">⏸️</button>
+    <button class="voice-ctrl-btn" id="muteBtn" title="Mute Mic">🔇</button>
+    <input type="text" class="voice-text-input" id="textInput" placeholder="Type a message..." />
+    <button class="voice-text-send" id="sendBtn">➤</button>
+    <button class="voice-ctrl-btn" id="uploadBtn" title="Upload File">📎</button>
+    <button class="voice-ctrl-btn danger" id="endBtn" title="End Session">✕</button>
+  </div>
+</div>
+
+<!-- Requirements drawer -->
+<div class="req-drawer-overlay" id="reqDrawer">
+  <div class="req-drawer">
+    <div class="req-drawer-header">
+      <span>📋 Requirements</span>
+      <button class="req-drawer-close" id="reqClose">✕</button>
+    </div>
+    <div class="req-drawer-body" id="reqBody">
+      <p style="color:#64748b;font-size:14px;">Requirements will appear here as they are gathered.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" style="display:none" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" capture="environment">
+
+<script>
+  // Inject URL params so session.js can find project/session
+  if (!window.location.search.includes('project=')) {
+    const url = new URL(window.location);
+    url.searchParams.set('project', '<%= encodeId(project.id) %>');
+    url.searchParams.set('session', '<%= sessionId %>');
+    window.history.replaceState({}, '', url.toString());
+  }
+</script>
+<script src="/session.js"></script>
+<script>
+(function() {
+  // Initialize the existing VoiceSession from session.js
+  // The session.js script auto-constructs VoiceSession on load
+  // We just need to wire up our mobile UI to it
+
+  let session = null;
+
+  // Wait for session.js to initialize
+  function waitForSession() {
+    if (window.voiceSession) {
+      session = window.voiceSession;
+      wireUpMobileUI();
+    } else {
+      // session.js creates window.voiceSession or we look for VoiceSession class
+      setTimeout(waitForSession, 100);
+    }
+  }
+
+  function wireUpMobileUI() {
+    const micBtn = document.getElementById('micBtn');
+    const micStatus = document.getElementById('micStatus');
+    const waveform = document.getElementById('waveform');
+    const transcript = document.getElementById('transcript');
+    const holdBtn = document.getElementById('holdBtn');
+    const muteBtn = document.getElementById('muteBtn');
+    const endBtn = document.getElementById('endBtn');
+    const textInput = document.getElementById('textInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const reqDrawer = document.getElementById('reqDrawer');
+    const reqClose = document.getElementById('reqClose');
+    const reqBody = document.getElementById('reqBody');
+    const reqToggle = document.querySelector('.m-header-action');
+
+    // Mic button — start/stop Vapi call
+    micBtn.addEventListener('click', function() {
+      session.toggleCall();
+    });
+
+    // Monitor call state changes via polling
+    let stateInterval = setInterval(function() {
+      if (!session) return;
+      
+      if (session.inCall) {
+        micBtn.classList.add('in-call');
+        if (session.aiHeld) {
+          micStatus.textContent = '⏸️ AI on hold';
+          micStatus.className = 'mic-status';
+          waveform.classList.remove('active');
+          holdBtn.classList.add('active');
+        } else {
+          micStatus.textContent = 'In call — speak now';
+          micStatus.className = 'mic-status active';
+          holdBtn.classList.remove('active');
+        }
+      }
+
+      // Update transcript from session messages
+      if (session.messages && session.messages.length > 0) {
+        updateTranscript(session.messages);
+      }
+
+      // Update requirements
+      if (session.requirements && Object.keys(session.requirements).length > 0) {
+        updateRequirements(session.requirements);
+      }
+
+      // Mute state
+      if (session.micMuted) {
+        muteBtn.classList.add('active');
+        muteBtn.innerHTML = '🔇';
+      } else {
+        muteBtn.classList.remove('active');
+        muteBtn.innerHTML = '🔊';
+      }
+    }, 500);
+
+    // Hold AI button (toggleMute in session.js = hold/resume AI)
+    holdBtn.addEventListener('click', function() {
+      session.toggleMute();
+    });
+
+    // Mic mute button (toggleMic in session.js = mute/unmute mic)
+    muteBtn.addEventListener('click', function() {
+      session.toggleMic();
+    });
+
+    // End session
+    endBtn.addEventListener('click', function() {
+      if (confirm('End this voice session?')) {
+        if (session.inCall) session.endCall();
+        window.location.href = '/m/projects/<%= encodeId(project.id) %>';
+      }
+    });
+
+    // Text input — session.sendText reads from #text-input by default
+    // We'll override to use our mobile input
+    function sendMobileText() {
+      const text = textInput.value.trim();
+      if (!text) return;
+      // Temporarily set the desktop text input value if it exists
+      const desktopInput = document.getElementById('text-input');
+      if (desktopInput) {
+        desktopInput.value = text;
+        session.sendText();
+      } else {
+        // Direct approach
+        session.messages.push({ role: 'user', content: text });
+        session.renderTranscript();
+        session.saveSession();
+      }
+      textInput.value = '';
+    }
+    sendBtn.addEventListener('click', sendMobileText);
+    textInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); sendMobileText(); }
+    });
+
+    // File upload
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', function() {
+      if (this.files.length > 0) {
+        session.handleFiles(this.files);
+      }
+      this.value = '';
+    });
+
+    // Requirements drawer
+    if (reqToggle) {
+      reqToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        reqDrawer.classList.toggle('open');
+      });
+    }
+    reqClose.addEventListener('click', () => reqDrawer.classList.remove('open'));
+    reqDrawer.addEventListener('click', function(e) {
+      if (e.target === reqDrawer) reqDrawer.classList.remove('open');
+    });
+
+    // Transcript rendering
+    let lastMsgCount = 0;
+    function updateTranscript(messages) {
+      if (messages.length === lastMsgCount) return;
+      lastMsgCount = messages.length;
+      
+      let html = '';
+      messages.forEach(function(m) {
+        const role = m.role === 'user' ? 'user' : 'ai';
+        const sender = role === 'user' ? 'You' : 'Morti AI';
+        html += '<div class="transcript-msg ' + role + '">' +
+          '<span class="transcript-sender">' + sender + '</span>' +
+          '<div class="transcript-bubble">' + escapeHtml(m.content || m.text || '') + '</div>' +
+          '</div>';
+      });
+      transcript.innerHTML = html;
+      transcript.scrollTop = transcript.scrollHeight;
+    }
+
+    function updateRequirements(reqs) {
+      let html = '';
+      Object.entries(reqs).forEach(function([cat, items]) {
+        if (!Array.isArray(items) || items.length === 0) return;
+        html += '<div class="req-category"><div class="req-category-title">' + escapeHtml(cat) + '</div>';
+        items.forEach(function(item) {
+          html += '<div class="req-item">• ' + escapeHtml(typeof item === 'string' ? item : item.text || JSON.stringify(item)) + '</div>';
+        });
+        html += '</div>';
+      });
+      if (html) reqBody.innerHTML = html;
+    }
+
+    function escapeHtml(t) {
+      return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  }
+
+  // Auto-init: session.js creates VoiceSession at bottom of file  
+  // Check if it assigns to window or just constructs
+  waitForSession();
+
+  // Fallback: if session.js doesn't expose globally, create one
+  setTimeout(function() {
+    if (!window.voiceSession && typeof VoiceSession !== 'undefined') {
+      window.voiceSession = new VoiceSession();
+      wireUpMobileUI();
+    }
+  }, 2000);
+})();
+</script>
+
+<%- include('layout-bottom', { showTabs: false }) %>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morti Projects - Voice-Powered Requirements Gathering</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; min-height: 100vh; line-height: 1.6; color: #333; }
+        
+        /* Layout */
+        .app { display: flex; height: 100vh; }
+        .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .sidebar { width: 340px; background: white; border-left: 1px solid #e0e0e0; display: flex; flex-direction: column; overflow: hidden; box-shadow: -2px 0 8px rgba(0,0,0,0.04); }
+        
+        @media (max-width: 768px) {
+            .app { flex-direction: column; }
+            .sidebar { width: 100%; height: 40vh; border-left: none; border-top: 1px solid #e0e0e0; box-shadow: 0 -2px 8px rgba(0,0,0,0.04); }
+            .main { height: 60vh; }
+            .header-container { flex-direction: column; gap: 12px; text-align: center; }
+            .nav { flex-wrap: wrap; justify-content: center; }
+            .controls { flex-wrap: wrap; }
+            .text-input-wrap { min-width: 100%; }
+        }
+
+        /* Header — portal style */
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px 0; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
+        .nav { display: flex; gap: 20px; align-items: center; }
+        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; font-size: 14px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); }
+        .nav a.active { background: rgba(255,255,255,0.3); }
+        .user-name { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 6px; font-weight: 500; font-size: 14px; }
+
+        /* Buttons — portal .btn style */
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; transform: translateY(-1px); }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; transform: translateY(-1px); }
+        .btn-outline { background: white; color: #667eea; border: 1px solid #667eea; }
+        .btn-outline:hover { background: #f8f9ff; transform: translateY(-1px); }
+        .btn-call { background: #28a745; }
+        .btn-call:hover { background: #218838; }
+        .btn-call.active { background: #dc3545; }
+        .btn-call.active:hover { background: #c82333; }
+        .btn-mute { background: #FF9800; }
+        .btn-mute:hover { background: #e68a00; }
+        .btn-mute.active { background: #28a745; }
+        .btn-mic { background: #607D8B; }
+        .btn-mic:hover { background: #546E7A; }
+        .btn-mic.active { background: #dc3545; }
+
+        /* Status bar */
+        .status-bar { background: white; padding: 14px 20px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 12px; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+        .status-dot.listening { background: #28a745; animation: blink 1.5s infinite; }
+        .status-dot.speaking { background: #667eea; animation: blink 1s infinite; }
+        .status-dot.thinking { background: #FF9800; }
+        .status-dot.muted { background: #dc3545; }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .status-info { flex: 1; }
+        .status-label { font-size: 14px; font-weight: 600; color: #333; }
+        .status-sub { font-size: 12px; color: #888; margin-top: 2px; }
+        .volume-mini { width: 80px; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden; }
+        .volume-mini-level { height: 100%; background: #28a745; width: 0%; transition: width 0.1s; }
+
+        /* Controls bar */
+        .controls { background: white; padding: 12px 20px; border-bottom: 1px solid #e0e0e0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .text-input-wrap { flex: 1; display: flex; gap: 8px; min-width: 200px; }
+        .text-input-wrap input { flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.2s; }
+        .text-input-wrap input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+
+        /* Card style — portal */
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+        /* Main content area — requirements */
+        .content { flex: 1; overflow-y: auto; padding: 20px; }
+        .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .content-header h3 { color: #333; font-size: 18px; margin: 0; display: flex; align-items: center; gap: 8px; }
+        .section { margin-bottom: 20px; }
+        .section h3 { font-size: 13px; text-transform: uppercase; color: #667eea; margin-bottom: 10px; letter-spacing: 0.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .req-item { background: white; padding: 14px 16px; border-radius: 10px; margin-bottom: 8px; font-size: 14px; line-height: 1.6; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-left: 3px solid #667eea; color: #444; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .empty-state { text-align: center; color: #999; padding: 40px 20px; font-size: 14px; }
+        .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
+        .empty-state h3 { margin-bottom: 8px; color: #666; font-size: 18px; }
+
+        /* Files section — card style */
+        .file-section { background: white; padding: 20px; border-bottom: 1px solid #e0e0e0; }
+        .file-section h4 { font-size: 14px; color: #333; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .upload-zone { border: 2px dashed #ddd; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; font-size: 13px; color: #666; transition: all 0.2s; }
+        .upload-zone:hover { border-color: #667eea; background: #f8f9ff; }
+        .upload-zone input { display: none; }
+        .upload-zone small { color: #888; }
+        .file-chip { display: inline-flex; align-items: center; gap: 4px; background: #f0f2f5; padding: 4px 10px; border-radius: 20px; font-size: 12px; margin: 4px 2px; }
+        .file-chip .x { cursor: pointer; color: #dc3545; font-weight: bold; margin-left: 2px; }
+        .file-processing { font-size: 12px; color: #FF9800; margin-top: 8px; }
+        
+        /* File cards */
+        .file-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; margin: 8px 0; overflow: hidden; }
+        .file-card-header { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid #f0f0f0; }
+        .file-icon { font-size: 16px; margin-right: 8px; }
+        .file-name { flex: 1; font-size: 13px; font-weight: 600; color: #333; }
+        .file-actions { display: flex; align-items: center; gap: 8px; }
+        .analyzed-badge { background: #28a745; color: white; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+        .file-remove { cursor: pointer; color: #dc3545; font-weight: bold; font-size: 16px; padding: 2px 4px; border-radius: 4px; }
+        .file-remove:hover { background: #ffebee; }
+        .file-description { padding: 10px 14px; }
+        .file-description textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; font-size: 13px; resize: vertical; min-height: 60px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+        .file-description textarea:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+
+        /* Sidebar — transcript card style */
+        .sidebar-header { padding: 16px 20px; border-bottom: 1px solid #e0e0e0; font-size: 15px; font-weight: 600; color: #333; display: flex; align-items: center; gap: 8px; background: white; }
+        .transcript { flex: 1; overflow-y: auto; padding: 16px; background: #f8f9fa; }
+        .t-msg { padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; max-width: 88%; }
+        .t-msg.ai { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(102,126,234,0.3); }
+        .t-msg.user { background: white; margin-left: auto; border-bottom-right-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); color: #333; }
+        .t-msg .t-role { font-size: 11px; font-weight: 600; opacity: 0.7; margin-bottom: 3px; }
+        .t-empty { text-align: center; color: #999; padding: 40px 20px; font-size: 13px; }
+
+        .error { background: #ffebee; color: #c62828; padding: 12px 20px; font-size: 13px; display: none; border-bottom: 1px solid #ffcdd2; }
+        .hidden { display: none !important; }
+        /* Hide Vapi's default floating call button */
+        #vapi-support-btn, .vapi-btn, [id^="vapi"] { display: none !important; position: absolute !important; left: -9999px !important; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Main panel -->
+        <div class="main">
+            <div class="header">
+                <div class="header-container">
+                    <a href="/dashboard" class="logo">🎙️ Morti Projects</a>
+                    <nav class="nav">
+                        <a href="/dashboard">Dashboard</a>
+                        <a href="/projects">My Projects</a>
+                        <a href="/profile">Profile</a>
+                        <div class="user-name" id="userName">👤</div>
+                        <a href="/logout">🚪 Logout</a>
+                    </nav>
+                </div>
+            </div>
+
+            <div id="error" class="error"></div>
+
+            <div class="status-bar">
+                <div class="status-dot" id="statusDot"></div>
+                <div class="status-info">
+                    <div class="status-label" id="statusText">Ready</div>
+                    <div class="status-sub" id="statusDetail">Start a conversation to begin</div>
+                </div>
+                <div class="volume-mini"><div class="volume-mini-level" id="volumeLevel"></div></div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-call btn-sm" id="callBtn" onclick="toggleCall()">📞 Start</button>
+                <button class="btn btn-mute btn-sm hidden" id="muteBtn" onclick="toggleMute()">✋ Hold AI</button>
+                <button class="btn btn-mic btn-sm hidden" id="micBtn" onclick="toggleMic()">🎤 Mute</button>
+                <div class="text-input-wrap">
+                    <input type="text" id="textInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendText()">
+                    <button class="btn btn-sm" onclick="sendText()">Send</button>
+                </div>
+            </div>
+
+            <!-- File upload -->
+            <div class="file-section">
+                <h4>📎 Project Assets</h4>
+                <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)">
+                    📁 Tap to upload files<br>
+                    <small>Documents, images, specs</small>
+                </div>
+                <div id="fileList"></div>
+                <div id="fileProcessing" class="file-processing hidden">⏳ Processing file...</div>
+            </div>
+
+            <!-- Requirements content -->
+            <div class="content" id="content">
+                <div class="content-header">
+                    <h3>📋 Requirements Analysis</h3>
+                    <button id="refreshReqBtn" class="btn btn-success btn-sm" onclick="refreshRequirements()">🔄 Refresh Requirements</button>
+                    <button class="btn btn-sm" style="background:#ef4444;color:white;margin-left:6px;" onclick="clearRequirements()">🗑 Clear</button>
+                </div>
+                <div class="empty-state" id="emptyState">
+                    <span class="emoji">📋</span>
+                    <h3>No requirements yet</h3>
+                    <p>Have a conversation and upload files, then click "Refresh Requirements" to analyze everything together</p>
+                </div>
+                <div id="reqSections"></div>
+            </div>
+        </div>
+
+        <!-- Sidebar - transcript -->
+        <div class="sidebar">
+            <div class="sidebar-header">💬 Conversation</div>
+            <div class="transcript" id="transcript">
+                <div class="t-empty">Voice transcript will appear here</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Request Button & Modal -->
+    <button onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:12px 20px;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(102,126,234,0.4);z-index:999;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">💡 Feature Request</button>
+    <div id="featureModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+      <div style="background:white;border-radius:12px;padding:28px;width:90%;max-width:500px;box-shadow:0 8px 30px rgba(0,0,0,0.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 style="color:#333;font-size:18px;">💡 Submit a Feature Request</h3>
+          <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button>
+        </div>
+        <textarea id="featureText" rows="5" placeholder="Describe the feature you'd like to see..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#ddd'"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+          <button onclick="document.getElementById('featureModal').style.display='none'" class="btn btn-outline">Cancel</button>
+          <button onclick="submitFeature()" class="btn">Submit</button>
+        </div>
+        <div id="featureStatus" style="margin-top:8px;font-size:13px;"></div>
+      </div>
+    </div>
+    <script>
+    async function submitFeature(){
+      const text=document.getElementById('featureText').value.trim();
+      if(!text)return;
+      const st=document.getElementById('featureStatus');
+      st.innerHTML='Submitting...';st.style.color='#666';
+      try{
+        const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'voice-session'})});
+        if(!r.ok)throw new Error('Failed');
+        st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#28a745';
+        document.getElementById('featureText').value='';
+        setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
+      }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#dc3545';}
+    }
+    </script>
+
+    <script src="/session.js"></script>
+</body>
+</html>

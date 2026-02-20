@@ -91,7 +91,7 @@
 
 <div class="main">
     <div class="breadcrumb">
-        <a href="/dashboard">Dashboard</a> → <a href="/projects">Projects</a> → <a href="/projects/<%= project.id %>"><%= project.name %></a> → Proposal
+        <a href="/dashboard">Dashboard</a> → <a href="/projects">Projects</a> → <a href="/projects/<%= encodeId(project.id) %>"><%= project.name %></a> → Proposal
     </div>
 
     <% if (proposal.approvedAt) { %>
@@ -103,7 +103,7 @@
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>💰 Proposal — <%= project.name %></h2>
-        <a href="/projects/<%= project.id %>" class="btn" style="background: #64748b;">← Back to Project</a>
+        <a href="/projects/<%= encodeId(project.id) %>" class="btn" style="background: #64748b;">← Back to Project</a>
     </div>
 
     <!-- Header -->
@@ -256,7 +256,7 @@
     <div class="approve-card">
         <h3>Ready to proceed?</h3>
         <p>By approving this proposal, you confirm acceptance of the scope, fees, and timeline outlined above.</p>
-        <form method="POST" action="/customer/projects/<%= project.id %>/proposal/approve" onsubmit="return confirm('Approve this proposal? This confirms your acceptance of the scope and fees.')">
+        <form method="POST" action="/customer/projects/<%= encodeId(project.id) %>/proposal/approve" onsubmit="return confirm('Approve this proposal? This confirms your acceptance of the scope and fees.')">
             <button type="submit" class="btn-approve">✅ Approve Proposal</button>
         </form>
     </div>

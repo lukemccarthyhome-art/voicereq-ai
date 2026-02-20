@@ -74,7 +74,7 @@
     <div class="breadcrumb">
       <a href="/admin">Dashboard</a> › <a href="/admin/projects">Projects</a>
                 <a href="/admin/projects">Projects</a>
-                <a href="/admin/feature-requests">Feature Requests</a> › <a href="/admin/projects/<%= projectId %>">Project <%= projectId %></a> › Design
+                <a href="/admin/feature-requests">Feature Requests</a> › <a href="/admin/projects/<%= encodeId(projectId) %>">Project <%= projectId %></a> › Design
     </div>
 
     <% if (locals.generating && !design) { %>
@@ -118,7 +118,7 @@
       <div style="font-size: 3rem; margin-bottom: 16px;">❌</div>
       <h3 style="color: #dc2626; margin-bottom: 8px;">Design Extraction Failed</h3>
       <p style="color: #94a3b8;"><%= locals.genError %></p>
-      <a href="/admin/projects/<%= projectId %>" class="btn" style="margin-top: 16px;">← Back to Project</a>
+      <a href="/admin/projects/<%= encodeId(projectId) %>" class="btn" style="margin-top: 16px;">← Back to Project</a>
     </div>
     <% } else if (design) { %>
     <%
@@ -176,17 +176,17 @@
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <span class="badge <%= (design.status === 'final') ? 'badge-final' : 'badge-draft' %>"><%= design.status || 'draft' %></span>
-          <form method="POST" action="/admin/projects/<%= projectId %>/extract-design" style="margin:0">
+          <form method="POST" action="/admin/projects/<%= encodeId(projectId) %>/extract-design" style="margin:0">
             <button type="submit" class="btn btn-amber btn-sm">🔄 Refresh</button>
           </form>
           <button id="generateFlowchart" class="btn btn-cyan btn-sm">🗺️ Flowchart</button>
           <% if (design.published) { %>
-            <form method="POST" action="/admin/projects/<%= projectId %>/design/unpublish" style="margin:0">
+            <form method="POST" action="/admin/projects/<%= encodeId(projectId) %>/design/unpublish" style="margin:0">
               <button type="submit" class="btn btn-sm" style="background:#ef4444;color:white;">🔒 Unpublish</button>
             </form>
             <span class="badge badge-final" style="font-size:10px;">Published <%= design.publishedAt ? melbDate(design.publishedAt) : '' %></span>
           <% } else { %>
-            <form method="POST" action="/admin/projects/<%= projectId %>/design/publish" style="margin:0">
+            <form method="POST" action="/admin/projects/<%= encodeId(projectId) %>/design/publish" style="margin:0">
               <button type="submit" class="btn btn-sm" style="background:#10b981;color:white;">📤 Publish to Customer</button>
             </form>
           <% } %>
@@ -322,7 +322,7 @@
               <div class="q-answer">✅ <strong>Customer Answer:</strong> <%= customerAnswered.answer %> <span style="font-size:11px;color:#6b7280">— <%= customerAnswered.from %>, <%= melb(customerAnswered.ts) %></span></div>
             <% } else { %>
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <form method="POST" action="/admin/projects/<%= projectId %>/design/answer" class="answer-form" style="flex:1;margin-top:0;">
+                <form method="POST" action="/admin/projects/<%= encodeId(projectId) %>/design/answer" class="answer-form" style="flex:1;margin-top:0;">
                   <input type="hidden" name="designId" value="<%= design.id %>" />
                   <input type="hidden" name="question" value="<%= qText %>" />
                   <input type="text" name="answer" placeholder="Type your answer…" />
@@ -499,7 +499,7 @@
       msgs.scrollTop = msgs.scrollHeight;
 
       try {
-        const res = await fetch('/admin/projects/<%= projectId %>/design/chat', {
+        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/design/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ designId: '<%= design.id %>', text })
@@ -529,7 +529,7 @@
       btn.disabled = true;
       btn.textContent = '⏳ Sending to Engine...';
       try {
-        const res = await fetch('/admin/projects/<%= projectId %>/send-to-engine', {
+        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/send-to-engine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -548,7 +548,7 @@
     // Assign question to customer
     async function acceptAssumption(btn, questionText, assumption) {
       try {
-        const res = await fetch('/admin/projects/<%= projectId %>/design/accept-assumption', {
+        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/design/accept-assumption', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ designId: '<%= design.id %>', questionText, assumption })
@@ -567,7 +567,7 @@
 
     async function assignQuestion(btn, questionText) {
       try {
-        const res = await fetch('/admin/projects/<%= projectId %>/design/assign-question', {
+        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/design/assign-question', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ designId: '<%= design.id %>', questionText, assignedTo: 'customer' })
@@ -589,7 +589,7 @@
       const render = document.getElementById('flowchartRender');
       let responseData = null;
       try {
-        const res = await fetch('/admin/projects/<%= projectId %>/design/flowchart', {
+        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/design/flowchart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });

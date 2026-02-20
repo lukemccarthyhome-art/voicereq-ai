@@ -1,0 +1,147 @@
+<%- include('layout-top', { 
+  title: project.name, 
+  headerTitle: project.name, 
+  headerSubtitle: project.description || '',
+  backUrl: '/m/projects',
+  activeTab: 'projects'
+}) %>
+
+<!-- Tabs -->
+<div class="m-tab-bar" id="projectTabs">
+  <a href="#overview" class="m-tab-item active" data-tab="overview">Overview</a>
+  <% if (hasRequirements) { %><a href="#requirements" class="m-tab-item" data-tab="requirements">Requirements</a><% } %>
+  <% if (hasPublishedDesign) { %><a href="#design" class="m-tab-item" data-tab="design">Design</a><% } %>
+  <% if (hasPublishedProposal) { %><a href="#proposal" class="m-tab-item" data-tab="proposal">Proposal</a><% } %>
+</div>
+
+<div class="m-content">
+  <!-- Overview Tab -->
+  <div id="tab-overview" class="tab-panel">
+    <!-- Voice CTA -->
+    <a href="/m/projects/<%= encodeId(project.id) %>/voice" class="m-quick-voice">
+      <div class="m-quick-voice-icon">🎙️</div>
+      <div class="m-quick-voice-text">
+        <h3>Start Voice Session</h3>
+        <p>Discuss requirements with AI</p>
+      </div>
+    </a>
+
+    <!-- Progress -->
+    <div class="m-card">
+      <div class="m-card-title">Progress</div>
+      <%
+      const milestones = [
+        { key: 'session', label: 'Session', icon: '🎙️', done: sessions.length > 0 },
+        { key: 'requirements', label: 'Requirements', icon: '📋', done: hasRequirements },
+        { key: 'design', label: 'Design', icon: '📐', done: hasPublishedDesign },
+        { key: 'proposal', label: 'Proposal', icon: '💰', done: hasPublishedProposal },
+        { key: 'approved', label: 'Approved', icon: '✅', done: proposalApproved }
+      ];
+      %>
+      <div style="display:flex;gap:4px;margin-top:12px;">
+        <% milestones.forEach(function(m) { %>
+          <div style="flex:1;text-align:center;">
+            <div style="width:36px;height:36px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:16px;background:<%= m.done ? '#d1fae5' : '#f1f5f9' %>;border:2px solid <%= m.done ? '#10b981' : '#e2e8f0' %>"><%= m.icon %></div>
+            <div style="font-size:11px;font-weight:600;color:<%= m.done ? '#059669' : '#94a3b8' %>"><%= m.label %></div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- Sessions -->
+    <% if (sessions.length > 0) { %>
+      <div class="m-card">
+        <div class="m-card-title">Sessions (<%= sessions.length %>)</div>
+        <% sessions.slice(0, 5).forEach(function(s) { %>
+          <div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;">
+            Session #<%= s.id %> — <span style="color:var(--text-secondary)"><%= new Date(s.created_at).toLocaleDateString() %></span>
+            <span class="m-badge <%= s.status === 'active' ? 'm-badge-session' : 'm-badge-approved' %>" style="float:right"><%= s.status %></span>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <!-- Files -->
+    <% if (files && files.length > 0) { %>
+      <div class="m-card">
+        <div class="m-card-title">Files (<%= files.length %>)</div>
+        <% files.forEach(function(f) { %>
+          <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;">
+            📎 <%= f.original_name || f.filename %>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <!-- Customer questions -->
+    <% if (customerQuestions && customerQuestions.length > 0) { %>
+      <div class="m-card" style="border-left:3px solid var(--indigo);">
+        <div class="m-card-title">❓ Questions for You</div>
+        <% customerQuestions.forEach(function(q) { %>
+          <div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;">
+            <%= typeof q === 'object' ? q.text : q %>
+          </div>
+        <% }); %>
+        <a href="/m/projects/<%= encodeId(project.id) %>/design" class="m-btn m-btn-primary m-btn-full mt-16" style="font-size:14px;">Answer Questions</a>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Requirements Tab -->
+  <div id="tab-requirements" class="tab-panel" style="display:none;">
+    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">Requirements gathered from voice sessions.</p>
+    <a href="/customer/projects/<%= encodeId(project.id) %>/requirements" class="m-btn m-btn-outline m-btn-full mb-12">View Full Requirements</a>
+  </div>
+
+  <!-- Design Tab -->
+  <% if (hasPublishedDesign) { %>
+  <div id="tab-design" class="tab-panel" style="display:none;">
+    <div class="m-card">
+      <div class="m-card-title">📐 Solution Design</div>
+      <p style="color:var(--text-secondary);font-size:14px;margin:8px 0;">
+        <% if (designApproved) { %>
+          ✅ You've approved this design.
+        <% } else { %>
+          Review and approve the proposed solution design.
+        <% } %>
+      </p>
+      <a href="/m/projects/<%= encodeId(project.id) %>/design" class="m-btn m-btn-primary m-btn-full mt-8">
+        <%= designApproved ? 'View Design' : 'Review & Approve' %>
+      </a>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Proposal Tab -->
+  <% if (hasPublishedProposal) { %>
+  <div id="tab-proposal" class="tab-panel" style="display:none;">
+    <div class="m-card">
+      <div class="m-card-title">💰 Proposal</div>
+      <p style="color:var(--text-secondary);font-size:14px;margin:8px 0;">
+        <% if (proposalApproved) { %>
+          ✅ Proposal approved — project is underway!
+        <% } else { %>
+          Review the proposal and pricing for your project.
+        <% } %>
+      </p>
+      <a href="/m/projects/<%= encodeId(project.id) %>/proposal" class="m-btn m-btn-primary m-btn-full mt-8">
+        <%= proposalApproved ? 'View Proposal' : 'Review & Approve' %>
+      </a>
+    </div>
+  </div>
+  <% } %>
+</div>
+
+<script>
+document.querySelectorAll('#projectTabs .m-tab-item').forEach(tab => {
+  tab.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.querySelectorAll('#projectTabs .m-tab-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+    this.classList.add('active');
+    document.getElementById('tab-' + this.dataset.tab).style.display = 'block';
+  });
+});
+</script>
+
+<%- include('layout-bottom', { activeTab: 'projects' }) %>

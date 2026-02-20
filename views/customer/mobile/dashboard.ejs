@@ -1,0 +1,59 @@
+<%- include('layout-top', { title: 'Dashboard', headerTitle: '🎙️ Morti Projects', activeTab: 'home' }) %>
+
+<div class="m-content">
+  <h2 style="font-size:22px;font-weight:800;margin-bottom:4px;">Hey, <%= user.name %> 👋</h2>
+  <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">Here's where your projects stand</p>
+
+  <% if (projects.length > 0) { %>
+    <%
+    const latestProject = projects[0];
+    const counts = { total: projects.length, inProgress: 0, approved: 0 };
+    projects.forEach(p => { if (p.stage === 'approved') counts.approved++; else counts.inProgress++; });
+    %>
+
+    <!-- Quick voice session -->
+    <a href="/m/projects/<%= encodeId(latestProject.id) %>/voice" class="m-quick-voice">
+      <div class="m-quick-voice-icon">🎙️</div>
+      <div class="m-quick-voice-text">
+        <h3>Start Voice Session</h3>
+        <p>Continue with <%= latestProject.name %></p>
+      </div>
+    </a>
+
+    <!-- Stats -->
+    <div class="m-stats">
+      <div class="m-stat">
+        <div class="m-stat-count"><%= counts.total %></div>
+        <div class="m-stat-label">Projects</div>
+      </div>
+      <div class="m-stat">
+        <div class="m-stat-count"><%= counts.inProgress %></div>
+        <div class="m-stat-label">In Progress</div>
+      </div>
+    </div>
+
+    <!-- Project list -->
+    <div class="m-section-title">Active Projects</div>
+    <% 
+    const stageLabels = { new: '🆕 New', session: '🎙️ In Session', design: '📐 Design', proposal: '💰 Proposal', approved: '✅ Approved' };
+    const stageBadge = { new: 'm-badge-new', session: 'm-badge-session', design: 'm-badge-design', proposal: 'm-badge-proposal', approved: 'm-badge-approved' };
+    projects.forEach(function(p) { %>
+      <a href="/m/projects/<%= encodeId(p.id) %>" class="m-project-item">
+        <div class="m-project-info">
+          <div class="m-project-name"><%= p.name %></div>
+          <div class="m-project-desc"><%= p.description || 'No description' %></div>
+        </div>
+        <span class="m-badge <%= stageBadge[p.stage] || 'm-badge-new' %>"><%= stageLabels[p.stage] || p.stage %></span>
+        <span class="m-project-arrow">›</span>
+      </a>
+    <% }); %>
+  <% } else { %>
+    <div class="m-empty">
+      <div class="m-empty-icon">📋</div>
+      <div class="m-empty-title">No projects yet</div>
+      <p>Your projects will appear here once created.</p>
+    </div>
+  <% } %>
+</div>
+
+<%- include('layout-bottom', { activeTab: 'home' }) %>

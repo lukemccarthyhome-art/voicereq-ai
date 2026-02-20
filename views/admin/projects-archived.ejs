@@ -36,8 +36,8 @@
                         <td style="font-size:13px;">💬 <%= p.session_count||0 %> sessions • 📎 <%= p.file_count||0 %> files</td>
                         <td>
                             <div style="display:flex;gap:8px;">
-                                <a href="/admin/projects/<%= p.id %>" class="btn btn-sm">👁️ View</a>
-                                <form method="POST" action="/admin/projects/<%= p.id %>/unarchive" style="margin:0;">
+                                <a href="/admin/projects/<%= encodeId(p.id) %>" class="btn btn-sm">👁️ View</a>
+                                <form method="POST" action="/admin/projects/<%= encodeId(p.id) %>/unarchive" style="margin:0;">
                                     <button type="submit" class="btn btn-sm" style="background:#28a745;color:white;">📦 Unarchive</button>
                                 </form>
                             </div>

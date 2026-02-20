@@ -1,0 +1,28 @@
+<%- include('layout-top', { title: 'Profile', headerTitle: 'Profile', activeTab: 'profile' }) %>
+
+<div class="m-content">
+  <div style="padding:20px 0;text-align:center;">
+    <div class="m-avatar"><%= user.name ? user.name.charAt(0).toUpperCase() : '?' %></div>
+    <div class="m-profile-name"><%= user.name %></div>
+    <div class="m-profile-email"><%= user.email %></div>
+  </div>
+
+  <div style="border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin-bottom:20px;">
+    <a href="/profile" class="m-profile-item">
+      <span>🔒 Change Password</span>
+      <span style="color:var(--text-muted)">›</span>
+    </a>
+    <a href="/profile/mfa/setup" class="m-profile-item">
+      <span>🛡️ Two-Factor Auth</span>
+      <span style="color:var(--text-muted)">›</span>
+    </a>
+    <a href="/dashboard" class="m-profile-item">
+      <span>🖥️ Desktop View</span>
+      <span style="color:var(--text-muted)">›</span>
+    </a>
+  </div>
+
+  <a href="/logout" class="m-btn m-btn-danger m-btn-full">🚪 Sign Out</a>
+</div>
+
+<%- include('layout-bottom', { activeTab: 'profile' }) %>

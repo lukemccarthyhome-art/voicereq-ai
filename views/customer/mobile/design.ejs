@@ -1,0 +1,113 @@
+<%- include('layout-top', { 
+  title: project.name + ' — Design', 
+  headerTitle: '📐 Design Review', 
+  headerSubtitle: project.name,
+  backUrl: '/m/projects/' + encodeId(project.id),
+  activeTab: 'projects'
+}) %>
+
+<div class="m-content">
+  <% if (design.approvedAt) { %>
+  <div class="m-card" style="background:var(--green-bg, #d1fae5);border:1px solid var(--green-border, #6ee7b7);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:24px;">✅</span>
+      <div>
+        <div style="font-weight:700;color:var(--green-text, #065f46);">Design Approved</div>
+        <div style="font-size:13px;color:var(--green-text, #047857);opacity:0.85;">by <%= design.approvedBy %> on <%= melb(design.approvedAt) %></div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Meta -->
+  <div class="m-card">
+    <div class="m-card-title"><%= project.name %></div>
+    <div class="m-card-meta">
+      Published <%= design.publishedAt ? melb(design.publishedAt) : '' %>
+      <% if (design.version) { %> · v<%= design.version %><% } %>
+    </div>
+    <% if (design.summary) { %>
+      <div style="margin-top:12px;padding:10px 14px;background:var(--indigo-bg, #eef2ff);border-radius:8px;font-size:14px;color:var(--indigo-text, #3730a3);">
+        <%= design.summary %>
+      </div>
+    <% } %>
+    <% if (!design.approvedAt) { %>
+      <form method="POST" action="/customer/projects/<%= encodeId(project.id) %>/design/approve" onsubmit="return confirm('Approve this design?');" style="margin-top:14px;">
+        <button type="submit" class="m-btn m-btn-green m-btn-full">✅ Approve Design</button>
+      </form>
+    <% } %>
+  </div>
+
+  <!-- Design Sections -->
+  <%
+    const designSections = design.sections || null;
+    const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate', CostBenefitAnalysis:'Cost / Benefit Analysis', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' };
+    const sectionIcons = { ExecutiveSummary:'📝', CoreWorkflow:'📋', SimplifiedArchitecture:'🏗️', MinimalDataModel:'💾', ManualVsAutomated:'⚙️', Assumptions:'📌', Dependencies:'🔗', Phase2Enhancements:'🚀', RisksAndMitigations:'⚠️', BuildEffortEstimate:'⏱️', CostBenefitAnalysis:'💰', TechnicalReadiness:'✅', TechnicalReference:'📖' };
+  %>
+  <% if (designSections) { %>
+    <% Object.keys(designSections).forEach(function(key) { %>
+      <% if (designSections[key]) { %>
+      <div class="m-card m-design-section">
+        <div class="m-card-title"><%= sectionIcons[key] || '📄' %> <%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></div>
+        <div class="m-design-body"><%- (function(txt) {
+          let s = txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\[ASSUMPTION\]/g,'<span class="m-assumption-tag">ASSUMPTION</span>');
+          return s.split('\n').map(function(line) {
+            line = line.trim();
+            if (!line) return '';
+            var numbered = line.match(/^(\d+)\.\s+(.+)/);
+            var bullet = line.match(/^[-•]\s+(.+)/);
+            if (numbered) return '<div class="m-design-step"><span class="m-step-num">' + numbered[1] + '</span>' + numbered[2] + '</div>';
+            if (bullet) return '<div class="m-design-bullet">• ' + bullet[1] + '</div>';
+            return '<p>' + line + '</p>';
+          }).join('');
+        })(designSections[key]) %></div>
+      </div>
+      <% } %>
+    <% }); %>
+  <% } else { %>
+    <div class="m-card"><%- design.designHtml || '<p style="color:var(--text-secondary)">No design content available.</p>' %></div>
+  <% } %>
+
+  <!-- Customer Questions -->
+  <%
+    const customerQuestions = (design.questions || []).filter(function(q) {
+      return (typeof q === 'object' && q.assignedTo === 'customer');
+    });
+  %>
+  <% if (customerQuestions.length > 0) { %>
+  <div class="m-card" style="border-left:3px solid var(--indigo);">
+    <div class="m-card-title">❓ Questions for You</div>
+    <% customerQuestions.forEach(function(q, i) { %>
+      <%
+        var qText = q.text || String(q);
+        var qId = q.id || (i+1);
+        var qAssumption = q.assumption || '';
+        var custAnswered = (design.customerAnswers || []).find(function(a) { return a.question === qText; });
+      %>
+      <div class="m-question-item">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <span class="m-step-num"><%= qId %></span>
+          <span style="font-weight:600;font-size:14px;"><%= qText %></span>
+        </div>
+        <% if (qAssumption) { %>
+          <div style="font-size:13px;color:var(--text-secondary);font-style:italic;margin:6px 0 0 34px;">💡 <%= qAssumption %></div>
+        <% } %>
+        <% if (custAnswered) { %>
+          <div class="m-answer-badge">✅ <%= custAnswered.answer %></div>
+        <% } else { %>
+          <form method="POST" action="/customer/projects/<%= encodeId(project.id) %>/design/answer" class="m-answer-form">
+            <input type="hidden" name="designId" value="<%= design.id %>" />
+            <input type="hidden" name="question" value="<%= qText %>" />
+            <input type="text" name="answer" placeholder="Your answer…" required class="m-input" />
+            <button type="submit" class="m-btn m-btn-primary" style="padding:10px 16px;flex-shrink:0;">Send</button>
+          </form>
+        <% } %>
+      </div>
+    <% }); %>
+  </div>
+  <% } %>
+</div>
+
+<%- include('layout-bottom', { activeTab: 'projects' }) %>

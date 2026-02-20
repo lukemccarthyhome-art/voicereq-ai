@@ -134,6 +134,7 @@ const initDB = async (retries = 3) => {
     try { await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS approved INTEGER DEFAULT 1'); } catch (e) {}
     try { await client.query('ALTER TABLE projects ADD COLUMN IF NOT EXISTS design_questions TEXT'); } catch (e) {}
     try { await client.query('ALTER TABLE projects ADD COLUMN IF NOT EXISTS admin_notes TEXT DEFAULT \'[]\''); } catch (e) {}
+    try { await client.query('ALTER TABLE projects ADD COLUMN IF NOT EXISTS design_review_requested TIMESTAMP'); } catch (e) {}
 
     // Create seed admin user
     await createSeedUser();

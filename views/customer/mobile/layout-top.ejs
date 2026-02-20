@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/mobile.css">
+  <title><%= typeof title !== 'undefined' ? title + ' — Morti' : 'Morti Projects' %></title>
+</head>
+<body class="<%= typeof bodyClass !== 'undefined' ? bodyClass : '' %>">
+<div class="m-app">
+  <% if (typeof showHeader === 'undefined' || showHeader !== false) { %>
+  <header class="m-header">
+    <div style="display:flex;align-items:center;min-width:0;">
+      <% if (typeof backUrl !== 'undefined' && backUrl) { %>
+        <a href="<%= backUrl %>" class="m-header-back">‹</a>
+      <% } %>
+      <div style="min-width:0;">
+        <div class="m-header-title"><%= typeof headerTitle !== 'undefined' ? headerTitle : '🎙️ Morti' %></div>
+        <% if (typeof headerSubtitle !== 'undefined' && headerSubtitle) { %>
+          <div class="m-header-subtitle"><%= headerSubtitle %></div>
+        <% } %>
+      </div>
+    </div>
+    <% if (typeof headerAction !== 'undefined' && headerAction) { %>
+      <a href="<%= headerAction.url %>" class="m-header-action"><%= headerAction.label %></a>
+    <% } %>
+  </header>
+  <% } %>

@@ -119,9 +119,9 @@
                     </div>
                 </div>
                 <% if (activeSession) { %>
-                    <a href="/voice-session?project=<%= project.id %>&session=<%= activeSession.id %>" class="btn btn-success" style="font-size: 16px; padding: 12px 24px;">🎙️ Continue Session</a>
+                    <a href="/voice-session?project=<%= encodeId(project.id) %>&session=<%= activeSession.id %>" class="btn btn-success" style="font-size: 16px; padding: 12px 24px;">🎙️ Continue Session</a>
                 <% } else { %>
-                    <a href="/projects/<%= project.id %>/session" class="btn btn-success" style="font-size: 16px; padding: 12px 24px;">🎙️ Start Session</a>
+                    <a href="/projects/<%= encodeId(project.id) %>/session" class="btn btn-success" style="font-size: 16px; padding: 12px 24px;">🎙️ Start Session</a>
                 <% } %>
             </div>
         </div>
@@ -170,7 +170,7 @@
                             <h3 style="margin-bottom: 4px; color: #065f46;">Requirements</h3>
                             <p style="font-size: 13px; color: #047857;">View gathered requirements for your project</p>
                         </div>
-                        <a href="/customer/projects/<%= project.id %>/requirements" class="btn" style="background: #10b981;">View</a>
+                        <a href="/customer/projects/<%= encodeId(project.id) %>/requirements" class="btn" style="background: #10b981;">View</a>
                     </div>
                 </div>
             <% } %>
@@ -182,7 +182,7 @@
                             <h3 style="margin-bottom: 4px; color: #065f46;"><%= designApprovedState ? 'Design Approved ✓' : 'Your Solution Design is ready' %></h3>
                             <p style="font-size: 13px; color: #047857;"><%= designApprovedState ? 'You approved this design' : 'Review the proposed solution for your project' %></p>
                         </div>
-                        <a href="/customer/projects/<%= project.id %>/design" class="btn" style="background: #10b981;">View Design</a>
+                        <a href="/customer/projects/<%= encodeId(project.id) %>/design" class="btn" style="background: #10b981;">View Design</a>
                     </div>
                 </div>
             <% } %>
@@ -194,7 +194,7 @@
                             <h3 style="margin-bottom: 4px; color: #065f46;"><%= isApproved ? 'Proposal Approved ✓' : 'Your Proposal is ready for review' %></h3>
                             <p style="font-size: 13px; color: #047857;"><%= isApproved ? 'You approved this proposal' : 'Review pricing and scope details' %></p>
                         </div>
-                        <a href="/customer/projects/<%= project.id %>/proposal" class="btn" style="background: #8b5cf6;"><%= isApproved ? 'View Proposal' : 'View & Approve' %></a>
+                        <a href="/customer/projects/<%= encodeId(project.id) %>/proposal" class="btn" style="background: #8b5cf6;"><%= isApproved ? 'View Proposal' : 'View & Approve' %></a>
                     </div>
                 </div>
             <% } %>
@@ -206,7 +206,7 @@
                             <h3 style="margin-bottom: 4px; color: #1e40af;">Setup Required</h3>
                             <p style="font-size: 13px; color: #3b82f6;">Provide credentials and configuration to start your build</p>
                         </div>
-                        <a href="/customer/projects/<%= project.id %>/onboarding" class="btn" style="background: #4f46e5; color: white;">Complete Setup</a>
+                        <a href="/customer/projects/<%= encodeId(project.id) %>/onboarding" class="btn" style="background: #4f46e5; color: white;">Complete Setup</a>
                     </div>
                 </div>
             <% } %>
@@ -237,7 +237,7 @@
                             ✅ Your answer: <%= answered.answer %> <span style="font-size:11px;color:#6b7280;">— <%= melb(answered.ts) %></span>
                         </div>
                     <% } else { %>
-                        <form method="POST" action="/customer/projects/<%= project.id %>/design/answer" style="display: flex; gap: 8px; margin-top: 8px;">
+                        <form method="POST" action="/customer/projects/<%= encodeId(project.id) %>/design/answer" style="display: flex; gap: 8px; margin-top: 8px;">
                             <input type="hidden" name="designId" value="<%= customerDesignId %>" />
                             <input type="hidden" name="question" value="<%= qText %>" />
                             <input type="text" name="answer" placeholder="Type your answer…" style="flex:1; padding:8px 12px; border:1px solid #fde68a; border-radius:6px; font-size:13px;" />
@@ -267,9 +267,9 @@
                             </div>
                             <div>
                                 <% if (activeSession) { %>
-                                    <a href="/voice-session?project=<%= project.id %>&session=<%= activeSession.id %>" class="btn btn-success">🎙️ Continue</a>
+                                    <a href="/voice-session?project=<%= encodeId(project.id) %>&session=<%= activeSession.id %>" class="btn btn-success">🎙️ Continue</a>
                                 <% } else { %>
-                                    <a href="/projects/<%= project.id %>/session" class="btn btn-success">🎙️ New Session</a>
+                                    <a href="/projects/<%= encodeId(project.id) %>/session" class="btn btn-success">🎙️ New Session</a>
                                 <% } %>
                             </div>
                         </div>
@@ -302,7 +302,7 @@
                             <span class="emoji">💬</span>
                             <h3>No conversations yet</h3>
                             <p>Start a voice session to begin gathering requirements</p>
-                            <a href="/projects/<%= project.id %>/session" class="btn btn-success" style="margin-top: 16px;">🎙️ Start Session</a>
+                            <a href="/projects/<%= encodeId(project.id) %>/session" class="btn btn-success" style="margin-top: 16px;">🎙️ Start Session</a>
                         </div>
                     <% } %>
                 </div>
@@ -412,15 +412,15 @@
         <!-- Archive / Delete project (subtle, at bottom) -->
         <div style="text-align: center; margin-top: 40px; padding: 20px; display: flex; justify-content: center; gap: 24px;">
             <% if (project.status !== 'archived') { %>
-            <form method="POST" action="/customer/projects/<%= project.id %>/archive" onsubmit="return confirm('Archive this project? You can unarchive it later.');" style="display: inline;">
+            <form method="POST" action="/customer/projects/<%= encodeId(project.id) %>/archive" onsubmit="return confirm('Archive this project? You can unarchive it later.');" style="display: inline;">
                 <button type="submit" style="background: none; border: none; color: #999; font-size: 13px; cursor: pointer; text-decoration: underline;">📦 Archive this project</button>
             </form>
             <% } else { %>
-            <form method="POST" action="/customer/projects/<%= project.id %>/unarchive" style="display: inline;">
+            <form method="POST" action="/customer/projects/<%= encodeId(project.id) %>/unarchive" style="display: inline;">
                 <button type="submit" style="background: none; border: none; color: #667eea; font-size: 13px; cursor: pointer; text-decoration: underline;">📦 Unarchive this project</button>
             </form>
             <% } %>
-            <form method="POST" action="/projects/<%= project.id %>/delete" onsubmit="return confirm('Delete this project and all its data? This cannot be undone.');" style="display: inline;">
+            <form method="POST" action="/projects/<%= encodeId(project.id) %>/delete" onsubmit="return confirm('Delete this project and all its data? This cannot be undone.');" style="display: inline;">
                 <button type="submit" style="background: none; border: none; color: #999; font-size: 13px; cursor: pointer; text-decoration: underline;">Delete this project</button>
             </form>
         </div>
@@ -437,7 +437,7 @@
         </div>
 
         <script>
-        const projectId = <%= project.id %>;
+        const projectId = '<%= encodeId(project.id) %>';
         const sessions = <%- JSON.stringify(sessions) %>;
 
         async function handleFiles(fileList) {

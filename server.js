@@ -766,6 +766,46 @@ app.get('/admin/projects/archived', auth.authenticate, auth.requireAdmin, async 
   });
 });
 
+// Mark project as complete (customer action from voice session)
+app.post('/api/projects/:id/complete', apiAuth, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const project = await db.getProject(projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    // Verify ownership (admin or owner)
+    if (req.user.role !== 'admin' && project.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    // Update project status to completed and set design_review_requested
+    await db.updateProject(projectId, project.name, project.description, 'completed');
+    // Set design_review_requested timestamp (uses a simple column add if not exists)
+    try {
+      await db.pool.query('UPDATE projects SET design_review_requested = NOW() WHERE id = $1', [projectId]);
+    } catch (e) {
+      // Column might not exist yet — add it
+      try {
+        await db.pool.query('ALTER TABLE projects ADD COLUMN IF NOT EXISTS design_review_requested TIMESTAMP');
+        await db.pool.query('UPDATE projects SET design_review_requested = NOW() WHERE id = $1', [projectId]);
+      } catch (e2) { console.warn('Could not set design_review_requested:', e2.message); }
+    }
+    await db.logAction(req.user.id, 'project_completed', { projectId, projectName: project.name }, req.ip);
+    // Notify admin via Telegram
+    const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+    const tgChat = process.env.TELEGRAM_CHAT_ID;
+    if (tgToken && tgChat) {
+      const msg = `✅ Project Completed & Ready for Design Review\nProject: ${project.name}\nBy: ${req.user.name} (${req.user.email})\nTime: ${new Date().toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })}`;
+      fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: tgChat, text: msg })
+      }).catch(err => console.error('Telegram notify failed:', err.message));
+    }
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Complete project error:', e);
+    res.status(500).json({ error: 'Failed to complete project' });
+  }
+});
+
 // Archive/Unarchive project (admin)
 app.post('/admin/projects/:id/archive', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {

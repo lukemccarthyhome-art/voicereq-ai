@@ -43,7 +43,7 @@
 <body>
     <div class="header">
         <h1>🔧 Setup — <%= project.name %></h1>
-        <a href="/customer/projects/<%= project.id %>">← Back to Project</a>
+        <a href="/customer/projects/<%= encodeId(project.id) %>">← Back to Project</a>
     </div>
 
     <div class="container">
@@ -118,7 +118,7 @@
     </div>
 
     <script>
-    const PROJECT_ID = '<%= project.id %>';
+    const PROJECT_ID = '<%= encodeId(project.id) %>';
 
     function gatherData() {
         const credentials = {};

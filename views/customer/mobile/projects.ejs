@@ -1,0 +1,29 @@
+<%- include('layout-top', { title: 'Projects', headerTitle: 'My Projects', activeTab: 'projects' }) %>
+
+<div class="m-content">
+  <%
+  const stageLabels = { new: '🆕 New', session: '🎙️ In Session', design: '📐 Design', proposal: '💰 Proposal', approved: '✅ Approved' };
+  const stageBadge = { new: 'm-badge-new', session: 'm-badge-session', design: 'm-badge-design', proposal: 'm-badge-proposal', approved: 'm-badge-approved' };
+  %>
+  
+  <% if (projects.length > 0) { %>
+    <% projects.forEach(function(p) { %>
+      <a href="/m/projects/<%= encodeId(p.id) %>" class="m-project-item">
+        <div class="m-project-info">
+          <div class="m-project-name"><%= p.name %></div>
+          <div class="m-project-desc"><%= p.description || 'No description' %></div>
+        </div>
+        <span class="m-badge <%= stageBadge[p.stage] || 'm-badge-new' %>"><%= stageLabels[p.stage] || p.stage %></span>
+        <span class="m-project-arrow">›</span>
+      </a>
+    <% }); %>
+  <% } else { %>
+    <div class="m-empty">
+      <div class="m-empty-icon">📁</div>
+      <div class="m-empty-title">No projects yet</div>
+      <p>Projects will appear here once created.</p>
+    </div>
+  <% } %>
+</div>
+
+<%- include('layout-bottom', { activeTab: 'projects' }) %>

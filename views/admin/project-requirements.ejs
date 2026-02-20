@@ -22,12 +22,12 @@
     <main class="main">
         <div class="breadcrumb">
             <a href="/admin">Dashboard</a> › <a href="/admin/projects">Projects</a>
-                <a href="/admin/projects">Projects</a> › <a href="/admin/projects/<%= project.id %>"><%= project.name %></a> › Requirements
+                <a href="/admin/projects">Projects</a> › <a href="/admin/projects/<%= encodeId(project.id) %>"><%= project.name %></a> › Requirements
         </div>
         <div class="card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                 <h2>📋 Project Requirements</h2>
-                <a href="/admin/projects/<%= project.id %>" style="color:#667eea;text-decoration:none;font-size:14px;">← Back to Project</a>
+                <a href="/admin/projects/<%= encodeId(project.id) %>" style="color:#667eea;text-decoration:none;font-size:14px;">← Back to Project</a>
             </div>
             <p style="color: #64748b; font-size: 14px; margin-bottom: 24px;">Aggregated requirements from all sessions for <strong><%= project.name %></strong> (<%= project.company %>).</p>
             <% const cats = Object.keys(requirements); %>

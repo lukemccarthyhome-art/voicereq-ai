@@ -69,7 +69,7 @@
 <div class="main">
     <div class="breadcrumb">
         <a href="/admin">Dashboard</a> → <a href="/admin/projects">Projects</a>
-                <a href="/admin/projects">Projects</a> → <a href="/admin/projects/<%= project.id %>"><%= project.name %></a> → Proposal
+                <a href="/admin/projects">Projects</a> → <a href="/admin/projects/<%= encodeId(project.id) %>"><%= project.name %></a> → Proposal
     </div>
 
     <% if (locals.query && locals.query.error) { %>
@@ -79,13 +79,13 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
             <h2 style="margin: 0;">💰 Proposal — <%= project.name %></h2>
-            <a href="/admin/projects/<%= project.id %>" class="btn btn-sm" style="background: #64748b;">← Back</a>
+            <a href="/admin/projects/<%= encodeId(project.id) %>" class="btn btn-sm" style="background: #64748b;">← Back</a>
         </div>
         
         <!-- Action bar -->
         <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
             <% if (design) { %>
-            <form method="POST" action="/admin/projects/<%= project.id %>/generate-proposal" style="margin:0; display:flex; flex-wrap:wrap; gap:8px; align-items:center;" id="genForm">
+            <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/generate-proposal" style="margin:0; display:flex; flex-wrap:wrap; gap:8px; align-items:center;" id="genForm">
                 <div style="display:flex; gap:4px; align-items:center;">
                     <label style="font-size:12px; color:#64748b; font-weight:600;">Upfront</label>
                     <input type="number" name="discountUpfront" min="0" max="100" step="1" placeholder="%" style="width:60px; padding:6px 8px; border:2px solid #e2e8f0; border-radius:6px; font-size:13px; text-align:center;" title="Upfront fee discount %" value="<%= proposal && proposal.discount && proposal.discount.upfront ? proposal.discount.upfront : '' %>">
@@ -102,15 +102,15 @@
             <% if (proposal) { %>
                 <div style="display:flex; gap:8px; align-items:center; margin-left:auto;">
                     <% if (proposal.published) { %>
-                        <form method="POST" action="/admin/projects/<%= project.id %>/proposal/unpublish" style="margin:0;">
+                        <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/proposal/unpublish" style="margin:0;">
                             <button type="submit" class="btn btn-sm" style="background: #ef4444;">🔒 Unpublish</button>
                         </form>
                     <% } else { %>
-                        <form method="POST" action="/admin/projects/<%= project.id %>/proposal/publish" style="margin:0;">
+                        <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/proposal/publish" style="margin:0;">
                             <button type="submit" class="btn btn-sm" style="background: #10b981;">📤 Publish</button>
                         </form>
                     <% } %>
-                    <form method="POST" action="/admin/projects/<%= project.id %>/proposal/delete" style="margin:0;" onsubmit="return confirm('Delete all proposals for this project? This cannot be undone.')">
+                    <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/proposal/delete" style="margin:0;" onsubmit="return confirm('Delete all proposals for this project? This cannot be undone.')">
                         <button type="submit" class="btn btn-sm" style="background: #dc2626;">🗑️ Delete</button>
                     </form>
                 </div>
@@ -123,7 +123,7 @@
             <div style="font-size: 3rem; margin-bottom: 16px;">📐</div>
             <h3 style="color: #64748b; margin-bottom: 8px;">Design Required First</h3>
             <p style="color: #94a3b8;">Extract a design before generating a proposal.</p>
-            <a href="/admin/projects/<%= project.id %>" class="btn" style="margin-top: 16px;">← Back to Project</a>
+            <a href="/admin/projects/<%= encodeId(project.id) %>" class="btn" style="margin-top: 16px;">← Back to Project</a>
         </div>
     <% } else if (locals.generating) { %>
         <div class="card" style="text-align: center; padding: 60px;" id="genCard">
@@ -140,7 +140,7 @@
             <div style="font-size: 3rem; margin-bottom: 16px;">💰</div>
             <h3 style="color: #64748b; margin-bottom: 8px;">No Proposal Yet</h3>
             <p style="color: #94a3b8; margin-bottom: 20px;">Generate a value-based fee proposal from the project design.</p>
-            <form method="POST" action="/admin/projects/<%= project.id %>/generate-proposal" id="genForm2">
+            <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/generate-proposal" id="genForm2">
                 <button type="submit" class="btn" style="background: #8b5cf6;">⚡ Generate Proposal</button>
             </form>
         </div>
@@ -408,7 +408,7 @@ if (chatInput && chatSend) {
         chatSend.disabled = true;
         chatInput.disabled = true;
         try {
-            const res = await fetch('/admin/projects/<%= project.id %>/proposal/chat', {
+            const res = await fetch('/admin/projects/<%= encodeId(project.id) %>/proposal/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text })
@@ -438,7 +438,7 @@ if (chatInput && chatSend) {
 // Poll for generation status if generating
 <% if (locals.generating) { %>
 (function pollStatus() {
-    const projectId = '<%= project.id %>';
+    const projectId = '<%= encodeId(project.id) %>';
     let elapsed = 0;
     const interval = setInterval(async () => {
         elapsed += 2;

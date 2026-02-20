@@ -435,6 +435,11 @@ try {
   console.log('✅ Added admin_notes column to projects table');
 } catch (e) {}
 
+try {
+  db.exec(`ALTER TABLE projects ADD COLUMN design_review_requested TEXT`);
+  console.log('✅ Added design_review_requested column to projects table');
+} catch (e) {}
+
 
 // === Project Sharing Functions ===
 const shareProject = (projectId, email, permission, invitedBy, inviteToken) => {

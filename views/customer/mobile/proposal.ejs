@@ -1,0 +1,176 @@
+<%- include('layout-top', { 
+  title: project.name + ' — Proposal', 
+  headerTitle: '💰 Proposal', 
+  headerSubtitle: project.name,
+  backUrl: '/m/projects/' + encodeId(project.id),
+  activeTab: 'projects'
+}) %>
+
+<div class="m-content">
+  <% if (proposal.approvedAt) { %>
+  <div class="m-card" style="background:var(--green-bg, #d1fae5);border:1px solid var(--green-border, #6ee7b7);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:24px;">✅</span>
+      <div>
+        <div style="font-weight:700;color:var(--green-text, #065f46);">Proposal Approved</div>
+        <div style="font-size:13px;color:var(--green-text, #047857);opacity:0.85;">by <%= proposal.approvedBy %> on <%= melbDate(proposal.approvedAt) %></div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Header Card -->
+  <div class="m-card">
+    <div class="m-card-title"><%= proposal.projectName || project.name %></div>
+    <div class="m-card-meta">
+      Prepared for: <strong><%= proposal.clientCompany || 'TBD' %></strong> · <%= melbDate(proposal.createdAt) %>
+    </div>
+    <% if (proposal.commercialContext) { %>
+      <p style="margin-top:10px;font-size:14px;color:var(--text-secondary);line-height:1.6;"><%= proposal.commercialContext %></p>
+    <% } %>
+  </div>
+
+  <!-- Discount Banner -->
+  <% if (proposal.discount && (proposal.discount.upfront || proposal.discount.annual || proposal.discount.percentage)) { %>
+  <div class="m-card" style="background:#fef3c7;border:1px solid #f59e0b;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:20px;">🏷️</span>
+      <div>
+        <div style="font-weight:700;color:#92400e;"><%= proposal.discount.upfront && proposal.discount.annual ? proposal.discount.upfront + '%/' + proposal.discount.annual + '% Discount' : (proposal.discount.upfront ? proposal.discount.upfront + '% Upfront Discount' : (proposal.discount.annual ? proposal.discount.annual + '% Annual Discount' : proposal.discount.percentage + '% Discount')) %></div>
+        <% if (proposal.discount.reason) { %><div style="font-size:13px;color:#a16207;"><%= proposal.discount.reason %></div><% } %>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Pricing Cards -->
+  <div class="m-card m-fee-card">
+    <div class="m-fee-label">Upfront Fee</div>
+    <div class="m-fee-amount">
+      <% if (proposal.upfrontFee && proposal.upfrontFee.originalTotal && proposal.upfrontFee.originalTotal !== proposal.upfrontFee.total) { %>
+        <span style="text-decoration:line-through;color:var(--text-secondary);font-size:0.6em;">$<%= proposal.upfrontFee.originalTotal.toLocaleString() %></span>
+      <% } %>
+      $<%= ((proposal.upfrontFee && proposal.upfrontFee.total) || proposal.totalUpfront || 0).toLocaleString() %>
+    </div>
+    <div class="m-fee-desc">Discovery, design, development, testing & deployment</div>
+  </div>
+
+  <div class="m-card m-fee-card" style="border-left:3px solid var(--green);">
+    <div class="m-fee-label" style="color:var(--green);">Annual Fee</div>
+    <div class="m-fee-amount">
+      <% if (proposal.annualFee && proposal.annualFee.originalTotal && proposal.annualFee.originalTotal !== proposal.annualFee.total) { %>
+        <span style="text-decoration:line-through;color:var(--text-secondary);font-size:0.6em;">$<%= proposal.annualFee.originalTotal.toLocaleString() %></span>
+      <% } %>
+      $<%= ((proposal.annualFee && proposal.annualFee.total) || proposal.annualMaintenance || 0).toLocaleString() %><span style="font-size:0.5em;color:var(--text-secondary);"> /yr</span>
+    </div>
+    <% if (proposal.annualFee && proposal.annualFee.monthlyEquivalent) { %>
+      <div style="font-size:14px;color:var(--text-secondary);margin-top:4px;">$<%= proposal.annualFee.monthlyEquivalent.toLocaleString() %>/month</div>
+    <% } %>
+    <% if (proposal.annualFee && proposal.annualFee.includes) { %>
+      <div class="m-fee-desc"><%= proposal.annualFee.includes %></div>
+    <% } %>
+  </div>
+
+  <!-- Timeline -->
+  <% if (proposal.timeline) { %>
+  <div class="m-card" style="text-align:center;">
+    <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);font-weight:700;">Timeline</div>
+    <div style="font-size:22px;font-weight:800;margin-top:4px;"><%= proposal.timeline %></div>
+  </div>
+  <% } %>
+
+  <!-- Labour Analysis -->
+  <% if (proposal.labourAnalysis) { %>
+  <div class="m-card" style="border-left:3px solid #3b82f6;">
+    <div class="m-card-title">📊 Current Cost Analysis</div>
+    <% if (proposal.labourAnalysis.currentProcess) { %>
+      <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;">
+        <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;">Current Process</div>
+        <div><%= proposal.labourAnalysis.currentProcess %></div>
+      </div>
+    <% } %>
+    <% if (proposal.labourAnalysis.hoursPerWeek) { %>
+      <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;">
+        <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;">Estimated Effort</div>
+        <div><%= proposal.labourAnalysis.hoursPerWeek %> hrs/week</div>
+      </div>
+    <% } %>
+    <div style="padding:8px 0;font-size:14px;">
+      <div style="font-size:12px;color:var(--text-secondary);text-transform:uppercase;">Estimated Annual Savings</div>
+      <div style="font-size:20px;font-weight:800;color:#1e40af;">$<%= (proposal.labourAnalysis.totalAnnualSavings || 0).toLocaleString() %></div>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- ROI -->
+  <% const roi = proposal.roiIllustration || proposal.roi; %>
+  <% if (roi) { %>
+  <div class="m-card" style="border-left:3px solid var(--green);">
+    <div class="m-card-title">📈 Return on Investment</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+      <% if (roi.netAnnualBenefit) { %>
+      <div style="text-align:center;padding:12px;background:var(--bg-secondary, #f8fafc);border-radius:8px;">
+        <div style="font-size:11px;text-transform:uppercase;color:var(--text-secondary);">Net Annual Benefit</div>
+        <div style="font-size:18px;font-weight:800;color:var(--green-text, #166534);">$<%= (roi.netAnnualBenefit || 0).toLocaleString() %></div>
+      </div>
+      <% } %>
+      <% if (roi.roiMultiple) { %>
+      <div style="text-align:center;padding:12px;background:var(--bg-secondary, #f8fafc);border-radius:8px;">
+        <div style="font-size:11px;text-transform:uppercase;color:var(--text-secondary);">ROI Multiple</div>
+        <div style="font-size:18px;font-weight:800;color:var(--green-text, #166534);"><%= roi.roiMultiple %></div>
+      </div>
+      <% } %>
+      <% if (roi.paybackOnUpfront || roi.paybackPeriod) { %>
+      <div style="text-align:center;padding:12px;background:var(--bg-secondary, #f8fafc);border-radius:8px;grid-column:1/-1;">
+        <div style="font-size:11px;text-transform:uppercase;color:var(--text-secondary);">Payback Period</div>
+        <div style="font-size:18px;font-weight:800;color:var(--green-text, #166534);"><%= roi.paybackOnUpfront || roi.paybackPeriod %></div>
+      </div>
+      <% } %>
+    </div>
+    <% if (roi.summary) { %>
+      <p style="margin-top:10px;font-size:13px;color:var(--text-secondary);font-style:italic;border-top:1px solid var(--border);padding-top:10px;"><%= roi.summary %></p>
+    <% } %>
+  </div>
+  <% } %>
+
+  <!-- Assumptions & Exclusions -->
+  <% if (proposal.assumptions && proposal.assumptions.length > 0) { %>
+  <div class="m-card">
+    <div class="m-card-title">📌 Assumptions</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+      <% proposal.assumptions.forEach(function(a) { %>
+        <span class="m-tag"><%= a %></span>
+      <% }); %>
+    </div>
+  </div>
+  <% } %>
+
+  <% if (proposal.exclusions && proposal.exclusions.length > 0) { %>
+  <div class="m-card">
+    <div class="m-card-title">🚫 Exclusions</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+      <% proposal.exclusions.forEach(function(e) { %>
+        <span class="m-tag m-tag-excl"><%= e %></span>
+      <% }); %>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Approve -->
+  <% if (!proposal.approvedAt) { %>
+  <div class="m-card" style="text-align:center;background:var(--green-bg, #f0fdf4);border:1px solid var(--green-border, #86efac);">
+    <h3 style="color:var(--green-text, #166534);margin-bottom:6px;">Ready to proceed?</h3>
+    <p style="color:var(--green-text, #15803d);font-size:14px;margin-bottom:14px;">By approving, you accept the scope, fees, and timeline.</p>
+    <form method="POST" action="/customer/projects/<%= encodeId(project.id) %>/proposal/approve" onsubmit="return confirm('Approve this proposal?');">
+      <button type="submit" class="m-btn m-btn-green m-btn-full" style="font-size:16px;padding:14px;">✅ Approve Proposal</button>
+    </form>
+  </div>
+  <% } %>
+
+  <div style="text-align:center;padding:16px 0;font-size:13px;color:var(--text-secondary);">
+    Valid until: <%= proposal.validUntil || '30 days from generation' %><br>
+    All prices AUD, ex GST.
+  </div>
+</div>
+
+<%- include('layout-bottom', { activeTab: 'projects' }) %>

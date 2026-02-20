@@ -75,7 +75,7 @@
                             <tr data-project="<%= (session.project_name || '').toLowerCase() %>" data-customer="<%= (session.user_name || '').toLowerCase() %>" data-status="<%= session.status %>">
                                 <td><strong>#<%= session.id %></strong></td>
                                 <td>
-                                    <a href="/admin/projects/<%= session.project_id %>" style="color: #667eea; text-decoration: none; font-weight: 500;">
+                                    <a href="/admin/projects/<%= encodeId(session.project_id) %>" style="color: #667eea; text-decoration: none; font-weight: 500;">
                                         <%= session.project_name %>
                                     </a>
                                 </td>
@@ -94,7 +94,7 @@
                                 </td>
                                 <td>
                                     <a href="/admin/sessions/<%= session.id %>/view" class="btn btn-sm" style="margin-right: 4px;">👁️ View</a>
-                                    <a href="/voice-session?project=<%= session.project_id %>&session=<%= session.id %>" class="btn btn-sm btn-success">🎙️ Open</a>
+                                    <a href="/voice-session?project=<%= encodeId(session.project_id) %>&session=<%= session.id %>" class="btn btn-sm btn-success">🎙️ Open</a>
                                 </td>
                             </tr>
                         <% }) %>

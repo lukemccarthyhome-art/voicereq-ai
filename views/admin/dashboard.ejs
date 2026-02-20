@@ -101,6 +101,23 @@
                 <% } %>
             </div>
 
+            <% const reviewProjects = recentProjects.filter(p => p.status === 'completed' && p.design_review_requested); %>
+            <% if (reviewProjects.length > 0) { %>
+            <div class="card" style="border-left: 4px solid #f59e0b; background: #fffbeb;">
+                <h2>🔔 Design Review Needed</h2>
+                <p style="color: #92400e; font-size: 13px; margin-bottom: 12px;">These projects have been marked complete by customers and are waiting for design review.</p>
+                <% reviewProjects.forEach(project => { %>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:white;border-radius:8px;margin-bottom:8px;border:1px solid #fde68a;">
+                        <div>
+                            <strong><%= project.name %></strong>
+                            <span style="font-size:12px;color:#92400e;margin-left:8px;"><%= project.user_name %> — <%= project.company %></span>
+                        </div>
+                        <a href="/admin/projects/<%= encodeId(project.id) %>" class="btn btn-sm" style="background:#f59e0b;border-color:#f59e0b;">Review →</a>
+                    </div>
+                <% }) %>
+            </div>
+            <% } %>
+
             <div class="card">
                 <h2>📊 Recent Projects</h2>
                 <% if (recentProjects.length > 0) { %>
@@ -121,6 +138,9 @@
                                             <span style="color: #28a745; font-size: 12px;">● Active</span>
                                         <% } else if (project.status === 'completed') { %>
                                             <span style="color: #6c757d; font-size: 12px;">● Completed</span>
+                                            <% if (project.design_review_requested) { %>
+                                                <span style="background:#f59e0b;color:white;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;font-weight:600;">Design Review</span>
+                                            <% } %>
                                         <% } else { %>
                                             <span style="color: #dc3545; font-size: 12px;">● Archived</span>
                                         <% } %>

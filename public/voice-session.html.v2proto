@@ -1117,596 +1117,392 @@
     <!-- Updated toast -->
     <div class="updated-toast" id="updatedToast">✓ Requirements updated</div>
 
-
-    <!-- Hide Vapi's default floating call button -->
-    <style>#vapi-support-btn, .vapi-btn, [id^="vapi"] { display: none !important; position: absolute !important; left: -9999px !important; }</style>
-
     <script>
-    // ===== V2 UI — WIRED TO REAL BACKEND =====
+    // ===== DEMO INTERACTIONS =====
+    // This is a UI prototype — wiring to Vapi/backend happens in session.js
 
-    // ── State ──
     let inCall = false;
     let isHeld = false;
-    let isMicMuted = false;
+    let isMuted = false;
     let timerInterval = null;
     let seconds = 0;
-    let waveInterval = null;
-    let vapi = null;
-    let messages = [];
-    let uploadedFiles = [];
-    let requirements = {};
-    let hasHadFirstCall = false;
-    let sessionContext = {
-        projectName: '', topicsCovered: [], keyFacts: [], currentTopic: '', filesUploaded: []
-    };
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const projectId = urlParams.get('project');
-    const sessionId = urlParams.get('session');
-    console.log('🎯 Session initialized', { projectId, sessionId });
-
-    // ── Vapi Init ──
-    function initVapi() {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js';
-        script.defer = true; script.async = true;
-        script.onload = () => {
-            if (window.vapiSDK) {
-                vapi = window.vapiSDK.run({
-                    apiKey: 'b34ed3bb-5c71-43df-a191-9b91568a329b',
-                    assistant: '55bd93be-541f-4870-ae3e-0c97763c12b3',
-                    config: { hide: true }
-                });
-                setupVapiEvents();
-                console.log('✅ Vapi SDK loaded');
-            }
-        };
-        document.head.appendChild(script);
+    // --- Start call ---
+    function toggleCall() {
+        if (!inCall) {
+            startCall();
+        } else {
+            // Hero button clicked during call = end call
+            endCall();
+        }
     }
 
-    function setupVapiEvents() {
-        vapi.on('call-start', () => {
-            inCall = true; hasHadFirstCall = true;
-            enterCallUI();
-        });
-        vapi.on('call-end', () => {
-            inCall = false; isHeld = false; isMicMuted = false;
-            exitCallUI();
-            saveSession();
-        });
-        vapi.on('speech-start', () => {
-            if (isHeld) { try { vapi.say(' ', false, false); } catch(e) {} muteRemoteAudio(true); return; }
-            setStatus('speaking', 'AI Speaking');
-        });
-        vapi.on('speech-end', () => { if (!isHeld) setStatus('listening', 'Listening'); });
-        vapi.on('volume-level', (level) => {
-            document.querySelectorAll('.waveform-bar').forEach(bar => {
-                bar.style.height = (3 + level * 20 + Math.random() * 6) + 'px';
-            });
-        });
-        vapi.on('message', (msg) => {
-            if (msg.type === 'transcript' && msg.transcriptType === 'final') {
-                const role = msg.role === 'assistant' ? 'ai' : 'user';
-                if (isHeld && role === 'ai') return;
-                messages.push({ role, text: msg.transcript });
-                addTranscriptMsg(role, msg.transcript);
-                if (role === 'user') sessionContext.keyFacts.push(msg.transcript);
-                if (role === 'ai') trackTopics(msg.transcript);
-                if (messages.length % 4 === 0) saveSession();
-            }
-        });
-        vapi.on('error', (err) => {
-            console.error('Vapi error:', err);
-            showToastMsg('⚠️ Voice error: ' + (err.message || JSON.stringify(err)));
-        });
-    }
+    function startCall() {
+        inCall = true;
+        const holdBtn = document.getElementById('holdBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const endBtn = document.getElementById('endCallBtn');
+        const timer = document.getElementById('callTimer');
 
-    function muteRemoteAudio(mute) {
-        document.querySelectorAll('audio').forEach(a => { a.muted = mute; });
-        document.querySelectorAll('iframe').forEach(iframe => {
-            try { iframe.contentDocument.querySelectorAll('audio').forEach(a => { a.muted = mute; }); } catch(e) {}
-        });
-    }
-
-    function trackTopics(aiText) {
-        const lower = aiText.toLowerCase();
-        if (lower.match(/project|name|overview|what are you build/)) sessionContext.topicsCovered.push('project_basics');
-        if (lower.match(/stakeholder|user|who|audience/)) sessionContext.topicsCovered.push('stakeholders');
-        if (lower.match(/feature|function|should|need to do/)) sessionContext.topicsCovered.push('functional');
-        if (lower.match(/performance|security|scale|non-func/)) sessionContext.topicsCovered.push('non_functional');
-        if (lower.match(/budget|timeline|constraint|deadline/)) sessionContext.topicsCovered.push('constraints');
-        if (lower.match(/success|goal|metric|measure/)) sessionContext.topicsCovered.push('success_criteria');
-        sessionContext.topicsCovered = [...new Set(sessionContext.topicsCovered)];
-    }
-
-    // ── Call UI transitions ──
-    function enterCallUI() {
+        // Hide hero area + toolbar start btn, show call controls
         document.getElementById('heroArea').style.display = 'none';
         document.getElementById('emptyState').style.display = 'none';
         document.getElementById('tbStartBtn').style.display = 'none';
-        document.getElementById('holdBtn').style.display = 'flex';
-        document.getElementById('muteBtn').style.display = 'flex';
-        document.getElementById('endCallBtn').style.display = 'flex';
-        document.getElementById('callTimer').style.display = 'block';
+        holdBtn.style.display = 'flex';
+        muteBtn.style.display = 'flex';
+        endBtn.style.display = 'flex';
+        timer.style.display = 'block';
         setStatus('listening', 'Listening');
-        startTimer(); startWaveform();
+        startTimer();
+        startWaveform();
+        showDemoRequirements();
     }
-    function exitCallUI() {
+
+    function endCall() {
+        inCall = false;
+        isHeld = false;
+        isMuted = false;
+        const holdBtn = document.getElementById('holdBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const endBtn = document.getElementById('endCallBtn');
+
+        // Show toolbar start button, keep requirements visible
         document.getElementById('tbStartBtn').style.display = 'inline-flex';
-        document.getElementById('holdBtn').style.display = 'none';
-        document.getElementById('muteBtn').style.display = 'none';
-        document.getElementById('endCallBtn').style.display = 'none';
-        document.getElementById('holdBtn').classList.remove('active');
-        document.getElementById('muteBtn').classList.remove('active');
+        holdBtn.style.display = 'none';
+        muteBtn.style.display = 'none';
+        endBtn.style.display = 'none';
+        holdBtn.classList.remove('active');
+        muteBtn.classList.remove('active');
+
         setStatus('idle', 'Ready');
-        stopTimer(); stopWaveform();
+        stopTimer();
+        stopWaveform();
         document.getElementById('callTimer').style.display = 'none';
     }
 
-    // ── Call actions ──
-    function toggleCall() { inCall ? endCall() : startCall(); }
-
-    function buildFileContext() {
-        const fc = window.fileContents || {};
-        if (Object.keys(fc).length === 0) return '';
-        let ctx = 'UPLOADED DOCUMENTS:\n';
-        for (const [name, content] of Object.entries(fc)) ctx += '\n--- ' + name + ' ---\n' + content.substring(0, 4000) + '\n';
-        return ctx;
-    }
-
-    function buildContextSummary() {
-        let summary = '';
-        const reqEntries = Object.entries(requirements);
-        if (reqEntries.length > 0) {
-            summary += 'REQUIREMENTS GATHERED SO FAR:\n';
-            reqEntries.forEach(([cat, items]) => {
-                summary += '\n' + cat + ':\n';
-                (Array.isArray(items) ? items : []).forEach(r => {
-                    summary += '- ' + (typeof r === 'string' ? r : (r.text || '')) + '\n';
-                });
-            });
-        }
-        if (sessionContext.topicsCovered.length > 0)
-            summary += '\nTOPICS ALREADY COVERED (do NOT repeat): ' + sessionContext.topicsCovered.join(', ') + '\n';
-        const fc = window.fileContents || {};
-        if (Object.keys(fc).length > 0) {
-            summary += '\nFILES UPLOADED:\n';
-            for (const [name, content] of Object.entries(fc)) summary += '\n--- ' + name + ' ---\n' + content.substring(0, 3000) + '\n';
-        }
-        if (messages.length > 0) {
-            summary += '\nFULL CONVERSATION TRANSCRIPT:\n';
-            messages.forEach(m => summary += (m.role === 'ai' ? 'Assistant' : 'User') + ': ' + m.text + '\n');
-        }
-        return summary;
-    }
-
-    async function startCall() {
-        if (!vapi) { showToastMsg('⚠️ Voice SDK still loading...'); return; }
-        setStatus('thinking', 'Connecting...');
-        try {
-            if (messages.length > 0) {
-                const context = buildContextSummary();
-                const allTopics = ['project_basics','stakeholders','functional','non_functional','constraints','success_criteria'];
-                const remaining = allTopics.filter(t => !sessionContext.topicsCovered.includes(t));
-                const nextTopic = remaining.length > 0 ? remaining[0].replace('_',' ') : 'finalizing the document';
-                await vapi.start('55bd93be-541f-4870-ae3e-0c97763c12b3', {
-                    firstMessage: "Welcome back! Let's continue where we left off.",
-                    model: { provider:"openai", model:"gpt-4o", temperature:0.7, messages:[{
-                        role:"system",
-                        content:"You are an expert business analyst conducting a requirements gathering session through natural voice conversation.\n\nYour approach:\n- Ask one focused question at a time, 1-2 sentences max\n- Listen carefully and connect the dots\n- Probe for specifics when answers are vague\n- Be warm and conversational but efficient\n- Do NOT recap the full conversation\n\nIMPORTANT: This is a RESUMED session.\n\n"+context+"\n\nNEXT TOPIC: "+nextTopic+"\n\nRules: Do NOT re-ask answered questions. Reference prior info briefly. When all topics covered, offer to generate final document."
-                    }]}
-                });
-            } else {
-                const fileCtx = buildFileContext();
-                if (fileCtx) {
-                    await vapi.start('55bd93be-541f-4870-ae3e-0c97763c12b3', {
-                        model: { provider:"openai", model:"gpt-3.5-turbo", temperature:0.7, messages:[{
-                            role:"system",
-                            content:"You are an expert business analyst. The client uploaded documents before starting:\n\n"+fileCtx+"\n\nIncorporate naturally. Start by greeting and asking about their project."
-                        }]}
-                    });
-                } else {
-                    await vapi.start('55bd93be-541f-4870-ae3e-0c97763c12b3');
-                }
-            }
-        } catch (e) { showToastMsg('⚠️ Failed: ' + e.message); setStatus('idle', 'Ready'); }
-    }
-
-    function endCall() { if (vapi && inCall) vapi.stop(); }
-
     function toggleHold() {
-        if (!vapi || !inCall) return;
         isHeld = !isHeld;
         const btn = document.getElementById('holdBtn');
         btn.classList.toggle('active', isHeld);
         if (isHeld) {
-            try { vapi.say(' ', false, false); } catch(e) {}
-            muteRemoteAudio(true);
-            setStatus('muted', 'On Hold'); stopWaveform();
+            setStatus('muted', 'On Hold');
+            stopWaveform();
         } else {
-            muteRemoteAudio(false);
-            setStatus('listening', 'Listening'); startWaveform();
+            setStatus('listening', 'Listening');
+            startWaveform();
         }
     }
 
     function toggleMute() {
-        if (!vapi || !inCall) return;
-        isMicMuted = !isMicMuted;
-        vapi.setMuted(isMicMuted);
+        isMuted = !isMuted;
         const btn = document.getElementById('muteBtn');
-        btn.classList.toggle('active', isMicMuted);
-        btn.innerHTML = isMicMuted
-            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="22" y1="2" y2="22"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><line x1="12" x2="12" y1="19" y2="22"/></svg>'
-            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>';
-    }
-
-    // ── Text Chat ──
-    async function sendText() {
-        const input = document.getElementById('textInput');
-        const text = input.value.trim();
-        if (!text) return;
-        input.value = '';
-        messages.push({ role: 'user', text });
-        addTranscriptMsg('user', text);
-        const thinkingEl = addTranscriptMsg('ai', '💭 Thinking...');
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, transcript: messages, fileContents: window.fileContents || {}, sessionId })
-            });
-            if (!response.ok) throw new Error('Chat request failed');
-            const data = await response.json();
-            thinkingEl.remove();
-            messages.push({ role: 'ai', text: data.response });
-            addTranscriptMsg('ai', data.response);
-            saveSession();
-        } catch (error) {
-            console.error('Chat error:', error);
-            thinkingEl.textContent = '❌ Sorry, error occurred. Try again.';
-            setTimeout(() => thinkingEl.remove(), 3000);
+        btn.classList.toggle('active', isMuted);
+        // Update mic icon to slashed version
+        if (isMuted) {
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="22" y1="2" y2="22"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><line x1="12" x2="12" y1="19" y2="22"/></svg>';
+        } else {
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>';
         }
     }
 
-    // ── Transcript ──
-    function addTranscriptMsg(role, text) {
+    function setStatus(state, label) {
+        const el = document.getElementById('statusIndicator');
+        el.setAttribute('data-state', state);
+        document.getElementById('statusLabel').textContent = label;
+    }
+
+    // --- Timer ---
+    function startTimer() {
+        seconds = 0;
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+            seconds++;
+            updateTimerDisplay();
+        }, 1000);
+    }
+    function stopTimer() { clearInterval(timerInterval); }
+    function updateTimerDisplay() {
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        document.getElementById('callTimer').textContent = m + ':' + s;
+    }
+
+    // --- Waveform ---
+    let waveInterval;
+    function startWaveform() {
+        document.getElementById('waveform').classList.add('active');
+        const bars = document.querySelectorAll('.waveform-bar');
+        waveInterval = setInterval(() => {
+            bars.forEach(bar => {
+                bar.style.height = (3 + Math.random() * 18) + 'px';
+            });
+        }, 120);
+    }
+    function stopWaveform() {
+        document.getElementById('waveform').classList.remove('active');
+        clearInterval(waveInterval);
+        document.querySelectorAll('.waveform-bar').forEach(bar => bar.style.height = '4px');
+    }
+
+    // --- Sidebar tabs ---
+    function switchTab(tab) {
+        document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`.sidebar-tab[data-tab="${tab}"]`).classList.add('active');
+        document.getElementById('transcriptPanel').style.display = tab === 'transcript' ? 'block' : 'none';
+        document.getElementById('filesPanel').style.display = tab === 'files' ? 'block' : 'none';
+    }
+
+    // --- Keyboard shortcuts ---
+    document.addEventListener('keydown', (e) => {
+        // Don't trigger if typing in input
+        if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
+        if (e.code === 'Space') { e.preventDefault(); toggleCall(); }
+        if (e.key === 'h' || e.key === 'H') { if (inCall) toggleHold(); }
+        if (e.key === 'm' || e.key === 'M') { if (inCall) toggleMute(); }
+    });
+
+    // --- Drag and drop ---
+    let dragCounter = 0;
+    document.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dragCounter++;
+        document.getElementById('dropOverlay').classList.add('visible');
+    });
+    document.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragCounter--;
+        if (dragCounter === 0) document.getElementById('dropOverlay').classList.remove('visible');
+    });
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragCounter = 0;
+        document.getElementById('dropOverlay').classList.remove('visible');
+        if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+    });
+
+    // --- Reset modal ---
+    function confirmReset() {
+        document.getElementById('resetModal').classList.add('visible');
+    }
+    function closeModal() {
+        document.getElementById('resetModal').classList.remove('visible');
+    }
+    function resetAll() {
+        closeModal();
+        // Reset logic here
+        if (inCall) toggleCall();
+        document.getElementById('emptyState').style.display = 'flex';
+        document.getElementById('reqSections').style.display = 'none';
+        document.getElementById('reqSections').innerHTML = '';
+        document.getElementById('transcriptPanel').innerHTML = '<div class="t-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Conversation will appear here</div>';
+        document.getElementById('fileList').innerHTML = '';
+        setStatus('idle', 'Ready');
+    }
+
+    // --- Demo data ---
+    function showDemoRequirements() {
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('reqSections').style.display = 'block';
+
+        const demoData = {
+            'Project Overview': {
+                icon: '🎯',
+                color: '#6366f1',
+                items: [
+                    { text: 'Client portal for managing construction project requirements and approvals', status: 'confirmed' },
+                    { text: 'Target users: project managers, site supervisors, and external contractors', status: 'confirmed' },
+                    { text: 'Must integrate with existing Procore account for data sync', status: 'draft' }
+                ]
+            },
+            'Functional Requirements': {
+                icon: '⚙️',
+                color: '#06b6d4',
+                items: [
+                    { text: 'User authentication with SSO via Azure AD', status: 'confirmed' },
+                    { text: 'Dashboard showing project timeline, milestones, and blockers', status: 'confirmed' },
+                    { text: 'File upload supporting PDF, DWG, and image formats up to 50MB', status: 'draft' },
+                    { text: 'Real-time notifications for requirement changes and approvals', status: 'clarify' },
+                    { text: 'Offline mode for site workers with sync when connectivity returns', status: 'draft' }
+                ]
+            },
+            'Non-Functional Requirements': {
+                icon: '🛡️',
+                color: '#f59e0b',
+                items: [
+                    { text: 'Page load time under 2 seconds on 4G connections', status: 'confirmed' },
+                    { text: 'Support 500 concurrent users minimum', status: 'draft' },
+                    { text: 'WCAG 2.1 AA accessibility compliance', status: 'clarify' }
+                ]
+            },
+            'Constraints': {
+                icon: '🔒',
+                color: '#ef4444',
+                items: [
+                    { text: 'Budget: $120,000 AUD total development cost', status: 'confirmed' },
+                    { text: 'Timeline: MVP by Q3 2026, full release Q4 2026', status: 'confirmed' },
+                    { text: 'Must be hosted on Australian data centres (data sovereignty)', status: 'confirmed' }
+                ]
+            }
+        };
+
+        const container = document.getElementById('reqSections');
+        container.innerHTML = '';
+
+        for (const [category, data] of Object.entries(demoData)) {
+            const section = document.createElement('div');
+            section.className = 'req-section';
+            section.innerHTML = `
+                <div class="req-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <div class="req-section-icon" style="background: ${data.color}15; color: ${data.color}">${data.icon}</div>
+                    <div class="req-section-title">${category}</div>
+                    <div class="req-section-count">${data.items.length}</div>
+                    <div class="req-section-chevron">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                </div>
+                <div class="req-items">
+                    ${data.items.map(item => `
+                        <div class="req-item">
+                            <div class="req-drag">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                            </div>
+                            <div class="req-text" contenteditable="true">${item.text}</div>
+                            <div class="req-badge ${item.status}">${item.status === 'clarify' ? 'Needs Clarification' : item.status.charAt(0).toUpperCase() + item.status.slice(1)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            container.appendChild(section);
+        }
+
+        // Add demo transcript messages
+        addDemoTranscript();
+
+        // Show toast
+        showToast();
+    }
+
+    function addDemoTranscript() {
+        const panel = document.getElementById('transcriptPanel');
+        panel.innerHTML = '';
+        const msgs = [
+            { role: 'ai', text: "Hi! I'm here to help gather your project requirements. Can you start by telling me what you're building?", time: '0:03' },
+            { role: 'user', text: "We need a client portal for our construction company. Project managers need to track requirements and get approvals from contractors.", time: '0:12' },
+            { role: 'ai', text: "Great — a construction project portal. Who are the main user groups? You mentioned PMs and contractors — anyone else?", time: '0:18' },
+            { role: 'user', text: "Yeah, site supervisors too. They're on-site with tablets, often with patchy internet. And we use Procore already so it needs to integrate.", time: '0:31' },
+            { role: 'ai', text: "Got it. So offline capability is important for the site workers. What kind of files do they typically share?", time: '0:38' },
+            { role: 'user', text: "PDFs mainly, architectural drawings in DWG format, and photos from site. Some files can be pretty big, maybe 50 meg.", time: '0:52' },
+        ];
+        msgs.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 't-msg ' + m.role;
+            div.innerHTML = m.text + `<div class="t-time">${m.time}</div>`;
+            panel.appendChild(div);
+        });
+    }
+
+    function showToast() {
+        const toast = document.getElementById('updatedToast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // --- Session flow ---
+    function saveAndExit() {
+        // Save session state, then redirect to projects
+        showToastMsg('💾 Session saved. You can resume anytime.');
+        setTimeout(() => {
+            // In production: window.location.href = '/projects/' + projectId
+            console.log('Would redirect to project page');
+        }, 1500);
+    }
+
+    function showCompleteModal() {
+        document.getElementById('completeModal').classList.add('visible');
+    }
+    function closeCompleteModal() {
+        document.getElementById('completeModal').classList.remove('visible');
+    }
+
+    let selectedCompleteAction = 'complete';
+    function selectCompleteOption(el) {
+        document.querySelectorAll('.complete-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedCompleteAction = el.dataset.action;
+    }
+
+    function confirmComplete() {
+        closeCompleteModal();
+        if (selectedCompleteAction === 'complete') {
+            document.getElementById('sessionStatus').textContent = '✅ Session completed';
+            showToastMsg('✅ Requirements finalised and saved');
+        } else if (selectedCompleteAction === 'review') {
+            document.getElementById('sessionStatus').textContent = '👀 Submitted for review';
+            showToastMsg('👀 Sent for review');
+        } else {
+            document.getElementById('sessionStatus').textContent = '⏸️ Session paused';
+            showToastMsg('💾 Saved — pick up where you left off');
+        }
+    }
+
+    function showToastMsg(msg) {
+        const toast = document.getElementById('updatedToast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // --- Stubs ---
+    function sendText() {
+        const input = document.getElementById('textInput');
+        if (!input.value.trim()) return;
+        // Add to transcript
         const panel = document.getElementById('transcriptPanel');
         const empty = panel.querySelector('.t-empty');
         if (empty) empty.remove();
         const div = document.createElement('div');
-        div.className = 't-msg ' + role;
-        div.textContent = text;
+        div.className = 't-msg user';
+        div.innerHTML = input.value;
         panel.appendChild(div);
         panel.scrollTop = panel.scrollHeight;
-        return div;
+        input.value = '';
     }
-    function renderTranscript() {
-        const panel = document.getElementById('transcriptPanel');
-        panel.innerHTML = '';
-        if (messages.length === 0) {
-            panel.innerHTML = '<div class="t-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Conversation will appear here</div>';
-            return;
-        }
-        messages.forEach(m => addTranscriptMsg(m.role, m.text));
-    }
-
-    // ── Requirements rendering (v2 sections with badges) ──
-    const CAT_META = {
-        'Project Overview':           { icon: '🎯', color: '#6366f1' },
-        'Stakeholders':               { icon: '👥', color: '#8b5cf6' },
-        'Functional Requirements':    { icon: '⚙️', color: '#06b6d4' },
-        'Non-Functional Requirements':{ icon: '🛡️', color: '#f59e0b' },
-        'Constraints':                { icon: '🔒', color: '#ef4444' },
-        'Success Criteria':           { icon: '✅', color: '#10b981' },
-        'Business Rules':             { icon: '📋', color: '#6366f1' },
-        'General':                    { icon: '📝', color: '#64748b' }
-    };
-
-    function renderRequirements() {
-        const container = document.getElementById('reqSections');
-        const emptyState = document.getElementById('emptyState');
-        const heroArea = document.getElementById('heroArea');
-
-        if (!requirements || Object.keys(requirements).length === 0) {
-            container.style.display = 'none'; container.innerHTML = '';
-            if (!inCall && !hasHadFirstCall) {
-                if (heroArea) heroArea.style.display = 'flex';
-                if (emptyState) emptyState.style.display = 'flex';
-            }
-            return;
-        }
-
-        container.style.display = 'block';
-        if (emptyState) emptyState.style.display = 'none';
-        if (!inCall && hasHadFirstCall && heroArea) heroArea.style.display = 'none';
-        container.innerHTML = '';
-
-        const order = ['Project Overview','Stakeholders','Functional Requirements','Non-Functional Requirements','Constraints','Success Criteria','Business Rules'];
-        const rendered = new Set();
-
-        for (const cat of [...order, ...Object.keys(requirements)]) {
-            if (rendered.has(cat)) continue;
-            const items = requirements[cat];
-            if (!items || !Array.isArray(items) || items.length === 0) continue;
-            rendered.add(cat);
-
-            const meta = CAT_META[cat] || { icon: '📝', color: '#64748b' };
-            const section = document.createElement('div');
-            section.className = 'req-section';
-            section.innerHTML = '<div class="req-section-header" onclick="this.parentElement.classList.toggle(\'collapsed\')"><div class="req-section-icon" style="background:'+meta.color+'15;color:'+meta.color+'">'+meta.icon+'</div><div class="req-section-title">'+cat+'</div><div class="req-section-count">'+items.length+'</div><div class="req-section-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div></div>';
-
-            const itemsDiv = document.createElement('div');
-            itemsDiv.className = 'req-items';
-            items.forEach((r, idx) => {
-                const text = typeof r === 'string' ? r : (r.text || '');
-                const status = (typeof r === 'object' && r.status) ? r.status : 'draft';
-                const item = document.createElement('div');
-                item.className = 'req-item';
-                item.innerHTML = '<div class="req-drag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg></div><div class="req-text" contenteditable="true"></div><div class="req-badge '+status+'">'+(status==='clarify'?'Needs Clarification':status.charAt(0).toUpperCase()+status.slice(1))+'</div>';
-                const textEl = item.querySelector('.req-text');
-                textEl.textContent = text;
-                textEl.addEventListener('blur', () => {
-                    const newText = textEl.textContent.trim();
-                    if (newText && newText !== text) {
-                        if (typeof requirements[cat][idx]==='string') requirements[cat][idx]=newText;
-                        else requirements[cat][idx].text=newText;
-                        saveSession();
-                    } else if (!newText) {
-                        requirements[cat].splice(idx,1);
-                        if (requirements[cat].length===0) delete requirements[cat];
-                        saveSession(); renderRequirements();
-                    }
-                });
-                itemsDiv.appendChild(item);
-            });
-            const addBtn = document.createElement('div');
-            addBtn.style.cssText='font-size:0.78rem;color:var(--primary);cursor:pointer;padding:8px 14px;opacity:0.6;';
-            addBtn.textContent='+ Add requirement';
-            addBtn.onmouseenter=()=>{addBtn.style.opacity='1';};
-            addBtn.onmouseleave=()=>{addBtn.style.opacity='0.6';};
-            addBtn.onclick=()=>{ requirements[cat].push('New requirement'); saveSession(); renderRequirements(); };
-            itemsDiv.appendChild(addBtn);
-            section.appendChild(itemsDiv);
-            container.appendChild(section);
-        }
-    }
-
-    // ── Refresh requirements (real API) ──
-    async function refreshRequirements() {
-        let filesToAnalyze = window.fileContents || {};
-        if (Object.keys(filesToAnalyze).length===0 && uploadedFiles.length>0) {
-            filesToAnalyze = {};
-            uploadedFiles.forEach(f => { if (f.extracted_text) filesToAnalyze[f.original_name]=f.extracted_text; });
-        }
-        if (messages.length===0 && Object.keys(filesToAnalyze).length===0) { showToastMsg('⚠️ No conversation or files to analyze yet'); return; }
-
-        const btn = document.getElementById('refreshBtn');
-        const origHTML = btn.innerHTML;
-        btn.innerHTML = '⏳ Analyzing...'; btn.disabled = true;
-        try {
-            const response = await fetch('/api/analyze-session', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ transcript:messages, fileContents:filesToAnalyze, sessionId, projectId, existingRequirements:requirements })
-            });
-            if (!response.ok) throw new Error(await response.text());
-            const analysis = await response.json();
-            const newReqs = analysis.requirements || {};
-            for (const [cat, items] of Object.entries(newReqs)) {
-                if (!Array.isArray(items)||items.length===0) continue;
-                if (!requirements[cat]) { requirements[cat]=items; }
-                else {
-                    const existing = new Set(requirements[cat].map(r=>(typeof r==='string'?r:r.text||'').toLowerCase().trim()));
-                    const additions = items.filter(r=>{ const t=(typeof r==='string'?r:r.text||'').toLowerCase().trim(); return !existing.has(t); });
-                    if (additions.length>0) requirements[cat]=[...requirements[cat],...additions];
-                }
-            }
-            renderRequirements(); showToast(); saveSession();
-        } catch(e) { console.error('Refresh failed:',e); showToastMsg('⚠️ Analysis failed: '+e.message); }
-        finally { btn.innerHTML=origHTML; btn.disabled=false; }
-    }
-
-    // ── File handling ──
-    async function handleFiles(fileList) {
+    function handleFiles(files) {
         switchTab('files');
-        for (const file of fileList) { uploadedFiles.push(file); renderFileCardUI(file,'processing'); await processFile(file); }
-        document.getElementById('fileInput').value='';
-        updateFileCount();
-    }
-    function renderFileCardUI(file, status) {
         const list = document.getElementById('fileList');
-        const fileName = file.name||file.original_name||'Unknown';
-        const cardId = 'file-'+fileName.replace(/[^a-z0-9]/gi,'_');
-        const card = document.createElement('div');
-        card.className='file-card'; card.id=cardId;
-        card.innerHTML='<div class="file-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="file-info"><div class="file-name">'+fileName+'</div><div class="file-meta">'+(file.size?(file.size/1024).toFixed(1)+' KB':'')+'</div></div><div class="file-status '+(status==='processing'?'processing':'analyzed')+'">'+(status==='processing'?'⏳ Processing':'✓ Analyzed')+'</div><button class="file-remove" onclick="removeFile(this,\''+fileName.replace(/'/g,"\\'")+"')\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" x2=\"6\" y1=\"6\" y2=\"18\"/><line x1=\"6\" x2=\"18\" y1=\"6\" y2=\"18\"/></svg></button>";
-        list.appendChild(card);
-    }
-    function removeFile(el, name) {
-        if (!confirm('Delete this file?')) return;
-        const file = uploadedFiles.find(f=>(f.name||f.original_name)===name);
-        if (file&&file.id) fetch('/api/files/'+file.id,{method:'DELETE'}).catch(e=>console.error(e));
-        uploadedFiles = uploadedFiles.filter(f=>(f.name||f.original_name)!==name);
-        delete (window.fileContents||{})[name];
-        el.closest('.file-card').remove();
-        updateFileCount();
-    }
-    function updateFileCount() {
-        const count = document.getElementById('fileList').children.length;
-        document.getElementById('fileCount').textContent = count>0?'('+count+')':'';
-    }
-    async function processFile(file) {
-        try {
-            const formData = new FormData();
-            formData.append('file',file);
-            if (projectId) formData.append('projectId',projectId);
-            if (sessionId) formData.append('sessionId',sessionId);
-            const uploadRes = await fetch('/api/upload',{method:'POST',body:formData});
-            if (!uploadRes.ok) throw new Error('Upload failed');
-            const uploadData = await uploadRes.json();
-            if (!window.fileContents) window.fileContents={};
-            window.fileContents[file.name]=uploadData.content;
-            sessionContext.filesUploaded.push({name:file.name,content:uploadData.content});
-            const cardId='file-'+file.name.replace(/[^a-z0-9]/gi,'_');
-            const card=document.getElementById(cardId);
-            await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,content:uploadData.content,projectId,sessionId})});
-            if (card){const s=card.querySelector('.file-status');s.className='file-status analyzed';s.textContent='✓ Analyzed';}
-            const uf=uploadedFiles.find(f=>(f.name||f.original_name)===file.name);
-            if (uf&&uploadData.fileId) uf.id=uploadData.fileId;
-            if (vapi&&inCall){try{vapi.stop();await new Promise(r=>setTimeout(r,1500));await startCall();}catch(e){}}
-        } catch(e) {
-            console.error('File process error:',e);
-            const cardId='file-'+file.name.replace(/[^a-z0-9]/gi,'_');
-            const card=document.getElementById(cardId);
-            if(card){const s=card.querySelector('.file-status');s.textContent='❌ Failed';s.style.color='var(--danger)';}
+        for (const file of files) {
+            const card = document.createElement('div');
+            card.className = 'file-card';
+            card.innerHTML = `
+                <div class="file-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                <div class="file-info">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-meta">${(file.size / 1024).toFixed(1)} KB</div>
+                </div>
+                <div class="file-status analyzed">✓ Analyzed</div>
+                <button class="file-remove" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg></button>
+            `;
+            list.appendChild(card);
         }
+        const count = list.children.length;
+        document.getElementById('fileCount').textContent = count > 0 ? `(${count})` : '';
     }
-
-    // ── Session persistence ──
-    async function loadSessionData() {
-        if (projectId) {
-            try {
-                const projRes = await fetch('/api/projects/'+projectId);
-                if (projRes.ok) {
-                    const proj = await projRes.json();
-                    sessionContext.projectName = proj.name||'';
-                    document.getElementById('projectName').textContent = proj.name||'Project';
-                    document.getElementById('projectDesc').textContent = proj.description||'';
-                }
-            } catch(e) { console.log('Could not load project info:',e); }
-        }
-        if (!sessionId) return;
-        try {
-            const response = await fetch('/api/sessions/'+sessionId);
-            if (!response.ok) throw new Error('Failed to load session');
-            const sd = await response.json();
-            if (sd.transcript) { messages=JSON.parse(sd.transcript); renderTranscript(); if(messages.length>0) hasHadFirstCall=true; }
-            if (sd.requirements) { requirements=JSON.parse(sd.requirements); renderRequirements(); }
-            if (sd.context) { sessionContext={...sessionContext,...JSON.parse(sd.context)}; }
-            if (sd.files&&sd.files.length>0) {
-                uploadedFiles=sd.files; window.fileContents={};
-                sd.files.forEach(f=>{if(f.extracted_text)window.fileContents[f.original_name]=f.extracted_text; renderFileCardUI(f,'analyzed');});
-                updateFileCount();
-            }
-            if (hasHadFirstCall) {
-                document.getElementById('tbStartBtn').style.display='inline-flex';
-                if (Object.keys(requirements).length>0) {
-                    document.getElementById('emptyState').style.display='none';
-                    document.getElementById('heroArea').style.display='none';
-                }
-            }
-            console.log('✅ Session loaded',{messages:messages.length,requirements:Object.keys(requirements).length,files:sd.files?sd.files.length:0});
-        } catch(e) { console.error('Failed to load session:',e); }
+    function refreshRequirements() {
+        const btn = document.getElementById('refreshBtn');
+        btn.innerHTML = '<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg> Analyzing...';
+        btn.disabled = true;
+        setTimeout(() => {
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg> Refresh';
+            btn.disabled = false;
+            showToast();
+        }, 2000);
     }
-
-    async function saveSession() {
-        if (!sessionId) return;
-        if (messages.length===0&&Object.keys(requirements).length===0) return;
-        try {
-            await fetch('/api/sessions/'+sessionId,{
-                method:'PUT', headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({transcript:messages,requirements:requirements,context:sessionContext,status:inCall?'active':'paused'})
-            });
-            const ind=document.getElementById('saveIndicator');
-            ind.style.color='var(--success)'; setTimeout(()=>{ind.style.color='';},1500);
-            console.log('💾 Session saved — '+messages.length+' messages');
-        } catch(e) { console.error('Save failed:',e); }
+    function exportZip() { alert('Export — would generate zip'); }
+    function copyAllReqs() {
+        const text = Array.from(document.querySelectorAll('.req-text')).map(el => '• ' + el.textContent).join('\n');
+        navigator.clipboard.writeText(text).then(() => showToast());
     }
-
-    function setupAutoSave() {
-        setInterval(()=>{if(sessionId&&(messages.length>0||Object.keys(requirements).length>0))saveSession();},10000);
-        window.addEventListener('beforeunload',()=>{
-            if(sessionId&&(messages.length>0||Object.keys(requirements).length>0)){
-                const blob=new Blob([JSON.stringify({transcript:messages,requirements:requirements,context:sessionContext,status:inCall?'active':'paused'})],{type:'application/json'});
-                navigator.sendBeacon('/api/sessions/'+sessionId+'/save',blob);
-            }
-        });
-    }
-
-    // ── UI helpers ──
-    function setStatus(state,label){document.getElementById('statusIndicator').setAttribute('data-state',state);document.getElementById('statusLabel').textContent=label;}
-    function startTimer(){seconds=0;updateTimerDisplay();timerInterval=setInterval(()=>{seconds++;updateTimerDisplay();},1000);}
-    function stopTimer(){clearInterval(timerInterval);}
-    function updateTimerDisplay(){const m=String(Math.floor(seconds/60)).padStart(2,'0');const s=String(seconds%60).padStart(2,'0');document.getElementById('callTimer').textContent=m+':'+s;}
-    function startWaveform(){document.getElementById('waveform').classList.add('active');const bars=document.querySelectorAll('.waveform-bar');waveInterval=setInterval(()=>{bars.forEach(bar=>{bar.style.height=(3+Math.random()*18)+'px';});},120);}
-    function stopWaveform(){document.getElementById('waveform').classList.remove('active');clearInterval(waveInterval);document.querySelectorAll('.waveform-bar').forEach(bar=>bar.style.height='4px');}
-    function showToast(){const t=document.getElementById('updatedToast');t.textContent='✓ Requirements updated';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-    function showToastMsg(msg){const t=document.getElementById('updatedToast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-
-    // ── Sidebar tabs ──
-    function switchTab(tab){document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active'));document.querySelector('.sidebar-tab[data-tab="'+tab+'"]').classList.add('active');document.getElementById('transcriptPanel').style.display=tab==='transcript'?'block':'none';document.getElementById('filesPanel').style.display=tab==='files'?'block':'none';}
-
-    // ── Copy all ──
-    function copyAllReqs(){
-        const lines=[];
-        for(const[cat,items]of Object.entries(requirements)){
-            if(!Array.isArray(items)||items.length===0)continue;
-            lines.push('## '+cat);
-            items.forEach(r=>lines.push('• '+(typeof r==='string'?r:(r.text||''))));
-            lines.push('');
-        }
-        navigator.clipboard.writeText(lines.join('\n')).then(()=>showToastMsg('📋 Copied'));
-    }
-
-    // ── Reset ──
-    function confirmReset(){document.getElementById('resetModal').classList.add('visible');}
-    function closeModal(){document.getElementById('resetModal').classList.remove('visible');}
-    function resetAll(){
-        closeModal();
-        if(vapi&&inCall)vapi.stop();
-        messages=[];requirements={};uploadedFiles=[];
-        sessionContext={projectName:sessionContext.projectName,topicsCovered:[],keyFacts:[],currentTopic:'',filesUploaded:[]};
-        hasHadFirstCall=false;
-        document.getElementById('reqSections').style.display='none';
-        document.getElementById('reqSections').innerHTML='';
-        document.getElementById('heroArea').style.display='flex';
-        document.getElementById('emptyState').style.display='flex';
-        document.getElementById('tbStartBtn').style.display='none';
-        renderTranscript();
-        document.getElementById('fileList').innerHTML='';
-        updateFileCount();
-        setStatus('idle','Ready');
-        if(sessionId)saveSession();
-    }
-
-    // ── Complete / Save & Exit ──
-    function showCompleteModal(){saveSession();document.getElementById('completeModal').classList.add('visible');}
-    function closeCompleteModal(){document.getElementById('completeModal').classList.remove('visible');}
-    let selectedCompleteAction='complete';
-    function selectCompleteOption(el){document.querySelectorAll('.complete-option').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');selectedCompleteAction=el.dataset.action;}
-
-    async function confirmComplete(){
-        closeCompleteModal();
-        if(inCall)endCall();
-        await saveSession();
-        if(selectedCompleteAction==='complete'){
-            try{
-                const res=await fetch('/api/projects/'+projectId+'/complete',{method:'POST',headers:{'Content-Type':'application/json'}});
-                if(!res.ok)throw new Error('Failed');
-                showToastMsg('✅ Project marked complete — sent for design review');
-                setTimeout(()=>{window.location.href='/projects';},1500);
-            }catch(e){console.error(e);showToastMsg('⚠️ Failed: '+e.message);}
-        } else {
-            showToastMsg('💾 Saved — pick up where you left off');
-            setTimeout(()=>{window.location.href='/projects';},1500);
-        }
-    }
-
-    // ── Keyboard shortcuts ──
-    document.addEventListener('keydown',(e)=>{
-        if(e.target.tagName==='INPUT'||e.target.isContentEditable)return;
-        if(e.code==='Space'){e.preventDefault();toggleCall();}
-        if(e.key==='h'||e.key==='H'){if(inCall)toggleHold();}
-        if(e.key==='m'||e.key==='M'){if(inCall)toggleMute();}
-    });
-
-    // ── Drag and drop ──
-    let dragCounter=0;
-    document.addEventListener('dragenter',(e)=>{e.preventDefault();dragCounter++;document.getElementById('dropOverlay').classList.add('visible');});
-    document.addEventListener('dragleave',(e)=>{e.preventDefault();dragCounter--;if(dragCounter===0)document.getElementById('dropOverlay').classList.remove('visible');});
-    document.addEventListener('dragover',(e)=>e.preventDefault());
-    document.addEventListener('drop',(e)=>{e.preventDefault();dragCounter=0;document.getElementById('dropOverlay').classList.remove('visible');if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files);});
-
-    // ── Init ──
-    window.addEventListener('load',()=>{initVapi();setupAutoSave();loadSessionData();});
     </script>
 </body>
 </html>

@@ -45,12 +45,12 @@
                     <h2>Session #<%= session.id %> <span class="admin-badge">Admin View</span></h2>
                     <% if (project) { %>
                         <p style="color: #666; margin-top: 4px;">
-                            Project: <a href="/admin/projects/<%= project.id %>" style="color: #667eea;"><%= project.name %></a>
+                            Project: <a href="/admin/projects/<%= encodeId(project.id) %>" style="color: #667eea;"><%= project.name %></a>
                             <% if (project.user_name) { %> · Customer: <%= project.user_name %><% } %>
                         </p>
                     <% } %>
                 </div>
-                <a href="/voice-session?project=<%= session.project_id %>&session=<%= session.id %>" class="btn btn-success">🎙️ Open Live Session</a>
+                <a href="/voice-session?project=<%= encodeId(session.project_id) %>&session=<%= session.id %>" class="btn btn-success">🎙️ Open Live Session</a>
             </div>
 
             <div class="meta-grid">
