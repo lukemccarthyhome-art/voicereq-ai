@@ -283,6 +283,17 @@ const apiAuth = async (req, res, next) => {
   } catch { res.status(401).json({ error: 'Unauthorized' }); }
 };
 
+// Optional auth — sets req.user if valid cookie, but doesn't block unauthenticated requests
+const optionalAuth = async (req, res, next) => {
+  const token = req.cookies.authToken;
+  if (!token) return next();
+  try {
+    const decoded = require('jsonwebtoken').verify(token, auth.JWT_SECRET);
+    req.user = await db.getUserById(decoded.id);
+  } catch {}
+  next();
+};
+
 // Ownership check: verify session or project belongs to the requesting user (admins bypass)
 const verifySessionOwnership = async (req, res, next) => {
   if (req.user.role === 'admin') return next();
@@ -3145,7 +3156,7 @@ app.get('/voice-session', auth.authenticate, (req, res) => {
 // === API ROUTES ===
 
 // File upload and text extraction endpoint
-app.post('/api/upload', apiAuth, uploadLimiter, upload.single('file'), async (req, res) => {
+app.post('/api/upload', optionalAuth, uploadLimiter, upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded' });
@@ -3277,7 +3288,7 @@ app.post('/api/upload', apiAuth, uploadLimiter, upload.single('file'), async (re
 });
 
 // Analyze file content and extract requirements using OpenAI
-app.post('/api/analyze', apiAuth, express.json({ limit: '10mb' }), async (req, res) => {
+app.post('/api/analyze', optionalAuth, express.json({ limit: '10mb' }), async (req, res) => {
   try {
     const { filename, content } = req.body;
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
@@ -3349,7 +3360,7 @@ app.put('/api/files/:id/description', apiAuth, express.json(), verifyFileOwnersh
 });
 
 // Analyze full session (conversation + files) for comprehensive requirements extraction
-app.post('/api/analyze-session', apiAuth, express.json({ limit: '20mb' }), async (req, res) => {
+app.post('/api/analyze-session', optionalAuth, express.json({ limit: '20mb' }), async (req, res) => {
   try {
     const { transcript, fileContents, sessionId, projectId, existingRequirements } = req.body;
     
@@ -3555,7 +3566,7 @@ Return valid JSON only.`
 });
 
 // Text chat API - for standalone chat when not in voice call
-app.post('/api/chat', apiAuth, express.json({ limit: '10mb' }), async (req, res) => {
+app.post('/api/chat', optionalAuth, express.json({ limit: '10mb' }), async (req, res) => {
   try {
     const { message, transcript, fileContents, sessionId } = req.body;
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
