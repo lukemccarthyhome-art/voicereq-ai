@@ -978,3 +978,9 @@ function resetAll() { voiceSession.resetAll(); }
 function exportZip() { voiceSession.exportZip(); }
 function exportDoc() { voiceSession.exportDoc(); }
 function refreshRequirements() { voiceSession.refreshRequirements(); }
+function clearRequirements() {
+    if (!confirm('Clear all requirements? This cannot be undone.')) return;
+    voiceSession.requirements = {};
+    voiceSession.renderRequirements();
+    voiceSession.saveSession();
+}

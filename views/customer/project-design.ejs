@@ -36,6 +36,10 @@
     .answer-form { display:flex; gap:8px; margin-top:8px; }
     .answer-form input[type="text"] { flex:1; padding:8px 12px; border:1px solid #dbeafe; border-radius:6px; font-size:13px; }
     @media (max-width:768px) { .design-grid { grid-template-columns:1fr; } }
+    .cw-rollup-step { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; flex:1 1 calc(50% - 10px); min-width:260px; }
+    .cw-rollup-step .step-num { display:inline-block; background:#4f46e5; color:#fff; border-radius:50%; width:22px; height:22px; text-align:center; line-height:22px; font-size:12px; font-weight:600; margin-right:8px; }
+    .cw-rollup-step .step-title { font-weight:600; color:#1e293b; font-size:14px; }
+    .cw-rollup-step .step-desc { color:#64748b; font-size:13px; margin-top:4px; }
   </style>
 </head>
 <body>
@@ -98,9 +102,9 @@
 
       <% if (designSections) { %>
         <div class="design-grid">
-          <% const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate']; %>
-          <% const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements (Out of Scope)', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate' }; %>
-          <% const fullWidthSections = ['BusinessContext','Scope','UserJourneys','Architecture','DataModel','AcceptanceCriteria','Infrastructure']; %>
+          <% const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate','CostBenefitAnalysis','TechnicalReadiness','TechnicalReference']; %>
+          <% const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements (Out of Scope)', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate', CostBenefitAnalysis:'Cost / Benefit Analysis', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' }; %>
+          <% const fullWidthSections = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Phase2Enhancements','TechnicalReference']; %>
           <%
             const allKeys = Object.keys(designSections);
             const orderedKeys = sectionOrder.filter(k => designSections[k]);
@@ -108,6 +112,12 @@
             const renderKeys = orderedKeys.concat(extraKeys);
           %>
           <% renderKeys.forEach(key => { %>
+            <% if (key === 'CoreWorkflow' && designSections.CoreWorkflow) { %>
+              <div class="design-item full-width" id="coreWorkflowRollup">
+                <h4>📋 Workflow Overview <span style="font-size:12px;color:#94a3b8;font-weight:400;">(scroll down for full detail)</span></h4>
+                <div id="cwRollupContent" style="display:flex;flex-wrap:wrap;gap:10px;padding:8px 0;"></div>
+              </div>
+            <% } %>
             <% if (designSections[key]) { %>
               <div class="design-item <%= fullWidthSections.includes(key) ? 'full-width' : '' %>">
                 <h4><%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></h4>
@@ -117,37 +127,40 @@
                   s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
                   const lines = s.split('\n');
                   let html = '';
-                  let inList = false;
-                  let listType = '';
+                  let inOl = false;
+                  let inSub = false;
                   for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
+                    const raw = lines[i];
+                    const line = raw.trim();
                     if (!line) {
-                      if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
-                      html += '<div style="height:8px"></div>';
+                      if (inSub) { html += '</ul>'; inSub = false; }
+                      if (!inOl) html += '<div style="height:8px"></div>';
                       continue;
                     }
-                    const bullet = line.match(/^[-•]\s+(.+)/);
                     const numbered = line.match(/^(\d+)\.\s+(.+)/);
-                    if (bullet) {
-                      if (!inList || listType !== 'ul') {
-                        if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
-                        html += '<ul style="margin:4px 0 4px 20px;padding:0;">';
-                        inList = true; listType = 'ul';
-                      }
-                      html += '<li style="margin-bottom:3px;">' + bullet[1] + '</li>';
-                    } else if (numbered) {
-                      if (!inList || listType !== 'ol') {
-                        if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
-                        html += '<ol style="margin:4px 0 4px 20px;padding:0;">';
-                        inList = true; listType = 'ol';
-                      }
-                      html += '<li style="margin-bottom:3px;">' + numbered[2] + '</li>';
+                    const subItem = line.match(/^\(?([a-h])\)\s+(.+)/);
+                    const bullet = line.match(/^[-•]\s+(.+)/);
+                    const indented = raw.match(/^   +(.+)/);
+                    if (numbered) {
+                      if (inSub) { html += '</ul>'; inSub = false; }
+                      if (!inOl) { html += '<ol style="margin:8px 0 8px 0;padding:0;list-style:none;">'; inOl = true; }
+                      html += '<li style="margin-bottom:12px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;list-style:none;"><span style="display:inline-block;background:#4f46e5;color:#fff;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;font-size:12px;font-weight:700;margin-right:10px;">' + numbered[1] + '</span>' + numbered[2] + '</li>';
+                    } else if (subItem) {
+                      if (!inSub) { html += '<ul style="margin:6px 0 4px 36px;padding:0;list-style:none;">'; inSub = true; }
+                      html += '<li style="margin-bottom:4px;font-size:13px;color:#475569;"><span style="color:#6366f1;font-weight:600;margin-right:4px;">(' + subItem[1] + ')</span>' + subItem[2] + '</li>';
+                    } else if (bullet) {
+                      if (!inSub) { html += '<ul style="margin:4px 0 4px 36px;padding:0;">'; inSub = true; }
+                      html += '<li style="margin-bottom:3px;font-size:13px;color:#475569;">' + bullet[1] + '</li>';
+                    } else if (indented && inOl) {
+                      html += '<div style="margin:2px 0 2px 36px;font-size:13px;color:#475569;">' + line + '</div>';
                     } else {
-                      if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
+                      if (inSub) { html += '</ul>'; inSub = false; }
+                      if (inOl) { html += '</ol>'; inOl = false; }
                       html += '<p style="margin:0 0 4px 0;">' + line + '</p>';
                     }
                   }
-                  if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
+                  if (inSub) html += '</ul>';
+                  if (inOl) html += '</ol>';
                   return html;
                 })(designSections[key]) %></div>
               </div>
@@ -208,16 +221,48 @@
       <% } %>
     </div>
   </main>
-  <% if (design.flowchart) { %>
+  <% if (design.flowchart || design.coreWorkflowFlowchart) { %>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>
     mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    <% if (designSections.CoreWorkflow) { %>
+    (function() {
+      const cwText = `<%- (designSections.CoreWorkflow || '').replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`;
+      const container = document.getElementById('cwRollupContent');
+      if (!container || !cwText) return;
+      const steps = [];
+      const lines = cwText.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const numbered = line.match(/^(\d+)\.\s+\*\*(.+?)\*\*(.*)$/);
+        if (numbered) {
+          const title = numbered[2].trim();
+          let desc = numbered[3].replace(/^\s*[-:—–]\s*/, '').trim();
+          if (!desc) {
+            for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+              const next = lines[j].trim();
+              if (next && next.match(/^\(?[a-z]\)/)) { desc = next.replace(/^\(?[a-z]\)\s*/, '').substring(0, 140); break; }
+              else if (next && !next.startsWith('(')) { desc = next.replace(/^[-•]\s*/, '').substring(0, 140); break; }
+            }
+          }
+          steps.push({ num: numbered[1], title, desc: desc.substring(0, 140) });
+        }
+      }
+      if (steps.length === 0) { document.getElementById('coreWorkflowRollup').style.display = 'none'; return; }
+      container.innerHTML = steps.map(s =>
+        '<div class="cw-rollup-step"><span class="step-num">' + s.num + '</span><span class="step-title">' + s.title + '</span>' +
+        (s.desc ? '<div class="step-desc">' + s.desc + '</div>' : '') + '</div>'
+      ).join('');
+    })();
+    <% } %>
+    <% if (design.flowchart) { %>
     (async () => {
       try {
         const { svg } = await mermaid.render('flowchart-svg', `<%- design.flowchart.replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`);
         document.getElementById('flowchartRender').innerHTML = svg;
-      } catch(e) { document.getElementById('flowchartRender').textContent = 'Flowchart rendering failed'; }
+      } catch(e) { if (document.getElementById('flowchartRender')) document.getElementById('flowchartRender').textContent = 'Flowchart rendering failed'; }
     })();
+    <% } %>
   </script>
   <% } %>
 </body>

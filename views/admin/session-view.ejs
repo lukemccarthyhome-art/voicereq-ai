@@ -44,24 +44,11 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-container">
-            <a href="/admin" class="logo">🎙️ Morti Projects</a>
-            <nav class="nav">
-                <a href="/admin">Dashboard</a>
-                <a href="/admin/customers">Customers</a>
-                <a href="/admin/projects">Projects</a>
-                <a href="/admin/sessions" class="active">Sessions</a>
-                <a href="/profile">Profile</a>
-                <div class="user-name">👤 <%= user.name %></div>
-                <a href="/logout">🚪 Logout</a>
-            </nav>
-        </div>
-    </div>
+    <%- include('../partials/admin-nav', { currentPage: 'sessions', user: user }) %>
 
     <main class="main">
         <div style="margin-bottom: 16px;">
-            <a href="/admin/sessions" style="color: #667eea; text-decoration: none; font-size: 14px;">← Back to Sessions</a>
+            <a href="/admin/projects" style="color: #667eea; text-decoration: none; font-size: 14px;">← Back to Projects</a>
         </div>
 
         <div class="card">

@@ -56,21 +56,7 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-container">
-            <a href="/admin" class="logo">🎙️ Morti Projects</a>
-            <nav class="nav">
-                <a href="/admin">Dashboard</a>
-                <a href="/admin/customers" class="active">Customers</a>
-                <a href="/admin/projects">Projects</a>
-                <a href="/admin/sessions">Sessions</a>
-                <a href="/admin/feature-requests">Feature Requests</a>
-                <a href="/profile">Profile</a>
-                <div class="user-name">👤 <%= user.name %></div>
-                <a href="/logout">🚪 Logout</a>
-            </nav>
-        </div>
-    </div>
+    <%- include('../partials/admin-nav', { currentPage: 'customers', user: user }) %>
 
     <main class="main">
         <div class="card">

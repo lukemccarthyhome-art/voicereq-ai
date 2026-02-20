@@ -53,9 +53,19 @@
     .chat-bubble .chat-text { font-size:14px; color:#0f172a; }
     .chat-input { display:flex; gap:8px; margin-top:12px; }
     .chat-input textarea { flex:1; padding:10px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; font-family:inherit; resize:vertical; min-height:60px; }
-    #flowchartContainer { margin-top:16px; padding:16px; border:1px solid #e2e8f0; border-radius:8px; background:#fff; }
-    #flowchartContainer h4 { margin-bottom:12px; color:#334155; }
-    #flowchartRender { min-height:100px; display:flex; align-items:center; justify-content:center; }
+    #flowchartContainer { margin-top:16px; padding:24px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; }
+    #flowchartContainer h3 { margin-bottom:16px; color:#334155; }
+    #flowchartRender { min-height:200px; max-height:600px; overflow:auto; display:flex; align-items:center; justify-content:center; padding:16px; border:1px solid #f1f5f9; border-radius:8px; background:#fafbfc; position:relative; }
+    #flowchartRender svg { max-width:100%; height:auto; }
+    .flowchart-zoom { display:flex; gap:6px; margin-bottom:12px; }
+    .flowchart-zoom button { padding:4px 12px; border:1px solid #e2e8f0; border-radius:6px; background:#f8fafc; cursor:pointer; font-size:14px; }
+    .flowchart-zoom button:hover { background:#eef2ff; border-color:#4f46e5; }
+    .flowchart-error { color:#ef4444; padding:16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; }
+    .flowchart-error pre { font-size:11px; background:#f8fafc; padding:8px; border-radius:4px; overflow-x:auto; margin-top:8px; white-space:pre-wrap; }
+    .cw-rollup-step { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; flex:1 1 calc(50% - 10px); min-width:260px; }
+    .cw-rollup-step .step-num { display:inline-block; background:#4f46e5; color:#fff; border-radius:50%; width:22px; height:22px; text-align:center; line-height:22px; font-size:12px; font-weight:600; margin-right:8px; }
+    .cw-rollup-step .step-title { font-weight:600; color:#1e293b; font-size:14px; }
+    .cw-rollup-step .step-desc { color:#64748b; font-size:13px; margin-top:4px; }
     .empty-state { text-align:center; padding:24px; color:#94a3b8; font-size:14px; }
     @media (max-width:768px) {
       .design-grid { grid-template-columns:1fr; }
@@ -64,25 +74,12 @@
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="header-container">
-      <a href="/admin" class="logo">🎙️ Morti Projects</a>
-      <nav class="nav">
-        <a href="/admin">Dashboard</a>
-        <a href="/admin/customers">Customers</a>
-        <a href="/admin/projects">Projects</a>
-                <a href="/admin/sessions">Sessions</a>
-                <a href="/admin/feature-requests">Feature Requests</a>
-        <a href="/profile">Profile</a>
-        <a href="/logout">🚪 Logout</a>
-      </nav>
-    </div>
-  </div>
+    <%- include('../partials/admin-nav', { currentPage: 'projects', user: user }) %>
 
   <main class="main">
     <div class="breadcrumb">
       <a href="/admin">Dashboard</a> › <a href="/admin/projects">Projects</a>
-                <a href="/admin/sessions">Sessions</a>
+                <a href="/admin/projects">Projects</a>
                 <a href="/admin/feature-requests">Feature Requests</a> › <a href="/admin/projects/<%= projectId %>">Project <%= projectId %></a> › Design
     </div>
 
@@ -213,17 +210,13 @@
         </div>
       </div>
 
-      <% if (designSummary) { %>
-        <div style="padding:12px 16px;background:#eef2ff;border-radius:8px;font-size:14px;color:#3730a3;margin-bottom:16px;">
-          <strong>Summary:</strong> <%= designSummary %>
-        </div>
-      <% } %>
+      <%/* Summary bar removed — Executive Summary section covers this */%>
 
       <% if (designSections) { %>
         <div class="design-grid">
-          <% const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate']; %>
-          <% const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements (Out of Scope)', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate' }; %>
-          <% const fullWidthSections = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Phase2Enhancements']; %>
+          <% const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate','CostBenefitAnalysis','TechnicalReadiness','TechnicalReference']; %>
+          <% const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements (Out of Scope)', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate', CostBenefitAnalysis:'Cost / Benefit Analysis', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' }; %>
+          <% const fullWidthSections = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Phase2Enhancements','TechnicalReference']; %>
           <%
             // Also render any sections not in the predefined order
             const allKeys = Object.keys(designSections);
@@ -232,49 +225,55 @@
             const renderKeys = orderedKeys.concat(extraKeys);
           %>
           <% renderKeys.forEach(key => { %>
+            <% if (key === 'CoreWorkflow' && designSections.CoreWorkflow) { %>
+              <div class="design-item full-width" id="coreWorkflowRollup">
+                <h4>📋 Workflow Overview <span style="font-size:12px;color:#94a3b8;font-weight:400;">(scroll down for full detail)</span></h4>
+                <div id="cwRollupContent" style="display:flex;flex-wrap:wrap;gap:10px;padding:8px 0;"></div>
+              </div>
+            <% } %>
             <% if (designSections[key]) { %>
               <div class="design-item <%= fullWidthSections.includes(key) ? 'full-width' : '' %>">
                 <h4><%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></h4>
                 <div class="section-body"><%- (function(txt) {
                   let s = txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                  // Format [ASSUMPTION] tags
                   s = s.replace(/\[ASSUMPTION\]/g,'<span style="background:#fef3c7;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;color:#92400e;">ASSUMPTION</span>');
-                  // Bold text
                   s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-                  // Split into lines
                   const lines = s.split('\n');
                   let html = '';
-                  let inList = false;
-                  let listType = '';
+                  let inOl = false;
+                  let inSub = false;
                   for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
+                    const raw = lines[i];
+                    const line = raw.trim();
                     if (!line) {
-                      if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
-                      html += '<div style="height:8px"></div>';
+                      if (inSub) { html += '</ul>'; inSub = false; }
+                      if (!inOl) html += '<div style="height:8px"></div>';
                       continue;
                     }
-                    const bullet = line.match(/^[-•]\s+(.+)/);
                     const numbered = line.match(/^(\d+)\.\s+(.+)/);
-                    if (bullet) {
-                      if (!inList || listType !== 'ul') {
-                        if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
-                        html += '<ul style="margin:4px 0 4px 20px;padding:0;">';
-                        inList = true; listType = 'ul';
-                      }
-                      html += '<li style="margin-bottom:3px;">' + bullet[1] + '</li>';
-                    } else if (numbered) {
-                      if (!inList || listType !== 'ol') {
-                        if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
-                        html += '<ol style="margin:4px 0 4px 20px;padding:0;">';
-                        inList = true; listType = 'ol';
-                      }
-                      html += '<li style="margin-bottom:3px;">' + numbered[2] + '</li>';
+                    const subItem = line.match(/^\(?([a-h])\)\s+(.+)/);
+                    const bullet = line.match(/^[-•]\s+(.+)/);
+                    const indented = raw.match(/^   +(.+)/);
+                    if (numbered) {
+                      if (inSub) { html += '</ul>'; inSub = false; }
+                      if (!inOl) { html += '<ol style="margin:8px 0 8px 0;padding:0;list-style:none;counter-reset:none;">'; inOl = true; }
+                      html += '<li style="margin-bottom:12px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;list-style:none;"><span style="display:inline-block;background:#4f46e5;color:#fff;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;font-size:12px;font-weight:700;margin-right:10px;">' + numbered[1] + '</span>' + numbered[2] + '</li>';
+                    } else if (subItem) {
+                      if (!inSub) { html += '<ul style="margin:6px 0 4px 36px;padding:0;list-style:none;">'; inSub = true; }
+                      html += '<li style="margin-bottom:4px;font-size:13px;color:#475569;"><span style="color:#6366f1;font-weight:600;margin-right:4px;">(' + subItem[1] + ')</span>' + subItem[2] + '</li>';
+                    } else if (bullet) {
+                      if (!inSub) { html += '<ul style="margin:4px 0 4px 36px;padding:0;">'; inSub = true; }
+                      html += '<li style="margin-bottom:3px;font-size:13px;color:#475569;">' + bullet[1] + '</li>';
+                    } else if (indented && inOl) {
+                      html += '<div style="margin:2px 0 2px 36px;font-size:13px;color:#475569;">' + line + '</div>';
                     } else {
-                      if (inList) { html += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
+                      if (inSub) { html += '</ul>'; inSub = false; }
+                      if (inOl) { html += '</ol>'; inOl = false; }
                       html += '<p style="margin:0 0 4px 0;">' + line + '</p>';
                     }
                   }
-                  if (inList) html += listType === 'ul' ? '</ul>' : '</ol>';
+                  if (inSub) html += '</ul>';
+                  if (inOl) html += '</ol>';
                   return html;
                 })(designSections[key]) %></div>
               </div>
@@ -282,17 +281,18 @@
           <% }) %>
         </div>
       <% } else { %>
-        <div class="section">
-          <div class="section-body">
-            <%- design.designHtml || '<div class="empty-state">No design content generated yet. Click Refresh to generate.</div>' %>
-          </div>
-        </div>
+        <div class="empty-state" style="padding:24px;text-align:center;color:#94a3b8;">No design content generated yet. Click Refresh to generate.</div>
       <% } %>
     </div>
 
     <!-- Flowchart -->
     <div id="flowchartContainer" style="<%= design.flowchart ? '' : 'display:none;' %>" class="card">
       <h3 style="margin-bottom:12px;">🗺️ Component Flowchart</h3>
+      <div class="flowchart-zoom">
+        <button onclick="zoomFlowchart(0.2)" title="Zoom In">➕</button>
+        <button onclick="zoomFlowchart(-0.2)" title="Zoom Out">➖</button>
+        <button onclick="zoomFlowchart(0)" title="Reset Zoom">↺ Reset</button>
+      </div>
       <div id="flowchartRender"></div>
     </div>
 
@@ -388,15 +388,90 @@
 
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>
-    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#eef2ff',
+        primaryTextColor: '#1e293b',
+        primaryBorderColor: '#4f46e5',
+        lineColor: '#4f46e5',
+        secondaryColor: '#f8fafc',
+        tertiaryColor: '#f1f5f9',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontSize: '14px',
+        nodeBorder: '#4f46e5',
+        mainBkg: '#eef2ff',
+        clusterBkg: '#f8fafc',
+        clusterBorder: '#cbd5e1',
+        edgeLabelBackground: '#ffffff'
+      }
+    });
+    let flowchartZoom = 1;
+
+    function zoomFlowchart(delta) {
+      if (delta === 0) flowchartZoom = 1;
+      else flowchartZoom = Math.max(0.4, Math.min(3, flowchartZoom + delta));
+      const svg = document.querySelector('#flowchartRender svg');
+      if (svg) svg.style.transform = 'scale(' + flowchartZoom + ')';
+    }
+
+    async function renderMermaidSafe(elementId, code, container) {
+      try {
+        // Remove previous render element if exists (mermaid needs unique IDs)
+        const prev = document.getElementById(elementId);
+        if (prev) prev.remove();
+        const { svg } = await mermaid.render(elementId, code);
+        container.innerHTML = svg;
+      } catch(e) {
+        console.warn('Mermaid render failed:', e);
+        container.innerHTML = '<div class="flowchart-error"><strong>⚠️ Flowchart rendering failed</strong><p>' + (e.message || 'Unknown error') + '</p><pre>' + code.replace(/</g,'&lt;') + '</pre></div>';
+      }
+    }
+
+    // Core Workflow Rollup — extract step headings from CoreWorkflow text
+    <% if (designSections.CoreWorkflow) { %>
+    (function() {
+      const cwText = `<%- (designSections.CoreWorkflow || '').replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`;
+      const container = document.getElementById('cwRollupContent');
+      if (!container || !cwText) return;
+      const steps = [];
+      const lines = cwText.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        // Match: "1. **Title**" or "1. **Title** — desc" or "1. **Title**: desc"
+        const numbered = line.match(/^(\d+)\.\s+\*\*(.+?)\*\*(.*)$/);
+        if (numbered) {
+          const title = numbered[2].trim();
+          let desc = numbered[3].replace(/^\s*[-:—–]\s*/, '').trim();
+          // If no inline desc, grab from next (a) line
+          if (!desc) {
+            for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+              const next = lines[j].trim();
+              if (next && next.match(/^\(?[a-z]\)/)) {
+                desc = next.replace(/^\(?[a-z]\)\s*/, '').substring(0, 140);
+                break;
+              } else if (next && !next.startsWith('(')) {
+                desc = next.replace(/^[-•]\s*/, '').substring(0, 140);
+                break;
+              }
+            }
+          }
+          steps.push({ num: numbered[1], title, desc: desc.substring(0, 140) });
+        }
+      }
+      if (steps.length === 0) { document.getElementById('coreWorkflowRollup').style.display = 'none'; return; }
+      container.innerHTML = steps.map(s =>
+        '<div class="cw-rollup-step"><span class="step-num">' + s.num + '</span><span class="step-title">' + s.title + '</span>' +
+        (s.desc ? '<div class="step-desc">' + s.desc + '</div>' : '') + '</div>'
+      ).join('');
+    })();
+    <% } %>
 
     // Render saved flowchart on page load
     <% if (design.flowchart) { %>
     (async () => {
-      try {
-        const { svg } = await mermaid.render('flowchart-svg-saved', `<%- design.flowchart.replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`);
-        document.getElementById('flowchartRender').innerHTML = svg;
-      } catch(e) { console.warn('Saved flowchart render failed:', e); }
+      await renderMermaidSafe('flowchart-svg-saved', `<%- design.flowchart.replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`, document.getElementById('flowchartRender'));
     })();
     <% } %>
 
@@ -458,7 +533,7 @@
       if (!btn) return;
       if (!confirm('Send this approved design to Morti Engine for build planning?')) return;
       btn.disabled = true;
-      btn.textContent = '⏳ Sending...';
+      btn.textContent = '⏳ Sending to Engine...';
       try {
         const res = await fetch('/admin/projects/<%= projectId %>/send-to-engine', {
           method: 'POST',
@@ -466,9 +541,9 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed');
-        btn.textContent = '✅ Sent!';
+        btn.textContent = '✅ Sent to Engine';
         btn.style.background = '#10b981';
-        setTimeout(() => window.location.reload(), 1500);
+        setTimeout(() => window.location.reload(), 2000);
       } catch (e) {
         btn.disabled = false;
         btn.textContent = '🚀 Send to Engine';
@@ -516,32 +591,24 @@
       const btn = this;
       btn.disabled = true;
       btn.textContent = '⏳ Generating…';
+      const container = document.getElementById('flowchartContainer');
+      const render = document.getElementById('flowchartRender');
+      let responseData = null;
       try {
         const res = await fetch('/admin/projects/<%= projectId %>/design/flowchart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
         if (!res.ok) throw new Error('Server returned ' + res.status);
-        const data = await res.json();
-        if (!data.mermaid) throw new Error('No flowchart data returned');
+        responseData = await res.json();
+        if (!responseData.mermaid) throw new Error('No flowchart data returned');
 
-        const container = document.getElementById('flowchartContainer');
-        const render = document.getElementById('flowchartRender');
         container.style.display = 'block';
-
-        // Use mermaid.render for reliable rendering
-        // Sanitize labels with special chars
-        let code = data.mermaid.replace(/(\w+)(\[|\(|\{)([^\]})]+)(\]|\)|\})/g, (m, id, open, label, close) => {
-          if (/[\/\\(){}|<>#&]/.test(label) && !label.startsWith('"')) {
-            return id + open + '"' + label.replace(/"/g, "'") + '"' + close;
-          }
-          return m;
-        });
-        const { svg } = await mermaid.render('flowchart-svg', code);
-        render.innerHTML = svg;
+        flowchartZoom = 1;
+        await renderMermaidSafe('flowchart-svg', responseData.mermaid, render);
       } catch (e) {
-        render.innerHTML = '<div style="color:#ef4444;padding:12px;">Flowchart rendering failed: ' + e.message + '<br><br><pre style="font-size:11px;background:#f8fafc;padding:8px;border-radius:4px;overflow-x:auto;">' + (data && data.mermaid ? data.mermaid : '') + '</pre></div>';
         container.style.display = 'block';
+        render.innerHTML = '<div class="flowchart-error"><strong>⚠️ Flowchart generation failed</strong><p>' + e.message + '</p>' + (responseData && responseData.mermaid ? '<pre>' + responseData.mermaid.replace(/</g,'&lt;') + '</pre>' : '') + '</div>';
       } finally {
         btn.disabled = false;
         btn.textContent = '🗺️ Flowchart';
