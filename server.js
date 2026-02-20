@@ -1,6 +1,16 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+
+// Crash logging — write to persistent disk so we can diagnose Render crashes
+const CRASH_LOG = process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'crash.log') : null;
+function logCrash(label, err) {
+  const msg = `[${new Date().toISOString()}] ${label}: ${err?.stack || err?.message || err}\n`;
+  console.error(msg);
+  if (CRASH_LOG) try { fs.appendFileSync(CRASH_LOG, msg); } catch {}
+}
+process.on('uncaughtException', (err) => { logCrash('UNCAUGHT', err); process.exit(1); });
+process.on('unhandledRejection', (err) => { logCrash('UNHANDLED_REJECTION', err); });
 const https = require('https');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
@@ -3715,6 +3725,19 @@ app.post('/admin/projects/:id/import', auth.authenticate, auth.requireAdmin, imp
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy' });
+});
+
+// Crash log endpoint — read last crash info from persistent disk
+app.get('/api/crash-log', (req, res) => {
+  const key = req.query.key;
+  if (!key || key !== (process.env.BACKUP_KEY || 'morti-backup-2026')) {
+    return res.status(403).json({ error: 'Invalid key' });
+  }
+  const logPath = process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'crash.log') : null;
+  if (!logPath || !fs.existsSync(logPath)) return res.json({ log: 'No crash log found' });
+  const content = fs.readFileSync(logPath, 'utf8');
+  // Return last 5000 chars
+  res.type('text/plain').send(content.slice(-5000));
 });
 
 // Protected backup endpoint — dumps all data as JSON (key-based auth, no session required)
