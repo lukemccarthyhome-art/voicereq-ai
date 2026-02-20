@@ -7,7 +7,28 @@ if (process.env.DATABASE_URL) {
   console.log('📄 Using SQLite database');
 }
 
-// Proxy logAction to ensure it doesn't crash if backend doesn't export it yet
-dbBackend.logAction = dbBackend.logAction || (async () => {});
+// Stub any missing functions so server.js never crashes on db.xxx is not a function
+const stubs = {
+  logAction: async () => {},
+  getProjectShares: async () => [],
+  getSharedProjects: async () => [],
+  addProjectShare: async () => ({ changes: 0 }),
+  updateSharePermission: async () => {},
+  removeShare: async () => {},
+  acceptShare: async () => {},
+  getShareByToken: async () => null,
+  getShareById: async () => null,
+  getShareByProjectAndUser: async () => null,
+  getShareByProjectAndEmail: async () => null,
+  acceptSharesByEmail: async () => {},
+  getAllSessions: async () => [],
+};
+
+for (const [fn, stub] of Object.entries(stubs)) {
+  if (typeof dbBackend[fn] !== 'function') {
+    console.warn(`⚠️  DB adapter missing: ${fn} — using stub`);
+    dbBackend[fn] = stub;
+  }
+}
 
 module.exports = dbBackend;
