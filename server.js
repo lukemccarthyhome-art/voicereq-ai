@@ -3362,7 +3362,9 @@ app.put('/api/files/:id/description', apiAuth, express.json(), verifyFileOwnersh
 // Analyze full session (conversation + files) for comprehensive requirements extraction
 app.post('/api/analyze-session', optionalAuth, express.json({ limit: '20mb' }), async (req, res) => {
   try {
-    const { transcript, fileContents, sessionId, projectId, existingRequirements } = req.body;
+    const { transcript, fileContents, sessionId: rawSessionId, projectId: rawProjectId, existingRequirements } = req.body;
+    const projectId = resolveProjectId(rawProjectId);
+    const sessionId = resolveProjectId(rawSessionId); // decode hashid to integer if needed
     
     // Verify ownership
     if (projectId && req.user.role !== 'admin') {
