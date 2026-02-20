@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Morti — AI Consulting & Automation for Australian SMBs</title>
     <meta name="description" content="From idea to live automation. Morti delivers AI-powered requirements gathering, solution design, and managed automation for small and medium businesses across Australia.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --brand: #4f46e5;
@@ -32,24 +29,6 @@
         a { text-decoration: none; color: inherit; }
         html { scroll-behavior: smooth; }
 
-        /* Nav */
-        nav {
-            position: fixed; top: 0; width: 100%; z-index: 100;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 40px;
-            background: rgba(255,255,255,0.92);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(226,232,240,0.6);
-            transition: box-shadow 0.3s;
-        }
-        nav.scrolled { box-shadow: 0 1px 12px rgba(0,0,0,0.06); }
-        .nav-brand { font-size: 1.25rem; font-weight: 800; color: var(--brand); letter-spacing: -0.02em; }
-        .nav-links { display: flex; gap: 28px; align-items: center; }
-        .nav-links a.nav-text { font-size: 0.88rem; color: var(--text-mid); transition: color 0.2s; font-weight: 500; }
-        .nav-links a.nav-text:hover { color: var(--brand); }
-        .btn { display: inline-block; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor: pointer; border: none; }
-        .btn-cta { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.25); padding: 10px 28px; font-size: 0.92rem; }
-        .btn-cta:hover { background: var(--accent-dark); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
         .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,0.3); }
         .btn-primary:hover { background: var(--brand-light); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.35); }
         .btn-outline-white { border: 2px solid rgba(255,255,255,0.5); color: #fff; background: rgba(255,255,255,0.06); backdrop-filter: blur(4px); }
@@ -382,14 +361,7 @@
 
         @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 
-        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: var(--brand); }
         @media (max-width: 768px) {
-            nav { padding: 12px 20px; }
-            .hamburger { display: block; }
-            .nav-links { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: #fff; padding: 16px 20px; gap: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border-top: 1px solid var(--border); }
-            .nav-links.open { display: flex; }
-            .nav-links a.nav-text { padding: 10px 0; font-size: 1rem; }
-            .btn-cta { text-align: center; margin-top: 8px; }
             .hero { padding: 110px 20px 70px; min-height: auto; }
             .hero h1 { font-size: 2.4rem; }
             .hero p { font-size: 1rem; }
@@ -415,19 +387,7 @@
 </head>
 <body>
 
-<nav>
-    <a href="/" class="nav-brand">◆ Morti</a>
-    <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
-    <div class="nav-links">
-        <a href="#products" class="nav-text">What We Do</a>
-        <a href="#how-it-works" class="nav-text">How It Works</a>
-        <a href="/about" class="nav-text">About</a>
-        <a href="#pricing" class="nav-text">Pricing</a>
-        <a href="/contact" class="nav-text">Contact</a>
-        <a href="/login" class="nav-text">Login</a>
-        <a href="/signup" class="btn btn-cta">Get Started</a>
-    </div>
-</nav>
+<%- include('partials/marketing-nav', { currentPage: 'home' }) %>
 
 <!-- Hero -->
 <section class="hero">
@@ -722,11 +682,9 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-// Nav shadow on scroll
-const nav = document.querySelector('nav');
+// Back to top button
 const btt = document.querySelector('.back-to-top');
 window.addEventListener('scroll', () => {
-    nav.classList.toggle('scrolled', window.scrollY > 20);
     btt.classList.toggle('show', window.scrollY > 600);
 });
 </script>
