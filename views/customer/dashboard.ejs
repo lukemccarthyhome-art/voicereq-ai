@@ -130,7 +130,7 @@
                             <div class="project-name"><%= p.name %></div>
                             <div class="project-meta">
                                 <% if (p.description) { %><%= p.description.substring(0, 80) %><%= p.description.length > 80 ? '...' : '' %> · <% } %>
-                                Updated <%= new Date(p.updated_at).toLocaleDateString() %>
+                                Updated <%= melbDate(p.updated_at) %>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px;">

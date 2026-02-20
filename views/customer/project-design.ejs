@@ -71,7 +71,7 @@
         <span style="font-size:20px;">✅</span>
         <div>
           <strong style="color:#065f46;">Design Approved</strong>
-          <span style="font-size:13px;color:#047857;"> — by <%= design.approvedBy %> on <%= new Date(design.approvedAt).toLocaleString() %></span>
+          <span style="font-size:13px;color:#047857;"> — by <%= design.approvedBy %> on <%= melb(design.approvedAt) %></span>
         </div>
       </div>
       <% } %>
@@ -80,7 +80,7 @@
         <div>
           <h2>📐 <%= project.name %> — Solution Design</h2>
           <div class="meta-row" style="margin-top:8px;">
-            <span>📅 Published <%= design.publishedAt ? new Date(design.publishedAt).toLocaleString() : '' %></span>
+            <span>📅 Published <%= design.publishedAt ? melb(design.publishedAt) : '' %></span>
             <% if (design.version) { %><span>v<%= design.version %></span><% } %>
           </div>
         </div>
@@ -207,7 +207,7 @@
               <div class="q-assumption">💡 <%= qAssumption %></div>
             <% } %>
             <% if (custAnswered) { %>
-              <div class="q-answer">✅ <strong>Your answer:</strong> <%= custAnswered.answer %> <span style="font-size:11px;color:#6b7280">— <%= new Date(custAnswered.ts).toLocaleString() %></span></div>
+              <div class="q-answer">✅ <strong>Your answer:</strong> <%= custAnswered.answer %> <span style="font-size:11px;color:#6b7280">— <%= melb(custAnswered.ts) %></span></div>
             <% } else { %>
               <form method="POST" action="/customer/projects/<%= projectId %>/design/answer" class="answer-form">
                 <input type="hidden" name="designId" value="<%= design.id %>" />

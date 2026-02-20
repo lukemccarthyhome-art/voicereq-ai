@@ -97,7 +97,7 @@
     <% if (proposal.approvedAt) { %>
     <div class="approved-banner">
         <h3>✅ Proposal Approved</h3>
-        <p style="color: #065f46; margin-top: 4px;">Approved by <%= proposal.approvedBy %> on <%= new Date(proposal.approvedAt).toLocaleDateString() %></p>
+        <p style="color: #065f46; margin-top: 4px;">Approved by <%= proposal.approvedBy %> on <%= melbDate(proposal.approvedAt) %></p>
     </div>
     <% } %>
 
@@ -111,7 +111,7 @@
         <h3 style="margin-bottom: 4px;"><%= proposal.projectName || project.name %></h3>
         <div style="color: #64748b; font-size: 0.9rem;">
             Prepared for: <strong><%= proposal.clientCompany || 'TBD' %></strong>
-            &nbsp;·&nbsp; <%= new Date(proposal.createdAt).toLocaleDateString() %>
+            &nbsp;·&nbsp; <%= melbDate(proposal.createdAt) %>
             &nbsp;·&nbsp; All prices ex GST
         </div>
 

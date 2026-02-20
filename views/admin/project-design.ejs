@@ -170,7 +170,7 @@
           <h2>📐 <%= projectName %> — Solution Design</h2>
           <div class="meta-row" style="margin-top:8px;">
             <span>👤 <%= design.owner %></span>
-            <span>📅 <%= new Date(design.createdAt).toLocaleString() %></span>
+            <span>📅 <%= melb(design.createdAt) %></span>
             <% if (design.version) { %><span>v<%= design.version %></span><% } %>
           </div>
         </div>
@@ -184,7 +184,7 @@
             <form method="POST" action="/admin/projects/<%= projectId %>/design/unpublish" style="margin:0">
               <button type="submit" class="btn btn-sm" style="background:#ef4444;color:white;">🔒 Unpublish</button>
             </form>
-            <span class="badge badge-final" style="font-size:10px;">Published <%= design.publishedAt ? new Date(design.publishedAt).toLocaleDateString() : '' %></span>
+            <span class="badge badge-final" style="font-size:10px;">Published <%= design.publishedAt ? melbDate(design.publishedAt) : '' %></span>
           <% } else { %>
             <form method="POST" action="/admin/projects/<%= projectId %>/design/publish" style="margin:0">
               <button type="submit" class="btn btn-sm" style="background:#10b981;color:white;">📤 Publish to Customer</button>
@@ -193,7 +193,7 @@
 
           <% if (design.approvedAt) { %>
             <% if (design.sentToEngineAt) { %>
-              <span class="badge badge-final" style="font-size:10px;">✅ Sent to Engine <%= new Date(design.sentToEngineAt).toLocaleDateString() %></span>
+              <span class="badge badge-final" style="font-size:10px;">✅ Sent to Engine <%= melbDate(design.sentToEngineAt) %></span>
               <% if (design.enginePlanId) { %>
                 <a href="<%= (process.env.ENGINE_API_URL || 'http://localhost:3100') %>/builds/<%= design.enginePlanId %>" target="_blank" class="btn btn-sm" style="background:#06b6d4;color:white;font-size:11px;">🔗 View Build</a>
               <% } %>
@@ -317,9 +317,9 @@
               const assignedTo = isObj && q.assignedTo ? q.assignedTo : 'admin';
             %>
             <% if (answered) { %>
-              <div class="q-answer">✅ <strong>Answer:</strong> <%= answered.answer %> <span style="font-size:11px;color:#6b7280">— <%= answered.from %>, <%= new Date(answered.ts).toLocaleString() %></span></div>
+              <div class="q-answer">✅ <strong>Answer:</strong> <%= answered.answer %> <span style="font-size:11px;color:#6b7280">— <%= answered.from %>, <%= melb(answered.ts) %></span></div>
             <% } else if (customerAnswered) { %>
-              <div class="q-answer">✅ <strong>Customer Answer:</strong> <%= customerAnswered.answer %> <span style="font-size:11px;color:#6b7280">— <%= customerAnswered.from %>, <%= new Date(customerAnswered.ts).toLocaleString() %></span></div>
+              <div class="q-answer">✅ <strong>Customer Answer:</strong> <%= customerAnswered.answer %> <span style="font-size:11px;color:#6b7280">— <%= customerAnswered.from %>, <%= melb(customerAnswered.ts) %></span></div>
             <% } else { %>
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <form method="POST" action="/admin/projects/<%= projectId %>/design/answer" class="answer-form" style="flex:1;margin-top:0;">
@@ -352,7 +352,7 @@
         <div style="padding:10px 14px;background:#f5f3ff;border-left:3px solid #8b5cf6;border-radius:0 8px 8px 0;margin-bottom:8px;">
           <div style="font-size:13px;color:#64748b;">❓ <%= a.question %></div>
           <div style="font-size:14px;color:#0f172a;margin-top:4px;">💡 <strong>Assumption:</strong> <%= a.assumption %></div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Accepted by <%= a.acceptedBy %> · <%= new Date(a.ts).toLocaleString() %></div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Accepted by <%= a.acceptedBy %> · <%= melb(a.ts) %></div>
         </div>
       <% }) %>
     </div>
@@ -367,7 +367,7 @@
         <% } else { %>
           <% design.chat.forEach(function(c) { %>
             <div class="chat-bubble" style="<%= c.from === 'AI Assistant' ? 'background:#eef2ff;border-left:3px solid #667eea;' : '' %>">
-              <div class="chat-meta"><strong><%= c.from === 'AI Assistant' ? '🤖 AI' : '👤 ' + c.from %></strong> — <%= new Date(c.ts).toLocaleString() %></div>
+              <div class="chat-meta"><strong><%= c.from === 'AI Assistant' ? '🤖 AI' : '👤 ' + c.from %></strong> — <%= melb(c.ts) %></div>
               <div class="chat-text" style="white-space:pre-wrap;"><%= c.text %></div>
             </div>
           <% }) %>

@@ -101,7 +101,7 @@
                             <% } %>
                         </td>
                         <td>
-                            <%= new Date(project.updated_at).toLocaleDateString() %><br>
+                            <%= melbDate(project.updated_at) %><br>
                             <small style="color: #666;"><%= new Date(project.updated_at).toLocaleTimeString() %></small>
                         </td>
                         <td>

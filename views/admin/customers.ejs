@@ -120,7 +120,7 @@
                                 <a href="/admin/projects?user=<%= customer.id %>" style="font-size: 12px;">→ View</a>
                             <% } %>
                         </td>
-                        <td><%= new Date(customer.created_at).toLocaleDateString() %></td>
+                        <td><%= melbDate(customer.created_at) %></td>
                         <td>
                             <div style="display: flex; gap: 8px;">
                                 <% if (customer.approved === 0) { %>

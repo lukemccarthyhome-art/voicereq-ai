@@ -29,7 +29,7 @@
                         <div class="request-meta">
                             <strong><%= r.user_name %></strong> (<%= r.user_email %>) · 
                             <span class="badge"><%= r.page %></span> · 
-                            <%= new Date(r.created_at).toLocaleString() %>
+                            <%= melb(r.created_at) %>
                         </div>
                         <div class="request-text"><%= r.text %></div>
                     </div>

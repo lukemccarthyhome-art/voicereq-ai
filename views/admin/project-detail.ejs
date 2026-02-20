@@ -100,12 +100,12 @@
         
         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
             <div style="font-size: 12px; color: #666; margin-bottom: 4px;">CREATED</div>
-            <div style="font-size: 14px;"><%= new Date(project.created_at).toLocaleDateString() %></div>
+            <div style="font-size: 14px;"><%= melbDate(project.created_at) %></div>
         </div>
         
         <div style="margin-top: 12px;">
             <div style="font-size: 12px; color: #666; margin-bottom: 4px;">LAST UPDATED</div>
-            <div style="font-size: 14px;"><%= new Date(project.updated_at).toLocaleDateString() %></div>
+            <div style="font-size: 14px;"><%= melbDate(project.updated_at) %></div>
         </div>
 
         <div style="margin-top: 20px;">
@@ -134,7 +134,7 @@
                   <% locals.designsList.forEach(d => { %>
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:4px;font-size:12px;">
                       <a href="/admin/projects/<%= project.id %>/design?design=<%= d.id %>" style="color:#667eea;text-decoration:none;font-weight:500;">
-                        v<%= d.version %> — <%= new Date(d.createdAt).toLocaleString() %> — <%= d.status %>
+                        v<%= d.version %> — <%= melb(d.createdAt) %> — <%= d.status %>
                       </a>
                       <form method="POST" action="/admin/projects/<%= project.id %>/design/<%= d.id %>/delete" onsubmit="return confirm('Delete design v<%= d.version %>? This cannot be undone.')" style="margin:0;">
                         <button type="submit" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:13px;" title="Delete this version">✕</button>
@@ -257,7 +257,7 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div style="flex: 1;">
                             <div style="font-size: 14px; color: #0f172a; white-space: pre-wrap;"><%= note.text %></div>
-                            <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;"><%= note.from %> · <%= new Date(note.ts).toLocaleString() %></div>
+                            <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;"><%= note.from %> · <%= melb(note.ts) %></div>
                         </div>
                         <form method="POST" action="/admin/projects/<%= project.id %>/notes/<%= idx %>/delete" style="margin: 0;">
                             <button type="submit" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 14px;" title="Delete note">✕</button>
@@ -285,7 +285,7 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
             <div style="padding: 10px 14px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 0 8px 8px 0; margin-bottom: 8px;">
                 <div style="font-size: 13px; color: #64748b; font-weight: 600;">❓ <%= a.question %></div>
                 <div style="font-size: 14px; color: #0f172a; margin-top: 4px;">✅ <%= a.answer %></div>
-                <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;"><%= a.from %> · <%= new Date(a.ts).toLocaleString() %></div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;"><%= a.from %> · <%= melb(a.ts) %></div>
             </div>
         <% }) %>
     </div>
@@ -318,7 +318,7 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
                             <% } %>
                         </div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
-                            <%= new Date(session.created_at).toLocaleString() %>
+                            <%= melb(session.created_at) %>
                         </div>
                         
                         <% 
@@ -358,7 +358,7 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
                             📄 <%= file.original_name %>
                         </div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
-                            <%= (file.size / 1024).toFixed(1) %> KB • <%= new Date(file.created_at).toLocaleDateString() %>
+                            <%= (file.size / 1024).toFixed(1) %> KB • <%= melbDate(file.created_at) %>
                         </div>
                         <% if (file.description) { %>
                             <div style="font-size: 13px; color: #333; margin-bottom: 8px; padding: 8px; background: #f0f8ff; border-left: 3px solid #667eea; border-radius: 4px;">
@@ -454,8 +454,8 @@ function viewSession(sessionId) {
     let content = `
         <div style="margin-bottom: 20px;">
             <strong>Status:</strong> ${session.status} | 
-            <strong>Created:</strong> ${new Date(session.created_at).toLocaleString()} |
-            <strong>Updated:</strong> ${new Date(session.updated_at).toLocaleString()}
+            <strong>Created:</strong> ${new Date(session.created_at).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })} |
+            <strong>Updated:</strong> ${new Date(session.updated_at).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })}
         </div>
     `;
     
@@ -542,7 +542,7 @@ async function exportProject() {
         let doc = '# <%= project.name %> - Requirements Document\\n\\n';
         doc += '**Company:** <%= project.company %>\\n';
         doc += '**Contact:** <%= project.user_name %> (<%= project.email %>)\\n';
-        doc += '**Generated:** ' + new Date().toLocaleString() + '\\n\\n';
+        doc += '**Generated:** ' + new Date().toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' }) + '\\n\\n';
         
         if (Object.keys(allRequirements).length > 0) {
             doc += '## Requirements\\n\\n';

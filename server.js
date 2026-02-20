@@ -27,6 +27,16 @@ const nodemailer = require('nodemailer');
 
 require('dotenv').config();
 
+// Melbourne timezone helpers
+function melb(dateStr) {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' });
+}
+function melbDate(dateStr) {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleDateString('en-AU', { timeZone: 'Australia/Melbourne' });
+}
+
 // Reusable email sender
 async function sendMortiEmail(to, subject, html) {
   const smtpUser = process.env.SMTP_USER;
@@ -193,7 +203,7 @@ const cloudflareOnly = (req, res, next) => {
 
 // Security Alert Helper (Telegram)
 async function sendSecurityAlert(type, details) {
-  const message = 'SECURITY ALERT: Morti Projects\nType: ' + type + '\nTime: ' + new Date().toLocaleString() + '\nDetails: ' + JSON.stringify(details);
+  const message = 'SECURITY ALERT: Morti Projects\nType: ' + type + '\nTime: ' + melb(new Date()) + '\nDetails: ' + JSON.stringify(details);
 
   try {
     await db.logAction(null, 'security_alert', { type, ...details }, details.ip || '0.0.0.0');
@@ -215,6 +225,13 @@ app.use(sanitizeInput);
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Make timezone helpers available to all templates
+app.use((req, res, next) => {
+  res.locals.melb = melb;
+  res.locals.melbDate = melbDate;
+  next();
+});
 
 // File upload setup — use persistent storage if available
 let uploadsDir;

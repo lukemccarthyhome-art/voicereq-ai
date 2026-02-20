@@ -234,7 +234,7 @@
                     <% } %>
                     <% if (answered) { %>
                         <div style="margin-top: 8px; padding: 8px 12px; background: #d1fae5; border-radius: 6px; color: #065f46; font-size: 13px;">
-                            ✅ Your answer: <%= answered.answer %> <span style="font-size:11px;color:#6b7280;">— <%= new Date(answered.ts).toLocaleString() %></span>
+                            ✅ Your answer: <%= answered.answer %> <span style="font-size:11px;color:#6b7280;">— <%= melb(answered.ts) %></span>
                         </div>
                     <% } else { %>
                         <form method="POST" action="/customer/projects/<%= project.id %>/design/answer" style="display: flex; gap: 8px; margin-top: 8px;">
@@ -262,7 +262,7 @@
                                 <div style="font-size: 20px; font-weight: 700; color: #333;"><%= totalMessages %> message<%= totalMessages === 1 ? '' : 's' %> exchanged</div>
                                 <div style="font-size: 13px; color: #666;">
                                     <%= sessions.length %> session<%= sessions.length === 1 ? '' : 's' %> •
-                                    Last updated <%= new Date(sessions[0].updated_at || sessions[0].created_at).toLocaleDateString() %>
+                                    Last updated <%= melbDate(sessions[0].updated_at || sessions[0].created_at) %>
                                 </div>
                             </div>
                             <div>
@@ -292,7 +292,7 @@
                                     <% } else { %>
                                         <span style="color: #dc3545;">● Paused</span>
                                     <% } %>
-                                    • <%= new Date(session.created_at).toLocaleDateString() %>
+                                    • <%= melbDate(session.created_at) %>
                                 </div>
                                 <button onclick="viewSession(<%= session.id %>)" class="btn btn-sm">👁️ View</button>
                             </div>
@@ -329,7 +329,7 @@
                                 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white;">
                                     <div style="font-weight: 600; margin-bottom: 4px;">📄 <%= file.original_name %></div>
                                     <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
-                                        <%= (file.size / 1024).toFixed(1) %> KB • <%= new Date(file.created_at).toLocaleDateString() %>
+                                        <%= (file.size / 1024).toFixed(1) %> KB • <%= melbDate(file.created_at) %>
                                     </div>
                                     <% if (file.analysis) { %>
                                         <% let analysis = {}; try { analysis = JSON.parse(file.analysis); } catch {} %>
@@ -356,9 +356,9 @@
                     <h3>ℹ️ Project Info</h3>
                     <div style="margin-top: 12px;">
                         <div style="font-size: 12px; color: #666; margin-bottom: 4px;">CREATED</div>
-                        <div style="margin-bottom: 12px;"><%= new Date(project.created_at).toLocaleDateString() %></div>
+                        <div style="margin-bottom: 12px;"><%= melbDate(project.created_at) %></div>
                         <div style="font-size: 12px; color: #666; margin-bottom: 4px;">LAST UPDATED</div>
-                        <div><%= new Date(project.updated_at).toLocaleDateString() %></div>
+                        <div><%= melbDate(project.updated_at) %></div>
                     </div>
                 </div>
             </div>
@@ -479,7 +479,7 @@
             try { transcript = JSON.parse(session.transcript || '[]'); } catch {}
             try { requirements = JSON.parse(session.requirements || '{}'); } catch {}
             document.getElementById('sessionModalTitle').innerText = 'Session Details';
-            let content = `<div style="margin-bottom: 20px;"><strong>Status:</strong> ${session.status} | <strong>Created:</strong> ${new Date(session.created_at).toLocaleString()}</div>`;
+            let content = `<div style="margin-bottom: 20px;"><strong>Status:</strong> ${session.status} | <strong>Created:</strong> ${new Date(session.created_at).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })}</div>`;
             if (Object.keys(requirements).length > 0) {
                 content += '<h4>📋 Requirements Identified</h4>';
                 for (const [category, items] of Object.entries(requirements)) {

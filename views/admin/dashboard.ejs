@@ -84,7 +84,7 @@
                                         <small style="color: #666;"><%= customer.name %></small>
                                     </td>
                                     <td><%= customer.email %></td>
-                                    <td><%= new Date(customer.created_at).toLocaleDateString() %></td>
+                                    <td><%= melbDate(customer.created_at) %></td>
                                 </tr>
                             <% }) %>
                         </tbody>

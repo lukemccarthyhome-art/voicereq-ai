@@ -90,7 +90,7 @@
                                     <%= session.status %>
                                 </td>
                                 <td style="font-size: 13px; color: #666;">
-                                    <%= new Date(session.updated_at).toLocaleString() %>
+                                    <%= melb(session.updated_at) %>
                                 </td>
                                 <td>
                                     <a href="/admin/sessions/<%= session.id %>/view" class="btn btn-sm" style="margin-right: 4px;">👁️ View</a>

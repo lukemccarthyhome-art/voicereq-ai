@@ -152,15 +152,15 @@
                     <h3 style="margin-bottom: 4px;"><%= proposal.projectName || project.name %></h3>
                     <div style="color: #64748b; font-size: 0.9rem;">
                         Client: <strong><%= proposal.clientCompany || 'TBD' %></strong>
-                        &nbsp;·&nbsp; Generated: <%= new Date(proposal.createdAt).toLocaleDateString() %>
+                        &nbsp;·&nbsp; Generated: <%= melbDate(proposal.createdAt) %>
                         &nbsp;·&nbsp; All prices ex GST
                     </div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;">
                     <% if (proposal.approvedAt) { %>
-                        <span style="background:#d1fae5;color:#065f46;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">✅ Approved by <%= proposal.approvedBy %> · <%= new Date(proposal.approvedAt).toLocaleDateString() %></span>
+                        <span style="background:#d1fae5;color:#065f46;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">✅ Approved by <%= proposal.approvedBy %> · <%= melbDate(proposal.approvedAt) %></span>
                     <% } else if (proposal.published) { %>
-                        <span style="background:#dbeafe;color:#1e40af;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">📤 Published <%= proposal.publishedAt ? new Date(proposal.publishedAt).toLocaleDateString() : '' %></span>
+                        <span style="background:#dbeafe;color:#1e40af;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">📤 Published <%= proposal.publishedAt ? melbDate(proposal.publishedAt) : '' %></span>
                     <% } else { %>
                         <span style="background:#fef3c7;color:#92400e;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">Draft</span>
                     <% } %>
@@ -371,7 +371,7 @@
             <div id="chatMessages" style="max-height: 400px; overflow-y: auto; margin-bottom: 16px;">
                 <% (proposal.chat || []).forEach(msg => { %>
                     <div style="margin-bottom: 12px; padding: 10px 14px; border-radius: 8px; <%= msg.from === 'ai' ? 'background: #f0f4ff; border-left: 3px solid #667eea;' : 'background: #f8fafc; border-left: 3px solid #10b981;' %>">
-                        <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;"><%= msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from %> · <%= new Date(msg.ts).toLocaleString() %></div>
+                        <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;"><%= msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from %> · <%= melb(msg.ts) %></div>
                         <div style="font-size: 14px; color: #334155; white-space: pre-wrap;"><%= msg.text %></div>
                     </div>
                 <% }) %>
@@ -421,7 +421,7 @@ if (chatInput && chatSend) {
                 const div = document.createElement('div');
                 div.style.cssText = 'margin-bottom: 12px; padding: 10px 14px; border-radius: 8px; ' +
                     (msg.from === 'ai' ? 'background: #f0f4ff; border-left: 3px solid #667eea;' : 'background: #f8fafc; border-left: 3px solid #10b981;');
-                div.innerHTML = `<div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">${msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from} · ${new Date(msg.ts).toLocaleString()}</div><div style="font-size:14px;color:#334155;white-space:pre-wrap;">${msg.text}</div>`;
+                div.innerHTML = `<div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">${msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from} · ${new Date(msg.ts).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })}</div><div style="font-size:14px;color:#334155;white-space:pre-wrap;">${msg.text}</div>`;
                 container.appendChild(div);
             });
             container.scrollTop = container.scrollHeight;
