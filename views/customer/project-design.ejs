@@ -9,11 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-deep: #050d1a; --bg-primary: #0a1628; --bg-card: #0f1d32;
+      --bg-deep: #0a1628; --bg-primary: #0f1d32; --bg-card: #142640;
       --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
       --border-glass-hover: rgba(255, 255, 255, 0.15);
       --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12);
-      --accent-secondary: #00d4aa; --accent-purple: #8b5cf6;
+      --accent-secondary: #009e7e; --accent-purple: #8b5cf6;
       --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4);
       --radius: 16px; --radius-pill: 50px;
     }
@@ -32,7 +32,7 @@
     .breadcrumb { font-size:0.82rem; color:var(--text-muted); margin-bottom:20px; }
     .breadcrumb a { color:var(--accent); }
     .badge { display:inline-block; padding:4px 12px; border-radius:var(--radius-pill); font-size:0.72rem; font-weight:600; text-transform:uppercase; }
-    .badge-final { background:rgba(0,212,170,0.12); color:var(--accent-secondary); border: 1px solid rgba(0,212,170,0.3); }
+    .badge-final { background:rgba(0,158,126,0.12); color:var(--accent-secondary); border: 1px solid rgba(0,158,126,0.3); }
     .btn { display:inline-flex; align-items:center; gap:6px; padding:10px 24px; border:none; border-radius:var(--radius-pill); font-weight:600; font-size:0.88rem; cursor:pointer; transition:all 0.3s; color:#fff; font-family:'Inter',sans-serif; }
     .btn-primary { background:var(--accent); box-shadow: 0 0 16px var(--accent-glow); }
     .btn-sm { padding:6px 14px; font-size:0.78rem; }
@@ -56,7 +56,7 @@
     .question-card .q-id { display:inline-block; background:var(--accent); color:white; width:26px; height:26px; border-radius:50%; text-align:center; line-height:26px; font-size:0.78rem; font-weight:700; margin-right:10px; }
     .question-card .q-text { font-weight:600; color:var(--text-primary); font-size:0.88rem; }
     .question-card .q-assumption { font-size:0.78rem; color:var(--text-muted); margin-top:4px; font-style:italic; }
-    .question-card .q-answer { margin-top:8px; padding:8px 12px; background:rgba(0,212,170,0.1); border-radius:8px; color:var(--accent-secondary); font-size:0.82rem; }
+    .question-card .q-answer { margin-top:8px; padding:8px 12px; background:rgba(0,158,126,0.1); border-radius:8px; color:var(--accent-secondary); font-size:0.82rem; }
     .answer-form { display:flex; gap:8px; margin-top:10px; }
     .answer-form input[type="text"] { flex:1; padding:10px 14px; border:1px solid var(--border-glass); border-radius:10px; font-size:0.88rem; background:rgba(5,13,26,0.6); color:var(--text-primary); font-family:'Inter',sans-serif; }
     .answer-form input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
@@ -99,7 +99,7 @@
 
     <!-- Approval Banner -->
     <% if (design.approvedAt) { %>
-    <div style="padding:14px 18px;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.3);border-radius:var(--radius);margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+    <div style="padding:14px 18px;background:rgba(0,158,126,0.1);border:1px solid rgba(0,158,126,0.3);border-radius:var(--radius);margin-bottom:16px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:22px;">✅</span>
       <div>
         <strong style="color:var(--accent-secondary);">Design Approved</strong>
@@ -121,7 +121,7 @@
         <span class="badge badge-final">Published</span>
         <% if (!design.approvedAt) { %>
         <form method="POST" action="/customer/projects/<%= encodeId(projectId) %>/design/approve" onsubmit="return confirm('Approve this design? This confirms you are happy with the proposed solution.');" style="margin:0;">
-          <button type="submit" class="btn" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">✅ Approve Design</button>
+          <button type="submit" class="btn" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,158,126,0.3);">✅ Approve Design</button>
         </form>
         <% } %>
       </div>

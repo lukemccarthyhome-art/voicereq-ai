@@ -9,16 +9,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #050d1a;
-            --bg-primary: #0a1628;
-            --bg-card: #0f1d32;
+            --bg-deep: #0a1628;
+            --bg-primary: #0f1d32;
+            --bg-card: #142640;
             --bg-glass: rgba(15, 29, 50, 0.6);
             --border-glass: rgba(255, 255, 255, 0.08);
             --border-glass-hover: rgba(255, 255, 255, 0.15);
             --accent: #1199fa;
             --accent-glow: rgba(17, 153, 250, 0.4);
             --accent-dim: rgba(17, 153, 250, 0.12);
-            --accent-secondary: #00d4aa;
+            --accent-secondary: #009e7e;
             --accent-purple: #8b5cf6;
             --text-primary: #f0f4f8;
             --text-secondary: rgba(240, 244, 248, 0.7);
@@ -67,8 +67,8 @@
         .btn-primary { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
         .btn-primary:hover { background: #2aa8ff; transform: translateY(-2px); box-shadow: 0 0 32px var(--accent-glow); }
         .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
-        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0, 212, 170, 0.3); }
-        .btn-success:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(0, 212, 170, 0.4); }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0, 158, 126, 0.3); }
+        .btn-success:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(0, 158, 126, 0.4); }
 
         .overview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
         .overview-card {
@@ -146,11 +146,11 @@
             const inProgress = counts.new + counts.session;
             
             const stageConfig = {
-                approved: { icon: '✅', label: 'Approved', color: '#00d4aa', bg: 'rgba(0,212,170,0.12)', border: 'rgba(0,212,170,0.3)' },
+                approved: { icon: '✅', label: 'Approved', color: '#009e7e', bg: 'rgba(0,158,126,0.12)', border: 'rgba(0,158,126,0.3)' },
                 proposal: { icon: '💰', label: 'Proposal Ready', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)' },
                 design:   { icon: '📐', label: 'Design Ready', color: '#1199fa', bg: 'rgba(17,153,250,0.12)', border: 'rgba(17,153,250,0.3)' },
                 session:  { icon: '🎙️', label: 'In Session', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-                new:      { icon: '🆕', label: 'Getting Started', color: var(--text-muted), bg: 'rgba(255,255,255,0.06)', border: 'var(--border-glass)' }
+                new:      { icon: '🆕', label: 'Getting Started', color: 'rgba(240,244,248,0.4)', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.08)' }
             };
             %>
 
@@ -168,7 +168,7 @@
                     <div class="label">Awaiting Review</div>
                 </div>
                 <div class="overview-card">
-                    <div class="count" style="color: #00d4aa;"><%= counts.approved %></div>
+                    <div class="count" style="color: #009e7e;"><%= counts.approved %></div>
                     <div class="label">Approved</div>
                 </div>
             </div>
@@ -200,7 +200,7 @@
                             <% } else if (stage === 'design') { %>
                                 <span class="btn btn-sm" style="background: var(--accent); box-shadow: 0 0 12px var(--accent-glow);">View Design</span>
                             <% } else if (stage === 'approved') { %>
-                                <span class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,212,170,0.3);">View Project</span>
+                                <span class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,158,126,0.3);">View Project</span>
                             <% } else { %>
                                 <span class="btn btn-sm btn-success"><%= (p.session_count || 0) > 0 ? '🎙️ Continue' : '🎙️ Start' %></span>
                             <% } %>
@@ -247,7 +247,7 @@ async function submitFeature(){
   try{
     const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'dashboard'})});
     if(!r.ok)throw new Error('Failed');
-    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#00d4aa';
+    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#009e7e';
     document.getElementById('featureText').value='';
     setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
   }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}

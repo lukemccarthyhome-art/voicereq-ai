@@ -9,16 +9,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #050d1a;
-            --bg-primary: #0a1628;
-            --bg-card: #0f1d32;
+            --bg-deep: #0a1628;
+            --bg-primary: #0f1d32;
+            --bg-card: #142640;
             --bg-glass: rgba(15, 29, 50, 0.6);
             --border-glass: rgba(255, 255, 255, 0.08);
             --border-glass-hover: rgba(255, 255, 255, 0.15);
             --accent: #1199fa;
             --accent-glow: rgba(17, 153, 250, 0.4);
             --accent-dim: rgba(17, 153, 250, 0.12);
-            --accent-secondary: #00d4aa;
+            --accent-secondary: #009e7e;
             --accent-purple: #8b5cf6;
             --text-primary: #f0f4f8;
             --text-secondary: rgba(240, 244, 248, 0.7);
@@ -65,13 +65,13 @@
         .scenario-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
         .scenario-amount { font-size: 1.3rem; font-weight: 800; color: var(--accent); margin-top: 4px; }
 
-        .roi-card { background: rgba(0,212,170,0.06); border: 1px solid rgba(0,212,170,0.15); border-radius: var(--radius); padding: 24px; margin: 20px 0; }
+        .roi-card { background: rgba(0,158,126,0.06); border: 1px solid rgba(0,158,126,0.15); border-radius: var(--radius); padding: 24px; margin: 20px 0; }
         .roi-card h3 { color: var(--accent-secondary); margin-bottom: 12px; }
         .roi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
         .roi-stat { text-align: center; padding: 16px; background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 10px; }
         .roi-stat .label { font-size: 0.75rem; text-transform: uppercase; color: var(--accent-secondary); letter-spacing: 0.5px; }
         .roi-stat .val { font-size: 1.5rem; font-weight: 800; color: var(--accent-secondary); margin-top: 4px; }
-        .roi-summary { color: var(--accent-secondary); font-size: 0.95rem; font-style: italic; padding-top: 12px; border-top: 1px solid rgba(0,212,170,0.15); }
+        .roi-summary { color: var(--accent-secondary); font-size: 0.95rem; font-style: italic; padding-top: 12px; border-top: 1px solid rgba(0,158,126,0.15); }
 
         .section { margin-bottom: 20px; }
         .section h3 { font-size: 1.1rem; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
@@ -134,7 +134,7 @@
                         </form>
                     <% } else { %>
                         <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/proposal/publish" style="margin:0;">
-                            <button type="submit" class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,212,170,0.3);">📤 Publish</button>
+                            <button type="submit" class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,158,126,0.3);">📤 Publish</button>
                         </form>
                     <% } %>
                     <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/proposal/delete" style="margin:0;" onsubmit="return confirm('Delete all proposals for this project? This cannot be undone.')">
@@ -185,7 +185,7 @@
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;">
                     <% if (proposal.approvedAt) { %>
-                        <span style="background: rgba(0,212,170,0.1); color: var(--accent-secondary); padding:6px 14px; border-radius: var(--radius-pill); font-size:12px; font-weight:600; border: 1px solid rgba(0,212,170,0.2);">✅ Approved by <%= proposal.approvedBy %> · <%= melbDate(proposal.approvedAt) %></span>
+                        <span style="background: rgba(0,158,126,0.1); color: var(--accent-secondary); padding:6px 14px; border-radius: var(--radius-pill); font-size:12px; font-weight:600; border: 1px solid rgba(0,158,126,0.2);">✅ Approved by <%= proposal.approvedBy %> · <%= melbDate(proposal.approvedAt) %></span>
                     <% } else if (proposal.published) { %>
                         <span style="background: var(--accent-dim); color: var(--accent); padding:6px 14px; border-radius: var(--radius-pill); font-size:12px; font-weight:600; border: 1px solid rgba(17,153,250,0.2);">📤 Published <%= proposal.publishedAt ? melbDate(proposal.publishedAt) : '' %></span>
                     <% } else { %>
@@ -293,7 +293,7 @@
                     <% } %>
                 </div>
             </div>
-            <div class="fee-card highlight" style="border-color: rgba(0,212,170,0.3);">
+            <div class="fee-card highlight" style="border-color: rgba(0,158,126,0.3);">
                 <div class="fee-label" style="color: var(--accent-secondary);">2. Annual Fee</div>
                 <% if (proposal.annualFee && proposal.annualFee.originalTotal && proposal.annualFee.originalTotal !== proposal.annualFee.total) { %>
                     <div class="fee-amount"><span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.7em;">$<%= proposal.annualFee.originalTotal.toLocaleString() %></span> $<%= (proposal.annualFee.total || 0).toLocaleString() %> <small>/yr</small></div>
@@ -302,7 +302,7 @@
                 <% } %>
                 <% if (proposal.annualFee) { %>
                     <div style="font-size: 0.85rem; color: var(--text-muted); margin: 8px 0;"><%= proposal.annualFee.calculation %></div>
-                    <div style="font-size: 0.9rem; color: var(--accent-secondary); background: rgba(0,212,170,0.08); padding: 8px 12px; border-radius: 10px; margin: 8px 0; border: 1px solid rgba(0,212,170,0.15);">
+                    <div style="font-size: 0.9rem; color: var(--accent-secondary); background: rgba(0,158,126,0.08); padding: 8px 12px; border-radius: 10px; margin: 8px 0; border: 1px solid rgba(0,158,126,0.15);">
                         $<%= (proposal.annualFee.monthlyEquivalent || 0).toLocaleString() %>/month
                     </div>
                     <div class="fee-desc" style="text-align: left; margin-top: 8px;">
@@ -405,7 +405,7 @@
             </div>
             <div style="display: flex; gap: 8px;">
                 <input type="text" id="chatInput" placeholder="Add feedback on pricing, scope, assumptions..." style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-glass); border-radius: var(--radius-pill); font-size: 14px; outline: none; background: var(--bg-card); color: var(--text-primary);" />
-                <button id="chatSend" class="btn" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,212,170,0.3);">Send</button>
+                <button id="chatSend" class="btn" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,158,126,0.3);">Send</button>
             </div>
         </div>
 
@@ -447,7 +447,7 @@ if (chatInput && chatSend) {
             data.messages.forEach(msg => {
                 const div = document.createElement('div');
                 div.style.cssText = 'margin-bottom: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); ' +
-                    (msg.from === 'ai' ? 'background: rgba(17,153,250,0.12); border-left: 3px solid #1199fa;' : 'background: #0f1d32; border-left: 3px solid #00d4aa;');
+                    (msg.from === 'ai' ? 'background: rgba(17,153,250,0.12); border-left: 3px solid #1199fa;' : 'background: #0f1d32; border-left: 3px solid #009e7e;');
                 div.innerHTML = `<div style="font-size:11px;color:rgba(240,244,248,0.4);margin-bottom:4px;">${msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from} · ${new Date(msg.ts).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })}</div><div style="font-size:14px;color:rgba(240,244,248,0.7);white-space:pre-wrap;">${msg.text}</div>`;
                 container.appendChild(div);
             });

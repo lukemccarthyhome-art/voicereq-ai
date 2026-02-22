@@ -9,11 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #050d1a; --bg-primary: #0a1628; --bg-card: #0f1d32;
+            --bg-deep: #0a1628; --bg-primary: #0f1d32; --bg-card: #142640;
             --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
             --border-glass-hover: rgba(255, 255, 255, 0.15);
             --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12);
-            --accent-secondary: #00d4aa; --accent-purple: #8b5cf6;
+            --accent-secondary: #009e7e; --accent-purple: #8b5cf6;
             --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4);
             --radius: 16px; --radius-pill: 50px;
         }
@@ -39,7 +39,7 @@
         .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; }
         .btn-primary { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
         .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
-        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0, 212, 170, 0.3); }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0, 158, 126, 0.3); }
         .btn-secondary { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: var(--text-secondary); }
         .btn-secondary:hover { background: rgba(255,255,255,0.12); border-color: var(--border-glass-hover); }
 
@@ -53,7 +53,7 @@
         .project-card:hover { border-color: var(--border-glass-hover); box-shadow: 0 8px 32px rgba(0,0,0,0.2); transform: translateY(-2px); }
 
         .status-badge { padding: 6px 16px; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 600; }
-        .status-active { background: rgba(0,212,170,0.12); color: #00d4aa; border: 1px solid rgba(0,212,170,0.3); }
+        .status-active { background: rgba(0,158,126,0.12); color: #009e7e; border: 1px solid rgba(0,158,126,0.3); }
         .status-completed { background: rgba(17,153,250,0.12); color: #1199fa; border: 1px solid rgba(17,153,250,0.3); }
         .status-archived { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
 
@@ -214,7 +214,7 @@ async function submitFeature(){
   try{
     const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'projects'})});
     if(!r.ok)throw new Error('Failed');
-    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#00d4aa';
+    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#009e7e';
     document.getElementById('featureText').value='';
     setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
   }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}

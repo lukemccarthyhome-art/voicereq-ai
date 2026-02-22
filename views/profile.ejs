@@ -9,16 +9,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #050d1a;
-            --bg-primary: #0a1628;
-            --bg-card: #0f1d32;
+            --bg-deep: #0a1628;
+            --bg-primary: #0f1d32;
+            --bg-card: #142640;
             --bg-glass: rgba(15, 29, 50, 0.6);
             --border-glass: rgba(255, 255, 255, 0.08);
             --border-glass-hover: rgba(255, 255, 255, 0.15);
             --accent: #1199fa;
             --accent-glow: rgba(17, 153, 250, 0.4);
             --accent-dim: rgba(17, 153, 250, 0.12);
-            --accent-secondary: #00d4aa;
+            --accent-secondary: #009e7e;
             --accent-purple: #8b5cf6;
             --text-primary: #f0f4f8;
             --text-secondary: rgba(240, 244, 248, 0.7);
@@ -60,8 +60,8 @@
         }
         .btn { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
         .btn:hover { background: #2aa8ff; transform: translateY(-2px); box-shadow: 0 0 32px var(--accent-glow); }
-        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0,212,170,0.3); }
-        .btn-success:hover { background: #00e6b8; box-shadow: 0 0 24px rgba(0,212,170,0.4); }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0,158,126,0.3); }
+        .btn-success:hover { background: #00e6b8; box-shadow: 0 0 24px rgba(0,158,126,0.4); }
         .btn-secondary { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); box-shadow: none; }
         .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: var(--border-glass-hover); box-shadow: none; }
 
@@ -71,7 +71,7 @@
         .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
 
         .alert { padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid; }
-        .alert-success { background: rgba(0,212,170,0.1); color: var(--accent-secondary); border-color: rgba(0,212,170,0.2); }
+        .alert-success { background: rgba(0,158,126,0.1); color: var(--accent-secondary); border-color: rgba(0,158,126,0.2); }
         .alert-error { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.2); }
 
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
@@ -187,7 +187,7 @@
         <div class="card">
             <h2>🔐 Two-Factor Authentication</h2>
             <% if (user.mfa_secret) { %>
-                <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: rgba(0,212,170,0.08); border-radius: 12px; border: 1px solid rgba(0,212,170,0.15);">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: rgba(0,158,126,0.08); border-radius: 12px; border: 1px solid rgba(0,158,126,0.15);">
                     <span style="font-size: 24px;">✅</span>
                     <div>
                         <strong style="color: var(--accent-secondary);">2FA is enabled</strong>

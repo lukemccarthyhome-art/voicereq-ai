@@ -9,11 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #050d1a; --bg-primary: #0a1628; --bg-card: #0f1d32;
+            --bg-deep: #0a1628; --bg-primary: #0f1d32; --bg-card: #142640;
             --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
             --border-glass-hover: rgba(255, 255, 255, 0.15);
             --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12);
-            --accent-secondary: #00d4aa; --accent-purple: #8b5cf6;
+            --accent-secondary: #009e7e; --accent-purple: #8b5cf6;
             --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4);
             --radius: 16px; --radius-pill: 50px;
         }
@@ -65,13 +65,13 @@
         .scenario-label { font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
         .scenario-amount { font-size: 1.3rem; font-weight: 800; color: var(--accent); margin-top: 4px; }
 
-        .roi-card { background: rgba(0,212,170,0.06); border: 1px solid rgba(0,212,170,0.2); border-radius: var(--radius); padding: 24px; margin: 20px 0; }
+        .roi-card { background: rgba(0,158,126,0.06); border: 1px solid rgba(0,158,126,0.2); border-radius: var(--radius); padding: 24px; margin: 20px 0; }
         .roi-card h3 { color: var(--accent-secondary); margin-bottom: 12px; font-weight: 700; }
         .roi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
         .roi-stat { text-align: center; padding: 16px; background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 12px; }
         .roi-stat .label { font-size: 0.72rem; text-transform: uppercase; color: var(--accent-secondary); letter-spacing: 0.05em; }
         .roi-stat .val { font-size: 1.5rem; font-weight: 800; color: var(--accent-secondary); margin-top: 4px; }
-        .roi-summary { color: var(--text-secondary); font-size: 0.92rem; font-style: italic; padding-top: 12px; border-top: 1px solid rgba(0,212,170,0.15); }
+        .roi-summary { color: var(--text-secondary); font-size: 0.92rem; font-style: italic; padding-top: 12px; border-top: 1px solid rgba(0,158,126,0.15); }
 
         .section { margin-bottom: 20px; }
         .section h3 { font-size: 1rem; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
@@ -81,7 +81,7 @@
         .tag.excl { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: #ef4444; }
 
         .approve-card {
-            background: rgba(0,212,170,0.06); border: 2px solid rgba(0,212,170,0.3);
+            background: rgba(0,158,126,0.06); border: 2px solid rgba(0,158,126,0.3);
             border-radius: var(--radius); padding: 32px; text-align: center; margin: 24px 0;
         }
         .approve-card h3 { color: var(--accent-secondary); margin-bottom: 8px; font-weight: 700; }
@@ -89,12 +89,12 @@
         .btn-approve {
             background: var(--accent-secondary); color: #fff; padding: 14px 36px; font-size: 1rem;
             font-weight: 700; border: none; border-radius: var(--radius-pill); cursor: pointer;
-            box-shadow: 0 0 24px rgba(0,212,170,0.4); transition: all 0.3s; font-family: 'Inter', sans-serif;
+            box-shadow: 0 0 24px rgba(0,158,126,0.4); transition: all 0.3s; font-family: 'Inter', sans-serif;
         }
-        .btn-approve:hover { transform: translateY(-2px); box-shadow: 0 0 36px rgba(0,212,170,0.5); }
+        .btn-approve:hover { transform: translateY(-2px); box-shadow: 0 0 36px rgba(0,158,126,0.5); }
 
         .approved-banner {
-            background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3);
+            background: rgba(0,158,126,0.1); border: 1px solid rgba(0,158,126,0.3);
             border-radius: var(--radius); padding: 20px; text-align: center; margin: 20px 0;
         }
         .approved-banner h3 { color: var(--accent-secondary); }
@@ -202,7 +202,7 @@
             <% } %>
             <div class="fee-desc">Discovery, design, development, testing, and deployment — everything to get you live.</div>
         </div>
-        <div class="fee-card" style="border-color: rgba(0,212,170,0.3);">
+        <div class="fee-card" style="border-color: rgba(0,158,126,0.3);">
             <div class="fee-label" style="color: var(--accent-secondary);">2. Annual Fee</div>
             <% if (proposal.annualFee && proposal.annualFee.originalTotal && proposal.annualFee.originalTotal !== proposal.annualFee.total) { %>
                 <div class="fee-amount"><span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.7em;">$<%= proposal.annualFee.originalTotal.toLocaleString() %></span> $<%= (proposal.annualFee.total || 0).toLocaleString() %> <small>/yr</small></div>
@@ -210,7 +210,7 @@
                 <div class="fee-amount">$<%= ((proposal.annualFee && proposal.annualFee.total) || proposal.annualMaintenance || 0).toLocaleString() %> <small>/yr</small></div>
             <% } %>
             <% if (proposal.annualFee) { %>
-            <div style="font-size: 0.88rem; color: var(--text-secondary); background: rgba(0,212,170,0.08); padding: 8px 12px; border-radius: 8px; margin: 8px 0;">
+            <div style="font-size: 0.88rem; color: var(--text-secondary); background: rgba(0,158,126,0.08); padding: 8px 12px; border-radius: 8px; margin: 8px 0;">
                 $<%= (proposal.annualFee.monthlyEquivalent || 0).toLocaleString() %>/month
             </div>
             <div class="fee-desc"><%= proposal.annualFee.includes %></div>

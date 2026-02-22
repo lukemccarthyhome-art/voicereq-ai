@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-deep: #050d1a; --bg-card: #0f1d32; --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08); --border-glass-hover: rgba(255, 255, 255, 0.15); --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12); --accent-secondary: #00d4aa; --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4); --radius: 16px; --radius-pill: 50px; }
+        :root { --bg-deep: #0a1628; --bg-card: #142640; --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08); --border-glass-hover: rgba(255, 255, 255, 0.15); --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12); --accent-secondary: #009e7e; --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4); --radius: 16px; --radius-pill: 50px; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
         a { text-decoration: none; color: inherit; }
@@ -19,7 +19,7 @@
         .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; text-decoration: none; background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
         .btn:hover { background: #2aa8ff; transform: translateY(-1px); }
         .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
-        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0,212,170,0.3); }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0,158,126,0.3); }
         .btn-danger { background: #ef4444; box-shadow: 0 0 16px rgba(239,68,68,0.3); }
         .btn-secondary { background: rgba(255,255,255,0.1); box-shadow: none; border: 1px solid var(--border-glass); }
         .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
@@ -100,7 +100,7 @@
                             <% if (customer.approved === 0) { %>
                                 <span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:3px 10px;border-radius:50px;font-size:12px;font-weight:600;">⏳ Pending</span>
                             <% } else { %>
-                                <span style="background:rgba(0,212,170,0.12);color:var(--accent-secondary);padding:3px 10px;border-radius:50px;font-size:12px;font-weight:600;">✅ Active</span>
+                                <span style="background:rgba(0,158,126,0.12);color:var(--accent-secondary);padding:3px 10px;border-radius:50px;font-size:12px;font-weight:600;">✅ Active</span>
                             <% } %>
                         </td>
                         <td style="color: var(--text-secondary);">

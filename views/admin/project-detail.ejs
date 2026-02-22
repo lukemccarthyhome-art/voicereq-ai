@@ -9,11 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #050d1a; --bg-primary: #0a1628; --bg-card: #0f1d32;
+            --bg-deep: #0a1628; --bg-primary: #0f1d32; --bg-card: #142640;
             --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
             --border-glass-hover: rgba(255, 255, 255, 0.15); --accent: #1199fa;
             --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12);
-            --accent-secondary: #00d4aa; --accent-purple: #8b5cf6;
+            --accent-secondary: #009e7e; --accent-purple: #8b5cf6;
             --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7);
             --text-muted: rgba(240, 244, 248, 0.4); --radius: 16px; --radius-pill: 50px;
         }
@@ -29,7 +29,7 @@
         .btn { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
         .btn:hover { background: #2aa8ff; transform: translateY(-1px); }
         .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
-        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0,212,170,0.3); }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0,158,126,0.3); }
         .btn-danger { background: #ef4444; box-shadow: 0 0 16px rgba(239,68,68,0.3); }
         .btn-secondary { background: rgba(255,255,255,0.1); box-shadow: none; border: 1px solid var(--border-glass); }
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
@@ -51,7 +51,7 @@
             </div>
             <div style="margin-left: auto;">
                 <% if (project.status === 'active') { %>
-                    <span style="background: rgba(0,212,170,0.12); color: var(--accent-secondary); padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600;">● Active</span>
+                    <span style="background: rgba(0,158,126,0.12); color: var(--accent-secondary); padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600;">● Active</span>
                 <% } else if (project.status === 'completed') { %>
                     <span style="background: var(--accent-dim); color: var(--accent); padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600;">● Completed</span>
                 <% } else { %>
@@ -109,12 +109,12 @@
         <div style="margin-top: 20px;">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <button onclick="exportProject()" class="btn btn-sm" style="flex:1">📦 Export</button>
-                <button onclick="document.getElementById('importModal').style.display='flex'" class="btn btn-sm" style="flex:1;background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">📥 Import ZIP</button>
+                <button onclick="document.getElementById('importModal').style.display='flex'" class="btn btn-sm" style="flex:1;background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,158,126,0.3);">📥 Import ZIP</button>
                 <a href="/admin/projects/<%= encodeId(project.id) %>/requirements" class="btn btn-sm" style="background:#3b82f6;box-shadow:0 0 16px rgba(59,130,246,0.3);flex:1;text-align:center;">📋 Requirements</a>
                 <a href="/admin/projects/<%= encodeId(project.id) %>/proposal" class="btn btn-sm" style="background:var(--accent-purple);box-shadow:0 0 16px rgba(139,92,246,0.3);flex:1;text-align:center;">💰 Proposal</a>
                 <% if (typeof designExists !== "undefined" && designExists) { %>
                   <div style="display:flex;gap:8px;align-items:center">
-                    <a href="/admin/projects/<%= encodeId(project.id) %>/design" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">🔎 View Latest Design</a>
+                    <a href="/admin/projects/<%= encodeId(project.id) %>/design" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,158,126,0.3);">🔎 View Latest Design</a>
                     <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/extract-design" style="margin:0">
                       <button type="submit" class="btn btn-sm" style="background:#f59e0b;box-shadow:0 0 16px rgba(245,158,11,0.3);">🔄 Refresh design</button>
                     </form>
@@ -154,13 +154,13 @@
                       <div style="font-weight:600">Q: <%= q %></div>
                       <% const answered = (da.find(a=>a.question===q)); %>
                       <% if (answered) { %>
-                        <div style="margin-top:6px;color:var(--accent-secondary);background:rgba(0,212,170,0.08);padding:8px;border-radius:8px">A: <%= answered.answer %> <span style="font-size:12px;color:var(--text-muted)">— <%= answered.from %></span></div>
+                        <div style="margin-top:6px;color:var(--accent-secondary);background:rgba(0,158,126,0.08);padding:8px;border-radius:8px">A: <%= answered.answer %> <span style="font-size:12px;color:var(--text-muted)">— <%= answered.from %></span></div>
                       <% } else { %>
                         <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/design/answer" style="margin-top:6px;display:flex;gap:8px">
                           <input type="hidden" name="designId" value="<%= locals.latestDesign.id %>">
                           <input type="hidden" name="question" value="<%= q %>">
                           <input name="answer" placeholder="Type your answer here" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border-glass);background:rgba(5,13,26,0.6);color:var(--text-primary);font-size:13px;">
-                          <button class="btn btn-sm" type="submit" style="background:var(--accent-secondary);box-shadow:0 0 12px rgba(0,212,170,0.3);">Save</button>
+                          <button class="btn btn-sm" type="submit" style="background:var(--accent-secondary);box-shadow:0 0 12px rgba(0,158,126,0.3);">Save</button>
                         </form>
                       <% } %>
                     </div>
@@ -197,22 +197,22 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
     <h3 style="margin-bottom:12px;">Project Progress</h3>
     <div style="display:flex;align-items:center;gap:0;margin-bottom:4px;">
         <div style="flex:1;text-align:center;">
-            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasSession ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasSession ? 'rgba(0,212,170,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasSession ? 1 : 0.4 %>;">🎙️</div>
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasSession ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasSession ? 'rgba(0,158,126,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasSession ? 1 : 0.4 %>;">🎙️</div>
             <div style="font-size:12px;font-weight:600;color:<%= hasSession ? 'var(--accent-secondary)' : 'var(--text-muted)' %>;"><%= hasSession ? '✓ Session' : 'Session' %></div>
         </div>
         <div style="height:3px;width:40px;background:<%= hasSession ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;margin-top:-20px;"></div>
         <div style="flex:1;text-align:center;">
-            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasDesignPublished ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasDesignPublished ? 'rgba(0,212,170,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasDesignPublished ? 1 : 0.4 %>;">📐</div>
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasDesignPublished ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasDesignPublished ? 'rgba(0,158,126,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasDesignPublished ? 1 : 0.4 %>;">📐</div>
             <div style="font-size:12px;font-weight:600;color:<%= hasDesignPublished ? 'var(--accent-secondary)' : 'var(--text-muted)' %>;"><%= hasDesignPublished ? '✓ Design' : 'Design' %></div>
         </div>
         <div style="height:3px;width:40px;background:<%= hasDesignPublished ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;margin-top:-20px;"></div>
         <div style="flex:1;text-align:center;">
-            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasProposalPublished ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasProposalPublished ? 'rgba(0,212,170,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasProposalPublished ? 1 : 0.4 %>;">💰</div>
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasProposalPublished ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasProposalPublished ? 'rgba(0,158,126,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasProposalPublished ? 1 : 0.4 %>;">💰</div>
             <div style="font-size:12px;font-weight:600;color:<%= hasProposalPublished ? 'var(--accent-secondary)' : 'var(--text-muted)' %>;"><%= hasProposalPublished ? '✓ Proposal' : 'Proposal' %></div>
         </div>
         <div style="height:3px;width:40px;background:<%= hasProposalApproved ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;margin-top:-20px;"></div>
         <div style="flex:1;text-align:center;">
-            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasProposalApproved ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasProposalApproved ? 'rgba(0,212,170,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasProposalApproved ? 1 : 0.4 %>;">✅</div>
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasProposalApproved ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasProposalApproved ? 'rgba(0,158,126,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasProposalApproved ? 1 : 0.4 %>;">✅</div>
             <div style="font-size:12px;font-weight:600;color:<%= hasProposalApproved ? 'var(--accent-secondary)' : 'var(--text-muted)' %>;"><%= hasProposalApproved ? '✓ Approved' : 'Approved' %></div>
         </div>
     </div>
@@ -226,15 +226,15 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
         <a href="/admin/projects/<%= encodeId(project.id) %>/requirements" class="btn btn-sm" style="background:#3b82f6;box-shadow:0 0 16px rgba(59,130,246,0.3);">View</a>
     </div>
     <% } %>
-    <div style="background:var(--bg-glass);backdrop-filter:blur(20px);border-radius:var(--radius);padding:16px;border:1px solid <%= designExists ? 'rgba(0,212,170,0.2)' : 'var(--border-glass)' %>;display:flex;align-items:center;justify-content:space-between;">
+    <div style="background:var(--bg-glass);backdrop-filter:blur(20px);border-radius:var(--radius);padding:16px;border:1px solid <%= designExists ? 'rgba(0,158,126,0.2)' : 'var(--border-glass)' %>;display:flex;align-items:center;justify-content:space-between;">
         <div><div style="font-size:20px;margin-bottom:2px;">📐</div><div style="font-weight:600;font-size:14px;"><%= designExists ? (hasDesignApproved ? 'Design Approved ✓' : 'Design Ready') : 'Design' %></div></div>
         <% if (designExists) { %>
-        <a href="/admin/projects/<%= encodeId(project.id) %>/design" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">View</a>
+        <a href="/admin/projects/<%= encodeId(project.id) %>/design" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,158,126,0.3);">View</a>
         <% } else { %>
         <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/extract-design" style="margin:0;"><button type="submit" class="btn btn-sm">Extract</button></form>
         <% } %>
     </div>
-    <div style="background:var(--bg-glass);backdrop-filter:blur(20px);border-radius:var(--radius);padding:16px;border:1px solid <%= hasProposalPublished ? 'rgba(0,212,170,0.2)' : 'var(--border-glass)' %>;display:flex;align-items:center;justify-content:space-between;">
+    <div style="background:var(--bg-glass);backdrop-filter:blur(20px);border-radius:var(--radius);padding:16px;border:1px solid <%= hasProposalPublished ? 'rgba(0,158,126,0.2)' : 'var(--border-glass)' %>;display:flex;align-items:center;justify-content:space-between;">
         <div><div style="font-size:20px;margin-bottom:2px;">💰</div><div style="font-weight:600;font-size:14px;"><%= hasProposalApproved ? 'Proposal Approved ✓' : (hasProposalPublished ? 'Proposal Published' : 'Proposal') %></div></div>
         <a href="/admin/projects/<%= encodeId(project.id) %>/proposal" class="btn btn-sm" style="background:var(--accent-purple);box-shadow:0 0 16px rgba(139,92,246,0.3);">View</a>
     </div>
@@ -279,7 +279,7 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
     <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 12px;">Answers provided by the customer to assigned design questions. These are included when refreshing the design.</p>
     <div style="max-height: 300px; overflow-y: auto;">
         <% customerAnswers.forEach(function(a) { %>
-            <div style="padding: 10px 14px; background: rgba(0,212,170,0.05); border-left: 3px solid var(--accent-secondary); border-radius: 0 12px 12px 0; margin-bottom: 8px;">
+            <div style="padding: 10px 14px; background: rgba(0,158,126,0.05); border-left: 3px solid var(--accent-secondary); border-radius: 0 12px 12px 0; margin-bottom: 8px;">
                 <div style="font-size: 13px; color: var(--text-muted); font-weight: 600;">❓ <%= a.question %></div>
                 <div style="font-size: 14px; color: var(--text-primary); margin-top: 4px;">✅ <%= a.answer %></div>
                 <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;"><%= a.from %> · <%= melb(a.ts) %></div>
@@ -601,7 +601,7 @@ async function adminLoadShares() {
                 <div style="flex:1;">
                     <div style="font-weight:600;font-size:14px;">${s.user_name || s.email}</div>
                     ${s.user_name ? '<div style="font-size:12px;color:rgba(240,244,248,0.4);">' + s.email + '</div>' : ''}
-                    ${!s.user_id ? '<span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:50px;font-size:11px;">⏳ Pending signup</span>' : '<span style="background:rgba(0,212,170,0.12);color:#00d4aa;padding:2px 8px;border-radius:50px;font-size:11px;">✓ Active</span>'}
+                    ${!s.user_id ? '<span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:50px;font-size:11px;">⏳ Pending signup</span>' : '<span style="background:rgba(0,158,126,0.12);color:#009e7e;padding:2px 8px;border-radius:50px;font-size:11px;">✓ Active</span>'}
                     <span style="font-size:11px;color:rgba(240,244,248,0.3);margin-left:8px;">Invited by ${s.inviter_name || 'admin'}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;">
@@ -632,7 +632,7 @@ async function adminInviteShare() {
         if (!res.ok) throw new Error(data.error);
         let msg = '✅ Invited ' + email;
         if (data.signupLink) msg += '<br><span style="font-size:12px;color:rgba(240,244,248,0.4);">Signup link: <a href="' + data.signupLink + '" style="word-break:break-all;color:#1199fa;">' + data.signupLink + '</a></span>';
-        status.innerHTML = msg; status.style.color = '#00d4aa';
+        status.innerHTML = msg; status.style.color = '#009e7e';
         document.getElementById('adminShareEmail').value = '';
         adminLoadShares();
     } catch(e) { status.innerHTML = '❌ ' + e.message; status.style.color = '#ef4444'; }
@@ -671,7 +671,7 @@ adminLoadShares();
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button type="button" onclick="document.getElementById('importModal').style.display='none'" class="btn btn-sm btn-secondary">Cancel</button>
-        <button type="submit" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">📥 Import</button>
+        <button type="submit" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,158,126,0.3);">📥 Import</button>
       </div>
     </form>
   </div>

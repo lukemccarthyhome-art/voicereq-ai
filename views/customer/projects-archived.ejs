@@ -9,11 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #050d1a; --bg-primary: #0a1628; --bg-card: #0f1d32;
+            --bg-deep: #0a1628; --bg-primary: #0f1d32; --bg-card: #142640;
             --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
             --border-glass-hover: rgba(255, 255, 255, 0.15);
             --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12);
-            --accent-secondary: #00d4aa; --accent-purple: #8b5cf6;
+            --accent-secondary: #009e7e; --accent-purple: #8b5cf6;
             --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4);
             --radius: 16px; --radius-pill: 50px;
         }
@@ -78,7 +78,7 @@
                 <div style="display:flex;gap:8px;">
                     <a href="/projects/<%= encodeId(p.id) %>" class="btn btn-sm" style="background:var(--accent);box-shadow:0 0 8px var(--accent-glow);">👁️ View</a>
                     <form method="POST" action="/customer/projects/<%= encodeId(p.id) %>/unarchive" style="margin:0;">
-                        <button type="submit" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 8px rgba(0,212,170,0.3);">📦 Unarchive</button>
+                        <button type="submit" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 8px rgba(0,158,126,0.3);">📦 Unarchive</button>
                     </form>
                 </div>
             </div>

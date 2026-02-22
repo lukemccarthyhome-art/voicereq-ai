@@ -9,11 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #050d1a; --bg-primary: #0a1628; --bg-card: #0f1d32;
+            --bg-deep: #0a1628; --bg-primary: #0f1d32; --bg-card: #142640;
             --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
             --border-glass-hover: rgba(255, 255, 255, 0.15);
             --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12);
-            --accent-secondary: #00d4aa; --accent-purple: #8b5cf6;
+            --accent-secondary: #009e7e; --accent-purple: #8b5cf6;
             --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4);
             --radius: 16px; --radius-pill: 50px;
         }
@@ -40,11 +40,11 @@
         .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; }
         .btn-primary { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
         .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
-        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0, 212, 170, 0.3); }
+        .btn-success { background: #009e7e; color: #fff; box-shadow: 0 0 16px rgba(0, 158, 126, 0.3); }
         .btn-danger { background: #ef4444; box-shadow: 0 0 12px rgba(239,68,68,0.3); }
 
         .status-badge { padding: 6px 16px; border-radius: var(--radius-pill); font-size: 0.78rem; font-weight: 600; }
-        .status-active { background: rgba(0,212,170,0.12); color: #00d4aa; border: 1px solid rgba(0,212,170,0.3); }
+        .status-active { background: rgba(0,158,126,0.12); color: #009e7e; border: 1px solid rgba(0,158,126,0.3); }
         .status-completed { background: rgba(17,153,250,0.12); color: #1199fa; border: 1px solid rgba(17,153,250,0.3); }
         .status-archived { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
 
@@ -56,20 +56,20 @@
         .milestone-tracker { display: flex; align-items: center; gap: 0; margin: 20px 0; }
         .milestone { flex: 1; text-align: center; position: relative; }
         .milestone-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 20px; border: 3px solid rgba(255,255,255,0.1); background: var(--bg-card); position: relative; z-index: 1; opacity: 0.4; }
-        .milestone-icon.done { border-color: var(--accent-secondary); background: rgba(0,212,170,0.15); opacity: 1; }
+        .milestone-icon.done { border-color: var(--accent-secondary); background: rgba(0,158,126,0.15); opacity: 1; }
         .milestone-icon.done::after { content: '✓'; position: absolute; top: -6px; right: -6px; background: var(--accent-secondary); color: #fff; font-size: 11px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg-deep); }
         .milestone-icon.current { border-color: rgba(255,255,255,0.1); background: var(--bg-card); opacity: 0.4; }
         .milestone-label { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; }
         .milestone-label.done { color: var(--accent-secondary); font-weight: 700; }
         .milestone-label.current { color: var(--text-muted); }
         .milestone-connector { height: 4px; flex: 0 0 auto; width: 50px; background: rgba(255,255,255,0.08); margin-top: -30px; border-radius: 2px; }
-        .milestone-connector.done { background: var(--accent-secondary); box-shadow: 0 0 8px rgba(0,212,170,0.3); }
+        .milestone-connector.done { background: var(--accent-secondary); box-shadow: 0 0 8px rgba(0,158,126,0.3); }
 
         /* Milestone cards */
         .milestone-card { border-radius: var(--radius); padding: 20px; border: 1px solid var(--border-glass); background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); transition: all 0.3s; }
         .milestone-card:hover { border-color: var(--border-glass-hover); }
-        .milestone-card.ready { border-color: rgba(0,212,170,0.3); background: rgba(0,212,170,0.06); }
-        .milestone-card.approved { border-color: rgba(0,212,170,0.4); background: rgba(0,212,170,0.1); }
+        .milestone-card.ready { border-color: rgba(0,158,126,0.3); background: rgba(0,158,126,0.06); }
+        .milestone-card.approved { border-color: rgba(0,158,126,0.4); background: rgba(0,158,126,0.1); }
         .milestone-card.pending { border-color: var(--border-glass); background: var(--bg-glass); }
 
         .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
@@ -181,7 +181,7 @@
                             <h3 style="margin-bottom: 4px; color: var(--accent-secondary); font-weight: 700;">Requirements</h3>
                             <p style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 300;">View gathered requirements for your project</p>
                         </div>
-                        <a href="/customer/projects/<%= encodeId(project.id) %>/requirements" class="btn" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,212,170,0.3);">View</a>
+                        <a href="/customer/projects/<%= encodeId(project.id) %>/requirements" class="btn" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,158,126,0.3);">View</a>
                     </div>
                 </div>
             <% } %>
@@ -193,7 +193,7 @@
                             <h3 style="margin-bottom: 4px; color: var(--accent-secondary); font-weight: 700;"><%= designApprovedState ? 'Design Approved ✓' : 'Your Solution Design is ready' %></h3>
                             <p style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 300;"><%= designApprovedState ? 'You approved this design' : 'Review the proposed solution for your project' %></p>
                         </div>
-                        <a href="/customer/projects/<%= encodeId(project.id) %>/design" class="btn" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,212,170,0.3);">View Design</a>
+                        <a href="/customer/projects/<%= encodeId(project.id) %>/design" class="btn" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,158,126,0.3);">View Design</a>
                     </div>
                 </div>
             <% } %>
@@ -244,7 +244,7 @@
                         <div style="font-size: 0.78rem; color: #f59e0b; margin-top: 4px; font-style: italic;">💡 Our assumption: <%= qAssumption %></div>
                     <% } %>
                     <% if (answered) { %>
-                        <div style="margin-top: 8px; padding: 8px 12px; background: rgba(0,212,170,0.1); border-radius: 8px; color: var(--accent-secondary); font-size: 0.82rem;">
+                        <div style="margin-top: 8px; padding: 8px 12px; background: rgba(0,158,126,0.1); border-radius: 8px; color: var(--accent-secondary); font-size: 0.82rem;">
                             ✅ Your answer: <%= answered.answer %> <span style="font-size:0.72rem;color:var(--text-muted);">— <%= melb(answered.ts) %></span>
                         </div>
                     <% } else { %>
@@ -578,7 +578,7 @@
                 if (!res.ok) throw new Error(data.error);
                 let msg = '✅ Invited ' + email;
                 if (data.signupLink) msg += '<br><span style="font-size:0.78rem;color:var(--text-muted);">Share this signup link: <a href="' + data.signupLink + '" style="word-break:break-all;color:var(--accent);">' + data.signupLink + '</a></span>';
-                status.innerHTML = msg; status.style.color = '#00d4aa';
+                status.innerHTML = msg; status.style.color = '#009e7e';
                 document.getElementById('shareEmail').value = '';
                 loadShares();
             } catch(e) { status.innerHTML = '❌ ' + e.message; status.style.color = '#ef4444'; }
@@ -630,7 +630,7 @@ async function submitFeature(){
   try{
     const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'project'})});
     if(!r.ok)throw new Error('Failed');
-    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#00d4aa';
+    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#009e7e';
     document.getElementById('featureText').value='';
     setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
   }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}
