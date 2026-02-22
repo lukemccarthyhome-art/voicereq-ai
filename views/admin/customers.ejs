@@ -4,45 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Management - Morti Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root { --bg-deep: #050d1a; --bg-card: #0f1d32; --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08); --border-glass-hover: rgba(255, 255, 255, 0.15); --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12); --accent-secondary: #00d4aa; --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4); --radius: 16px; --radius-pill: 50px; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
-        
-        
-        .main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 200px); }
-        
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .card h2 { margin-bottom: 16px; color: #333; font-size: 24px; }
-        .card h3 { margin-bottom: 12px; color: #555; font-size: 18px; }
-        
-        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
-        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
-        .btn-success { background: #28a745; }
-        .btn-success:hover { background: #218838; }
-        .btn-danger { background: #dc3545; }
-        .btn-danger:hover { background: #c82333; }
-        .btn-secondary { background: #6c757d; }
-        .btn-secondary:hover { background: #545b62; }
-        
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; min-height: calc(100vh - 200px); }
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+        .card h2 { margin-bottom: 16px; color: var(--text-primary); font-size: 1.3rem; font-weight: 700; }
+        .card h3 { margin-bottom: 12px; color: var(--text-secondary); font-size: 1.1rem; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; text-decoration: none; background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn:hover { background: #2aa8ff; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0,212,170,0.3); }
+        .btn-danger { background: #ef4444; box-shadow: 0 0 16px rgba(239,68,68,0.3); }
+        .btn-secondary { background: rgba(255,255,255,0.1); box-shadow: none; border: 1px solid var(--border-glass); }
         .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid #e0e0e0; }
-        .table th { background: #f8f9fa; font-weight: 600; color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .table tbody tr:hover { background: #f8f9ff; }
-        
+        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-glass); }
+        .table th { background: rgba(15,29,50,0.4); font-weight: 600; color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .table tbody tr:hover { background: rgba(17,153,250,0.05); }
         .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; }
-        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: border-color 0.2s; }
-        .form-control:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
-        
-        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-secondary); font-size: 0.88rem; }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border-glass); border-radius: 12px; font-size: 14px; transition: all 0.2s; background: rgba(5,13,26,0.6); color: var(--text-primary); }
+        .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
         .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
-        .empty-state h3 { margin-bottom: 8px; color: #666; }
-        
-        @media (max-width: 768px) {
-            .main { padding: 16px; }
-            .card { padding: 16px; }
-        }
+        .empty-state h3 { margin-bottom: 8px; color: var(--text-secondary); }
+        @media (max-width: 768px) { .main { padding: 16px; } .card { padding: 16px; } }
     </style>
 </head>
 <body>
@@ -55,8 +46,7 @@
         <button onclick="showCreateForm()" class="btn btn-success">➕ Add Customer</button>
     </div>
 
-    <!-- Create Customer Form (hidden by default) -->
-    <div id="createForm" class="card" style="display: none; background: #f8f9ff; border: 2px solid #667eea;">
+    <div id="createForm" class="card" style="display: none; background: rgba(17,153,250,0.05); border: 2px solid var(--accent);">
         <h3>Create New Customer</h3>
         <form method="POST" action="/admin/customers">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -76,7 +66,7 @@
                     <label for="password">Password</label>
                     <input type="text" id="password" name="password" class="form-control" 
                            value="customer123" placeholder="Auto-generated password">
-                    <small style="color: #666;">Leave blank to auto-generate</small>
+                    <small style="color: var(--text-muted);">Leave blank to auto-generate</small>
                 </div>
             </div>
             <div style="display: flex; gap: 12px; margin-top: 16px;">
@@ -103,26 +93,26 @@
                     <tr>
                         <td>
                             <strong><%= customer.name %></strong><br>
-                            <small style="color: #666;"><%= customer.email %></small>
+                            <small style="color: var(--text-muted);"><%= customer.email %></small>
                         </td>
-                        <td><%= customer.company %></td>
+                        <td style="color: var(--text-secondary);"><%= customer.company %></td>
                         <td>
                             <% if (customer.approved === 0) { %>
-                                <span style="background:#fef3cd;color:#856404;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">⏳ Pending</span>
+                                <span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:3px 10px;border-radius:50px;font-size:12px;font-weight:600;">⏳ Pending</span>
                             <% } else { %>
-                                <span style="background:#d4edda;color:#155724;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">✅ Active</span>
+                                <span style="background:rgba(0,212,170,0.12);color:var(--accent-secondary);padding:3px 10px;border-radius:50px;font-size:12px;font-weight:600;">✅ Active</span>
                             <% } %>
                         </td>
-                        <td>
+                        <td style="color: var(--text-secondary);">
                             <% const projectCount = customer.project_count || 0; %>
                             <%= projectCount %> 
                             <% if (projectCount > 0) { %>
-                                <a href="/admin/projects?user=<%= customer.id %>" style="font-size: 12px;">→ View</a>
+                                <a href="/admin/projects?user=<%= customer.id %>" style="font-size: 12px; color: var(--accent);">→ View</a>
                             <% } %>
                         </td>
-                        <td><%= melbDate(customer.created_at) %></td>
+                        <td style="color: var(--text-secondary);"><%= melbDate(customer.created_at) %></td>
                         <td>
-                            <div style="display: flex; gap: 8px;">
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 <% if (customer.approved === 0) { %>
                                 <form method="POST" action="/admin/customers/<%= customer.id %>/approve" style="display:inline;">
                                     <button type="submit" class="btn btn-sm btn-success">✅ Approve</button>
@@ -150,10 +140,10 @@
     <% } %>
 </div>
 
-<!-- Edit Customer Modal (hidden by default) -->
-<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 500px;">
-        <h3>Edit Customer</h3>
+<!-- Edit Customer Modal -->
+<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card); border: 1px solid var(--border-glass); padding: 24px; border-radius: var(--radius); width: 90%; max-width: 500px;">
+        <h3 style="color: var(--text-primary); margin-bottom: 16px;">Edit Customer</h3>
         <form id="editForm" method="POST">
             <div class="form-group">
                 <label>Full Name</label>
@@ -175,16 +165,16 @@
     </div>
 </div>
 
-<!-- Change Password Modal (hidden by default) -->
-<div id="passwordModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 500px;">
-        <h3>🔑 Change Customer Password</h3>
-        <p style="color: #666; margin-bottom: 16px;">Set a new password for <strong id="passwordCustomerName"></strong></p>
+<!-- Change Password Modal -->
+<div id="passwordModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card); border: 1px solid var(--border-glass); padding: 24px; border-radius: var(--radius); width: 90%; max-width: 500px;">
+        <h3 style="color: var(--text-primary); margin-bottom: 8px;">🔑 Change Customer Password</h3>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">Set a new password for <strong id="passwordCustomerName"></strong></p>
         <form id="passwordForm" method="POST">
             <div class="form-group">
                 <label for="newPassword">New Password</label>
                 <input type="password" id="newPasswordField" name="password" class="form-control" required>
-                <small style="color: #666;">Minimum 6 characters</small>
+                <small style="color: var(--text-muted);">Minimum 6 characters</small>
             </div>
             <div class="form-group">
                 <label for="confirmPassword">Confirm Password</label>
@@ -199,15 +189,8 @@
 </div>
 
 <script>
-function showCreateForm() {
-    document.getElementById('createForm').style.display = 'block';
-    document.getElementById('name').focus();
-}
-
-function hideCreateForm() {
-    document.getElementById('createForm').style.display = 'none';
-}
-
+function showCreateForm() { document.getElementById('createForm').style.display = 'block'; document.getElementById('name').focus(); }
+function hideCreateForm() { document.getElementById('createForm').style.display = 'none'; }
 function editCustomer(id, name, email, company) {
     document.getElementById('editName').value = name;
     document.getElementById('editEmail').value = email;
@@ -215,11 +198,7 @@ function editCustomer(id, name, email, company) {
     document.getElementById('editForm').action = '/admin/customers/' + id;
     document.getElementById('editModal').style.display = 'block';
 }
-
-function hideEditModal() {
-    document.getElementById('editModal').style.display = 'none';
-}
-
+function hideEditModal() { document.getElementById('editModal').style.display = 'none'; }
 function changePassword(id, name) {
     document.getElementById('passwordCustomerName').textContent = name;
     document.getElementById('passwordForm').action = '/admin/customers/' + id + '/password';
@@ -227,56 +206,28 @@ function changePassword(id, name) {
     document.getElementById('confirmPasswordField').value = '';
     document.getElementById('passwordModal').style.display = 'block';
 }
-
-function hidePasswordModal() {
-    document.getElementById('passwordModal').style.display = 'none';
-}
-
+function hidePasswordModal() { document.getElementById('passwordModal').style.display = 'none'; }
 function deleteCustomer(id, name) {
     if (confirm('Are you sure you want to delete customer "' + name + '"? This will also delete all their projects and sessions.')) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/admin/customers/' + id + '/delete';
-        document.body.appendChild(form);
-        form.submit();
+        const form = document.createElement('form'); form.method = 'POST'; form.action = '/admin/customers/' + id + '/delete';
+        document.body.appendChild(form); form.submit();
     }
 }
-
-// Auto-generate password
 document.addEventListener('DOMContentLoaded', function() {
     const passwordField = document.getElementById('password');
     if (passwordField.value === 'customer123') {
-        // Generate random password
         const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let password = '';
-        for (let i = 0; i < 8; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
+        for (let i = 0; i < 8; i++) { password += chars.charAt(Math.floor(Math.random() * chars.length)); }
         passwordField.value = password;
     }
 });
-
-// Show create form if action=create in URL
-if (window.location.search.includes('action=create')) {
-    showCreateForm();
-}
-
-// Password form validation
+if (window.location.search.includes('action=create')) { showCreateForm(); }
 document.getElementById('passwordForm').addEventListener('submit', function(e) {
     const newPassword = document.getElementById('newPasswordField').value;
     const confirmPassword = document.getElementById('confirmPasswordField').value;
-    
-    if (newPassword !== confirmPassword) {
-        e.preventDefault();
-        alert('Passwords do not match!');
-        return;
-    }
-    
-    if (newPassword.length < 6) {
-        e.preventDefault();
-        alert('Password must be at least 6 characters long!');
-        return;
-    }
+    if (newPassword !== confirmPassword) { e.preventDefault(); alert('Passwords do not match!'); return; }
+    if (newPassword.length < 6) { e.preventDefault(); alert('Password must be at least 6 characters long!'); return; }
 });
 </script>
     </main>

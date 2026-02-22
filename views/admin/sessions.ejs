@@ -4,36 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Sessions - Morti Projects Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root { --bg-deep: #050d1a; --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08); --border-glass-hover: rgba(255, 255, 255, 0.15); --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12); --accent-secondary: #00d4aa; --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4); --radius: 16px; --radius-pill: 50px; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
-        
-        
-        .main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 200px); }
-        
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        
-        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
-        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
-        .btn-success { background: #28a745; }
-        
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; min-height: calc(100vh - 200px); }
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; text-decoration: none; background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn:hover { background: #2aa8ff; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0,212,170,0.3); }
         .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid #e0e0e0; }
-        .table th { background: #f8f9fa; font-weight: 600; color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .table tbody tr:hover { background: #f8f9ff; }
-        
+        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-glass); }
+        .table th { background: rgba(15,29,50,0.4); font-weight: 600; color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .table tbody tr:hover { background: rgba(17,153,250,0.05); }
         .filters { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-        .filters input, .filters select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
-        
+        .filters input, .filters select { padding: 8px 12px; border: 1px solid var(--border-glass); border-radius: 12px; font-size: 13px; background: rgba(5,13,26,0.6); color: var(--text-primary); }
+        .filters input:focus, .filters select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
         .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-        .status-active { background: #28a745; }
-        .status-completed { background: #6c757d; }
-        .status-paused { background: #dc3545; }
-        
-        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .status-active { background: var(--accent-secondary); }
+        .status-completed { background: var(--text-muted); }
+        .status-paused { background: #ef4444; }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
         .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
-        
     </style>
 </head>
 <body>
@@ -42,8 +39,8 @@
     <main class="main">
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2>💬 All Sessions</h2>
-                <span style="color: #666; font-size: 14px;"><%= sessions.length %> total</span>
+                <h2 style="font-size:1.3rem;font-weight:700;">💬 All Sessions</h2>
+                <span style="color: var(--text-muted); font-size: 14px;"><%= sessions.length %> total</span>
             </div>
 
             <div class="filters">
@@ -75,21 +72,21 @@
                             <tr data-project="<%= (session.project_name || '').toLowerCase() %>" data-customer="<%= (session.user_name || '').toLowerCase() %>" data-status="<%= session.status %>">
                                 <td><strong>#<%= session.id %></strong></td>
                                 <td>
-                                    <a href="/admin/projects/<%= encodeId(session.project_id) %>" style="color: #667eea; text-decoration: none; font-weight: 500;">
+                                    <a href="/admin/projects/<%= encodeId(session.project_id) %>" style="color: var(--accent); font-weight: 500;">
                                         <%= session.project_name %>
                                     </a>
                                 </td>
                                 <td>
                                     <div style="font-weight: 500;"><%= session.user_name %></div>
-                                    <div style="font-size: 12px; color: #888;"><%= session.user_email %></div>
+                                    <div style="font-size: 12px; color: var(--text-muted);"><%= session.user_email %></div>
                                 </td>
-                                <td><%= session.message_count %></td>
-                                <td><%= session.file_count %></td>
+                                <td style="color: var(--text-secondary);"><%= session.message_count %></td>
+                                <td style="color: var(--text-secondary);"><%= session.file_count %></td>
                                 <td>
                                     <span class="status-dot status-<%= session.status %>"></span>
-                                    <%= session.status %>
+                                    <span style="color: var(--text-secondary);"><%= session.status %></span>
                                 </td>
-                                <td style="font-size: 13px; color: #666;">
+                                <td style="font-size: 13px; color: var(--text-muted);">
                                     <%= melb(session.updated_at) %>
                                 </td>
                                 <td>
@@ -103,7 +100,7 @@
             <% } else { %>
                 <div class="empty-state">
                     <span class="emoji">💬</span>
-                    <h3>No sessions yet</h3>
+                    <h3 style="color:var(--text-secondary);">No sessions yet</h3>
                     <p>Sessions will appear here when customers start voice conversations</p>
                 </div>
             <% } %>

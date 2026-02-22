@@ -4,17 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Archived Projects - Morti Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root { --bg-deep: #050d1a; --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08); --border-glass-hover: rgba(255, 255, 255, 0.15); --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12); --accent-secondary: #00d4aa; --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4); --radius: 16px; --radius-pill: 50px; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
-        .main { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .btn { display: inline-block; padding: 8px 16px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; font-size: 13px; }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 20px; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; text-decoration: none; background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn:hover { background: #2aa8ff; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+        .btn-secondary { background: rgba(255,255,255,0.1); box-shadow: none; border: 1px solid var(--border-glass); }
         .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid #e0e0e0; }
-        .table th { background: #f8f9fa; font-weight: 600; color: #555; font-size: 13px; text-transform: uppercase; }
-        .table tbody tr:hover { background: #f8f9ff; }
+        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-glass); }
+        .table th { background: rgba(15,29,50,0.4); font-weight: 600; color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; }
+        .table tbody tr:hover { background: rgba(17,153,250,0.05); }
     </style>
 </head>
 <body>
@@ -22,8 +29,8 @@
     <main class="main">
         <div class="card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                <h2>📦 Archived Projects</h2>
-                <a href="/admin/projects" class="btn" style="background:#6c757d;">← Back to Projects</a>
+                <h2 style="font-size:1.3rem;font-weight:700;">📦 Archived Projects</h2>
+                <a href="/admin/projects" class="btn btn-secondary">← Back to Projects</a>
             </div>
             <% if (projects.length > 0) { %>
             <table class="table">
@@ -31,14 +38,14 @@
                 <tbody>
                 <% projects.forEach(p => { %>
                     <tr>
-                        <td><strong><%= p.name %></strong><br><small style="color:#666;"><%= (p.description||'').substring(0,60) %></small></td>
-                        <td><%= p.company %><br><small style="color:#666;"><%= p.user_name %></small></td>
-                        <td style="font-size:13px;">💬 <%= p.session_count||0 %> sessions • 📎 <%= p.file_count||0 %> files</td>
+                        <td><strong><%= p.name %></strong><br><small style="color:var(--text-muted);"><%= (p.description||'').substring(0,60) %></small></td>
+                        <td><%= p.company %><br><small style="color:var(--text-muted);"><%= p.user_name %></small></td>
+                        <td style="font-size:13px;color:var(--text-secondary);">💬 <%= p.session_count||0 %> sessions • 📎 <%= p.file_count||0 %> files</td>
                         <td>
                             <div style="display:flex;gap:8px;">
                                 <a href="/admin/projects/<%= encodeId(p.id) %>" class="btn btn-sm">👁️ View</a>
                                 <form method="POST" action="/admin/projects/<%= encodeId(p.id) %>/unarchive" style="margin:0;">
-                                    <button type="submit" class="btn btn-sm" style="background:#28a745;color:white;">📦 Unarchive</button>
+                                    <button type="submit" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">📦 Unarchive</button>
                                 </form>
                             </div>
                         </td>
@@ -47,9 +54,9 @@
                 </tbody>
             </table>
             <% } else { %>
-            <div style="text-align:center;padding:40px;color:#999;">
+            <div style="text-align:center;padding:40px;color:var(--text-muted);">
                 <div style="font-size:48px;margin-bottom:16px;">📦</div>
-                <h3 style="color:#666;">No archived projects</h3>
+                <h3 style="color:var(--text-secondary);">No archived projects</h3>
             </div>
             <% } %>
         </div>

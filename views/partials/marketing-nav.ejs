@@ -2,30 +2,30 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-    /* Nav */
+    /* Nav - Dark Glass */
     nav {
         position: fixed; top: 0; width: 100%; z-index: 100;
         display: flex; align-items: center; justify-content: space-between;
         padding: 14px 40px;
-        background: rgba(255,255,255,0.92);
-        backdrop-filter: blur(16px);
-        border-bottom: 1px solid rgba(226,232,240,0.6);
+        background: rgba(10, 22, 40, 0.85);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         transition: box-shadow 0.3s;
     }
-    nav.scrolled { box-shadow: 0 1px 12px rgba(0,0,0,0.06); }
-    .nav-brand { font-size: 1.25rem; font-weight: 800; color: var(--brand); letter-spacing: -0.02em; }
-    .nav-links { display: flex; gap: 28px; align-items: center; }
-    .nav-links a.nav-text { font-size: 0.88rem; color: var(--text-mid); transition: color 0.2s; font-weight: 500; }
-    .nav-links a.nav-text:hover { color: var(--brand); }
-    .nav-links a.nav-text.active { color: var(--brand); font-weight: 600; }
-    .btn { display: inline-block; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor: pointer; border: none; }
-    .btn-cta { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,0.25); padding: 10px 28px; font-size: 0.92rem; }
-    .btn-cta:hover { background: var(--accent-dark, #059669); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
-    .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: var(--brand); }
+    nav.scrolled { box-shadow: 0 2px 24px rgba(0,0,0,0.3); }
+    .nav-brand { font-size: 1.25rem; font-weight: 800; color: #f0f4f8; letter-spacing: -0.02em; text-decoration: none; }
+    .nav-links { display: flex; gap: 8px; align-items: center; }
+    .nav-links a.nav-text { font-size: 0.88rem; color: rgba(240, 244, 248, 0.6); transition: all 0.2s; font-weight: 500; padding: 8px 14px; border-radius: 50px; text-decoration: none; }
+    .nav-links a.nav-text:hover { color: #f0f4f8; background: rgba(255,255,255,0.05); }
+    .nav-links a.nav-text.active { color: #1199fa; background: rgba(17, 153, 250, 0.12); font-weight: 600; }
+    .btn { display: inline-block; padding: 10px 24px; border-radius: 50px; font-weight: 600; font-size: 0.9rem; transition: all 0.3s; cursor: pointer; border: none; text-decoration: none; }
+    .btn-cta { background: #1199fa; color: #fff; box-shadow: 0 0 20px rgba(17, 153, 250, 0.4); padding: 10px 28px; font-size: 0.92rem; }
+    .btn-cta:hover { background: #2aa8ff; transform: translateY(-2px); box-shadow: 0 0 32px rgba(17, 153, 250, 0.5); }
+    .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #f0f4f8; }
     @media (max-width: 768px) {
         nav { padding: 12px 20px; }
         .hamburger { display: block; }
-        .nav-links { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: #fff; padding: 16px 20px; gap: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border-top: 1px solid var(--border); }
+        .nav-links { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: rgba(10, 22, 40, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 16px 20px; gap: 4px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.08); }
         .nav-links.open { display: flex; }
         .nav-links a.nav-text { padding: 10px 0; font-size: 1rem; }
         .btn-cta { text-align: center; margin-top: 8px; }

@@ -4,40 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= project.name %> - Project Detail - Morti Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
-        
-        
-        .main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 200px); }
-        
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .card h2 { margin-bottom: 16px; color: #333; font-size: 24px; }
-        .card h3 { margin-bottom: 12px; color: #555; font-size: 18px; }
-        
-        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
-        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
-        .btn-success { background: #28a745; }
-        .btn-success:hover { background: #218838; }
-        .btn-danger { background: #dc3545; }
-        .btn-danger:hover { background: #c82333; }
-        .btn-secondary { background: #6c757d; }
-        .btn-secondary:hover { background: #545b62; }
-        
-        .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid #e0e0e0; }
-        .table th { background: #f8f9fa; font-weight: 600; color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .table tbody tr:hover { background: #f8f9ff; }
-        
-        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
-        .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
-        .empty-state h3 { margin-bottom: 8px; color: #666; }
-        
-        @media (max-width: 768px) {
-            .main { padding: 16px; }
-            .card { padding: 16px; }
+        :root {
+            --bg-deep: #050d1a; --bg-primary: #0a1628; --bg-card: #0f1d32;
+            --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15); --accent: #1199fa;
+            --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #00d4aa; --accent-purple: #8b5cf6;
+            --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7);
+            --text-muted: rgba(240, 244, 248, 0.4); --radius: 16px; --radius-pill: 50px;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; min-height: calc(100vh - 200px); }
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; transition: border-color 0.3s; }
+        .card:hover { border-color: var(--border-glass-hover); }
+        .card h2 { margin-bottom: 16px; color: var(--text-primary); font-size: 1.3rem; font-weight: 700; }
+        .card h3 { margin-bottom: 12px; color: var(--text-secondary); font-size: 1.1rem; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; text-decoration: none; }
+        .btn { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn:hover { background: #2aa8ff; transform: translateY(-1px); }
+        .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0,212,170,0.3); }
+        .btn-danger { background: #ef4444; box-shadow: 0 0 16px rgba(239,68,68,0.3); }
+        .btn-secondary { background: rgba(255,255,255,0.1); box-shadow: none; border: 1px solid var(--border-glass); }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
+        .empty-state h3, .empty-state h4 { margin-bottom: 8px; color: var(--text-secondary); }
+        @media (max-width: 768px) { .main { padding: 16px; } .card { padding: 16px; } }
     </style>
 </head>
 <body>
@@ -49,30 +47,30 @@
         <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 16px;">
             <div>
                 <h2>📋 <%= project.name %></h2>
-                <p style="color: #666; margin-top: 8px;"><%= project.description || 'No description provided' %></p>
+                <p style="color: var(--text-muted); margin-top: 8px;"><%= project.description || 'No description provided' %></p>
             </div>
             <div style="margin-left: auto;">
                 <% if (project.status === 'active') { %>
-                    <span style="background: #d4edda; color: #155724; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">● Active</span>
+                    <span style="background: rgba(0,212,170,0.12); color: var(--accent-secondary); padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600;">● Active</span>
                 <% } else if (project.status === 'completed') { %>
-                    <span style="background: #d1ecf1; color: #0c5460; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">● Completed</span>
+                    <span style="background: var(--accent-dim); color: var(--accent); padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600;">● Completed</span>
                 <% } else { %>
-                    <span style="background: #f8d7da; color: #721c24; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">● Archived</span>
+                    <span style="background: rgba(239,68,68,0.12); color: #ef4444; padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 600;">● Archived</span>
                 <% } %>
             </div>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 16px; background: #f8f9ff; border-radius: 8px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 16px; background: rgba(17,153,250,0.05); border: 1px solid var(--border-glass); border-radius: 12px;">
             <div style="text-align: center;">
-                <div style="font-size: 24px; font-weight: bold; color: #667eea;"><%= sessions.length %></div>
-                <div style="font-size: 12px; color: #666; text-transform: uppercase;">Sessions</div>
+                <div style="font-size: 24px; font-weight: bold; color: var(--accent);"><%= sessions.length %></div>
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Sessions</div>
             </div>
             <div style="text-align: center;">
-                <div style="font-size: 24px; font-weight: bold; color: #667eea;"><%= files.length %></div>
-                <div style="font-size: 12px; color: #666; text-transform: uppercase;">Files</div>
+                <div style="font-size: 24px; font-weight: bold; color: var(--accent);"><%= files.length %></div>
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Files</div>
             </div>
             <div style="text-align: center;">
-                <div style="font-size: 24px; font-weight: bold; color: #667eea;">
+                <div style="font-size: 24px; font-weight: bold; color: var(--accent);">
                     <% 
                     const totalReqs = sessions.reduce((acc, session) => {
                         try {
@@ -85,7 +83,7 @@
                     %>
                     <%= totalReqs %>
                 </div>
-                <div style="font-size: 12px; color: #666; text-transform: uppercase;">Requirements</div>
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Requirements</div>
             </div>
         </div>
     </div>
@@ -94,50 +92,50 @@
         <h3>👤 Customer</h3>
         <div style="margin-top: 12px;">
             <strong><%= project.user_name %></strong><br>
-            <span style="color: #666;"><%= project.email %></span><br>
-            <span style="color: #888; font-size: 14px;">🏢 <%= project.company %></span>
+            <span style="color: var(--text-muted);"><%= project.email %></span><br>
+            <span style="color: var(--text-muted); font-size: 14px;">🏢 <%= project.company %></span>
         </div>
         
-        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
-            <div style="font-size: 12px; color: #666; margin-bottom: 4px;">CREATED</div>
-            <div style="font-size: 14px;"><%= melbDate(project.created_at) %></div>
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-glass);">
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">CREATED</div>
+            <div style="font-size: 14px; color: var(--text-secondary);"><%= melbDate(project.created_at) %></div>
         </div>
         
         <div style="margin-top: 12px;">
-            <div style="font-size: 12px; color: #666; margin-bottom: 4px;">LAST UPDATED</div>
-            <div style="font-size: 14px;"><%= melbDate(project.updated_at) %></div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">LAST UPDATED</div>
+            <div style="font-size: 14px; color: var(--text-secondary);"><%= melbDate(project.updated_at) %></div>
         </div>
 
         <div style="margin-top: 20px;">
-            <div style="display:flex;gap:8px;align-items:center">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <button onclick="exportProject()" class="btn btn-sm" style="flex:1">📦 Export</button>
-                <button onclick="document.getElementById('importModal').style.display='flex'" class="btn btn-sm" style="flex:1;background:#10b981">📥 Import ZIP</button>
-                <a href="/admin/projects/<%= encodeId(project.id) %>/requirements" class="btn btn-sm" style="background:#3b82f6;color:white;padding:8px;border-radius:6px;flex:1;text-align:center;">📋 Requirements</a>
-                <a href="/admin/projects/<%= encodeId(project.id) %>/proposal" class="btn btn-sm" style="background:#8b5cf6;color:white;padding:8px;border-radius:6px;flex:1;text-align:center;">💰 Proposal</a>
+                <button onclick="document.getElementById('importModal').style.display='flex'" class="btn btn-sm" style="flex:1;background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">📥 Import ZIP</button>
+                <a href="/admin/projects/<%= encodeId(project.id) %>/requirements" class="btn btn-sm" style="background:#3b82f6;box-shadow:0 0 16px rgba(59,130,246,0.3);flex:1;text-align:center;">📋 Requirements</a>
+                <a href="/admin/projects/<%= encodeId(project.id) %>/proposal" class="btn btn-sm" style="background:var(--accent-purple);box-shadow:0 0 16px rgba(139,92,246,0.3);flex:1;text-align:center;">💰 Proposal</a>
                 <% if (typeof designExists !== "undefined" && designExists) { %>
                   <div style="display:flex;gap:8px;align-items:center">
-                    <a href="/admin/projects/<%= encodeId(project.id) %>/design" class="btn btn-sm" style="background:#10b981;color:white;padding:8px;border-radius:6px;">🔎 View Latest Design</a>
+                    <a href="/admin/projects/<%= encodeId(project.id) %>/design" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">🔎 View Latest Design</a>
                     <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/extract-design" style="margin:0">
-                      <button type="submit" class="btn btn-sm" style="background:#f59e0b;border-radius:8px">🔄 Refresh design</button>
+                      <button type="submit" class="btn btn-sm" style="background:#f59e0b;box-shadow:0 0 16px rgba(245,158,11,0.3);">🔄 Refresh design</button>
                     </form>
                   </div>
                 <% } else { %>
                   <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/extract-design" style="margin:0">
-                    <button type="submit" class="btn btn-sm" style="background:#667eea;color:white;padding:8px;border-radius:6px;">🎯 Extract → Design</button>
+                    <button type="submit" class="btn btn-sm">🎯 Extract → Design</button>
                   </form>
                 <% } %>
             </div>
             <% if (locals.designsList && locals.designsList.length > 0) { %>
               <div style="margin-top:8px">
-                <label style="font-size:12px;color:#666;display:block;margin-bottom:6px">Design versions:</label>
+                <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px">Design versions:</label>
                 <div style="max-height:200px;overflow-y:auto;">
                   <% locals.designsList.forEach(d => { %>
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:4px;font-size:12px;">
-                      <a href="/admin/projects/<%= encodeId(project.id) %>/design?design=<%= d.id %>" style="color:#667eea;text-decoration:none;font-weight:500;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(5,13,26,0.4);border:1px solid var(--border-glass);border-radius:8px;margin-bottom:4px;font-size:12px;">
+                      <a href="/admin/projects/<%= encodeId(project.id) %>/design?design=<%= d.id %>" style="color:var(--accent);text-decoration:none;font-weight:500;">
                         v<%= d.version %> — <%= melb(d.createdAt) %> — <%= d.status %>
                       </a>
                       <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/design/<%= d.id %>/delete" onsubmit="return confirm('Delete design v<%= d.version %>? This cannot be undone.')" style="margin:0;">
-                        <button type="submit" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:13px;" title="Delete this version">✕</button>
+                        <button type="submit" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;" title="Delete this version">✕</button>
                       </form>
                     </div>
                   <% }) %>
@@ -145,24 +143,24 @@
               </div>
             <% } %>
             <% if (locals.latestDesign) { %>
-              <div style="margin-top:12px;padding:12px;border-radius:8px;background:#fff;border:1px solid #e6eef8">
-                <h4 style="margin-bottom:8px">🧭 Design Questions (latest)</h4>
+              <div style="margin-top:12px;padding:12px;border-radius:12px;background:rgba(5,13,26,0.4);border:1px solid var(--border-glass)">
+                <h4 style="margin-bottom:8px;color:var(--text-primary);">🧭 Design Questions (latest)</h4>
                 <% const dq = locals.latestDesign.questions || []; const da = locals.latestDesign.answers || []; %>
                 <% if (dq.length === 0) { %>
-                  <div style="color:#666">No outstanding questions.</div>
+                  <div style="color:var(--text-muted)">No outstanding questions.</div>
                 <% } else { %>
                   <% dq.forEach((q, idx) => { %>
-                    <div style="margin-bottom:8px;padding:8px;border-radius:6px;background:#f8fafc;border:1px solid #eef7ff;">
+                    <div style="margin-bottom:8px;padding:8px;border-radius:8px;background:rgba(15,29,50,0.4);border:1px solid var(--border-glass);">
                       <div style="font-weight:600">Q: <%= q %></div>
                       <% const answered = (da.find(a=>a.question===q)); %>
                       <% if (answered) { %>
-                        <div style="margin-top:6px;color:#0f5132;background:#e6ffed;padding:8px;border-radius:6px">A: <%= answered.answer %> <span style="font-size:12px;color:#666">— <%= answered.from %></span></div>
+                        <div style="margin-top:6px;color:var(--accent-secondary);background:rgba(0,212,170,0.08);padding:8px;border-radius:8px">A: <%= answered.answer %> <span style="font-size:12px;color:var(--text-muted)">— <%= answered.from %></span></div>
                       <% } else { %>
                         <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/design/answer" style="margin-top:6px;display:flex;gap:8px">
                           <input type="hidden" name="designId" value="<%= locals.latestDesign.id %>">
                           <input type="hidden" name="question" value="<%= q %>">
-                          <input name="answer" placeholder="Type your answer here" style="flex:1;padding:8px;border-radius:6px;border:1px solid #dbeafe">
-                          <button class="btn btn-sm" type="submit" style="background:#10b981;color:white">Save</button>
+                          <input name="answer" placeholder="Type your answer here" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border-glass);background:rgba(5,13,26,0.6);color:var(--text-primary);font-size:13px;">
+                          <button class="btn btn-sm" type="submit" style="background:var(--accent-secondary);box-shadow:0 0 12px rgba(0,212,170,0.3);">Save</button>
                         </form>
                       <% } %>
                     </div>
@@ -174,15 +172,15 @@
             <div style="display:flex;gap:8px;margin-top:8px;">
                 <% if (project.status !== 'archived') { %>
                 <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/archive" onsubmit="return confirm('Archive this project?')" style="flex:1;margin:0;">
-                    <button type="submit" class="btn btn-sm" style="width:100%;background:#6c757d;color:white;">📦 Archive</button>
+                    <button type="submit" class="btn btn-sm btn-secondary" style="width:100%;">📦 Archive</button>
                 </form>
                 <% } else { %>
                 <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/unarchive" style="flex:1;margin:0;">
-                    <button type="submit" class="btn btn-sm" style="width:100%;background:#667eea;color:white;">📦 Unarchive</button>
+                    <button type="submit" class="btn btn-sm" style="width:100%;">📦 Unarchive</button>
                 </form>
                 <% } %>
                 <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/delete" onsubmit="return confirm('Delete this project and all its sessions/files? This cannot be undone.')" style="flex:1;margin:0;">
-                    <button type="submit" class="btn btn-sm" style="width:100%;background:#dc3545;color:white;">🗑️ Delete</button>
+                    <button type="submit" class="btn btn-sm btn-danger" style="width:100%;">🗑️ Delete</button>
                 </form>
             </div>
         </div>
@@ -194,29 +192,28 @@
 const hasSession = sessions.length > 0;
 let totalMessagesAdmin = 0;
 sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '[]').length; } catch {} });
-// hasDesignPublished, hasDesignApproved, hasProposalPublished, hasProposalApproved, hasReqs are passed from server.js
 %>
 <div class="card">
     <h3 style="margin-bottom:12px;">Project Progress</h3>
     <div style="display:flex;align-items:center;gap:0;margin-bottom:4px;">
         <div style="flex:1;text-align:center;">
-            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasSession ? '#28a745' : '#e0e0e0' %>;background:<%= hasSession ? '#28a745' : '#f8f9fa' %>;opacity:<%= hasSession ? 1 : 0.4 %>;">🎙️</div>
-            <div style="font-size:12px;font-weight:600;color:<%= hasSession ? '#28a745' : '#aaa' %>;"><%= hasSession ? '✓ Session' : 'Session' %></div>
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasSession ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasSession ? 'rgba(0,212,170,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasSession ? 1 : 0.4 %>;">🎙️</div>
+            <div style="font-size:12px;font-weight:600;color:<%= hasSession ? 'var(--accent-secondary)' : 'var(--text-muted)' %>;"><%= hasSession ? '✓ Session' : 'Session' %></div>
         </div>
-        <div style="height:3px;width:40px;background:<%= hasSession ? '#28a745' : '#e0e0e0' %>;margin-top:-20px;"></div>
+        <div style="height:3px;width:40px;background:<%= hasSession ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;margin-top:-20px;"></div>
         <div style="flex:1;text-align:center;">
-            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasDesignPublished ? '#28a745' : '#e0e0e0' %>;background:<%= hasDesignPublished ? '#28a745' : '#f8f9fa' %>;opacity:<%= hasDesignPublished ? 1 : 0.4 %>;">📐</div>
-            <div style="font-size:12px;font-weight:600;color:<%= hasDesignPublished ? '#28a745' : '#aaa' %>;"><%= hasDesignPublished ? '✓ Design' : 'Design' %></div>
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasDesignPublished ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasDesignPublished ? 'rgba(0,212,170,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasDesignPublished ? 1 : 0.4 %>;">📐</div>
+            <div style="font-size:12px;font-weight:600;color:<%= hasDesignPublished ? 'var(--accent-secondary)' : 'var(--text-muted)' %>;"><%= hasDesignPublished ? '✓ Design' : 'Design' %></div>
         </div>
-        <div style="height:3px;width:40px;background:<%= hasDesignPublished ? '#28a745' : '#e0e0e0' %>;margin-top:-20px;"></div>
+        <div style="height:3px;width:40px;background:<%= hasDesignPublished ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;margin-top:-20px;"></div>
         <div style="flex:1;text-align:center;">
-            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasProposalPublished ? '#28a745' : '#e0e0e0' %>;background:<%= hasProposalPublished ? '#28a745' : '#f8f9fa' %>;opacity:<%= hasProposalPublished ? 1 : 0.4 %>;">💰</div>
-            <div style="font-size:12px;font-weight:600;color:<%= hasProposalPublished ? '#28a745' : '#aaa' %>;"><%= hasProposalPublished ? '✓ Proposal' : 'Proposal' %></div>
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasProposalPublished ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasProposalPublished ? 'rgba(0,212,170,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasProposalPublished ? 1 : 0.4 %>;">💰</div>
+            <div style="font-size:12px;font-weight:600;color:<%= hasProposalPublished ? 'var(--accent-secondary)' : 'var(--text-muted)' %>;"><%= hasProposalPublished ? '✓ Proposal' : 'Proposal' %></div>
         </div>
-        <div style="height:3px;width:40px;background:<%= hasProposalApproved ? '#28a745' : '#e0e0e0' %>;margin-top:-20px;"></div>
+        <div style="height:3px;width:40px;background:<%= hasProposalApproved ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;margin-top:-20px;"></div>
         <div style="flex:1;text-align:center;">
-            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasProposalApproved ? '#28a745' : '#e0e0e0' %>;background:<%= hasProposalApproved ? '#28a745' : '#f8f9fa' %>;opacity:<%= hasProposalApproved ? 1 : 0.4 %>;">✅</div>
-            <div style="font-size:12px;font-weight:600;color:<%= hasProposalApproved ? '#28a745' : '#aaa' %>;"><%= hasProposalApproved ? '✓ Approved' : 'Approved' %></div>
+            <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;border:3px solid <%= hasProposalApproved ? 'var(--accent-secondary)' : 'var(--border-glass)' %>;background:<%= hasProposalApproved ? 'rgba(0,212,170,0.15)' : 'rgba(15,29,50,0.4)' %>;opacity:<%= hasProposalApproved ? 1 : 0.4 %>;">✅</div>
+            <div style="font-size:12px;font-weight:600;color:<%= hasProposalApproved ? 'var(--accent-secondary)' : 'var(--text-muted)' %>;"><%= hasProposalApproved ? '✓ Approved' : 'Approved' %></div>
         </div>
     </div>
 </div>
@@ -224,22 +221,22 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
 <!-- Action Cards -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px;">
     <% if (hasReqs) { %>
-    <div style="background:white;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+    <div style="background:var(--bg-glass);backdrop-filter:blur(20px);border-radius:var(--radius);padding:16px;border:1px solid var(--border-glass);display:flex;align-items:center;justify-content:space-between;">
         <div><div style="font-size:20px;margin-bottom:2px;">📋</div><div style="font-weight:600;font-size:14px;">Requirements</div></div>
-        <a href="/admin/projects/<%= encodeId(project.id) %>/requirements" class="btn btn-sm" style="background:#3b82f6;color:white;">View</a>
+        <a href="/admin/projects/<%= encodeId(project.id) %>/requirements" class="btn btn-sm" style="background:#3b82f6;box-shadow:0 0 16px rgba(59,130,246,0.3);">View</a>
     </div>
     <% } %>
-    <div style="background:white;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid <%= designExists ? '#d1fae5' : '#e2e8f0' %>;display:flex;align-items:center;justify-content:space-between;">
+    <div style="background:var(--bg-glass);backdrop-filter:blur(20px);border-radius:var(--radius);padding:16px;border:1px solid <%= designExists ? 'rgba(0,212,170,0.2)' : 'var(--border-glass)' %>;display:flex;align-items:center;justify-content:space-between;">
         <div><div style="font-size:20px;margin-bottom:2px;">📐</div><div style="font-weight:600;font-size:14px;"><%= designExists ? (hasDesignApproved ? 'Design Approved ✓' : 'Design Ready') : 'Design' %></div></div>
         <% if (designExists) { %>
-        <a href="/admin/projects/<%= encodeId(project.id) %>/design" class="btn btn-sm" style="background:#10b981;color:white;">View</a>
+        <a href="/admin/projects/<%= encodeId(project.id) %>/design" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">View</a>
         <% } else { %>
         <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/extract-design" style="margin:0;"><button type="submit" class="btn btn-sm">Extract</button></form>
         <% } %>
     </div>
-    <div style="background:white;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid <%= hasProposalPublished ? '#d1fae5' : '#e2e8f0' %>;display:flex;align-items:center;justify-content:space-between;">
+    <div style="background:var(--bg-glass);backdrop-filter:blur(20px);border-radius:var(--radius);padding:16px;border:1px solid <%= hasProposalPublished ? 'rgba(0,212,170,0.2)' : 'var(--border-glass)' %>;display:flex;align-items:center;justify-content:space-between;">
         <div><div style="font-size:20px;margin-bottom:2px;">💰</div><div style="font-weight:600;font-size:14px;"><%= hasProposalApproved ? 'Proposal Approved ✓' : (hasProposalPublished ? 'Proposal Published' : 'Proposal') %></div></div>
-        <a href="/admin/projects/<%= encodeId(project.id) %>/proposal" class="btn btn-sm" style="background:#8b5cf6;color:white;">View</a>
+        <a href="/admin/projects/<%= encodeId(project.id) %>/proposal" class="btn btn-sm" style="background:var(--accent-purple);box-shadow:0 0 16px rgba(139,92,246,0.3);">View</a>
     </div>
 </div>
 
@@ -253,39 +250,39 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
     <% if (adminNotes.length > 0) { %>
         <div style="max-height: 300px; overflow-y: auto; margin-bottom: 12px;">
             <% adminNotes.forEach(function(note, idx) { %>
-                <div style="padding: 10px 14px; background: #f8fafc; border-left: 3px solid #667eea; border-radius: 0 8px 8px 0; margin-bottom: 8px;">
+                <div style="padding: 10px 14px; background: rgba(17,153,250,0.05); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; margin-bottom: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div style="flex: 1;">
-                            <div style="font-size: 14px; color: #0f172a; white-space: pre-wrap;"><%= note.text %></div>
-                            <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;"><%= note.from %> · <%= melb(note.ts) %></div>
+                            <div style="font-size: 14px; color: var(--text-primary); white-space: pre-wrap;"><%= note.text %></div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;"><%= note.from %> · <%= melb(note.ts) %></div>
                         </div>
                         <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/notes/<%= idx %>/delete" style="margin: 0;">
-                            <button type="submit" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 14px;" title="Delete note">✕</button>
+                            <button type="submit" style="background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 14px;" title="Delete note">✕</button>
                         </form>
                     </div>
                 </div>
             <% }) %>
         </div>
     <% } else { %>
-        <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">No admin notes yet. Add context, decisions, or information for this project.</p>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">No admin notes yet. Add context, decisions, or information for this project.</p>
     <% } %>
     <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/notes" style="display: flex; gap: 8px;">
-        <textarea name="note" placeholder="Add a note — additional context, decisions, technical constraints…" rows="2" style="flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical;"></textarea>
-        <button type="submit" class="btn btn-sm" style="align-self: flex-end; background: #667eea; color: white;">Add Note</button>
+        <textarea name="note" placeholder="Add a note — additional context, decisions, technical constraints…" rows="2" style="flex: 1; padding: 10px; border: 1px solid var(--border-glass); border-radius: 12px; font-size: 13px; font-family: inherit; resize: vertical; background: rgba(5,13,26,0.6); color: var(--text-primary);"></textarea>
+        <button type="submit" class="btn btn-sm" style="align-self: flex-end;">Add Note</button>
     </form>
 </div>
 
 <!-- Customer Answers -->
 <% if (customerAnswers && customerAnswers.length > 0) { %>
-<div class="card" style="border-left: 4px solid #10b981;">
+<div class="card" style="border-left: 3px solid var(--accent-secondary);">
     <h3>💬 Customer Answers</h3>
-    <p style="color: #64748b; font-size: 12px; margin-bottom: 12px;">Answers provided by the customer to assigned design questions. These are included when refreshing the design.</p>
+    <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 12px;">Answers provided by the customer to assigned design questions. These are included when refreshing the design.</p>
     <div style="max-height: 300px; overflow-y: auto;">
         <% customerAnswers.forEach(function(a) { %>
-            <div style="padding: 10px 14px; background: #f0fdf4; border-left: 3px solid #10b981; border-radius: 0 8px 8px 0; margin-bottom: 8px;">
-                <div style="font-size: 13px; color: #64748b; font-weight: 600;">❓ <%= a.question %></div>
-                <div style="font-size: 14px; color: #0f172a; margin-top: 4px;">✅ <%= a.answer %></div>
-                <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;"><%= a.from %> · <%= melb(a.ts) %></div>
+            <div style="padding: 10px 14px; background: rgba(0,212,170,0.05); border-left: 3px solid var(--accent-secondary); border-radius: 0 12px 12px 0; margin-bottom: 8px;">
+                <div style="font-size: 13px; color: var(--text-muted); font-weight: 600;">❓ <%= a.question %></div>
+                <div style="font-size: 14px; color: var(--text-primary); margin-top: 4px;">✅ <%= a.answer %></div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;"><%= a.from %> · <%= melb(a.ts) %></div>
             </div>
         <% }) %>
     </div>
@@ -306,18 +303,18 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
         <% if (sessions.length > 0) { %>
             <div style="max-height: 400px; overflow-y: auto;">
                 <% sessions.forEach(session => { %>
-                    <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fafafa;">
+                    <div style="border: 1px solid var(--border-glass); border-radius: 12px; padding: 12px; margin-bottom: 12px; background: rgba(5,13,26,0.4);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <strong>Session #<%= session.id %></strong>
                             <% if (session.status === 'active') { %>
-                                <span style="color: #28a745; font-size: 12px;">● Active</span>
+                                <span style="color: var(--accent-secondary); font-size: 12px;">● Active</span>
                             <% } else if (session.status === 'completed') { %>
-                                <span style="color: #6c757d; font-size: 12px;">● Completed</span>
+                                <span style="color: var(--text-muted); font-size: 12px;">● Completed</span>
                             <% } else { %>
-                                <span style="color: #dc3545; font-size: 12px;">● Paused</span>
+                                <span style="color: #ef4444; font-size: 12px;">● Paused</span>
                             <% } %>
                         </div>
-                        <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
                             <%= melb(session.created_at) %>
                         </div>
                         
@@ -330,7 +327,7 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
                         } catch {}
                         %>
                         
-                        <div style="font-size: 13px; margin-bottom: 8px;">
+                        <div style="font-size: 13px; margin-bottom: 8px; color: var(--text-secondary);">
                             📝 <%= transcript.length %> messages | 
                             ✅ <%= Object.values(requirements).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0) %> requirements
                         </div>
@@ -353,15 +350,15 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
         <% if (files.length > 0) { %>
             <div style="max-height: 400px; overflow-y: auto;">
                 <% files.forEach(file => { %>
-                    <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fafafa;">
+                    <div style="border: 1px solid var(--border-glass); border-radius: 12px; padding: 12px; margin-bottom: 12px; background: rgba(5,13,26,0.4);">
                         <div style="font-weight: 600; margin-bottom: 4px;">
                             📄 <%= file.original_name %>
                         </div>
-                        <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
                             <%= (file.size / 1024).toFixed(1) %> KB • <%= melbDate(file.created_at) %>
                         </div>
                         <% if (file.description) { %>
-                            <div style="font-size: 13px; color: #333; margin-bottom: 8px; padding: 8px; background: #f0f8ff; border-left: 3px solid #667eea; border-radius: 4px;">
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; padding: 8px; background: rgba(17,153,250,0.05); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0;">
                                 <%= file.description %>
                             </div>
                         <% } %>
@@ -374,14 +371,14 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
                             } catch {}
                             %>
                             <% if (analysis.requirements && analysis.requirements.length > 0) { %>
-                                <div style="font-size: 12px; color: #28a745; margin-bottom: 8px;">
+                                <div style="font-size: 12px; color: var(--accent-secondary); margin-bottom: 8px;">
                                     ✅ <%= analysis.requirements.length %> requirements extracted
                                 </div>
                             <% } %>
                         <% } %>
                         
                         <button onclick="viewFile('<%= file.filename %>')" class="btn btn-sm" style="font-size: 11px;">👁️ View</button>
-                        <button onclick="deleteFile(<%= file.id %>, this)" class="btn btn-sm" style="font-size: 11px; background: #dc3545; color: white;">🗑️</button>
+                        <button onclick="deleteFile(<%= file.id %>, this)" class="btn btn-sm btn-danger" style="font-size: 11px;">🗑️</button>
                     </div>
                 <% }) %>
             </div>
@@ -402,15 +399,15 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
         <button onclick="document.getElementById('adminShareForm').style.display = document.getElementById('adminShareForm').style.display === 'none' ? 'block' : 'none'" class="btn btn-sm">+ Invite</button>
     </div>
     
-    <div id="adminShareForm" style="display: none; margin-bottom: 20px; padding: 16px; background: #f8f9ff; border-radius: 10px;">
+    <div id="adminShareForm" style="display: none; margin-bottom: 20px; padding: 16px; background: rgba(17,153,250,0.05); border: 1px solid var(--border-glass); border-radius: 12px;">
         <div style="display: flex; gap: 8px; align-items: flex-end;">
             <div style="flex: 1;">
-                <label style="font-size: 12px; font-weight: 600; color: #666; display: block; margin-bottom: 4px;">Email</label>
-                <input type="email" id="adminShareEmail" placeholder="user@company.com" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Email</label>
+                <input type="email" id="adminShareEmail" placeholder="user@company.com" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-glass); border-radius: 8px; font-size: 14px; background: rgba(5,13,26,0.6); color: var(--text-primary);">
             </div>
             <div>
-                <label style="font-size: 12px; font-weight: 600; color: #666; display: block; margin-bottom: 4px;">Permission</label>
-                <select id="adminSharePermission" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Permission</label>
+                <select id="adminSharePermission" style="padding: 8px 12px; border: 1px solid var(--border-glass); border-radius: 8px; font-size: 14px; background: rgba(5,13,26,0.6); color: var(--text-primary);">
                     <option value="readonly">👁️ View Only</option>
                     <option value="user">✏️ Contributor</option>
                     <option value="admin">⚡ Admin</option>
@@ -422,16 +419,16 @@ sessions.forEach(s => { try { totalMessagesAdmin += JSON.parse(s.transcript || '
     </div>
     
     <div id="adminSharesList" style="min-height: 40px;">
-        <div style="color: #999; font-size: 13px; text-align: center; padding: 12px;">Loading shares...</div>
+        <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 12px;">Loading shares...</div>
     </div>
 </div>
 
 <!-- Session Detail Modal -->
-<div id="sessionModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000;">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto;">
+<div id="sessionModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card); border: 1px solid var(--border-glass); padding: 24px; border-radius: var(--radius); width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 id="sessionModalTitle">Session Details</h3>
-            <button onclick="closeSessionModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <h3 id="sessionModalTitle" style="color: var(--text-primary);">Session Details</h3>
+            <button onclick="closeSessionModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted);">&times;</button>
         </div>
         <div id="sessionModalContent"></div>
     </div>
@@ -452,37 +449,33 @@ function viewSession(sessionId) {
     document.getElementById('sessionModalTitle').innerText = `Session #${sessionId}`;
     
     let content = `
-        <div style="margin-bottom: 20px;">
+        <div style="margin-bottom: 20px; color: rgba(240,244,248,0.7);">
             <strong>Status:</strong> ${session.status} | 
             <strong>Created:</strong> ${new Date(session.created_at).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })} |
             <strong>Updated:</strong> ${new Date(session.updated_at).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })}
         </div>
     `;
     
-    // Requirements
     if (Object.keys(requirements).length > 0) {
-        content += '<h4>📋 Requirements Identified</h4>';
+        content += '<h4 style="color:#1199fa;margin-bottom:8px;">📋 Requirements Identified</h4>';
         for (const [category, items] of Object.entries(requirements)) {
             if (Array.isArray(items) && items.length > 0) {
-                content += `<h5>${category}</h5><ul>`;
-                items.forEach(item => {
-                    content += `<li>${item}</li>`;
-                });
+                content += `<h5 style="color:rgba(240,244,248,0.7);margin:8px 0 4px;">${category}</h5><ul style="margin-left:16px;color:rgba(240,244,248,0.7);">`;
+                items.forEach(item => { content += `<li>${item}</li>`; });
                 content += '</ul>';
             }
         }
     }
     
-    // Transcript
     if (transcript.length > 0) {
-        content += '<h4 style="margin-top: 20px;">💬 Full Transcript</h4>';
-        content += '<div style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px;">';
+        content += '<h4 style="margin-top: 20px;color:#1199fa;">💬 Full Transcript</h4>';
+        content += '<div style="max-height: 300px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px;">';
         transcript.forEach(msg => {
             const isAI = msg.role === 'ai';
             content += `
-                <div style="margin-bottom: 12px; padding: 8px; border-radius: 8px; ${isAI ? 'background: #f0f2ff;' : 'background: #f8f8f8;'}">
-                    <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px; color: ${isAI ? '#667eea' : '#333'};">${isAI ? '🤖 AI' : '👤 User'}</div>
-                    <div>${msg.text}</div>
+                <div style="margin-bottom: 12px; padding: 8px; border-radius: 8px; ${isAI ? 'background: rgba(17,153,250,0.08);' : 'background: rgba(255,255,255,0.04);'}">
+                    <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px; color: ${isAI ? '#1199fa' : 'rgba(240,244,248,0.7)'};">${isAI ? '🤖 AI' : '👤 User'}</div>
+                    <div style="color:rgba(240,244,248,0.9);">${msg.text}</div>
                 </div>
             `;
         });
@@ -517,7 +510,6 @@ async function deleteFile(fileId, btn) {
 
 async function exportProject() {
     try {
-        // Build requirements document
         const sessions = <%- JSON.stringify(sessions) %>;
         let allRequirements = {};
         let allTranscript = [];
@@ -526,9 +518,7 @@ async function exportProject() {
             try {
                 const transcript = JSON.parse(session.transcript || '[]');
                 const requirements = JSON.parse(session.requirements || '{}');
-                
                 allTranscript = allTranscript.concat(transcript);
-                
                 for (const [category, items] of Object.entries(requirements)) {
                     if (!allRequirements[category]) allRequirements[category] = [];
                     if (Array.isArray(items)) {
@@ -538,7 +528,6 @@ async function exportProject() {
             } catch {}
         });
         
-        // Build markdown document
         let doc = '# <%= project.name %> - Requirements Document\\n\\n';
         doc += '**Company:** <%= project.company %>\\n';
         doc += '**Contact:** <%= project.user_name %> (<%= project.email %>)\\n';
@@ -548,7 +537,6 @@ async function exportProject() {
             doc += '## Requirements\\n\\n';
             const order = ['Project Overview', 'Stakeholders', 'Functional Requirements', 'Non-Functional Requirements', 'Constraints', 'Success Criteria'];
             const seen = new Set();
-            
             for (const cat of [...order, ...Object.keys(allRequirements)]) {
                 if (seen.has(cat) || !allRequirements[cat] || allRequirements[cat].length === 0) continue;
                 seen.add(cat);
@@ -574,7 +562,6 @@ async function exportProject() {
         
         doc += '---\\n*Generated by Morti Projects*\\n';
         
-        // Export as zip
         const response = await fetch('/api/export-zip', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -593,15 +580,11 @@ async function exportProject() {
     }
 }
 
-// Close modal when clicking outside
 document.addEventListener('click', function(e) {
     const modal = document.getElementById('sessionModal');
-    if (e.target === modal) {
-        closeSessionModal();
-    }
+    if (e.target === modal) { closeSessionModal(); }
 });
 
-// Admin Sharing Functions
 const adminProjectId = '<%= encodeId(project.id) %>';
 
 async function adminLoadShares() {
@@ -610,28 +593,28 @@ async function adminLoadShares() {
         const res = await fetch('/admin/projects/' + adminProjectId + '/shares');
         const data = await res.json();
         if (!data.shares || data.shares.length === 0) {
-            el.innerHTML = '<div style="color:#999;font-size:13px;text-align:center;padding:12px;">No collaborators added yet</div>';
+            el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:12px;">No collaborators added yet</div>';
             return;
         }
         el.innerHTML = data.shares.map(s => `
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;margin-bottom:6px;background:rgba(5,13,26,0.4);">
                 <div style="flex:1;">
                     <div style="font-weight:600;font-size:14px;">${s.user_name || s.email}</div>
-                    ${s.user_name ? '<div style="font-size:12px;color:#666;">' + s.email + '</div>' : ''}
-                    ${!s.user_id ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px;">⏳ Pending signup</span>' : '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:11px;">✓ Active</span>'}
-                    <span style="font-size:11px;color:#999;margin-left:8px;">Invited by ${s.inviter_name || 'admin'}</span>
+                    ${s.user_name ? '<div style="font-size:12px;color:rgba(240,244,248,0.4);">' + s.email + '</div>' : ''}
+                    ${!s.user_id ? '<span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:50px;font-size:11px;">⏳ Pending signup</span>' : '<span style="background:rgba(0,212,170,0.12);color:#00d4aa;padding:2px 8px;border-radius:50px;font-size:11px;">✓ Active</span>'}
+                    <span style="font-size:11px;color:rgba(240,244,248,0.3);margin-left:8px;">Invited by ${s.inviter_name || 'admin'}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <select onchange="adminUpdatePermission(${s.id}, this.value)" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
+                    <select onchange="adminUpdatePermission(${s.id}, this.value)" style="padding:4px 8px;border:1px solid rgba(255,255,255,0.08);border-radius:8px;font-size:12px;background:rgba(5,13,26,0.6);color:rgba(240,244,248,0.7);">
                         <option value="readonly" ${s.permission==='readonly'?'selected':''}>👁️ View Only</option>
                         <option value="user" ${s.permission==='user'?'selected':''}>✏️ Contributor</option>
                         <option value="admin" ${s.permission==='admin'?'selected':''}>⚡ Admin</option>
                     </select>
-                    <button onclick="adminRemoveShare(${s.id})" style="background:none;border:none;cursor:pointer;color:#dc3545;font-size:16px;" title="Remove">✕</button>
+                    <button onclick="adminRemoveShare(${s.id})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:16px;" title="Remove">✕</button>
                 </div>
             </div>
         `).join('');
-    } catch(e) { el.innerHTML = '<div style="color:#dc3545;font-size:13px;">Failed to load shares</div>'; }
+    } catch(e) { el.innerHTML = '<div style="color:#ef4444;font-size:13px;">Failed to load shares</div>'; }
 }
 
 async function adminInviteShare() {
@@ -639,7 +622,7 @@ async function adminInviteShare() {
     const permission = document.getElementById('adminSharePermission').value;
     const status = document.getElementById('adminShareStatus');
     if (!email) return;
-    status.style.display = 'block'; status.innerHTML = 'Sending invite...'; status.style.color = '#666';
+    status.style.display = 'block'; status.innerHTML = 'Sending invite...'; status.style.color = 'rgba(240,244,248,0.7)';
     try {
         const res = await fetch('/admin/projects/' + adminProjectId + '/share', {
             method: 'POST', headers: {'Content-Type':'application/json'},
@@ -648,11 +631,11 @@ async function adminInviteShare() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         let msg = '✅ Invited ' + email;
-        if (data.signupLink) msg += '<br><span style="font-size:12px;color:#666;">Signup link: <a href="' + data.signupLink + '" style="word-break:break-all;">' + data.signupLink + '</a></span>';
-        status.innerHTML = msg; status.style.color = '#28a745';
+        if (data.signupLink) msg += '<br><span style="font-size:12px;color:rgba(240,244,248,0.4);">Signup link: <a href="' + data.signupLink + '" style="word-break:break-all;color:#1199fa;">' + data.signupLink + '</a></span>';
+        status.innerHTML = msg; status.style.color = '#00d4aa';
         document.getElementById('adminShareEmail').value = '';
         adminLoadShares();
-    } catch(e) { status.innerHTML = '❌ ' + e.message; status.style.color = '#dc3545'; }
+    } catch(e) { status.innerHTML = '❌ ' + e.message; status.style.color = '#ef4444'; }
 }
 
 async function adminUpdatePermission(shareId, permission) {
@@ -677,18 +660,18 @@ adminLoadShares();
     </main>
 
 <!-- Import ZIP Modal -->
-<div id="importModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:white;border-radius:12px;padding:28px;max-width:500px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
-    <h3 style="margin-bottom:16px;color:#333">📥 Import ZIP into "<%= project.name %>"</h3>
-    <p style="color:#666;font-size:13px;margin-bottom:16px">Upload an exported ZIP file to restore or merge requirements and transcript into this project. This will <strong>replace</strong> the current session data.</p>
+<div id="importModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius);padding:28px;max-width:500px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.4)">
+    <h3 style="margin-bottom:16px;color:var(--text-primary)">📥 Import ZIP into "<%= project.name %>"</h3>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Upload an exported ZIP file to restore or merge requirements and transcript into this project. This will <strong>replace</strong> the current session data.</p>
     <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/import" enctype="multipart/form-data">
       <div style="margin-bottom:16px">
-        <label style="font-weight:600;font-size:13px;color:#333;display:block;margin-bottom:4px">ZIP File</label>
-        <input type="file" name="zipfile" accept=".zip" required style="width:100%;padding:8px;font-size:14px" />
+        <label style="font-weight:600;font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px">ZIP File</label>
+        <input type="file" name="zipfile" accept=".zip" required style="width:100%;padding:8px;font-size:14px;color:var(--text-secondary)" />
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button type="button" onclick="document.getElementById('importModal').style.display='none'" style="padding:10px 20px;border:1px solid #ddd;border-radius:8px;background:white;cursor:pointer;font-size:14px">Cancel</button>
-        <button type="submit" style="padding:10px 20px;border:none;border-radius:8px;background:#10b981;color:white;cursor:pointer;font-weight:600;font-size:14px">📥 Import</button>
+        <button type="button" onclick="document.getElementById('importModal').style.display='none'" class="btn btn-sm btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-sm" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">📥 Import</button>
       </div>
     </form>
   </div>

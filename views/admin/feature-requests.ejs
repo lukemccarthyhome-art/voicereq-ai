@@ -4,30 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Feature Requests - Admin - Morti Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root { --bg-deep: #050d1a; --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08); --border-glass-hover: rgba(255, 255, 255, 0.15); --accent: #1199fa; --accent-dim: rgba(17, 153, 250, 0.12); --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4); --radius: 16px; --radius-pill: 50px; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
-        .main { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .card h2 { margin-bottom: 16px; color: #333; font-size: 24px; }
-        .request-item { border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px; margin-bottom: 12px; background: #fafafa; }
-        .request-meta { font-size: 12px; color: #888; margin-bottom: 8px; }
-        .request-text { font-size: 14px; color: #333; line-height: 1.6; white-space: pre-wrap; }
-        .badge { display: inline-block; background: #667eea; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+        .card h2 { margin-bottom: 16px; color: var(--text-primary); font-size: 1.3rem; font-weight: 700; }
+        .request-item { border: 1px solid var(--border-glass); border-radius: 12px; padding: 16px; margin-bottom: 12px; background: rgba(5,13,26,0.4); transition: border-color 0.3s; }
+        .request-item:hover { border-color: var(--border-glass-hover); }
+        .request-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+        .request-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; }
+        .badge { display: inline-block; background: var(--accent-dim); color: var(--accent); padding: 2px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
     </style>
 </head>
 <body>
     <%- include('../partials/admin-nav', { currentPage: 'feature-requests', user: user }) %>
     <main class="main">
-        <h1 style="margin-bottom: 24px;">💡 Feature Requests</h1>
+        <h1 style="margin-bottom: 24px; font-size: 1.5rem; font-weight: 800;">💡 Feature Requests</h1>
         <div class="card">
             <h2>All Requests (<%= requests.length %>)</h2>
             <% if (requests.length > 0) { %>
                 <% requests.forEach(r => { %>
                     <div class="request-item">
                         <div class="request-meta">
-                            <strong><%= r.user_name %></strong> (<%= r.user_email %>) · 
+                            <strong style="color: var(--text-primary);"><%= r.user_name %></strong> (<%= r.user_email %>) · 
                             <span class="badge"><%= r.page %></span> · 
                             <%= melb(r.created_at) %>
                         </div>

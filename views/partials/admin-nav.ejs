@@ -1,12 +1,17 @@
 <style>
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
-    .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
-    .nav { display: flex; gap: 20px; align-items: center; }
-    .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
-    .nav a:hover { background: rgba(255,255,255,0.2); }
-    .nav a.active { background: rgba(255,255,255,0.3); }
-    .user-name { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 6px; font-weight: 500; }
+    .header {
+        background: rgba(5, 13, 26, 0.8);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 16px 0;
+    }
+    .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+    .logo { font-size: 1.3rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+    .nav { display: flex; gap: 8px; align-items: center; }
+    .nav a { color: rgba(240, 244, 248, 0.4); font-size: 0.88rem; padding: 8px 14px; border-radius: 50px; transition: all 0.2s; font-weight: 500; text-decoration: none; }
+    .nav a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    .nav a.active { color: #1199fa; background: rgba(17, 153, 250, 0.12); }
+    .user-name { background: rgba(255,255,255,0.06); border: 1px solid rgba(255, 255, 255, 0.08); padding: 8px 14px; border-radius: 50px; font-weight: 500; font-size: 0.88rem; color: rgba(240, 244, 248, 0.7); }
     @media (max-width: 768px) {
         .header-container { flex-direction: column; gap: 12px; text-align: center; }
         .nav { flex-wrap: wrap; justify-content: center; }
@@ -14,7 +19,7 @@
 </style>
 <div class="header">
     <div class="header-container">
-        <a href="/admin" class="logo">🎙️ Morti Projects</a>
+        <a href="/admin" class="logo">◆ Morti</a>
         <nav class="nav">
             <a href="/admin"<%= currentPage === 'dashboard' ? ' class="active"' : '' %>>Dashboard</a>
             <a href="/admin/customers"<%= currentPage === 'customers' ? ' class="active"' : '' %>>Customers</a>
@@ -22,7 +27,7 @@
             <a href="/admin/feature-requests"<%= currentPage === 'feature-requests' ? ' class="active"' : '' %>>Feature Requests</a>
             <a href="/profile"<%= currentPage === 'profile' ? ' class="active"' : '' %>>Profile</a>
             <div class="user-name">👤 <%= user.name %></div>
-            <a href="/logout">🚪 Logout</a>
+            <a href="/logout">Logout</a>
         </nav>
     </div>
 </div>

@@ -4,55 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= project.name %> - Proposal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-deep: #050d1a;
+            --bg-primary: #0a1628;
+            --bg-card: #0f1d32;
+            --bg-glass: rgba(15, 29, 50, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --accent: #1199fa;
+            --accent-glow: rgba(17, 153, 250, 0.4);
+            --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #00d4aa;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f0f4f8;
+            --text-secondary: rgba(240, 244, 248, 0.7);
+            --text-muted: rgba(240, 244, 248, 0.4);
+            --radius: 16px;
+            --radius-pill: 50px;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
-        .main { max-width: 1000px; margin: 0 auto; padding: 20px; }
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; font-size: 14px; }
-        .btn:hover { background: #5a6fd8; }
-        .breadcrumb { font-size: 13px; color: #666; margin-bottom: 20px; }
-        .breadcrumb a { color: #667eea; text-decoration: none; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-deep); line-height: 1.6; color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 24px 20px; }
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; transition: border-color 0.3s; }
+        .card:hover { border-color: var(--border-glass-hover); }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border: none; border-radius: var(--radius-pill); font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.3s; text-decoration: none; color: #fff; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: var(--accent); box-shadow: 0 0 16px var(--accent-glow); }
+        .btn-primary:hover { background: #2aa8ff; box-shadow: 0 0 24px var(--accent-glow); }
+        .btn-sm { padding: 6px 14px; font-size: 12px; }
+        .breadcrumb { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+        .breadcrumb a { color: var(--accent); text-decoration: none; }
 
         .fee-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
-        .fee-card { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center; }
-        .fee-card.highlight { border-color: #667eea; background: #f0f4ff; }
-        .fee-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #667eea; font-weight: 700; margin-bottom: 8px; }
-        .fee-amount { font-size: 2rem; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
-        .fee-amount small { font-size: 0.5em; color: #64748b; font-weight: 400; }
-        .fee-desc { font-size: 0.85rem; color: #64748b; line-height: 1.5; }
-        .fee-rationale { font-size: 0.8rem; color: #94a3b8; margin-top: 8px; font-style: italic; }
+        .fee-card { background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; text-align: center; transition: border-color 0.3s; }
+        .fee-card:hover { border-color: var(--border-glass-hover); }
+        .fee-card.highlight { border-color: rgba(17,153,250,0.3); }
+        .fee-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+        .fee-amount { font-size: 2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; }
+        .fee-amount small { font-size: 0.5em; color: var(--text-muted); font-weight: 400; }
+        .fee-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+        .fee-rationale { font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; font-style: italic; }
 
-        .total-bar { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 12px; padding: 24px; display: flex; justify-content: space-around; text-align: center; margin: 20px 0; }
-        .total-item h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
-        .total-item .amount { font-size: 1.5rem; font-weight: 800; }
+        .total-bar { background: linear-gradient(135deg, rgba(17,153,250,0.15), rgba(139,92,246,0.15)); border: 1px solid rgba(17,153,250,0.2); color: var(--text-primary); border-radius: var(--radius); padding: 24px; display: flex; justify-content: space-around; text-align: center; margin: 20px 0; }
+        .total-item h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 4px; }
+        .total-item .amount { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
 
-        .value-card { background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 12px; padding: 24px; margin: 20px 0; }
-        .value-card h3 { color: #1e40af; margin-bottom: 16px; }
-        .value-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #dbeafe; }
+        .value-card { background: var(--accent-dim); border: 1px solid rgba(17,153,250,0.2); border-radius: var(--radius); padding: 24px; margin: 20px 0; }
+        .value-card h3 { color: var(--accent); margin-bottom: 16px; }
+        .value-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(17,153,250,0.1); }
         .value-row:last-child { border: none; }
-        .value-label { color: #1e40af; font-size: 0.9rem; }
-        .value-text { color: #334155; font-size: 0.9rem; max-width: 60%; text-align: right; }
+        .value-label { color: var(--accent); font-size: 0.9rem; }
+        .value-text { color: var(--text-secondary); font-size: 0.9rem; max-width: 60%; text-align: right; }
         .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
-        .scenario { text-align: center; padding: 16px; border-radius: 8px; background: white; }
-        .scenario-label { font-size: 0.75rem; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
-        .scenario-amount { font-size: 1.3rem; font-weight: 800; color: #1e40af; margin-top: 4px; }
+        .scenario { text-align: center; padding: 16px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border-glass); }
+        .scenario-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        .scenario-amount { font-size: 1.3rem; font-weight: 800; color: var(--accent); margin-top: 4px; }
 
-        .roi-card { background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 24px; margin: 20px 0; }
-        .roi-card h3 { color: #166534; margin-bottom: 12px; }
+        .roi-card { background: rgba(0,212,170,0.06); border: 1px solid rgba(0,212,170,0.15); border-radius: var(--radius); padding: 24px; margin: 20px 0; }
+        .roi-card h3 { color: var(--accent-secondary); margin-bottom: 12px; }
         .roi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
-        .roi-stat { text-align: center; padding: 16px; background: white; border-radius: 8px; }
-        .roi-stat .label { font-size: 0.75rem; text-transform: uppercase; color: #166534; letter-spacing: 0.5px; }
-        .roi-stat .val { font-size: 1.5rem; font-weight: 800; color: #166534; margin-top: 4px; }
-        .roi-summary { color: #166534; font-size: 0.95rem; font-style: italic; padding-top: 12px; border-top: 1px solid #dcfce7; }
+        .roi-stat { text-align: center; padding: 16px; background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 10px; }
+        .roi-stat .label { font-size: 0.75rem; text-transform: uppercase; color: var(--accent-secondary); letter-spacing: 0.5px; }
+        .roi-stat .val { font-size: 1.5rem; font-weight: 800; color: var(--accent-secondary); margin-top: 4px; }
+        .roi-summary { color: var(--accent-secondary); font-size: 0.95rem; font-style: italic; padding-top: 12px; border-top: 1px solid rgba(0,212,170,0.15); }
 
         .section { margin-bottom: 20px; }
-        .section h3 { font-size: 1.1rem; color: #334155; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .section p { color: #475569; font-size: 0.95rem; line-height: 1.7; white-space: pre-wrap; }
+        .section h3 { font-size: 1.1rem; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .section p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; white-space: pre-wrap; }
         .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
-        .tag { background: #f1f5f9; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; color: #475569; }
-        .tag.excl { background: #fef2f2; color: #991b1b; }
-        .error-msg { background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px; padding: 12px 16px; color: #c53030; margin-bottom: 16px; }
+        .tag { background: var(--bg-card); border: 1px solid var(--border-glass); padding: 6px 14px; border-radius: var(--radius-pill); font-size: 0.85rem; color: var(--text-secondary); }
+        .tag.excl { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: #f87171; }
+        .error-msg { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); border-radius: 12px; padding: 12px 16px; color: #f87171; margin-bottom: 16px; }
 
         @media (max-width: 768px) {
             .fee-grid, .scenario-grid, .roi-grid { grid-template-columns: 1fr; }
@@ -78,23 +105,23 @@
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-            <h2 style="margin: 0;">💰 Proposal — <%= project.name %></h2>
-            <a href="/admin/projects/<%= encodeId(project.id) %>" class="btn btn-sm" style="background: #64748b;">← Back</a>
+            <h2 style="margin: 0; color: var(--text-primary);">💰 Proposal — <%= project.name %></h2>
+            <a href="/admin/projects/<%= encodeId(project.id) %>" class="btn btn-sm" style="background: rgba(255,255,255,0.08); border: 1px solid var(--border-glass);">← Back</a>
         </div>
         
         <!-- Action bar -->
-        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; padding: 16px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-glass);">
             <% if (design) { %>
             <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/generate-proposal" style="margin:0; display:flex; flex-wrap:wrap; gap:8px; align-items:center;" id="genForm">
                 <div style="display:flex; gap:4px; align-items:center;">
-                    <label style="font-size:12px; color:#64748b; font-weight:600;">Upfront</label>
-                    <input type="number" name="discountUpfront" min="0" max="100" step="1" placeholder="%" style="width:60px; padding:6px 8px; border:2px solid #e2e8f0; border-radius:6px; font-size:13px; text-align:center;" title="Upfront fee discount %" value="<%= proposal && proposal.discount && proposal.discount.upfront ? proposal.discount.upfront : '' %>">
+                    <label style="font-size:12px; color: var(--text-muted); font-weight:600;">Upfront</label>
+                    <input type="number" name="discountUpfront" min="0" max="100" step="1" placeholder="%" style="width:60px; padding:6px 8px; border:1px solid var(--border-glass); border-radius:8px; font-size:13px; text-align:center; background: var(--bg-primary); color: var(--text-primary);" title="Upfront fee discount %" value="<%= proposal && proposal.discount && proposal.discount.upfront ? proposal.discount.upfront : '' %>">
                 </div>
                 <div style="display:flex; gap:4px; align-items:center;">
-                    <label style="font-size:12px; color:#64748b; font-weight:600;">Annual</label>
-                    <input type="number" name="discountAnnual" min="0" max="100" step="1" placeholder="%" style="width:60px; padding:6px 8px; border:2px solid #e2e8f0; border-radius:6px; font-size:13px; text-align:center;" title="Annual fee discount %" value="<%= proposal && proposal.discount && proposal.discount.annual ? proposal.discount.annual : '' %>">
+                    <label style="font-size:12px; color: var(--text-muted); font-weight:600;">Annual</label>
+                    <input type="number" name="discountAnnual" min="0" max="100" step="1" placeholder="%" style="width:60px; padding:6px 8px; border:1px solid var(--border-glass); border-radius:8px; font-size:13px; text-align:center; background: var(--bg-primary); color: var(--text-primary);" title="Annual fee discount %" value="<%= proposal && proposal.discount && proposal.discount.annual ? proposal.discount.annual : '' %>">
                 </div>
-                <button type="submit" class="btn btn-sm" style="background: #8b5cf6;">
+                <button type="submit" class="btn btn-sm" style="background: var(--accent-purple); box-shadow: 0 0 12px rgba(139,92,246,0.3);">
                     <%= proposal ? '🔄 Regenerate' : '⚡ Generate' %>
                 </button>
             </form>
@@ -107,7 +134,7 @@
                         </form>
                     <% } else { %>
                         <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/proposal/publish" style="margin:0;">
-                            <button type="submit" class="btn btn-sm" style="background: #10b981;">📤 Publish</button>
+                            <button type="submit" class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,212,170,0.3);">📤 Publish</button>
                         </form>
                     <% } %>
                     <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/proposal/delete" style="margin:0;" onsubmit="return confirm('Delete all proposals for this project? This cannot be undone.')">
@@ -121,27 +148,27 @@
     <% if (!design) { %>
         <div class="card" style="text-align: center; padding: 60px;">
             <div style="font-size: 3rem; margin-bottom: 16px;">📐</div>
-            <h3 style="color: #64748b; margin-bottom: 8px;">Design Required First</h3>
-            <p style="color: #94a3b8;">Extract a design before generating a proposal.</p>
-            <a href="/admin/projects/<%= encodeId(project.id) %>" class="btn" style="margin-top: 16px;">← Back to Project</a>
+            <h3 style="color: var(--text-muted); margin-bottom: 8px;">Design Required First</h3>
+            <p style="color: var(--text-muted);">Extract a design before generating a proposal.</p>
+            <a href="/admin/projects/<%= encodeId(project.id) %>" class="btn btn-primary" style="margin-top: 16px;">← Back to Project</a>
         </div>
     <% } else if (locals.generating) { %>
         <div class="card" style="text-align: center; padding: 60px;" id="genCard">
             <div style="font-size: 3rem; margin-bottom: 16px;" id="genSpinner">⏳</div>
-            <h3 style="color: #8b5cf6; margin-bottom: 8px;" id="genTitle">Generating Proposal...</h3>
-            <p style="color: #94a3b8;" id="genMsg">AI is analysing your design and building a value-based proposal. This usually takes 15-30 seconds.</p>
-            <div style="margin-top: 16px; width: 200px; height: 4px; background: #e2e8f0; border-radius: 2px; margin-left: auto; margin-right: auto; overflow: hidden;">
-                <div style="width: 30%; height: 100%; background: #8b5cf6; border-radius: 2px; animation: progress 2s ease-in-out infinite;" id="genBar"></div>
+            <h3 style="color: var(--accent-purple); margin-bottom: 8px;" id="genTitle">Generating Proposal...</h3>
+            <p style="color: var(--text-muted);" id="genMsg">AI is analysing your design and building a value-based proposal. This usually takes 15-30 seconds.</p>
+            <div style="margin-top: 16px; width: 200px; height: 4px; background: var(--bg-card); border-radius: 2px; margin-left: auto; margin-right: auto; overflow: hidden;">
+                <div style="width: 30%; height: 100%; background: var(--accent-purple); border-radius: 2px; animation: progress 2s ease-in-out infinite;" id="genBar"></div>
             </div>
         </div>
         <style>@keyframes progress { 0% { width: 10%; margin-left: 0; } 50% { width: 60%; margin-left: 20%; } 100% { width: 10%; margin-left: 90%; } }</style>
     <% } else if (!proposal) { %>
         <div class="card" style="text-align: center; padding: 60px;">
             <div style="font-size: 3rem; margin-bottom: 16px;">💰</div>
-            <h3 style="color: #64748b; margin-bottom: 8px;">No Proposal Yet</h3>
-            <p style="color: #94a3b8; margin-bottom: 20px;">Generate a value-based fee proposal from the project design.</p>
+            <h3 style="color: var(--text-muted); margin-bottom: 8px;">No Proposal Yet</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Generate a value-based fee proposal from the project design.</p>
             <form method="POST" action="/admin/projects/<%= encodeId(project.id) %>/generate-proposal" id="genForm2">
-                <button type="submit" class="btn" style="background: #8b5cf6;">⚡ Generate Proposal</button>
+                <button type="submit" class="btn" style="background: var(--accent-purple); box-shadow: 0 0 16px rgba(139,92,246,0.3);">⚡ Generate Proposal</button>
             </form>
         </div>
     <% } else { %>
@@ -149,20 +176,20 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <div>
-                    <h3 style="margin-bottom: 4px;"><%= proposal.projectName || project.name %></h3>
-                    <div style="color: #64748b; font-size: 0.9rem;">
-                        Client: <strong><%= proposal.clientCompany || 'TBD' %></strong>
+                    <h3 style="margin-bottom: 4px; color: var(--text-primary);"><%= proposal.projectName || project.name %></h3>
+                    <div style="color: var(--text-muted); font-size: 0.9rem;">
+                        Client: <strong style="color: var(--text-secondary);"><%= proposal.clientCompany || 'TBD' %></strong>
                         &nbsp;·&nbsp; Generated: <%= melbDate(proposal.createdAt) %>
                         &nbsp;·&nbsp; All prices ex GST
                     </div>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;">
                     <% if (proposal.approvedAt) { %>
-                        <span style="background:#d1fae5;color:#065f46;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">✅ Approved by <%= proposal.approvedBy %> · <%= melbDate(proposal.approvedAt) %></span>
+                        <span style="background: rgba(0,212,170,0.1); color: var(--accent-secondary); padding:6px 14px; border-radius: var(--radius-pill); font-size:12px; font-weight:600; border: 1px solid rgba(0,212,170,0.2);">✅ Approved by <%= proposal.approvedBy %> · <%= melbDate(proposal.approvedAt) %></span>
                     <% } else if (proposal.published) { %>
-                        <span style="background:#dbeafe;color:#1e40af;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">📤 Published <%= proposal.publishedAt ? melbDate(proposal.publishedAt) : '' %></span>
+                        <span style="background: var(--accent-dim); color: var(--accent); padding:6px 14px; border-radius: var(--radius-pill); font-size:12px; font-weight:600; border: 1px solid rgba(17,153,250,0.2);">📤 Published <%= proposal.publishedAt ? melbDate(proposal.publishedAt) : '' %></span>
                     <% } else { %>
-                        <span style="background:#fef3c7;color:#92400e;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;">Draft</span>
+                        <span style="background: rgba(245,158,11,0.1); color: #f59e0b; padding:6px 14px; border-radius: var(--radius-pill); font-size:12px; font-weight:600; border: 1px solid rgba(245,158,11,0.2);">Draft</span>
                     <% } %>
                 </div>
             </div>
@@ -208,20 +235,20 @@
                 <span class="value-text"><%= proposal.labourAnalysis.additionalCosts %></span>
             </div>
             <% } %>
-            <div class="value-row" style="border-top: 2px solid #93c5fd; padding-top: 12px;">
+            <div class="value-row" style="border-top: 1px solid rgba(17,153,250,0.2); padding-top: 12px;">
                 <span class="value-label" style="font-weight: 700;">Estimated Total Annual Savings</span>
-                <span class="value-text" style="font-size: 1.2rem; font-weight: 800; color: #1e40af;">$<%= (proposal.labourAnalysis.totalAnnualSavings || 0).toLocaleString() %></span>
+                <span class="value-text" style="font-size: 1.2rem; font-weight: 800; color: var(--accent);">$<%= (proposal.labourAnalysis.totalAnnualSavings || 0).toLocaleString() %></span>
             </div>
         </div>
         <% } %>
 
         <!-- Discount Banner -->
         <% if (proposal.discount && (proposal.discount.upfront || proposal.discount.annual || proposal.discount.percentage)) { %>
-        <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 10px; padding: 12px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+        <div style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 12px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
             <span style="font-size: 24px;">🏷️</span>
             <div>
-                <strong style="color: #92400e; font-size: 16px;"><%= proposal.discount.upfront && proposal.discount.annual ? proposal.discount.upfront + '%/' + proposal.discount.annual + '% Discount (Upfront/Annual)' : (proposal.discount.upfront ? proposal.discount.upfront + '% Upfront Discount' : (proposal.discount.annual ? proposal.discount.annual + '% Annual Discount' : proposal.discount.percentage + '% Discount')) %></strong>
-                <% if (proposal.discount.reason) { %><div style="color: #a16207; font-size: 13px;"><%= proposal.discount.reason %></div><% } %>
+                <strong style="color: #f59e0b; font-size: 16px;"><%= proposal.discount.upfront && proposal.discount.annual ? proposal.discount.upfront + '%/' + proposal.discount.annual + '% Discount (Upfront/Annual)' : (proposal.discount.upfront ? proposal.discount.upfront + '% Upfront Discount' : (proposal.discount.annual ? proposal.discount.annual + '% Annual Discount' : proposal.discount.percentage + '% Discount')) %></strong>
+                <% if (proposal.discount.reason) { %><div style="color: rgba(245,158,11,0.7); font-size: 13px;"><%= proposal.discount.reason %></div><% } %>
             </div>
         </div>
         <% } %>
@@ -236,29 +263,29 @@
                 const headerDiscounted = headerPreDiscount > 0 && Math.abs(headerPreDiscount - headerTotal) > 1;
                 %>
                 <% if (headerDiscounted) { %>
-                    <div class="fee-amount"><span style="text-decoration: line-through; color: #94a3b8; font-size: 0.7em;">$<%= headerPreDiscount.toLocaleString() %></span> $<%= headerTotal.toLocaleString() %></div>
+                    <div class="fee-amount"><span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.7em;">$<%= headerPreDiscount.toLocaleString() %></span> $<%= headerTotal.toLocaleString() %></div>
                 <% } else { %>
                     <div class="fee-amount">$<%= headerTotal.toLocaleString() %></div>
                 <% } %>
                 <div class="fee-desc" style="text-align: left; margin-top: 12px;">
                     <% if (proposal.upfrontFee && proposal.upfrontFee.breakdown) { %>
                         <% proposal.upfrontFee.breakdown.forEach(item => { %>
-                            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0;">
-                                <span><strong><%= item.phase %></strong> (<%= item.hours %>hrs)</span>
+                            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border-glass);">
+                                <span><strong style="color: var(--text-primary);"><%= item.phase %></strong> (<%= item.hours %>hrs)</span>
                                 <span>$<%= (item.hours * (proposal.upfrontFee.hourlyRate || 400)).toLocaleString() %></span>
                             </div>
-                            <div style="font-size: 0.8rem; color: #94a3b8; padding: 2px 0 6px;"><%= item.description %></div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); padding: 2px 0 6px;"><%= item.description %></div>
                         <% }) %>
                         <%
                         const upfrontPreDiscount = (proposal.upfrontFee.totalHours || 0) * (proposal.upfrontFee.hourlyRate || 400);
                         const upfrontHasDiscount = proposal.upfrontFee.originalTotal || (upfrontPreDiscount > 0 && Math.abs(upfrontPreDiscount - (proposal.upfrontFee.total || 0)) > 1);
                         %>
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0 0; font-weight: 700; border-top: 2px solid #667eea;">
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0 0; font-weight: 700; border-top: 1px solid var(--accent); color: var(--text-primary);">
                             <span>Total (<%= proposal.upfrontFee.totalHours || 0 %> hrs × $<%= (proposal.upfrontFee.hourlyRate || 400).toLocaleString() %>/hr)</span>
                             <span>$<%= upfrontPreDiscount.toLocaleString() %></span>
                         </div>
                         <% if (upfrontHasDiscount) { %>
-                        <div style="display: flex; justify-content: space-between; padding: 6px 0 0; font-weight: 800; color: #059669; font-size: 1.1em;">
+                        <div style="display: flex; justify-content: space-between; padding: 6px 0 0; font-weight: 800; color: var(--accent-secondary); font-size: 1.1em;">
                             <span>After Discount</span>
                             <span>$<%= (proposal.upfrontFee.total || 0).toLocaleString() %></span>
                         </div>
@@ -266,20 +293,20 @@
                     <% } %>
                 </div>
             </div>
-            <div class="fee-card highlight" style="border-color: #10b981;">
-                <div class="fee-label" style="color: #10b981;">2. Annual Fee</div>
+            <div class="fee-card highlight" style="border-color: rgba(0,212,170,0.3);">
+                <div class="fee-label" style="color: var(--accent-secondary);">2. Annual Fee</div>
                 <% if (proposal.annualFee && proposal.annualFee.originalTotal && proposal.annualFee.originalTotal !== proposal.annualFee.total) { %>
-                    <div class="fee-amount"><span style="text-decoration: line-through; color: #94a3b8; font-size: 0.7em;">$<%= proposal.annualFee.originalTotal.toLocaleString() %></span> $<%= (proposal.annualFee.total || 0).toLocaleString() %> <small>/yr</small></div>
+                    <div class="fee-amount"><span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.7em;">$<%= proposal.annualFee.originalTotal.toLocaleString() %></span> $<%= (proposal.annualFee.total || 0).toLocaleString() %> <small>/yr</small></div>
                 <% } else { %>
                     <div class="fee-amount">$<%= ((proposal.annualFee && proposal.annualFee.total) || proposal.annualMaintenance || 0).toLocaleString() %> <small>/yr</small></div>
                 <% } %>
                 <% if (proposal.annualFee) { %>
-                    <div style="font-size: 0.85rem; color: #64748b; margin: 8px 0;"><%= proposal.annualFee.calculation %></div>
-                    <div style="font-size: 0.9rem; color: #475569; background: #f0fdf4; padding: 8px 12px; border-radius: 6px; margin: 8px 0;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin: 8px 0;"><%= proposal.annualFee.calculation %></div>
+                    <div style="font-size: 0.9rem; color: var(--accent-secondary); background: rgba(0,212,170,0.08); padding: 8px 12px; border-radius: 10px; margin: 8px 0; border: 1px solid rgba(0,212,170,0.15);">
                         $<%= (proposal.annualFee.monthlyEquivalent || 0).toLocaleString() %>/month
                     </div>
                     <div class="fee-desc" style="text-align: left; margin-top: 8px;">
-                        <strong>Includes:</strong> <%= proposal.annualFee.includes %>
+                        <strong style="color: var(--text-primary);">Includes:</strong> <%= proposal.annualFee.includes %>
                     </div>
                 <% } %>
             </div>
@@ -347,7 +374,7 @@
         <!-- Assumptions & Exclusions -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div class="card">
-                <h3 style="margin-bottom: 12px;">📌 Assumptions</h3>
+                <h3 style="margin-bottom: 12px; color: var(--text-primary);">📌 Assumptions</h3>
                 <div class="tag-list">
                     <% (proposal.assumptions || []).forEach(a => { %>
                         <span class="tag"><%= a %></span>
@@ -355,7 +382,7 @@
                 </div>
             </div>
             <div class="card">
-                <h3 style="margin-bottom: 12px;">🚫 Exclusions</h3>
+                <h3 style="margin-bottom: 12px; color: var(--text-primary);">🚫 Exclusions</h3>
                 <div class="tag-list">
                     <% (proposal.exclusions || []).forEach(e => { %>
                         <span class="tag excl"><%= e %></span>
@@ -366,26 +393,26 @@
 
         <!-- Feedback Chat -->
         <div class="card">
-            <h3 style="margin-bottom: 16px;">💬 Proposal Feedback</h3>
-            <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 16px;">Add feedback below. When you regenerate, all feedback will be incorporated.</p>
+            <h3 style="margin-bottom: 16px; color: var(--text-primary);">💬 Proposal Feedback</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Add feedback below. When you regenerate, all feedback will be incorporated.</p>
             <div id="chatMessages" style="max-height: 400px; overflow-y: auto; margin-bottom: 16px;">
                 <% (proposal.chat || []).forEach(msg => { %>
-                    <div style="margin-bottom: 12px; padding: 10px 14px; border-radius: 8px; <%= msg.from === 'ai' ? 'background: #f0f4ff; border-left: 3px solid #667eea;' : 'background: #f8fafc; border-left: 3px solid #10b981;' %>">
-                        <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;"><%= msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from %> · <%= melb(msg.ts) %></div>
-                        <div style="font-size: 14px; color: #334155; white-space: pre-wrap;"><%= msg.text %></div>
+                    <div style="margin-bottom: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); <%= msg.from === 'ai' ? 'background: var(--accent-dim); border-left: 3px solid var(--accent);' : 'background: var(--bg-card); border-left: 3px solid var(--accent-secondary);' %>">
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;"><%= msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from %> · <%= melb(msg.ts) %></div>
+                        <div style="font-size: 14px; color: var(--text-secondary); white-space: pre-wrap;"><%= msg.text %></div>
                     </div>
                 <% }) %>
             </div>
             <div style="display: flex; gap: 8px;">
-                <input type="text" id="chatInput" placeholder="Add feedback on pricing, scope, assumptions..." style="flex: 1; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none;" />
-                <button id="chatSend" class="btn" style="background: #10b981;">Send</button>
+                <input type="text" id="chatInput" placeholder="Add feedback on pricing, scope, assumptions..." style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-glass); border-radius: var(--radius-pill); font-size: 14px; outline: none; background: var(--bg-card); color: var(--text-primary);" />
+                <button id="chatSend" class="btn" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,212,170,0.3);">Send</button>
             </div>
         </div>
 
-        <div class="card" style="text-align: center; color: #94a3b8; font-size: 0.85rem;">
+        <div class="card" style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">
             Valid until: <%= proposal.validUntil || '30 days from generation' %>
             &nbsp;·&nbsp; Proposal ID: <%= proposal.id %>
-            <div style="margin-top: 8px; font-weight: 600; color: #64748b;">All prices are in AUD and exclude GST.</div>
+            <div style="margin-top: 8px; font-weight: 600; color: var(--text-secondary);">All prices are in AUD and exclude GST.</div>
         </div>
     <% } %>
 </div>
@@ -419,9 +446,9 @@ if (chatInput && chatSend) {
             const container = document.getElementById('chatMessages');
             data.messages.forEach(msg => {
                 const div = document.createElement('div');
-                div.style.cssText = 'margin-bottom: 12px; padding: 10px 14px; border-radius: 8px; ' +
-                    (msg.from === 'ai' ? 'background: #f0f4ff; border-left: 3px solid #667eea;' : 'background: #f8fafc; border-left: 3px solid #10b981;');
-                div.innerHTML = `<div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">${msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from} · ${new Date(msg.ts).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })}</div><div style="font-size:14px;color:#334155;white-space:pre-wrap;">${msg.text}</div>`;
+                div.style.cssText = 'margin-bottom: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); ' +
+                    (msg.from === 'ai' ? 'background: rgba(17,153,250,0.12); border-left: 3px solid #1199fa;' : 'background: #0f1d32; border-left: 3px solid #00d4aa;');
+                div.innerHTML = `<div style="font-size:11px;color:rgba(240,244,248,0.4);margin-bottom:4px;">${msg.from === 'ai' ? '🤖 AI' : '👤 ' + msg.from} · ${new Date(msg.ts).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' })}</div><div style="font-size:14px;color:rgba(240,244,248,0.7);white-space:pre-wrap;">${msg.text}</div>`;
                 container.appendChild(div);
             });
             container.scrollTop = container.scrollHeight;
@@ -452,7 +479,7 @@ if (chatInput && chatSend) {
                 clearInterval(interval);
                 document.getElementById('genSpinner').textContent = '❌';
                 document.getElementById('genTitle').textContent = 'Generation Failed';
-                document.getElementById('genTitle').style.color = '#dc2626';
+                document.getElementById('genTitle').style.color = '#f87171';
                 document.getElementById('genMsg').textContent = data.error || 'Unknown error. Try again.';
                 document.getElementById('genBar').style.display = 'none';
             } else if (elapsed > 120) {

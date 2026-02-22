@@ -4,46 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile Settings - Morti Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-deep: #050d1a;
+            --bg-primary: #0a1628;
+            --bg-card: #0f1d32;
+            --bg-glass: rgba(15, 29, 50, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --accent: #1199fa;
+            --accent-glow: rgba(17, 153, 250, 0.4);
+            --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #00d4aa;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f0f4f8;
+            --text-secondary: rgba(240, 244, 248, 0.7);
+            --text-muted: rgba(240, 244, 248, 0.4);
+            --radius: 16px;
+            --radius-pill: 50px;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
-        
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+
+        .header {
+            background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass); color: var(--text-primary); padding: 16px 0;
+        }
         .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
-        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
-        .nav { display: flex; gap: 20px; align-items: center; }
-        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
-        .nav a:hover { background: rgba(255,255,255,0.2); }
-        .nav a.active { background: rgba(255,255,255,0.3); }
-        .user-name { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 6px; font-weight: 500; }
-        
-        .main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 200px); }
-        
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .card h2 { margin-bottom: 16px; color: #333; font-size: 24px; }
-        .card h3 { margin-bottom: 12px; color: #555; font-size: 18px; }
-        
-        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
-        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
-        .btn-success { background: #28a745; }
-        .btn-success:hover { background: #218838; }
-        .btn-secondary { background: #6c757d; }
-        .btn-secondary:hover { background: #545b62; }
-        
+        .logo { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-primary); }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .nav a { color: var(--text-secondary); text-decoration: none; padding: 8px 14px; border-radius: var(--radius-pill); transition: all 0.2s; font-weight: 500; font-size: 0.88rem; }
+        .nav a:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+        .nav a.active { color: var(--accent); background: var(--accent-dim); }
+        .user-name { background: rgba(255,255,255,0.06); padding: 8px 14px; border-radius: var(--radius-pill); font-weight: 500; font-size: 0.88rem; color: var(--text-secondary); border: 1px solid var(--border-glass); }
+
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; min-height: calc(100vh - 200px); }
+
+        .card {
+            background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass); border-radius: var(--radius);
+            padding: 24px; margin-bottom: 20px; transition: border-color 0.3s;
+        }
+        .card:hover { border-color: var(--border-glass-hover); }
+        .card h2 { margin-bottom: 16px; color: var(--text-primary); font-size: 1.3rem; font-weight: 700; }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem;
+            font-weight: 600; cursor: pointer; transition: all 0.3s; border: none;
+            color: #fff; text-decoration: none;
+        }
+        .btn { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn:hover { background: #2aa8ff; transform: translateY(-2px); box-shadow: 0 0 32px var(--accent-glow); }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0,212,170,0.3); }
+        .btn-success:hover { background: #00e6b8; box-shadow: 0 0 24px rgba(0,212,170,0.4); }
+        .btn-secondary { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); box-shadow: none; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: var(--border-glass-hover); box-shadow: none; }
+
         .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; }
-        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: border-color 0.2s; }
-        .form-control:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
-        
-        .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid; }
-        .alert-success { background: #d4edda; color: #155724; border-color: #28a745; }
-        .alert-error { background: #f8d7da; color: #721c24; border-color: #dc3545; }
-        
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-secondary); font-size: 0.85rem; }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border-glass); border-radius: 10px; font-size: 14px; transition: all 0.2s; background: var(--bg-card); color: var(--text-primary); }
+        .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+
+        .alert { padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid; }
+        .alert-success { background: rgba(0,212,170,0.1); color: var(--accent-secondary); border-color: rgba(0,212,170,0.2); }
+        .alert-error { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.2); }
+
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
-        .info-item { padding: 16px; background: #f8f9ff; border-radius: 8px; border-left: 4px solid #667eea; }
-        .info-label { font-size: 12px; text-transform: uppercase; color: #666; font-weight: 600; margin-bottom: 4px; }
-        .info-value { font-size: 16px; color: #333; font-weight: 500; }
-        
+        .info-item { padding: 16px; background: var(--bg-card); border-radius: 12px; border-left: 4px solid var(--accent); }
+        .info-label { font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; letter-spacing: 0.06em; }
+        .info-value { font-size: 16px; color: var(--text-primary); font-weight: 500; }
+
         @media (max-width: 768px) {
             .header-container { flex-direction: column; gap: 12px; text-align: center; }
             .nav { flex-wrap: wrap; justify-content: center; }
@@ -77,7 +112,7 @@
         <% if (message) { %>
             <div class="alert alert-success">✅ <%= message %></div>
         <% } %>
-        
+
         <% if (error) { %>
             <div class="alert alert-error">❌ <%= error %></div>
         <% } %>
@@ -110,10 +145,10 @@
                         </div>
                     </div>
                 </div>
-                
-                <div style="margin-top: 20px; padding: 16px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px;">
-                    <h4 style="color: #856404; margin-bottom: 8px;">💡 Profile Updates</h4>
-                    <p style="color: #856404; font-size: 14px;">
+
+                <div style="margin-top: 20px; padding: 16px; background: var(--accent-dim); border: 1px solid rgba(17,153,250,0.2); border-radius: 12px;">
+                    <h4 style="color: var(--accent); margin-bottom: 8px;">💡 Profile Updates</h4>
+                    <p style="color: var(--text-secondary); font-size: 14px;">
                         To update your name, email, or company information, please contact your administrator.
                     </p>
                 </div>
@@ -122,26 +157,26 @@
             <!-- Password Change -->
             <div class="card">
                 <h2>🔒 Change Password</h2>
-                <p style="color: #666; margin-bottom: 20px;">Update your account password for better security.</p>
-                
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Update your account password for better security.</p>
+
                 <form method="POST" action="/profile/password">
                     <div class="form-group">
                         <label for="currentPassword">Current Password</label>
                         <input type="password" id="currentPassword" name="currentPassword" class="form-control" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="newPassword">New Password</label>
                         <input type="password" id="newPassword" name="newPassword" class="form-control" required>
-                        <small style="color: #666;">Minimum 6 characters</small>
+                        <small style="color: var(--text-muted);">Minimum 6 characters</small>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="confirmPassword">Confirm New Password</label>
                         <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
                     </div>
-                    
-                    <div style="margin-top: 20px;">
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
                         <button type="submit" class="btn btn-success">🔒 Update Password</button>
                         <a href="<%= user.role === 'admin' ? '/admin' : '/dashboard' %>" class="btn btn-secondary">Cancel</a>
                     </div>
@@ -152,19 +187,19 @@
         <div class="card">
             <h2>🔐 Two-Factor Authentication</h2>
             <% if (user.mfa_secret) { %>
-                <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #d4edda; border-radius: 8px; border-left: 4px solid #28a745;">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: rgba(0,212,170,0.08); border-radius: 12px; border: 1px solid rgba(0,212,170,0.15);">
                     <span style="font-size: 24px;">✅</span>
                     <div>
-                        <strong style="color: #155724;">2FA is enabled</strong>
-                        <p style="color: #155724; font-size: 14px; margin-top: 4px;">Your account is protected with two-factor authentication.</p>
+                        <strong style="color: var(--accent-secondary);">2FA is enabled</strong>
+                        <p style="color: var(--accent-secondary); font-size: 14px; margin-top: 4px; opacity: 0.8;">Your account is protected with two-factor authentication.</p>
                     </div>
                 </div>
             <% } else { %>
-                <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: rgba(245,158,11,0.08); border-radius: 12px; border: 1px solid rgba(245,158,11,0.15); margin-bottom: 16px;">
                     <span style="font-size: 24px;">⚠️</span>
                     <div>
-                        <strong style="color: #856404;">2FA is not enabled</strong>
-                        <p style="color: #856404; font-size: 14px; margin-top: 4px;">Add an extra layer of security to your account.</p>
+                        <strong style="color: #f59e0b;">2FA is not enabled</strong>
+                        <p style="color: rgba(245,158,11,0.8); font-size: 14px; margin-top: 4px;">Add an extra layer of security to your account.</p>
                     </div>
                 </div>
                 <a href="/profile/mfa/setup" class="btn btn-success">🔐 Setup 2FA Now</a>
@@ -194,13 +229,13 @@
         document.querySelector('form').addEventListener('submit', function(e) {
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-            
+
             if (newPassword !== confirmPassword) {
                 e.preventDefault();
                 alert('New passwords do not match!');
                 return;
             }
-            
+
             if (newPassword.length < 6) {
                 e.preventDefault();
                 alert('New password must be at least 6 characters long!');

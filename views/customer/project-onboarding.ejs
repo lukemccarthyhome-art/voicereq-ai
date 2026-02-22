@@ -4,40 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %></title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        :root { --brand: #4f46e5; --brand-light: #6366f1; --text: #1e293b; --text-mid: #475569; --text-light: #64748b; --bg: #f8fafc; --card-bg: #ffffff; --border: #e2e8f0; --success: #10b981; --warning: #f59e0b; }
+        :root {
+            --bg-deep: #050d1a; --bg-primary: #0a1628; --bg-card: #0f1d32;
+            --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #00d4aa; --accent-purple: #8b5cf6;
+            --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4);
+            --radius: 16px; --radius-pill: 50px;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
-        .header { background: white; border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
-        .header h1 { font-size: 18px; font-weight: 600; }
-        .header a { color: var(--brand); text-decoration: none; font-size: 14px; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+
+        .header { background: rgba(5, 13, 26, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-glass); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 1.1rem; font-weight: 700; }
+        .header a { color: var(--accent); font-size: 0.88rem; }
+
         .container { max-width: 800px; margin: 24px auto; padding: 0 24px; }
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
-        .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
-        .card p { font-size: 14px; color: var(--text-mid); line-height: 1.6; margin-bottom: 12px; }
+
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; transition: border-color 0.3s; }
+        .card:hover { border-color: var(--border-glass-hover); }
+        .card h2 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); }
+        .card p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px; }
+
         .field-group { margin-bottom: 16px; }
-        .field-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-        .field-group .hint { font-size: 12px; color: var(--text-light); margin-bottom: 4px; }
-        .field-group input, .field-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; }
-        .field-group input:focus, .field-group textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
-        .field-group input.filled { border-color: var(--success); background: #f0fdf4; }
-        .badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; }
-        .badge-success { background: #d1fae5; color: #065f46; }
-        .badge-warning { background: #fef3c7; color: #78350f; }
-        .badge-info { background: #dbeafe; color: #1e40af; }
-        .svc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-        .svc-header h3 { font-size: 14px; font-weight: 600; }
-        .svc-header .critical { color: #dc2626; font-size: 11px; font-weight: 500; }
-        .btn { display: inline-block; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; text-decoration: none; }
-        .btn-primary { background: var(--brand); color: white; }
-        .btn-primary:hover { background: var(--brand-light); }
-        .btn-secondary { background: white; color: var(--text); border: 1px solid var(--border); }
+        .field-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+        .field-group .hint { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px; }
+        .field-group input, .field-group textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border-glass); border-radius: 10px; font-size: 0.88rem; font-family: 'Inter', sans-serif; background: rgba(5,13,26,0.6); color: var(--text-primary); transition: all 0.2s; }
+        .field-group input:focus, .field-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+        .field-group input::placeholder, .field-group textarea::placeholder { color: var(--text-muted); }
+        .field-group input.filled { border-color: var(--accent-secondary); background: rgba(0,212,170,0.06); }
+
+        .badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 600; }
+        .badge-success { background: rgba(0,212,170,0.12); color: var(--accent-secondary); border: 1px solid rgba(0,212,170,0.3); }
+        .badge-warning { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+        .badge-info { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(17,153,250,0.3); }
+
+        .svc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-glass); }
+        .svc-header h3 { font-size: 0.88rem; font-weight: 700; color: var(--text-primary); }
+        .svc-header .critical { color: #ef4444; font-size: 0.72rem; font-weight: 600; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; color: #fff; transition: all 0.3s; font-family: 'Inter', sans-serif; }
+        .btn-primary { background: var(--accent); box-shadow: 0 0 16px var(--accent-glow); }
+        .btn-primary:hover { background: #2aa8ff; transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: var(--text-secondary); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
         .actions { display: flex; gap: 12px; align-items: center; margin-top: 20px; }
-        .status-msg { font-size: 13px; color: var(--text-light); }
-        .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-        .progress-fill { height: 100%; background: var(--success); border-radius: 4px; transition: width 0.3s; }
-        .error-box { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 20px; }
+        .status-msg { font-size: 0.82rem; color: var(--text-muted); }
+        .progress-bar { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-secondary)); border-radius: 4px; transition: width 0.3s; box-shadow: 0 0 12px var(--accent-glow); }
+        .error-box { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 16px; border-radius: var(--radius); margin-bottom: 20px; font-size: 0.88rem; }
     </style>
 </head>
 <body>
@@ -54,11 +76,11 @@
         <div class="card">
             <p>To build your automation, we need a few credentials and configuration details. Your data is stored securely and only used for your project.</p>
             <div style="display:flex; gap:12px; align-items:center;">
-                <span>Status:</span>
+                <span style="font-size:0.88rem;">Status:</span>
                 <span class="badge <%= state.status === 'complete' ? 'badge-success' : state.status === 'in_progress' ? 'badge-warning' : 'badge-info' %>" id="statusBadge"><%= state.status === 'complete' ? '✅ Complete' : state.status === 'in_progress' ? '⏳ In Progress' : '📋 Not Started' %></span>
             </div>
             <div class="progress-bar" style="margin-top:12px;"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-            <div id="progressText" style="font-size:12px; color:var(--text-light);"></div>
+            <div id="progressText" style="font-size:0.78rem; color:var(--text-muted);"></div>
         </div>
 
         <form id="onboardingForm">
@@ -70,7 +92,7 @@
                     <div class="svc-header">
                         <h3><%= svc.service || 'Service' %></h3>
                         <% if (svc.critical) { %><span class="critical">Required</span><% } %>
-                        <% if (svc.setupGuide) { %><a href="<%= svc.setupGuide %>" target="_blank" style="font-size:12px; color:var(--brand); margin-left:auto;">Setup Guide ↗</a><% } %>
+                        <% if (svc.setupGuide) { %><a href="<%= svc.setupGuide %>" target="_blank" style="font-size:0.78rem; color:var(--accent); margin-left:auto;">Setup Guide ↗</a><% } %>
                     </div>
                     <% (svc.keys || []).forEach(key => { %>
                         <div class="field-group">
@@ -91,7 +113,7 @@
                 <p>Settings and preferences for how your automation should work.</p>
                 <% spec.configuration.forEach(q => { %>
                     <div class="field-group">
-                        <label><%= q.label || q.field %> <% if (q.required) { %><span style="color:#dc2626;">*</span><% } %></label>
+                        <label><%= q.label || q.field %> <% if (q.required) { %><span style="color:#ef4444;">*</span><% } %></label>
                         <% if (q.hint) { %><div class="hint"><%= q.hint %></div><% } %>
                         <input type="text" name="config__<%= q.field %>" placeholder="<%= q.placeholder || '' %>"
                                class="<%= state.configurationFilled.includes(q.field) ? 'filled' : '' %>"
@@ -104,7 +126,7 @@
             <div class="card">
                 <h2>📝 Notes</h2>
                 <p>Any additional context, preferences, or instructions for our team.</p>
-                <textarea name="notes" rows="4" placeholder="Anything else we should know..."><%= state.notes || '' %></textarea>
+                <textarea name="notes" rows="4" placeholder="Anything else we should know..." style="width:100%;padding:10px 14px;border:1px solid var(--border-glass);border-radius:10px;font-size:0.88rem;font-family:'Inter',sans-serif;background:rgba(5,13,26,0.6);color:var(--text-primary);"><%= state.notes || '' %></textarea>
             </div>
 
             <div class="actions">
@@ -183,7 +205,6 @@
         } catch (e) { msg.textContent = '❌ ' + e.message; }
     }
 
-    // Init progress
     document.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updateProgress));
     updateProgress();
     </script>

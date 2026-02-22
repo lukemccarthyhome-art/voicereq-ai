@@ -4,46 +4,109 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Morti Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-deep: #050d1a;
+            --bg-primary: #0a1628;
+            --bg-card: #0f1d32;
+            --bg-glass: rgba(15, 29, 50, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --accent: #1199fa;
+            --accent-glow: rgba(17, 153, 250, 0.4);
+            --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #00d4aa;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f0f4f8;
+            --text-secondary: rgba(240, 244, 248, 0.7);
+            --text-muted: rgba(240, 244, 248, 0.4);
+            --radius: 16px;
+            --radius-pill: 50px;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
-        
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
-        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
-        .nav { display: flex; gap: 20px; align-items: center; }
-        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
-        .nav a:hover { background: rgba(255,255,255,0.2); }
-        .nav a.active { background: rgba(255,255,255,0.3); }
-        .user-name { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 6px; font-weight: 500; }
-        
-        .main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 200px); }
-        
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        
-        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
-        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
-        .btn-success { background: #28a745; }
-        .btn-success:hover { background: #218838; }
-        
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+
+        /* Nav */
+        .header {
+            background: rgba(5, 13, 26, 0.8);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 16px 0;
+        }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+        .logo { font-size: 1.3rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .nav a { color: var(--text-muted); font-size: 0.88rem; padding: 8px 14px; border-radius: var(--radius-pill); transition: all 0.2s; font-weight: 500; }
+        .nav a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+        .nav a.active { color: var(--accent); background: var(--accent-dim); }
+        .user-name { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); padding: 8px 14px; border-radius: var(--radius-pill); font-weight: 500; font-size: 0.88rem; color: var(--text-secondary); }
+
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; min-height: calc(100vh - 200px); }
+
+        .card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: var(--border-glass-hover); }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem;
+            font-weight: 600; cursor: pointer; transition: all 0.3s; border: none;
+            color: #fff; letter-spacing: -0.01em;
+        }
+        .btn-primary { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn-primary:hover { background: #2aa8ff; transform: translateY(-2px); box-shadow: 0 0 32px var(--accent-glow); }
+        .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0, 212, 170, 0.3); }
+        .btn-success:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(0, 212, 170, 0.4); }
+
         .overview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-        .overview-card { background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .overview-card .count { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
-        .overview-card .label { font-size: 13px; color: #666; font-weight: 600; }
-        
+        .overview-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .overview-card:hover { border-color: var(--border-glass-hover); transform: translateY(-2px); }
+        .overview-card .count { font-size: 2rem; font-weight: 800; margin-bottom: 4px; }
+        .overview-card .label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+
         .stage-section { margin-bottom: 28px; }
-        .stage-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid #e0e0e0; }
-        .stage-header h3 { font-size: 16px; color: #333; }
-        .stage-badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; }
-        
-        .project-row { display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 10px; padding: 16px 20px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-decoration: none; color: inherit; transition: all 0.15s; }
-        .project-row:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); transform: translateY(-1px); }
-        .project-name { font-weight: 600; color: #333; font-size: 15px; }
-        .project-meta { font-size: 12px; color: #999; margin-top: 2px; }
-        
-        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .stage-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border-glass); }
+        .stage-header h3 { font-size: 1rem; color: var(--text-primary); font-weight: 600; }
+        .stage-badge {
+            padding: 4px 12px; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 700;
+        }
+
+        .project-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            padding: 16px 20px; margin-bottom: 8px;
+            text-decoration: none; color: inherit; transition: all 0.2s;
+        }
+        .project-row:hover { border-color: var(--border-glass-hover); transform: translateY(-1px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .project-name { font-weight: 600; color: var(--text-primary); font-size: 0.95rem; }
+        .project-meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
         .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
+        .empty-state h3 { color: var(--text-secondary); margin-bottom: 8px; }
 
         @media (max-width: 768px) {
             .header-container { flex-direction: column; gap: 12px; text-align: center; }
@@ -56,13 +119,13 @@
 <body>
     <div class="header">
         <div class="header-container">
-            <a href="/dashboard" class="logo">🎙️ Morti Projects</a>
+            <a href="/dashboard" class="logo">◆ Morti</a>
             <nav class="nav">
                 <a href="/dashboard" class="active">Dashboard</a>
                 <a href="/projects">My Projects</a>
                 <a href="/profile">Profile</a>
                 <div class="user-name">👤 <%= user.name %></div>
-                <a href="/logout">🚪 Logout</a>
+                <a href="/logout">Logout</a>
             </nav>
         </div>
     </div>
@@ -70,8 +133,8 @@
     <main class="main">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
             <div>
-                <h1>Welcome back, <%= user.name %> 👋</h1>
-                <p style="color: #666; margin-top: 4px;">Here's where your projects stand</p>
+                <h1 style="font-weight: 800; letter-spacing: -0.03em;">Welcome back, <%= user.name %> 👋</h1>
+                <p style="color: var(--text-muted); margin-top: 4px; font-weight: 300;">Here's where your projects stand</p>
             </div>
             <a href="/projects/new" class="btn btn-success">➕ New Project</a>
         </div>
@@ -83,35 +146,33 @@
             const inProgress = counts.new + counts.session;
             
             const stageConfig = {
-                approved: { icon: '✅', label: 'Approved', color: '#059669', bg: '#d1fae5', border: '#a7f3d0' },
-                proposal: { icon: '💰', label: 'Proposal Ready', color: '#7c3aed', bg: '#ede9fe', border: '#c4b5fd' },
-                design:   { icon: '📐', label: 'Design Ready', color: '#2563eb', bg: '#dbeafe', border: '#93c5fd' },
-                session:  { icon: '🎙️', label: 'In Session', color: '#d97706', bg: '#fef3c7', border: '#fcd34d' },
-                new:      { icon: '🆕', label: 'Getting Started', color: '#6b7280', bg: '#f3f4f6', border: '#d1d5db' }
+                approved: { icon: '✅', label: 'Approved', color: '#00d4aa', bg: 'rgba(0,212,170,0.12)', border: 'rgba(0,212,170,0.3)' },
+                proposal: { icon: '💰', label: 'Proposal Ready', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)' },
+                design:   { icon: '📐', label: 'Design Ready', color: '#1199fa', bg: 'rgba(17,153,250,0.12)', border: 'rgba(17,153,250,0.3)' },
+                session:  { icon: '🎙️', label: 'In Session', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
+                new:      { icon: '🆕', label: 'Getting Started', color: var(--text-muted), bg: 'rgba(255,255,255,0.06)', border: 'var(--border-glass)' }
             };
             %>
 
-            <!-- Overview counts -->
             <div class="overview-grid">
                 <div class="overview-card">
-                    <div class="count" style="color: #333;"><%= projects.length %></div>
+                    <div class="count" style="color: var(--text-primary);"><%= projects.length %></div>
                     <div class="label">Total Projects</div>
                 </div>
                 <div class="overview-card">
-                    <div class="count" style="color: #d97706;"><%= inProgress %></div>
+                    <div class="count" style="color: #f59e0b;"><%= inProgress %></div>
                     <div class="label">In Progress</div>
                 </div>
                 <div class="overview-card">
-                    <div class="count" style="color: #7c3aed;"><%= counts.proposal + counts.design %></div>
+                    <div class="count" style="color: #8b5cf6;"><%= counts.proposal + counts.design %></div>
                     <div class="label">Awaiting Review</div>
                 </div>
                 <div class="overview-card">
-                    <div class="count" style="color: #059669;"><%= counts.approved %></div>
+                    <div class="count" style="color: #00d4aa;"><%= counts.approved %></div>
                     <div class="label">Approved</div>
                 </div>
             </div>
 
-            <!-- Projects grouped by stage -->
             <% const stageOrder = ['approved', 'proposal', 'design', 'session', 'new'];
                stageOrder.forEach(stage => {
                  const stageProjects = projects.filter(p => p.stage === stage);
@@ -135,11 +196,11 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <% if (stage === 'proposal') { %>
-                                <span class="btn btn-sm" style="background: #7c3aed;">View Proposal</span>
+                                <span class="btn btn-sm" style="background: #8b5cf6; box-shadow: 0 0 12px rgba(139,92,246,0.3);">View Proposal</span>
                             <% } else if (stage === 'design') { %>
-                                <span class="btn btn-sm" style="background: #2563eb;">View Design</span>
+                                <span class="btn btn-sm" style="background: var(--accent); box-shadow: 0 0 12px var(--accent-glow);">View Design</span>
                             <% } else if (stage === 'approved') { %>
-                                <span class="btn btn-sm" style="background: #059669;">View Project</span>
+                                <span class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,212,170,0.3);">View Project</span>
                             <% } else { %>
                                 <span class="btn btn-sm btn-success"><%= (p.session_count || 0) > 0 ? '🎙️ Continue' : '🎙️ Start' %></span>
                             <% } %>
@@ -155,26 +216,26 @@
                     <span class="emoji">📋</span>
                     <h3>No projects yet</h3>
                     <p>Create your first project to start gathering requirements with voice AI</p>
-                    <a href="/projects/new" class="btn" style="margin-top: 16px;">🚀 Create Your First Project</a>
+                    <a href="/projects/new" class="btn btn-primary" style="margin-top: 16px;">🚀 Create Your First Project</a>
                 </div>
             </div>
         <% } %>
     </main>
 
 <!-- Feature Request Button & Modal -->
-<button onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:12px 20px;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(102,126,234,0.4);z-index:999;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">💡 Feature Request</button>
-<div id="featureModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:white;border-radius:12px;padding:28px;width:90%;max-width:500px;box-shadow:0 8px 30px rgba(0,0,0,0.2);">
+<button onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:var(--accent);color:white;border:none;padding:12px 24px;border-radius:var(--radius-pill);font-size:0.88rem;font-weight:600;cursor:pointer;box-shadow:0 0 20px var(--accent-glow);z-index:999;transition:all 0.3s;font-family:'Inter',sans-serif;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 32px rgba(17,153,250,0.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 0 20px rgba(17,153,250,0.4)'">💡 Feature Request</button>
+<div id="featureModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+  <div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius);padding:28px;width:90%;max-width:500px;box-shadow:0 16px 48px rgba(0,0,0,0.4);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="color:#333;">💡 Submit a Feature Request</h3>
-      <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button>
+      <h3 style="color:var(--text-primary);font-weight:700;">💡 Submit a Feature Request</h3>
+      <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);">&times;</button>
     </div>
-    <textarea id="featureText" rows="5" placeholder="Describe the feature you'd like to see..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+    <textarea id="featureText" rows="5" placeholder="Describe the feature you'd like to see..." style="width:100%;padding:12px;border:1px solid var(--border-glass);border-radius:12px;font-size:0.88rem;font-family:'Inter',sans-serif;resize:vertical;background:rgba(5,13,26,0.6);color:var(--text-primary);"></textarea>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
-      <button onclick="document.getElementById('featureModal').style.display='none'" style="padding:10px 20px;border:1px solid #ddd;border-radius:8px;background:white;cursor:pointer;font-size:14px;">Cancel</button>
-      <button onclick="submitFeature()" style="padding:10px 20px;border:none;border-radius:8px;background:#667eea;color:white;cursor:pointer;font-weight:600;font-size:14px;">Submit</button>
+      <button onclick="document.getElementById('featureModal').style.display='none'" style="padding:10px 24px;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:transparent;cursor:pointer;font-size:0.88rem;color:var(--text-secondary);font-family:'Inter',sans-serif;">Cancel</button>
+      <button onclick="submitFeature()" style="padding:10px 24px;border:none;border-radius:var(--radius-pill);background:var(--accent);color:white;cursor:pointer;font-weight:600;font-size:0.88rem;box-shadow:0 0 16px var(--accent-glow);font-family:'Inter',sans-serif;">Submit</button>
     </div>
-    <div id="featureStatus" style="margin-top:8px;font-size:13px;"></div>
+    <div id="featureStatus" style="margin-top:8px;font-size:0.82rem;"></div>
   </div>
 </div>
 <script>
@@ -182,14 +243,14 @@ async function submitFeature(){
   const text=document.getElementById('featureText').value.trim();
   if(!text)return;
   const st=document.getElementById('featureStatus');
-  st.innerHTML='Submitting...';st.style.color='#666';
+  st.innerHTML='Submitting...';st.style.color='var(--text-muted)';
   try{
     const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'dashboard'})});
     if(!r.ok)throw new Error('Failed');
-    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#28a745';
+    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#00d4aa';
     document.getElementById('featureText').value='';
     setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
-  }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#dc3545';}
+  }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}
 }
 </script>
 </body>

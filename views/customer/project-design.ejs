@@ -4,66 +4,83 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %> - Morti Projects</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-deep: #050d1a; --bg-primary: #0a1628; --bg-card: #0f1d32;
+      --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
+      --border-glass-hover: rgba(255, 255, 255, 0.15);
+      --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12);
+      --accent-secondary: #00d4aa; --accent-purple: #8b5cf6;
+      --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4);
+      --radius: 16px; --radius-pill: 50px;
+    }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f0f2f5; line-height:1.6; color:#0f172a; }
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:16px 0; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
-    .header-container { max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:0 20px; }
-    .logo { font-size:20px; font-weight:bold; display:flex; align-items:center; gap:8px; text-decoration:none; color:white; }
-    .nav { display:flex; gap:12px; align-items:center; }
-    .nav a { color:rgba(255,255,255,0.9); text-decoration:none; padding:8px 14px; border-radius:6px; transition:background 0.2s; font-weight:500; font-size:14px; }
-    .nav a:hover { background:rgba(255,255,255,0.2); }
-    .main { max-width:900px; margin:0 auto; padding:32px 20px; }
-    .breadcrumb { font-size:13px; color:#64748b; margin-bottom:20px; }
-    .breadcrumb a { color:#667eea; text-decoration:none; }
-    .badge { display:inline-block; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase; }
-    .badge-final { background:#d1fae5; color:#065f46; }
-    .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border:none; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer; transition:all 0.15s; text-decoration:none; }
-    .btn-primary { background:#667eea; color:white; }
-    .btn-sm { padding:6px 12px; font-size:12px; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height:1.6; -webkit-font-smoothing: antialiased; }
+    a { text-decoration: none; color: inherit; }
 
-    /* Section cards */
-    .section-card { background:#fff; border-radius:12px; padding:24px 28px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
-    .section-card h3 { font-size:16px; font-weight:700; color:#1e293b; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+    .header { background: rgba(5, 13, 26, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-glass); padding: 16px 0; }
+    .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+    .logo { font-size: 1.3rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+    .nav { display:flex; gap:8px; align-items:center; }
+    .nav a { color: var(--text-muted); font-size: 0.88rem; padding: 8px 14px; border-radius: var(--radius-pill); transition: all 0.2s; font-weight: 500; }
+    .nav a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+
+    .main { max-width:900px; margin:0 auto; padding:32px 24px; }
+    .breadcrumb { font-size:0.82rem; color:var(--text-muted); margin-bottom:20px; }
+    .breadcrumb a { color:var(--accent); }
+    .badge { display:inline-block; padding:4px 12px; border-radius:var(--radius-pill); font-size:0.72rem; font-weight:600; text-transform:uppercase; }
+    .badge-final { background:rgba(0,212,170,0.12); color:var(--accent-secondary); border: 1px solid rgba(0,212,170,0.3); }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:10px 24px; border:none; border-radius:var(--radius-pill); font-weight:600; font-size:0.88rem; cursor:pointer; transition:all 0.3s; color:#fff; font-family:'Inter',sans-serif; }
+    .btn-primary { background:var(--accent); box-shadow: 0 0 16px var(--accent-glow); }
+    .btn-sm { padding:6px 14px; font-size:0.78rem; }
+
+    .section-card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding:24px 28px; margin-bottom:16px; transition: border-color 0.3s; }
+    .section-card:hover { border-color: var(--border-glass-hover); }
+    .section-card h3 { font-size:1rem; font-weight:700; color:var(--text-primary); margin-bottom:14px; display:flex; align-items:center; gap:10px; }
     .section-card h3 .icon { font-size:20px; }
-    .section-body { font-size:14px; color:#334155; line-height:1.8; }
+    .section-body { font-size:0.88rem; color:var(--text-secondary); line-height:1.8; }
     .section-body p { margin-bottom:8px; }
-    .section-body strong { color:#0f172a; }
+    .section-body strong { color:var(--text-primary); }
 
-    /* Step Flow */
     .step-flow { display:flex; flex-direction:column; gap:0; position:relative; padding-left:44px; }
-    .step-flow::before { content:''; position:absolute; left:18px; top:24px; bottom:24px; width:2px; background:linear-gradient(to bottom, #667eea, #a78bfa); }
+    .step-flow::before { content:''; position:absolute; left:18px; top:24px; bottom:24px; width:2px; background:linear-gradient(to bottom, var(--accent), var(--accent-purple)); }
     .step-item { position:relative; padding:14px 0; }
-    .step-num { position:absolute; left:-44px; top:14px; width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #667eea, #4f46e5); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; box-shadow:0 2px 8px rgba(79,70,229,0.3); z-index:1; }
-    .step-title { font-weight:700; color:#1e293b; font-size:15px; margin-bottom:4px; }
-    .step-desc { color:#64748b; font-size:14px; line-height:1.6; }
+    .step-num { position:absolute; left:-44px; top:14px; width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--accent), var(--accent-purple)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.88rem; font-weight:700; box-shadow:0 0 16px var(--accent-glow); z-index:1; }
+    .step-title { font-weight:700; color:var(--text-primary); font-size:0.95rem; margin-bottom:4px; }
+    .step-desc { color:var(--text-muted); font-size:0.88rem; line-height:1.6; }
 
-    /* Questions */
-    .question-card { padding:14px 18px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0; margin-bottom:12px; }
-    .question-card .q-id { display:inline-block; background:#667eea; color:white; width:26px; height:26px; border-radius:50%; text-align:center; line-height:26px; font-size:12px; font-weight:700; margin-right:10px; }
-    .question-card .q-text { font-weight:600; color:#0f172a; font-size:14px; }
-    .question-card .q-assumption { font-size:12px; color:#64748b; margin-top:4px; font-style:italic; }
-    .question-card .q-answer { margin-top:8px; padding:8px 12px; background:#d1fae5; border-radius:6px; color:#065f46; font-size:13px; }
+    .question-card { padding:14px 18px; border-radius:12px; background:var(--bg-card); border:1px solid var(--border-glass); margin-bottom:12px; }
+    .question-card .q-id { display:inline-block; background:var(--accent); color:white; width:26px; height:26px; border-radius:50%; text-align:center; line-height:26px; font-size:0.78rem; font-weight:700; margin-right:10px; }
+    .question-card .q-text { font-weight:600; color:var(--text-primary); font-size:0.88rem; }
+    .question-card .q-assumption { font-size:0.78rem; color:var(--text-muted); margin-top:4px; font-style:italic; }
+    .question-card .q-answer { margin-top:8px; padding:8px 12px; background:rgba(0,212,170,0.1); border-radius:8px; color:var(--accent-secondary); font-size:0.82rem; }
     .answer-form { display:flex; gap:8px; margin-top:10px; }
-    .answer-form input[type="text"] { flex:1; padding:10px 14px; border:1px solid #dbeafe; border-radius:8px; font-size:14px; }
+    .answer-form input[type="text"] { flex:1; padding:10px 14px; border:1px solid var(--border-glass); border-radius:10px; font-size:0.88rem; background:rgba(5,13,26,0.6); color:var(--text-primary); font-family:'Inter',sans-serif; }
+    .answer-form input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
 
-    /* Old format grid */
     .design-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
-    .design-item { padding:16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; }
-    .design-item h4 { font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:#667eea; margin-bottom:6px; }
+    .design-item { padding:16px; border-radius:12px; background:var(--bg-card); border:1px solid var(--border-glass); }
+    .design-item h4 { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent); margin-bottom:6px; font-weight:600; }
     .full-width { grid-column: 1 / -1; }
-    @media (max-width:768px) { .design-grid { grid-template-columns:1fr; } }
+    @media (max-width:768px) {
+      .design-grid { grid-template-columns:1fr; }
+      .header-container { flex-direction: column; gap: 12px; }
+      .nav { flex-wrap: wrap; justify-content: center; }
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="header-container">
-      <a href="/dashboard" class="logo">🎙️ Morti Projects</a>
+      <a href="/dashboard" class="logo">◆ Morti</a>
       <nav class="nav">
         <a href="/dashboard">Dashboard</a>
         <a href="/projects">My Projects</a>
         <a href="/profile">Profile</a>
-        <a href="/logout">🚪 Logout</a>
+        <a href="/logout">Logout</a>
       </nav>
     </div>
   </div>
@@ -76,18 +93,17 @@
     <%
       const hasNewFormat = !!(design.customerDesign || design.engineDesign);
       const customerDesign = design.customerDesign || null;
-      // Fallback for old format
       let designSections = design.sections || null;
       let designSummary = design.summary || '';
     %>
 
     <!-- Approval Banner -->
     <% if (design.approvedAt) { %>
-    <div style="padding:14px 18px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+    <div style="padding:14px 18px;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.3);border-radius:var(--radius);margin-bottom:16px;display:flex;align-items:center;gap:10px;">
       <span style="font-size:22px;">✅</span>
       <div>
-        <strong style="color:#065f46;">Design Approved</strong>
-        <span style="font-size:13px;color:#047857;"> — by <%= design.approvedBy %> on <%= melb(design.approvedAt) %></span>
+        <strong style="color:var(--accent-secondary);">Design Approved</strong>
+        <span style="font-size:0.82rem;color:var(--text-secondary);"> — by <%= design.approvedBy %> on <%= melb(design.approvedAt) %></span>
       </div>
     </div>
     <% } %>
@@ -95,8 +111,8 @@
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
       <div>
-        <h1 style="font-size:22px;color:#1e293b;margin-bottom:4px;">📐 <%= project.name %> — Solution Design</h1>
-        <div style="font-size:13px;color:#64748b;">
+        <h1 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:4px;">📐 <%= project.name %> — Solution Design</h1>
+        <div style="font-size:0.82rem;color:var(--text-muted);">
           Published <%= design.publishedAt ? melb(design.publishedAt) : '' %>
           <% if (design.version) { %> · v<%= design.version %><% } %>
         </div>
@@ -105,14 +121,13 @@
         <span class="badge badge-final">Published</span>
         <% if (!design.approvedAt) { %>
         <form method="POST" action="/customer/projects/<%= encodeId(projectId) %>/design/approve" onsubmit="return confirm('Approve this design? This confirms you are happy with the proposed solution.');" style="margin:0;">
-          <button type="submit" class="btn btn-primary" style="background:#10b981;">✅ Approve Design</button>
+          <button type="submit" class="btn" style="background:var(--accent-secondary);box-shadow:0 0 16px rgba(0,212,170,0.3);">✅ Approve Design</button>
         </form>
         <% } %>
       </div>
     </div>
 
     <% if (hasNewFormat && customerDesign) { %>
-      <!-- NEW FORMAT: Customer-facing sections only -->
       <%
         const custSections = [
           { key: 'ExecutiveSummary', label: 'Executive Summary', icon: '📋' },
@@ -148,9 +163,8 @@
       <% }) %>
 
     <% } else if (designSections) { %>
-      <!-- OLD FORMAT: All sections -->
       <% if (designSummary) { %>
-        <div style="padding:14px 18px;background:#eef2ff;border-radius:10px;font-size:14px;color:#3730a3;margin-bottom:16px;">
+        <div style="padding:14px 18px;background:var(--accent-dim);border:1px solid rgba(17,153,250,0.2);border-radius:12px;font-size:0.88rem;color:var(--accent);margin-bottom:16px;">
           <strong>Summary:</strong> <%= designSummary %>
         </div>
       <% } %>
@@ -174,7 +188,7 @@
         <% }) %>
       </div>
     <% } else { %>
-      <div style="text-align:center;padding:40px;color:#94a3b8;"><%- design.designHtml || '<p>No design content available.</p>' %></div>
+      <div style="text-align:center;padding:40px;color:var(--text-muted);"><%- design.designHtml || '<p>No design content available.</p>' %></div>
     <% } %>
 
     <!-- Flowchart -->
@@ -194,7 +208,7 @@
         });
       %>
       <% if (customerQuestions.length === 0) { %>
-        <div style="text-align:center;padding:24px;color:#94a3b8;font-size:14px;">No questions assigned to you at this time.</div>
+        <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:0.88rem;">No questions assigned to you at this time.</div>
       <% } else { %>
         <% customerQuestions.forEach(function(q, i) { %>
           <%
@@ -212,7 +226,7 @@
               <div class="q-assumption">💡 <%= qAssumption %></div>
             <% } %>
             <% if (custAnswered) { %>
-              <div class="q-answer">✅ <strong>Your answer:</strong> <%= custAnswered.answer %> <span style="font-size:11px;color:#6b7280">— <%= melb(custAnswered.ts) %></span></div>
+              <div class="q-answer">✅ <strong>Your answer:</strong> <%= custAnswered.answer %> <span style="font-size:0.72rem;color:var(--text-muted)">— <%= melb(custAnswered.ts) %></span></div>
             <% } else { %>
               <form method="POST" action="/customer/projects/<%= encodeId(projectId) %>/design/answer" class="answer-form">
                 <input type="hidden" name="designId" value="<%= design.id %>" />
@@ -230,9 +244,8 @@
   <% if (design.flowchart || (hasNewFormat && customerDesign && customerDesign.HowItWorks)) { %>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>
-    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
 
-    // HowItWorks step flow
     <% if (hasNewFormat && customerDesign && customerDesign.HowItWorks) { %>
     (function() {
       const text = `<%- (customerDesign.HowItWorks || '').replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`;

@@ -4,48 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Projects - Morti Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-deep: #050d1a; --bg-primary: #0a1628; --bg-card: #0f1d32;
+            --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --accent: #1199fa; --accent-glow: rgba(17, 153, 250, 0.4); --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #00d4aa; --accent-purple: #8b5cf6;
+            --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7); --text-muted: rgba(240, 244, 248, 0.4);
+            --radius: 16px; --radius-pill: 50px;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; line-height: 1.6; }
-        
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
-        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
-        .nav { display: flex; gap: 20px; align-items: center; }
-        .nav a { color: rgba(255,255,255,0.9); text-decoration: none; padding: 8px 14px; border-radius: 6px; transition: background 0.2s; font-weight: 500; }
-        .nav a:hover { background: rgba(255,255,255,0.2); }
-        .nav a.active { background: rgba(255,255,255,0.3); }
-        .user-name { background: rgba(255,255,255,0.2); padding: 8px 14px; border-radius: 6px; font-weight: 500; }
-        
-        .main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 200px); }
-        
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .card h2 { margin-bottom: 16px; color: #333; font-size: 24px; }
-        
-        .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; font-size: 14px; }
-        .btn:hover { background: #5a6fd8; transform: translateY(-1px); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
-        .btn-success { background: #28a745; }
-        .btn-success:hover { background: #218838; }
-        .btn-secondary { background: #6c757d; }
-        .btn-secondary:hover { background: #545b62; }
-        
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+
+        .header { background: rgba(5, 13, 26, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-glass); padding: 16px 0; }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+        .logo { font-size: 1.3rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .nav a { color: var(--text-muted); font-size: 0.88rem; padding: 8px 14px; border-radius: var(--radius-pill); transition: all 0.2s; font-weight: 500; }
+        .nav a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+        .nav a.active { color: var(--accent); background: var(--accent-dim); }
+        .user-name { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); padding: 8px 14px; border-radius: var(--radius-pill); font-weight: 500; font-size: 0.88rem; color: var(--text-secondary); }
+
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; min-height: calc(100vh - 200px); }
+
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+        .card:hover { border-color: var(--border-glass-hover); }
+        .card h2 { margin-bottom: 16px; color: var(--text-primary); font-size: 1.3rem; font-weight: 700; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; }
+        .btn-primary { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0, 212, 170, 0.3); }
+        .btn-secondary { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: var(--text-secondary); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); border-color: var(--border-glass-hover); }
+
         .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; }
-        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: border-color 0.2s; }
-        .form-control:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
-        
-        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-primary); font-size: 0.88rem; }
+        .form-control { width: 100%; padding: 12px 16px; border: 1px solid var(--border-glass); border-radius: 12px; font-size: 0.88rem; background: rgba(5,13,26,0.6); color: var(--text-primary); font-family: 'Inter', sans-serif; transition: all 0.2s; }
+        .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+        .form-control::placeholder { color: var(--text-muted); }
+
+        .project-card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; transition: all 0.3s; cursor: pointer; display: block; color: inherit; }
+        .project-card:hover { border-color: var(--border-glass-hover); box-shadow: 0 8px 32px rgba(0,0,0,0.2); transform: translateY(-2px); }
+
+        .status-badge { padding: 6px 16px; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 600; }
+        .status-active { background: rgba(0,212,170,0.12); color: #00d4aa; border: 1px solid rgba(0,212,170,0.3); }
+        .status-completed { background: rgba(17,153,250,0.12); color: #1199fa; border: 1px solid rgba(17,153,250,0.3); }
+        .status-archived { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
         .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
-        .empty-state h3 { margin-bottom: 8px; color: #666; }
-
-        .project-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s; cursor: pointer; text-decoration: none; display: block; color: inherit; }
-        .project-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: translateY(-2px); }
-
-        .status-badge { padding: 6px 16px; border-radius: 16px; font-size: 12px; font-weight: 600; }
-        .status-active { background: #d4edda; color: #155724; }
-        .status-completed { background: #d1ecf1; color: #0c5460; }
-        .status-archived { background: #f8d7da; color: #721c24; }
+        .empty-state h3 { margin-bottom: 8px; color: var(--text-secondary); }
 
         @media (max-width: 768px) {
             .header-container { flex-direction: column; gap: 12px; text-align: center; }
@@ -58,13 +72,13 @@
 <body>
     <div class="header">
         <div class="header-container">
-            <a href="/dashboard" class="logo">🎙️ Morti Projects</a>
+            <a href="/dashboard" class="logo">◆ Morti</a>
             <nav class="nav">
                 <a href="/dashboard">Dashboard</a>
                 <a href="/projects" class="active">My Projects</a>
                 <a href="/profile">Profile</a>
                 <div class="user-name">👤 <%= user.name %></div>
-                <a href="/logout">🚪 Logout</a>
+                <a href="/logout">Logout</a>
             </nav>
         </div>
     </div>
@@ -72,17 +86,17 @@
     <main class="main">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
             <div>
-                <h1>📋 My Projects</h1>
-                <p style="color: #666; margin-top: 8px;">Manage your requirements gathering projects</p>
+                <h1 style="font-weight: 800; letter-spacing: -0.03em;">📋 My Projects</h1>
+                <p style="color: var(--text-muted); margin-top: 8px; font-weight: 300;">Manage your requirements gathering projects</p>
             </div>
             <div style="display:flex;gap:12px;align-items:center;">
-                <a href="/projects/archived" style="color:#667eea;text-decoration:none;font-size:14px;">📦 View Archived</a>
+                <a href="/projects/archived" style="color:var(--accent);font-size:0.88rem;">📦 View Archived</a>
                 <a href="/projects/new" class="btn btn-success">➕ New Project</a>
             </div>
         </div>
 
         <% if (isNewProject) { %>
-        <div class="card" style="background: linear-gradient(135deg, #f8f9ff 0%, #e8eaff 100%); border: 2px solid #667eea; margin-bottom: 30px;">
+        <div class="card" style="border-color: rgba(17,153,250,0.3); margin-bottom: 30px;">
             <h2>🚀 Create New Project</h2>
             <form method="POST" action="/projects">
                 <div class="form-group">
@@ -107,16 +121,15 @@
                     <a href="/projects/<%= encodeId(project.id) %>" class="project-card">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                             <div style="flex: 1;">
-                                <h3 style="margin-bottom: 6px; color: #333;"><%= project.name %></h3>
+                                <h3 style="margin-bottom: 6px; color: var(--text-primary); font-weight: 700;"><%= project.name %></h3>
                                 <% if (project.description) { %>
-                                    <p style="color: #666; font-size: 14px; margin-bottom: 8px;"><%= project.description %></p>
+                                    <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 8px; font-weight: 300;"><%= project.description %></p>
                                 <% } %>
                             </div>
                             <span class="status-badge status-<%= project.status %>">● <%= project.status.charAt(0).toUpperCase() + project.status.slice(1) %></span>
                         </div>
-                        
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; gap: 20px; font-size: 13px; color: #666;">
+                            <div style="display: flex; gap: 20px; font-size: 0.82rem; color: var(--text-muted);">
                                 <span>💬 <%= project.session_count || 0 %> session<%= (project.session_count || 0) === 1 ? '' : 's' %></span>
                                 <span>📎 <%= project.file_count || 0 %> file<%= (project.file_count || 0) === 1 ? '' : 's' %></span>
                                 <span>📅 Updated <%= melbDate(project.updated_at) %></span>
@@ -145,26 +158,26 @@
 
         <% if (typeof sharedProjects !== 'undefined' && sharedProjects.length > 0) { %>
         <div style="margin-top: 32px;">
-            <h2 style="margin-bottom: 16px; color: #555;">🔗 Shared with me</h2>
+            <h2 style="margin-bottom: 16px; color: var(--text-secondary); font-weight: 700;">🔗 Shared with me</h2>
             <div style="display: grid; gap: 16px;">
                 <% sharedProjects.forEach(project => { %>
-                    <a href="/projects/<%= encodeId(project.id) %>" class="project-card" style="border-left: 3px solid #3b82f6;">
+                    <a href="/projects/<%= encodeId(project.id) %>" class="project-card" style="border-left: 3px solid var(--accent);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                             <div style="flex: 1;">
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                    <h3 style="color: #333; margin: 0;"><%= project.name %></h3>
-                                    <span style="background: <%= project.permission === 'admin' ? '#8b5cf6' : project.permission === 'user' ? '#3b82f6' : '#6b7280' %>; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;">
+                                    <h3 style="color: var(--text-primary); margin: 0; font-weight: 700;"><%= project.name %></h3>
+                                    <span style="background: <%= project.permission === 'admin' ? 'rgba(139,92,246,0.2)' : project.permission === 'user' ? 'rgba(17,153,250,0.2)' : 'rgba(255,255,255,0.06)' %>; color: <%= project.permission === 'admin' ? '#8b5cf6' : project.permission === 'user' ? '#1199fa' : 'var(--text-muted)' %>; padding: 2px 10px; border-radius: var(--radius-pill); font-size: 0.72rem; font-weight: 600;">
                                         <%= project.permission %>
                                     </span>
                                 </div>
                                 <% if (project.description) { %>
-                                    <p style="color: #666; font-size: 14px; margin-bottom: 4px;"><%= project.description %></p>
+                                    <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 4px; font-weight: 300;"><%= project.description %></p>
                                 <% } %>
-                                <div style="font-size: 12px; color: #888;">Shared by <%= project.owner_name %> (<%= project.owner_company %>)</div>
+                                <div style="font-size: 0.78rem; color: var(--text-muted);">Shared by <%= project.owner_name %> (<%= project.owner_company %>)</div>
                             </div>
                             <span class="status-badge status-<%= project.status || 'active' %>">● <%= (project.status || 'active').charAt(0).toUpperCase() + (project.status || 'active').slice(1) %></span>
                         </div>
-                        <div style="display: flex; gap: 20px; font-size: 13px; color: #666;">
+                        <div style="display: flex; gap: 20px; font-size: 0.82rem; color: var(--text-muted);">
                             <span>💬 <%= project.session_count || 0 %> sessions</span>
                             <span>📎 <%= project.file_count || 0 %> files</span>
                             <span>📅 Updated <%= melbDate(project.updated_at) %></span>
@@ -177,19 +190,19 @@
     </main>
 
 <!-- Feature Request Button & Modal -->
-<button onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:12px 20px;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(102,126,234,0.4);z-index:999;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">💡 Feature Request</button>
-<div id="featureModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:white;border-radius:12px;padding:28px;width:90%;max-width:500px;box-shadow:0 8px 30px rgba(0,0,0,0.2);">
+<button onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:var(--accent);color:white;border:none;padding:12px 24px;border-radius:var(--radius-pill);font-size:0.88rem;font-weight:600;cursor:pointer;box-shadow:0 0 20px var(--accent-glow);z-index:999;transition:all 0.3s;font-family:'Inter',sans-serif;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">💡 Feature Request</button>
+<div id="featureModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+  <div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius);padding:28px;width:90%;max-width:500px;box-shadow:0 16px 48px rgba(0,0,0,0.4);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="color:#333;">💡 Submit a Feature Request</h3>
-      <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button>
+      <h3 style="color:var(--text-primary);font-weight:700;">💡 Submit a Feature Request</h3>
+      <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);">&times;</button>
     </div>
-    <textarea id="featureText" rows="5" placeholder="Describe the feature you'd like to see..." style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+    <textarea id="featureText" rows="5" placeholder="Describe the feature you'd like to see..." style="width:100%;padding:12px;border:1px solid var(--border-glass);border-radius:12px;font-size:0.88rem;font-family:'Inter',sans-serif;resize:vertical;background:rgba(5,13,26,0.6);color:var(--text-primary);"></textarea>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
-      <button onclick="document.getElementById('featureModal').style.display='none'" style="padding:10px 20px;border:1px solid #ddd;border-radius:8px;background:white;cursor:pointer;font-size:14px;">Cancel</button>
-      <button onclick="submitFeature()" style="padding:10px 20px;border:none;border-radius:8px;background:#667eea;color:white;cursor:pointer;font-weight:600;font-size:14px;">Submit</button>
+      <button onclick="document.getElementById('featureModal').style.display='none'" style="padding:10px 24px;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:transparent;cursor:pointer;font-size:0.88rem;color:var(--text-secondary);font-family:'Inter',sans-serif;">Cancel</button>
+      <button onclick="submitFeature()" style="padding:10px 24px;border:none;border-radius:var(--radius-pill);background:var(--accent);color:white;cursor:pointer;font-weight:600;font-size:0.88rem;box-shadow:0 0 16px var(--accent-glow);font-family:'Inter',sans-serif;">Submit</button>
     </div>
-    <div id="featureStatus" style="margin-top:8px;font-size:13px;"></div>
+    <div id="featureStatus" style="margin-top:8px;font-size:0.82rem;"></div>
   </div>
 </div>
 <script>
@@ -197,14 +210,14 @@ async function submitFeature(){
   const text=document.getElementById('featureText').value.trim();
   if(!text)return;
   const st=document.getElementById('featureStatus');
-  st.innerHTML='Submitting...';st.style.color='#666';
+  st.innerHTML='Submitting...';st.style.color='var(--text-muted)';
   try{
     const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'projects'})});
     if(!r.ok)throw new Error('Failed');
-    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#28a745';
+    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#00d4aa';
     document.getElementById('featureText').value='';
     setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
-  }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#dc3545';}
+  }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}
 }
 </script>
 </body>
