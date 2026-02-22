@@ -4,85 +4,254 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login — Morti</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brand: #4f46e5; --brand-light: #6366f1; --brand-dark: #3730a3;
-            --accent: #10b981; --text: #1e293b; --text-mid: #475569; --text-light: #64748b;
-            --bg: #ffffff; --bg-alt: #f8fafc; --border: #e2e8f0;
+            --bg-deep: #050d1a;
+            --bg-primary: #0a1628;
+            --bg-card: #0f1d32;
+            --bg-glass: rgba(15, 29, 50, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --accent: #1199fa;
+            --accent-glow: rgba(17, 153, 250, 0.4);
+            --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #00d4aa;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f0f4f8;
+            --text-secondary: rgba(240, 244, 248, 0.7);
+            --text-muted: rgba(240, 244, 248, 0.4);
+            --radius: 16px;
+            --radius-pill: 50px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg-alt); min-height: 100vh; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary); background: var(--bg-deep);
+            overflow-x: hidden; font-weight: 400; min-height: 100vh; display: flex; flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
         a { text-decoration: none; color: inherit; }
 
-        .login-container { max-width: 440px; margin: 140px auto 60px; padding: 0 20px; }
-        .login-card { background: var(--bg); border-radius: 16px; padding: 48px 40px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); border: 1px solid var(--border); }
-        .login-card .logo { text-align: center; margin-bottom: 32px; }
-        .login-card .logo h1 { font-size: 1.5rem; color: var(--text); display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; }
-        .login-card .logo h1 span { color: var(--brand); }
-        .login-card .logo p { color: var(--text-light); margin-top: 8px; font-size: 0.9rem; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-mid); margin-bottom: 6px; }
-        .form-control {
-            width: 100%; padding: 12px 16px; border: 2px solid var(--border);
-            border-radius: 10px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.2s;
+        /* ========== NAV ========== */
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 40px;
+            background: rgba(5, 13, 26, 0.8);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass); transition: all 0.3s;
         }
-        .form-control:focus { outline: none; border-color: var(--brand); }
-        .btn-submit {
-            display: inline-block; padding: 14px 36px; border-radius: 10px;
-            font-weight: 600; font-size: 1rem; border: none; cursor: pointer;
-            background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(79,70,229,0.3);
-            transition: all 0.2s; width: 100%;
+        nav.scrolled { background: rgba(5, 13, 26, 0.95); }
+        .nav-brand { font-size: 1.3rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a.nav-text { font-size: 0.88rem; color: var(--text-muted); transition: color 0.2s; font-weight: 500; letter-spacing: 0.01em; }
+        .nav-links a.nav-text:hover { color: #fff; }
+        .nav-links a.nav-text.active { color: var(--accent); }
+        .nav-cta {
+            background: var(--accent); color: #fff; padding: 10px 28px;
+            border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600;
+            box-shadow: 0 0 16px var(--accent-glow); transition: all 0.3s;
         }
-        .btn-submit:hover { background: var(--brand-light); transform: translateY(-1px); }
-        .alert-error { background: #fff5f5; border: 2px solid #fed7d7; border-radius: 8px; padding: 12px 16px; color: #c53030; margin-bottom: 20px; font-size: 0.9rem; text-align: center; }
-        .login-footer { text-align: center; margin-top: 24px; color: var(--text-light); font-size: 0.9rem; }
-        .login-footer a { color: var(--brand); font-weight: 600; }
+        .nav-cta:hover { background: #2aa8ff; box-shadow: 0 0 24px var(--accent-glow); transform: translateY(-1px); }
+        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #fff; }
+        @media (max-width: 768px) {
+            nav { padding: 12px 20px; }
+            .hamburger { display: block; }
+            .nav-links {
+                display: none; flex-direction: column; position: absolute; top: 100%;
+                left: 0; right: 0; background: rgba(10, 22, 40, 0.98);
+                backdrop-filter: blur(20px); padding: 16px 20px; gap: 4px;
+                border-bottom: 1px solid var(--border-glass);
+            }
+            .nav-links.open { display: flex; }
+            .nav-links a.nav-text { padding: 12px 0; font-size: 1rem; }
+            .nav-cta { text-align: center; margin-top: 8px; display: block; }
+        }
 
-        footer { text-align: center; padding: 40px; color: var(--text-light); font-size: 0.85rem; border-top: 1px solid var(--border); }
-        footer a { color: var(--brand); }
+        /* ========== LOGIN LAYOUT ========== */
+        .login-section {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            padding: 140px 24px 80px; position: relative; overflow: hidden;
+        }
+        .login-section::before {
+            content: ''; position: absolute; width: 500px; height: 500px;
+            background: rgba(17, 153, 250, 0.08); border-radius: 50%;
+            filter: blur(100px); top: 10%; right: -10%; pointer-events: none;
+        }
+        .login-section::after {
+            content: ''; position: absolute; width: 400px; height: 400px;
+            background: rgba(139, 92, 246, 0.06); border-radius: 50%;
+            filter: blur(100px); bottom: 10%; left: -5%; pointer-events: none;
+        }
+        .login-inner {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+            max-width: 960px; width: 100%; align-items: center; position: relative; z-index: 1;
+        }
+        .login-hero h1 {
+            font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 900;
+            letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 20px;
+        }
+        .login-hero .gradient-text {
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .login-hero p { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.8; font-weight: 300; }
+        .login-card {
+            background: var(--bg-glass); border-radius: var(--radius); padding: 48px 40px;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        .login-card .logo { text-align: center; margin-bottom: 32px; }
+        .login-card .logo h1 { font-size: 1.5rem; color: var(--text-primary); display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; }
+        .login-card .logo h1 span { color: var(--accent); }
+        .login-card .logo p { color: var(--text-muted); margin-top: 8px; font-size: 0.9rem; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-control {
+            width: 100%; padding: 12px 16px; border: 1px solid var(--border-glass);
+            border-radius: 10px; font-size: 0.95rem; font-family: inherit; transition: all 0.25s;
+            background: rgba(5, 13, 26, 0.6); color: var(--text-primary);
+        }
+        .form-control::placeholder { color: var(--text-muted); }
+        .form-control:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .btn-submit {
+            display: inline-block; padding: 14px 36px; border-radius: var(--radius-pill);
+            font-weight: 600; font-size: 1rem; border: none; cursor: pointer;
+            background: var(--accent); color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow), 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s; width: 100%;
+        }
+        .btn-submit:hover { background: #2aa8ff; transform: translateY(-2px); box-shadow: 0 0 32px var(--accent-glow), 0 8px 24px rgba(0, 0, 0, 0.4); }
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px; padding: 12px 16px; color: #f87171; margin-bottom: 20px; font-size: 0.9rem; text-align: center;
+        }
+        .login-footer { text-align: center; margin-top: 24px; color: var(--text-muted); font-size: 0.9rem; }
+        .login-footer a { color: var(--accent); font-weight: 600; }
+
+        /* ========== FOOTER ========== */
+        .site-footer {
+            background: var(--bg-deep); color: var(--text-muted); padding: 72px 24px 40px;
+            border-top: 1px solid var(--border-glass);
+        }
+        .footer-grid {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px; max-width: 1000px; margin: 0 auto 48px;
+        }
+        .footer-brand { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 12px; }
+        .footer-brand-desc { font-size: 0.88rem; line-height: 1.8; color: var(--text-muted); max-width: 280px; }
+        .footer-col h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-muted); font-weight: 600; margin-bottom: 16px; }
+        .footer-col a { display: block; font-size: 0.88rem; color: var(--text-muted); padding: 5px 0; transition: color 0.2s; }
+        .footer-col a:hover { color: #fff; }
+        .footer-bottom {
+            text-align: center; padding-top: 32px; border-top: 1px solid var(--border-glass);
+            font-size: 0.82rem; color: var(--text-muted); max-width: 1000px; margin: 0 auto;
+        }
 
         @media (max-width: 768px) {
-            .login-container { margin-top: 80px; }
+            .login-inner { grid-template-columns: 1fr; gap: 40px; }
+            .login-hero { text-align: center; }
+            .login-section { padding: 100px 20px 60px; }
             .login-card { padding: 32px 24px; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
         }
+        @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; gap: 24px; } }
     </style>
 </head>
 <body>
 
-<%- include('partials/marketing-nav', { currentPage: 'login' }) %>
+<nav>
+    <a href="/" class="nav-brand">◆ Morti</a>
+    <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
+    <div class="nav-links">
+        <a href="/#products" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'products' ? ' active' : '' %>">What We Do</a>
+        <a href="/about" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'about' ? ' active' : '' %>">About</a>
+        <a href="/#pricing" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'pricing' ? ' active' : '' %>">Pricing</a>
+        <a href="/contact" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'contact' ? ' active' : '' %>">Contact</a>
+        <a href="/login" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'login' ? ' active' : '' %>">Login</a>
+        <a href="/signup" class="nav-cta">Get Started</a>
+    </div>
+</nav>
 
-<div class="login-container">
-    <div class="login-card">
-        <div class="logo">
-            <h1><span>◆</span> Morti</h1>
-            <p>Sign in to your account</p>
+<section class="login-section">
+    <div class="login-inner">
+        <div class="login-hero">
+            <h1>Welcome<br><span class="gradient-text">back.</span></h1>
+            <p>Sign in to manage your projects, track progress, and keep your automations running smoothly.</p>
         </div>
-
-        <% if (error) { %>
-            <div class="alert-error"><%= error %></div>
-        <% } %>
-
-        <form method="POST" action="/login">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" class="form-control" required value="<%= email || '' %>">
+        <div class="login-card">
+            <div class="logo">
+                <h1><span>◆</span> Morti</h1>
+                <p>Sign in to your account</p>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" class="form-control" required>
-            </div>
-            <button type="submit" class="btn-submit">Sign In</button>
-        </form>
 
-        <div class="login-footer">
-            Don't have an account? <a href="/signup">Sign up</a>
+            <% if (error) { %>
+                <div class="alert-error"><%= error %></div>
+            <% } %>
+
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" required value="<%= email || '' %>">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn-submit">Sign In</button>
+            </form>
+
+            <div class="login-footer">
+                Don't have an account? <a href="/signup">Sign up</a>
+            </div>
         </div>
     </div>
-</div>
+</section>
 
-<footer>
-    <p>&copy; <%= new Date().getFullYear() %> <a href="https://morti.com.au">Morti Pty Ltd</a> · Australia &nbsp;·&nbsp; <a href="/">Home</a> &nbsp;·&nbsp; <a href="/contact">Contact</a></p>
+<footer class="site-footer">
+    <div class="footer-grid">
+        <div>
+            <div class="footer-brand">◆ Morti</div>
+            <p class="footer-brand-desc">You talk, we build. AI-powered project delivery and managed automation for Australian small and medium businesses.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Product</h4>
+            <a href="/#how-it-works">How It Works</a>
+            <a href="/#pricing">Pricing</a>
+            <a href="/#products">Products</a>
+        </div>
+        <div class="footer-col">
+            <h4>Company</h4>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+            <a href="/signup">Get Started</a>
+            <a href="/login">Customer Login</a>
+        </div>
+        <div class="footer-col">
+            <h4>Contact</h4>
+            <a href="mailto:info@morti.com.au">Email Us</a>
+            <span style="display:block;font-size:0.88rem;padding:5px 0;">Australia</span>
+            <a href="https://morti.com.au">morti.com.au</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        &copy; <%= new Date().getFullYear() %> Morti Pty Ltd · ABN 15 687 741 797 · Australia
+    </div>
 </footer>
+
+<script>
+window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
+});
+</script>
 
 </body>
 </html>

@@ -240,6 +240,41 @@ app.use((req, res, next) => {
   res.locals.melb = melb;
   res.locals.melbDate = melbDate;
   res.locals.encodeId = encodeProjectId;
+  // renderText: convert plain text design content to safe HTML with formatting
+  res.locals.renderText = function(txt) {
+    if (!txt) return '';
+    let s = String(txt).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    s = s.replace(/\[ASSUMPTION\]/g,'<span style="background:#fef3c7;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;color:#92400e;">ASSUMPTION</span>');
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    const lines = s.split('\n');
+    let html = '', inOl = false, inUl = false;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) {
+        if (inUl) { html += '</ul>'; inUl = false; }
+        if (!inOl) html += '<div style="height:8px"></div>';
+        continue;
+      }
+      const numbered = line.match(/^(\d+)\.\s+(.+)/);
+      const bullet = line.match(/^[-•]\s+(.+)/);
+      if (numbered) {
+        if (inUl) { html += '</ul>'; inUl = false; }
+        if (!inOl) { html += '<ol style="margin:8px 0;padding:0;list-style:none;">'; inOl = true; }
+        html += '<li style="margin-bottom:10px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;list-style:none;"><span style="display:inline-block;background:#4f46e5;color:#fff;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;font-size:12px;font-weight:700;margin-right:10px;">' + numbered[1] + '</span>' + numbered[2] + '</li>';
+      } else if (bullet) {
+        if (inOl) { html += '</ol>'; inOl = false; }
+        if (!inUl) { html += '<ul style="margin:4px 0 4px 16px;padding:0;">'; inUl = true; }
+        html += '<li style="margin-bottom:3px;font-size:13px;color:#475569;">' + bullet[1] + '</li>';
+      } else {
+        if (inUl) { html += '</ul>'; inUl = false; }
+        if (inOl) { html += '</ol>'; inOl = false; }
+        html += '<p style="margin:0 0 4px 0;">' + line + '</p>';
+      }
+    }
+    if (inUl) html += '</ul>';
+    if (inOl) html += '</ol>';
+    return html;
+  };
   next();
 });
 
@@ -1104,25 +1139,30 @@ async function extractDesignAsync(projectId, user) {
     let designVersion = 1;
     let designStatus = 'draft';
     let designParsedSections = null;
+    let designParsedCustomerDesign = null;
+    let designParsedEngineDesign = null;
     let designSummary = '';
 
     const DESIGN_SECTIONS_SCHEMA = `{
   "summary": "3-5 sentence executive summary: what this system actually is, the core operating loop, what problem it solves, and what it is NOT.",
-  "design": {
-    "ExecutiveSummary": "Plain English explanation of what this system is. The core operating loop. What problem it solves and what it is not. Keep it commercially credible.",
-    "CoreWorkflow": "DETAILED step-by-step operational flow as a NUMBERED LIST. This is the most important section — be thorough and comprehensive. For EACH step include ALL of the following: (a) **Bold step name**, (b) Detailed description of what happens — inputs, processing, outputs, (c) WHY this step exists and what value it adds, (d) Where human control or review remains if applicable, (e) Data flow — what data comes in and what goes out, (f) Error handling — what happens if this step fails, (g) Specific tools/services used at this step, (h) Any business rules, conditions, or logic that apply. Do NOT summarise — expand fully. Each step should be a rich, self-contained specification. If a step has sub-steps, list them. There is NO length limit on this section — write as much detail as needed to fully specify the workflow.",
-    "SimplifiedArchitecture": "Architecture as a BULLETED LIST of components. For each: component name, specific tool/service recommended, rationale for choosing it, and how it connects to other components. End with a 'NOT required for MVP' list. Avoid microservices, enterprise cloud, advanced DevOps.",
-    "MinimalDataModel": "BULLETED LIST of entities. For each: **Entity Name** — all key fields with types/descriptions, relationships to other entities, purpose in the system. Include example values where helpful.",
-    "ManualVsAutomated": "TWO LISTS: 'Automated' and 'Remains Manual'. For each item: what it is, why it's in that category, and what happens if this decision changes later. Comment on strategic control and risk.",
-    "Assumptions": "BULLETED LIST of assumptions made in designing this MVP. For each: the assumption, why it was made, and what would change in the design if the assumption is wrong. Cover: user volume, budget, data sensitivity, platform compliance, operational maturity.",
-    "Dependencies": "BULLETED LIST of external dependencies. For each: name, what it's used for, version/tier if relevant, cost implications, and tag as (Critical) or (Optional). Include setup complexity notes.",
-    "Phase2Enhancements": "NUMBERED LIST of future enhancements — OUT OF SCOPE for MVP. Each item: what it is, what value it adds, rough effort to implement later, and any MVP decisions that would need revisiting. Make clear these are not required for launch.",
-    "RisksAndMitigations": "BULLETED LIST of realistic risks. For each: **Risk** — likelihood, impact, detailed mitigation strategy, and who is responsible. No theatrical or enterprise-only risks.",
-    "BuildEffortEstimate": "Complexity rating (Low/Medium/High), detailed timeline with phases and deliverables per phase, key dependencies between phases, recommended team composition. Be practical and specific.",
-    "CostBenefitAnalysis": "ROI analysis: current cost of the process being replaced (or human labour equivalent for new initiatives), expected value/savings the system delivers, simple payback calculation. If cost data was not provided in requirements, state this clearly and flag it as a required input before proposal generation.",
-    "TechnicalReadiness": "BULLETED LIST of the client's existing technical landscape relevant to this project. For each: tool/service name, how it connects to this project, credential/access status if mentioned. Include: current tools in use, data sources identified, integration points, technical constraints. If not discussed in requirements, state 'Not captured — probe during onboarding.'",
-    "TechnicalReference": "COMPREHENSIVE technical reference extracted from ALL sources — requirements conversation, uploaded documents, admin notes, and design chat feedback. This section is the build team's reference manual. Group by category and be EXHAUSTIVE. Include ALL of the following where mentioned: **Data & Fields** (exact field names, data types, formats, validation rules, example values), **APIs & Endpoints** (URLs, methods, auth requirements, request/response formats, rate limits), **Business Rules** (conditions, thresholds, logic flows, edge cases, exceptions), **Code & Patterns** (code snippets, regex patterns, naming conventions, ID formats), **URLs & Infrastructure** (domain structures, environment details, hosting specifics), **Compliance & Security** (regulatory requirements, data handling rules, access controls), **Integration Specifics** (webhook formats, callback URLs, polling intervals, retry logic), **Configuration** (environment variables, feature flags, default values). Quote directly from source material where possible. There is NO length limit — capture every technical detail available. If a category has no relevant details, omit it."
+  "customerDesign": {
+    "ExecutiveSummary": "Plain English explanation of what this system is. What problem it solves, for whom, and the core value proposition. 2-4 paragraphs max. Write for a business stakeholder, not an engineer.",
+    "HowItWorks": "Step-by-step operational flow from the USER'S perspective as a NUMBERED LIST. Each step: a short bold title, then 1-2 sentences describing what happens. Focus on what the user sees/does, not internal plumbing. Keep it to 4-8 steps max. Example format: 1. **Submit Request** — You upload your brief and the system extracts key requirements automatically.",
+    "WhatYouGet": "Concrete deliverables and outcomes as a BULLETED LIST. What the customer will actually receive — screens, dashboards, automations, reports, integrations. Be specific and tangible. Include any key metrics or KPIs the system will track.",
+    "WhatWeNeedFromYou": "BULLETED LIST of everything needed from the customer to proceed: access credentials, decisions to make, content to provide, approvals needed, stakeholder availability. Tag each as (Before Build), (During Build), or (Before Launch).",
+    "TimelineAndInvestment": "Phases with timeline and what gets delivered in each phase. Include complexity rating (Low/Medium/High) and rough effort estimate. Be practical and specific. If cost data was not provided, note this clearly.",
+    "AutomatedVsManual": "TWO LISTS: 'The System Handles' and 'You Still Control'. For each item: what it is and why it's in that category. Focus on the strategic value of what stays human (decisions, approvals, quality control) vs what gets automated (repetition, data entry, notifications)."
   },
+  "engineDesign": {
+    "TechnicalArchitecture": "Architecture as a BULLETED LIST of components. For each: component name, specific tool/service recommended, rationale, and how it connects to other components. Include hosting, deployment, and a 'NOT required for MVP' list. Avoid microservices and enterprise over-engineering.",
+    "DataModel": "BULLETED LIST of entities. For each: **Entity Name** — all key fields with types/descriptions, relationships to other entities, purpose in the system. Include example values where helpful.",
+    "IntegrationsAndAPIs": "COMPREHENSIVE list of all external services, APIs, webhooks needed. For each: service name, what it's used for, endpoint/auth details if known, cost tier, and tag as (Critical) or (Optional). Include: APIs & Endpoints (URLs, methods, auth, request/response formats, rate limits), Integration Specifics (webhook formats, callback URLs, polling intervals), Configuration (env vars, feature flags). Quote directly from source material where possible.",
+    "BuildSpecification": "DETAILED step-by-step build specification as a NUMBERED LIST. This is the engineering team's primary reference. For EACH step include: (a) **Bold step name**, (b) Detailed description — inputs, processing, outputs, (c) Data flow — what comes in and goes out, (d) Error handling — what happens if this step fails, (e) Specific tools/services used, (f) Business rules, conditions, and logic that apply, (g) Human control/review points if applicable. There is NO length limit — be exhaustive. Also include: assumptions made (mark with [ASSUMPTION]), dependencies between steps, and any technical details extracted from requirements (field names, data types, regex patterns, code snippets, URLs, compliance requirements).",
+    "RiskRegister": "BULLETED LIST of realistic risks. For each: **Risk** — likelihood, impact, detailed mitigation strategy, and who is responsible. Include technical risks, dependency risks, and timeline risks. No theatrical or enterprise-only risks."
+  },
+  "assets": [
+    {"id": "asset-1", "name": "Descriptive name", "type": "google-sheet | google-script | web-app | static-page | google-doc", "purpose": "What this asset is for and how it connects to the automation", "buildNotes": "Specific instructions for building — columns/structure for sheets, functionality for apps, content for docs", "linkedToSteps": [0, 1]}
+  ],
   "questions": [
     {"id": 1, "text": "Specific question about a gap or ambiguity", "assumption": "What we'll assume if unanswered"}
   ]
@@ -1130,6 +1170,7 @@ async function extractDesignAsync(projectId, user) {
 
     const DESIGN_RULES = `RULES:
 - You are a pragmatic product architect. The requirements may be verbose, repetitive, or over-engineered. Your job is to SYNTHESIZE them into a commercially credible MVP design.
+- The output has TWO audiences: customerDesign is for the business stakeholder (clear, non-technical, outcome-focused), engineDesign is for the build team (detailed, technical, exhaustive).
 - Extract the true business objective. Preserve critical strategic control points (human decisions, approval loops, segmentation logic).
 - Remove premature scaling, infrastructure complexity, and architectural over-design.
 - Focus on a system that can realistically be built by a small team in under 4 weeks.
@@ -1139,9 +1180,30 @@ async function extractDesignAsync(projectId, user) {
 - Reference the specific tools, platforms, and workflows mentioned in the conversation.
 - Where vague, make a reasonable assumption and mark it with [ASSUMPTION].
 
-TONE: Clear, pragmatic, commercially credible. Avoid hype. Avoid enterprise theatre. Prioritize clarity and decision rationale. Write as if this document will be reviewed by a founder or commercial stakeholder, not an infrastructure committee.
+TONE:
+- customerDesign: Friendly, clear, confident. Write for a founder or business owner. No jargon. Short sentences. Focus on outcomes and value.
+- engineDesign: Precise, detailed, technical. Write for a developer who needs to build this. Include every relevant detail.
 
-LENGTH: There is NO length limit on any section. Be as detailed as the content requires. CoreWorkflow and TechnicalReference in particular should be comprehensive — these are the sections the build team relies on most. Do not summarise where detail exists. Do not compress information to save space.
+LENGTH:
+- customerDesign sections should be CONCISE — the customer should be able to read the entire design in 5 minutes. HowItWorks should be 4-8 steps max.
+- engineDesign sections have NO length limit. BuildSpecification in particular should be comprehensive — this is what the build team relies on most.
+
+BUILD PLATFORM — MORTI ENGINE:
+- The Morti Engine builds automations using **Pipedream Connect** (primary) or **n8n** (self-hosted, for complex cases) as the orchestration layer.
+- **Pipedream Connect** (preferred): Managed auth via OAuth — customer connects their accounts (Google, OpenAI, Slack, etc.) and the engine invokes actions on their behalf. 2700+ app integrations. No credential sharing needed.
+- Pipedream workflows are deployed as step-by-step pipelines. Each step is deployed, tested with real data, and advanced individually.
+- **n8n** (alternative): Self-hosted on Railway for complex workflows needing custom code, self-hosted data, or integrations not on Pipedream. n8n Code nodes do NOT have fetch/require/import — HTTP calls must use HTTP Request node.
+- For each automation workflow, the engineDesign.BuildSpecification should describe steps as a pipeline: inputs, processing, outputs, and which app/API each step uses.
+- The TechnicalArchitecture section should specify: (a) primarily a Pipedream automation pipeline, (b) a web app with Pipedream automations supporting it, (c) an n8n workflow (self-hosted needs), or (d) a custom build.
+- Each customer gets isolated multi-tenant deployment via Pipedream external_user_id.
+
+ASSETS — REQUIRED RESOURCES:
+- Identify any assets that need to exist BEFORE or ALONGSIDE the automation pipeline. These are NOT automation steps — they are resources the automation depends on.
+- Asset types: google-sheet (tracking/data storage), google-script (Apps Script custom logic/web apps), web-app (frontend input pages, dashboards), static-page (landing pages, confirmation pages), google-doc (templates, documents).
+- For each asset, specify: a clear name, the type, what it's for (purpose), specific build instructions (buildNotes — e.g. column names for sheets, page functionality for web apps), and which pipeline steps use it (linkedToSteps by step number).
+- Examples of assets: "A Google Sheet to track blog draft status and approvals", "A simple voice input web page for capturing ideas", "A Google Doc template for client proposals".
+- If the project mentions spreadsheets, forms, dashboards, tracking, input pages, or templates — these are assets, not automation steps.
+- The customer will choose whether to provide an existing asset or have the engine build it.
 
 DESIGN PRINCIPLES:
 - Humans steer; systems automate repetition.
@@ -1200,7 +1262,7 @@ QUESTIONS RULES (REFRESH — STRICT):
 - If previous questions were answered satisfactorily, there should be ZERO new questions.
 
 PREVIOUS DESIGN (baseline — preserve, update where new info applies):
-${JSON.stringify(previousDesign.sections || {}, null, 2).substring(0, 20000)}
+${JSON.stringify({ customerDesign: previousDesign.customerDesign || null, engineDesign: previousDesign.engineDesign || null, sections: (!previousDesign.customerDesign && previousDesign.sections) ? previousDesign.sections : undefined }, null, 2).substring(0, 20000)}
 
 Previous Summary: ${previousDesign.summary || 'None'}
 
@@ -1296,45 +1358,69 @@ ${context}`;
             const jsonText = jsonStart >=0 ? cleanContent.slice(jsonStart) : cleanContent;
             const parsed = JSON.parse(jsonText);
             
-            // Store raw parsed design object for structured rendering
-            if (parsed.design && typeof parsed.design === 'object') {
-              // Flatten any nested objects to readable text
-              const flatDesign = {};
-              for (const [key, val] of Object.entries(parsed.design)) {
-                if (typeof val === 'string') {
-                  flatDesign[key] = val;
-                } else if (typeof val === 'object') {
-                  // Convert nested objects/arrays to readable bullet points
-                  const flatten = (obj, prefix = '') => {
-                    let out = '';
-                    if (Array.isArray(obj)) {
-                      obj.forEach((item, i) => {
-                        if (typeof item === 'object') out += flatten(item, `${i+1}. `);
-                        else out += `- ${item}\n`;
-                      });
-                    } else {
-                      for (const [k, v] of Object.entries(obj)) {
-                        if (typeof v === 'object') { out += `\n${prefix}${k}:\n${flatten(v, '  ')}`; }
-                        else { out += `${prefix}- ${k}: ${v}\n`; }
-                      }
-                    }
-                    return out;
-                  };
-                  flatDesign[key] = flatten(val);
-                } else {
-                  flatDesign[key] = String(val);
+            // Helper to flatten nested objects to text
+            const flattenObj = (obj, prefix = '') => {
+              let out = '';
+              if (Array.isArray(obj)) {
+                obj.forEach((item, i) => {
+                  if (typeof item === 'object') out += flattenObj(item, `${i+1}. `);
+                  else out += `- ${item}\n`;
+                });
+              } else if (typeof obj === 'object' && obj !== null) {
+                for (const [k, v] of Object.entries(obj)) {
+                  if (typeof v === 'object') { out += `\n${prefix}${k}:\n${flattenObj(v, '  ')}`; }
+                  else { out += `${prefix}- ${k}: ${v}\n`; }
                 }
               }
-              // Convert to markdown
+              return out;
+            };
+            const flattenSection = (val) => {
+              if (typeof val === 'string') return val;
+              if (typeof val === 'object') return flattenObj(val);
+              return String(val);
+            };
+
+            // Handle new split format (customerDesign + engineDesign)
+            let parsedCustomerDesign = null;
+            let parsedEngineDesign = null;
+            
+            if (parsed.customerDesign && typeof parsed.customerDesign === 'object') {
+              parsedCustomerDesign = {};
+              for (const [key, val] of Object.entries(parsed.customerDesign)) {
+                parsedCustomerDesign[key] = flattenSection(val);
+              }
+            }
+            if (parsed.engineDesign && typeof parsed.engineDesign === 'object') {
+              parsedEngineDesign = {};
+              for (const [key, val] of Object.entries(parsed.engineDesign)) {
+                parsedEngineDesign[key] = flattenSection(val);
+              }
+            }
+
+            // Also support old format (parsed.design) for backward compat
+            if (parsed.design && typeof parsed.design === 'object' && !parsedCustomerDesign) {
+              const flatDesign = {};
+              for (const [key, val] of Object.entries(parsed.design)) {
+                flatDesign[key] = flattenSection(val);
+              }
+              designParsedSections = flatDesign;
+            } else if (typeof parsed.design === 'string' && !parsedCustomerDesign) {
+              llmDesignMarkdown = parsed.design;
+            }
+
+            // Build combined sections for backward compat (merge customer + engine)
+            if (parsedCustomerDesign || parsedEngineDesign) {
+              designParsedSections = { ...(parsedCustomerDesign || {}), ...(parsedEngineDesign || {}) };
+            }
+
+            // Convert to markdown for designMarkdown field
+            if (designParsedSections) {
               let md = '';
-              for (const [section, body] of Object.entries(flatDesign)) {
+              for (const [section, body] of Object.entries(designParsedSections)) {
                 const title = section.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
                 md += `## ${title}\n\n${body}\n\n`;
               }
               llmDesignMarkdown = md;
-              designParsedSections = flatDesign;
-            } else if (typeof parsed.design === 'string') {
-              llmDesignMarkdown = parsed.design;
             }
             
             if (parsed.summary) {
@@ -1344,6 +1430,10 @@ ${context}`;
             if (parsed.questions && Array.isArray(parsed.questions)) {
               llmQuestions = parsed.questions;
             }
+            
+            // Store split designs for later use
+            if (parsedCustomerDesign) designParsedCustomerDesign = parsedCustomerDesign;
+            if (parsedEngineDesign) designParsedEngineDesign = parsedEngineDesign;
           } catch (e) {
             console.warn('JSON parse failed, using raw content:', e.message);
             // fallback: treat entire content as markdown
@@ -1437,6 +1527,8 @@ ${summarizeRequirements(reqText)}
       designMarkdown: llmDesignMarkdown,
       designHtml: mdToHtml(llmDesignMarkdown),
       sections: designParsedSections,
+      customerDesign: designParsedCustomerDesign,
+      engineDesign: designParsedEngineDesign,
       questions: llmQuestions,
       chat: [],
       answers: [],
@@ -1650,9 +1742,9 @@ app.post('/admin/projects/:id/design/flowchart', auth.authenticate, auth.require
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
     if (!OPENAI_KEY) return res.status(500).json({ error: 'OpenAI API key not configured' });
 
-    // Build context from sections
+    // Build context from sections (support both old and new format)
     const sections = design.sections || {};
-    const designContext = JSON.stringify({ summary: design.summary, sections }, null, 2);
+    const designContext = JSON.stringify({ summary: design.summary, customerDesign: design.customerDesign, engineDesign: design.engineDesign, sections }, null, 2);
 
     const prompt = `You are a systems architect creating a HIGH-LEVEL COMPONENT DIAGRAM as a Mermaid flowchart.
 
@@ -1759,7 +1851,7 @@ app.post('/admin/projects/:id/design/chat', auth.authenticate, auth.requireAdmin
     const OPENAI_KEY = process.env.OPENAI_API_KEY;
     if (OPENAI_KEY) {
       try {
-        const designContext = JSON.stringify({ summary: design.summary, sections: design.sections, questions: design.questions, answers: design.answers }, null, 2).substring(0, 10000);
+        const designContext = JSON.stringify({ summary: design.summary, customerDesign: design.customerDesign, engineDesign: design.engineDesign, sections: design.sections, questions: design.questions, answers: design.answers }, null, 2).substring(0, 10000);
         const chatHistory = (design.chat || []).slice(-10).map(c => ({
           role: c.from === 'AI Assistant' ? 'assistant' : 'user',
           content: c.text
@@ -2248,16 +2340,18 @@ app.post('/customer/projects/:id/onboarding', auth.authenticate, async (req, res
 async function generateProposalAsync(projectId, project, design, OPENAI_KEY, user, discount) {
   try {
     
-    // Build context
+    // Build context (support both old and new format)
     const sections = design.sections || {};
-    const costBenefit = sections.CostBenefitAnalysis || 'Not yet established';
-    const buildEffort = sections.BuildEffortEstimate || 'Not specified';
-    const executiveSummary = sections.ExecutiveSummary || design.summary || '';
-    const coreWorkflow = sections.CoreWorkflow || '';
-    const architecture = sections.SimplifiedArchitecture || '';
+    const cd = design.customerDesign || {};
+    const ed = design.engineDesign || {};
+    const costBenefit = sections.CostBenefitAnalysis || cd.TimelineAndInvestment || 'Not yet established';
+    const buildEffort = sections.BuildEffortEstimate || cd.TimelineAndInvestment || 'Not specified';
+    const executiveSummary = cd.ExecutiveSummary || sections.ExecutiveSummary || design.summary || '';
+    const coreWorkflow = cd.HowItWorks || sections.CoreWorkflow || '';
+    const architecture = ed.TechnicalArchitecture || sections.SimplifiedArchitecture || '';
     const assumptions = sections.Assumptions || '';
     const phase2 = sections.Phase2Enhancements || '';
-    const risks = sections.RisksAndMitigations || '';
+    const risks = ed.RiskRegister || sections.RisksAndMitigations || '';
     
     // Include customer answers and admin notes
     let extraContext = '';
@@ -2460,6 +2554,8 @@ app.post('/admin/projects/:id/send-to-engine', auth.authenticate, auth.requireAd
     const designPayload = design.sections || {};
     if (design.summary) designPayload.summary = design.summary;
     if (design.designMarkdown) designPayload.designMarkdown = design.designMarkdown;
+    if (design.customerDesign) designPayload.customerDesign = design.customerDesign;
+    if (design.engineDesign) designPayload.engineDesign = design.engineDesign;
 
     // Requirements from project record
     let requirements = {};

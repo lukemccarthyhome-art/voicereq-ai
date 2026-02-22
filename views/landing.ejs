@@ -198,6 +198,39 @@
         .hero-video {
             width: 100%; display: block; border-radius: 19px;
         }
+        /* Play button overlay */
+        .video-play-overlay {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 2; transition: opacity 0.4s;
+        }
+        .video-play-overlay.hidden { opacity: 0; pointer-events: none; }
+        .video-play-btn {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+        }
+        .video-play-btn::after {
+            content: ''; display: block;
+            width: 0; height: 0;
+            border-style: solid;
+            border-width: 12px 0 12px 22px;
+            border-color: transparent transparent transparent rgba(255, 255, 255, 0.9);
+            margin-left: 4px;
+        }
+        .video-play-overlay:hover .video-play-btn {
+            background: rgba(17, 153, 250, 0.25);
+            border-color: rgba(17, 153, 250, 0.4);
+            transform: scale(1.08);
+            box-shadow: 0 0 40px var(--accent-glow);
+        }
+        @media (max-width: 768px) {
+            .video-play-btn { width: 56px; height: 56px; }
+            .video-play-btn::after { border-width: 9px 0 9px 16px; margin-left: 3px; }
+        }
         .hero-buttons {
             display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
             animation: fadeUp 0.8s ease-out 0.35s both;
@@ -247,7 +280,7 @@
         .journey-icon-box {
             width: 100%; aspect-ratio: 4/3; border-radius: 20px; position: relative;
             display: flex; align-items: center; justify-content: center;
-            font-size: 5rem;
+            overflow: hidden;
             background: var(--bg-glass);
             backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border-glass);
@@ -259,6 +292,12 @@
             box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
             transform: translateY(-4px);
         }
+        .journey-icon-box img {
+            width: 70%; height: 70%; object-fit: contain;
+            filter: drop-shadow(0 8px 24px rgba(17, 153, 250, 0.15));
+            transition: transform 0.4s;
+        }
+        .journey-icon-box:hover img { transform: scale(1.06) translateY(-4px); }
         /* Coloured glow behind each icon box */
         .journey-step:nth-child(1) .journey-icon-box { box-shadow: 0 8px 40px rgba(17, 153, 250, 0.08); }
         .journey-step:nth-child(2) .journey-icon-box { box-shadow: 0 8px 40px rgba(139, 92, 246, 0.08); }
@@ -504,9 +543,12 @@
 
         <div class="hero-video-wrap">
             <div class="hero-video-container">
-                <video class="hero-video" controls playsinline preload="metadata" poster="/morti-poster.jpg">
+                <video class="hero-video" playsinline preload="metadata" poster="/morti-poster.jpg" id="hero-vid">
                     <source src="/morti.mp4" type="video/mp4">
                 </video>
+                <div class="video-play-overlay" id="play-overlay" onclick="playHeroVideo()">
+                    <div class="video-play-btn"></div>
+                </div>
             </div>
         </div>
 
@@ -531,7 +573,7 @@
                 <p>No forms. No templates. No jargon. Just have a conversation — tell Morti what you need, the way you'd tell a colleague over coffee. Voice, text, documents — however works for you.</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box">💬</div>
+                <div class="journey-icon-box"><img src="/images/journey/step1-talk.webp" alt="Conversation" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -546,7 +588,7 @@
                 <p>While you talk, Morti captures everything — goals, constraints, edge cases, integrations. Structured, organized, and complete. It even asks the follow-up questions your team would miss.</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box">📋</div>
+                <div class="journey-icon-box"><img src="/images/journey/step2-requirements.webp" alt="Requirements" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -561,7 +603,7 @@
                 <p>Components, data flows, integrations — all mapped out. A full solution architecture built from your conversation, ready for review. No guesswork, no hand-waving.</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box">📐</div>
+                <div class="journey-icon-box"><img src="/images/journey/step3-design.webp" alt="Architecture" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -576,7 +618,7 @@
                 <p>Pricing, timelines, deliverables — all in a polished proposal you can share with stakeholders, partners, or your team. No more "let me get back to you on that."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box">📄</div>
+                <div class="journey-icon-box"><img src="/images/journey/step4-proposal.webp" alt="Proposal" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -591,7 +633,7 @@
                 <p>Approve the design, and Morti builds it. Real workflows, real integrations, running on your own dedicated instance. Regular check-ins keep you in the loop.</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box">🔨</div>
+                <div class="journey-icon-box"><img src="/images/journey/step5-build.webp" alt="Build" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -606,7 +648,7 @@
                 <p>Your automation doesn't just launch and get forgotten. Ongoing monitoring, updates, and security patches keep everything running smoothly. You focus on your business.</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box">🛡️</div>
+                <div class="journey-icon-box"><img src="/images/journey/step6-maintain.webp" alt="Maintain" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -730,12 +772,12 @@
         <div class="footer-col">
             <h4>Contact</h4>
             <a href="mailto:info@morti.com.au">Email Us</a>
-            <a>Australia</a>
+            <span style="display:block;font-size:0.88rem;padding:5px 0;">Australia</span>
             <a href="https://morti.com.au">morti.com.au</a>
         </div>
     </div>
     <div class="footer-bottom">
-        &copy; <%= new Date().getFullYear() %> Morti Pty Ltd · ABN pending · Australia
+        &copy; <%= new Date().getFullYear() %> Morti Pty Ltd · ABN 15 687 741 797 · Australia
     </div>
 </footer>
 
@@ -755,6 +797,21 @@ window.addEventListener('scroll', () => {
     const nav = document.querySelector('nav');
     if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
     btt.classList.toggle('show', window.scrollY > 600);
+});
+
+// Hero video play overlay
+function playHeroVideo() {
+    const vid = document.getElementById('hero-vid');
+    const overlay = document.getElementById('play-overlay');
+    vid.controls = true;
+    vid.play();
+    overlay.classList.add('hidden');
+}
+document.getElementById('hero-vid').addEventListener('pause', () => {
+    document.getElementById('play-overlay').classList.remove('hidden');
+});
+document.getElementById('hero-vid').addEventListener('play', () => {
+    document.getElementById('play-overlay').classList.add('hidden');
 });
 </script>
 

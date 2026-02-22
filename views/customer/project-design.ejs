@@ -6,40 +6,53 @@
   <title><%= title %> - Morti Projects</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f0f2f5; line-height:1.6; color:#0f172a; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f0f2f5; line-height:1.6; color:#0f172a; }
     .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:16px 0; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
     .header-container { max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:0 20px; }
     .logo { font-size:20px; font-weight:bold; display:flex; align-items:center; gap:8px; text-decoration:none; color:white; }
     .nav { display:flex; gap:12px; align-items:center; }
     .nav a { color:rgba(255,255,255,0.9); text-decoration:none; padding:8px 14px; border-radius:6px; transition:background 0.2s; font-weight:500; font-size:14px; }
     .nav a:hover { background:rgba(255,255,255,0.2); }
-    .main { max-width:1100px; margin:0 auto; padding:24px 20px; }
-    .breadcrumb { font-size:13px; color:#64748b; margin-bottom:16px; }
+    .main { max-width:900px; margin:0 auto; padding:32px 20px; }
+    .breadcrumb { font-size:13px; color:#64748b; margin-bottom:20px; }
     .breadcrumb a { color:#667eea; text-decoration:none; }
-    .card { background:white; border-radius:12px; padding:24px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
     .badge { display:inline-block; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase; }
     .badge-final { background:#d1fae5; color:#065f46; }
-    .meta-row { display:flex; gap:24px; font-size:13px; color:#64748b; margin-bottom:4px; }
-    .design-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
-    .design-item { padding:16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; }
-    .design-item h4 { font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:#667eea; margin-bottom:6px; }
-    .design-item .section-body { font-size:13px; color:#475569; line-height:1.7; }
-    .full-width { grid-column: 1 / -1; }
     .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border:none; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer; transition:all 0.15s; text-decoration:none; }
     .btn-primary { background:#667eea; color:white; }
     .btn-sm { padding:6px 12px; font-size:12px; }
-    .question-card { padding:12px 16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; margin-bottom:10px; }
-    .question-card .q-id { display:inline-block; background:#667eea; color:white; width:24px; height:24px; border-radius:50%; text-align:center; line-height:24px; font-size:12px; font-weight:700; margin-right:8px; }
+
+    /* Section cards */
+    .section-card { background:#fff; border-radius:12px; padding:24px 28px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+    .section-card h3 { font-size:16px; font-weight:700; color:#1e293b; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+    .section-card h3 .icon { font-size:20px; }
+    .section-body { font-size:14px; color:#334155; line-height:1.8; }
+    .section-body p { margin-bottom:8px; }
+    .section-body strong { color:#0f172a; }
+
+    /* Step Flow */
+    .step-flow { display:flex; flex-direction:column; gap:0; position:relative; padding-left:44px; }
+    .step-flow::before { content:''; position:absolute; left:18px; top:24px; bottom:24px; width:2px; background:linear-gradient(to bottom, #667eea, #a78bfa); }
+    .step-item { position:relative; padding:14px 0; }
+    .step-num { position:absolute; left:-44px; top:14px; width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #667eea, #4f46e5); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; box-shadow:0 2px 8px rgba(79,70,229,0.3); z-index:1; }
+    .step-title { font-weight:700; color:#1e293b; font-size:15px; margin-bottom:4px; }
+    .step-desc { color:#64748b; font-size:14px; line-height:1.6; }
+
+    /* Questions */
+    .question-card { padding:14px 18px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0; margin-bottom:12px; }
+    .question-card .q-id { display:inline-block; background:#667eea; color:white; width:26px; height:26px; border-radius:50%; text-align:center; line-height:26px; font-size:12px; font-weight:700; margin-right:10px; }
     .question-card .q-text { font-weight:600; color:#0f172a; font-size:14px; }
     .question-card .q-assumption { font-size:12px; color:#64748b; margin-top:4px; font-style:italic; }
     .question-card .q-answer { margin-top:8px; padding:8px 12px; background:#d1fae5; border-radius:6px; color:#065f46; font-size:13px; }
-    .answer-form { display:flex; gap:8px; margin-top:8px; }
-    .answer-form input[type="text"] { flex:1; padding:8px 12px; border:1px solid #dbeafe; border-radius:6px; font-size:13px; }
+    .answer-form { display:flex; gap:8px; margin-top:10px; }
+    .answer-form input[type="text"] { flex:1; padding:10px 14px; border:1px solid #dbeafe; border-radius:8px; font-size:14px; }
+
+    /* Old format grid */
+    .design-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
+    .design-item { padding:16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; }
+    .design-item h4 { font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:#667eea; margin-bottom:6px; }
+    .full-width { grid-column: 1 / -1; }
     @media (max-width:768px) { .design-grid { grid-template-columns:1fr; } }
-    .cw-rollup-step { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; flex:1 1 calc(50% - 10px); min-width:260px; }
-    .cw-rollup-step .step-num { display:inline-block; background:#4f46e5; color:#fff; border-radius:50%; width:22px; height:22px; text-align:center; line-height:22px; font-size:12px; font-weight:600; margin-right:8px; }
-    .cw-rollup-step .step-title { font-weight:600; color:#1e293b; font-size:14px; }
-    .cw-rollup-step .step-desc { color:#64748b; font-size:13px; margin-top:4px; }
   </style>
 </head>
 <body>
@@ -61,128 +74,120 @@
     </div>
 
     <%
+      const hasNewFormat = !!(design.customerDesign || design.engineDesign);
+      const customerDesign = design.customerDesign || null;
+      // Fallback for old format
       let designSections = design.sections || null;
       let designSummary = design.summary || '';
     %>
 
-    <div class="card">
-      <% if (design.approvedAt) { %>
-      <div style="padding:12px 16px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:8px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:20px;">✅</span>
-        <div>
-          <strong style="color:#065f46;">Design Approved</strong>
-          <span style="font-size:13px;color:#047857;"> — by <%= design.approvedBy %> on <%= melb(design.approvedAt) %></span>
+    <!-- Approval Banner -->
+    <% if (design.approvedAt) { %>
+    <div style="padding:14px 18px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:22px;">✅</span>
+      <div>
+        <strong style="color:#065f46;">Design Approved</strong>
+        <span style="font-size:13px;color:#047857;"> — by <%= design.approvedBy %> on <%= melb(design.approvedAt) %></span>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div>
+        <h1 style="font-size:22px;color:#1e293b;margin-bottom:4px;">📐 <%= project.name %> — Solution Design</h1>
+        <div style="font-size:13px;color:#64748b;">
+          Published <%= design.publishedAt ? melb(design.publishedAt) : '' %>
+          <% if (design.version) { %> · v<%= design.version %><% } %>
         </div>
       </div>
-      <% } %>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="badge badge-final">Published</span>
+        <% if (!design.approvedAt) { %>
+        <form method="POST" action="/customer/projects/<%= encodeId(projectId) %>/design/approve" onsubmit="return confirm('Approve this design? This confirms you are happy with the proposed solution.');" style="margin:0;">
+          <button type="submit" class="btn btn-primary" style="background:#10b981;">✅ Approve Design</button>
+        </form>
+        <% } %>
+      </div>
+    </div>
 
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <div>
-          <h2>📐 <%= project.name %> — Solution Design</h2>
-          <div class="meta-row" style="margin-top:8px;">
-            <span>📅 Published <%= design.publishedAt ? melb(design.publishedAt) : '' %></span>
-            <% if (design.version) { %><span>v<%= design.version %></span><% } %>
+    <% if (hasNewFormat && customerDesign) { %>
+      <!-- NEW FORMAT: Customer-facing sections only -->
+      <%
+        const custSections = [
+          { key: 'ExecutiveSummary', label: 'Executive Summary', icon: '📋' },
+          { key: 'HowItWorks', label: 'How It Works', icon: '⚡' },
+          { key: 'WhatYouGet', label: 'What You Get', icon: '🎯' },
+          { key: 'WhatWeNeedFromYou', label: 'What We Need From You', icon: '🤝' },
+          { key: 'TimelineAndInvestment', label: 'Timeline & Investment', icon: '📅' },
+          { key: 'AutomatedVsManual', label: 'Automated vs Manual', icon: '🤖' }
+        ];
+        const custKeys = Object.keys(customerDesign);
+        const extraCustKeys = custKeys.filter(k => !custSections.find(s => s.key === k));
+      %>
+      <% custSections.forEach(sec => { %>
+        <% if (customerDesign[sec.key]) { %>
+          <div class="section-card">
+            <h3><span class="icon"><%= sec.icon %></span> <%= sec.label %></h3>
+            <% if (sec.key === 'HowItWorks') { %>
+              <div class="step-flow" id="howItWorksFlow"></div>
+              <noscript><div class="section-body"><%- renderText(customerDesign[sec.key]) %></div></noscript>
+            <% } else { %>
+              <div class="section-body"><%- renderText(customerDesign[sec.key]) %></div>
+            <% } %>
           </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="badge badge-final">Published</span>
-          <% if (!design.approvedAt) { %>
-          <form method="POST" action="/customer/projects/<%= encodeId(projectId) %>/design/approve" onsubmit="return confirm('Approve this design? This confirms you are happy with the proposed solution.');" style="margin:0;">
-            <button type="submit" class="btn btn-primary" style="background:#10b981;">✅ Approve Design</button>
-          </form>
-          <% } %>
-        </div>
-      </div>
+        <% } %>
+      <% }) %>
+      <% extraCustKeys.forEach(key => { %>
+        <% if (customerDesign[key]) { %>
+          <div class="section-card">
+            <h3><%= key.replace(/([A-Z])/g, ' $1').trim() %></h3>
+            <div class="section-body"><%- renderText(customerDesign[key]) %></div>
+          </div>
+        <% } %>
+      <% }) %>
 
+    <% } else if (designSections) { %>
+      <!-- OLD FORMAT: All sections -->
       <% if (designSummary) { %>
-        <div style="padding:12px 16px;background:#eef2ff;border-radius:8px;font-size:14px;color:#3730a3;margin-bottom:16px;">
+        <div style="padding:14px 18px;background:#eef2ff;border-radius:10px;font-size:14px;color:#3730a3;margin-bottom:16px;">
           <strong>Summary:</strong> <%= designSummary %>
         </div>
       <% } %>
-
-      <% if (designSections) { %>
-        <div class="design-grid">
-          <% const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate','CostBenefitAnalysis','TechnicalReadiness','TechnicalReference']; %>
-          <% const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements (Out of Scope)', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate', CostBenefitAnalysis:'Cost / Benefit Analysis', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' }; %>
-          <% const fullWidthSections = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Phase2Enhancements','TechnicalReference']; %>
-          <%
-            const allKeys = Object.keys(designSections);
-            const orderedKeys = sectionOrder.filter(k => designSections[k]);
-            const extraKeys = allKeys.filter(k => !sectionOrder.includes(k));
-            const renderKeys = orderedKeys.concat(extraKeys);
-          %>
-          <% renderKeys.forEach(key => { %>
-            <% if (key === 'CoreWorkflow' && designSections.CoreWorkflow) { %>
-              <div class="design-item full-width" id="coreWorkflowRollup">
-                <h4>📋 Workflow Overview <span style="font-size:12px;color:#94a3b8;font-weight:400;">(scroll down for full detail)</span></h4>
-                <div id="cwRollupContent" style="display:flex;flex-wrap:wrap;gap:10px;padding:8px 0;"></div>
-              </div>
-            <% } %>
-            <% if (designSections[key]) { %>
-              <div class="design-item <%= fullWidthSections.includes(key) ? 'full-width' : '' %>">
-                <h4><%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></h4>
-                <div class="section-body"><%- (function(txt) {
-                  let s = txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                  s = s.replace(/\[ASSUMPTION\]/g,'<span style="background:#fef3c7;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;color:#92400e;">ASSUMPTION</span>');
-                  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-                  const lines = s.split('\n');
-                  let html = '';
-                  let inOl = false;
-                  let inSub = false;
-                  for (let i = 0; i < lines.length; i++) {
-                    const raw = lines[i];
-                    const line = raw.trim();
-                    if (!line) {
-                      if (inSub) { html += '</ul>'; inSub = false; }
-                      if (!inOl) html += '<div style="height:8px"></div>';
-                      continue;
-                    }
-                    const numbered = line.match(/^(\d+)\.\s+(.+)/);
-                    const subItem = line.match(/^\(?([a-h])\)\s+(.+)/);
-                    const bullet = line.match(/^[-•]\s+(.+)/);
-                    const indented = raw.match(/^   +(.+)/);
-                    if (numbered) {
-                      if (inSub) { html += '</ul>'; inSub = false; }
-                      if (!inOl) { html += '<ol style="margin:8px 0 8px 0;padding:0;list-style:none;">'; inOl = true; }
-                      html += '<li style="margin-bottom:12px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;list-style:none;"><span style="display:inline-block;background:#4f46e5;color:#fff;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;font-size:12px;font-weight:700;margin-right:10px;">' + numbered[1] + '</span>' + numbered[2] + '</li>';
-                    } else if (subItem) {
-                      if (!inSub) { html += '<ul style="margin:6px 0 4px 36px;padding:0;list-style:none;">'; inSub = true; }
-                      html += '<li style="margin-bottom:4px;font-size:13px;color:#475569;"><span style="color:#6366f1;font-weight:600;margin-right:4px;">(' + subItem[1] + ')</span>' + subItem[2] + '</li>';
-                    } else if (bullet) {
-                      if (!inSub) { html += '<ul style="margin:4px 0 4px 36px;padding:0;">'; inSub = true; }
-                      html += '<li style="margin-bottom:3px;font-size:13px;color:#475569;">' + bullet[1] + '</li>';
-                    } else if (indented && inOl) {
-                      html += '<div style="margin:2px 0 2px 36px;font-size:13px;color:#475569;">' + line + '</div>';
-                    } else {
-                      if (inSub) { html += '</ul>'; inSub = false; }
-                      if (inOl) { html += '</ol>'; inOl = false; }
-                      html += '<p style="margin:0 0 4px 0;">' + line + '</p>';
-                    }
-                  }
-                  if (inSub) html += '</ul>';
-                  if (inOl) html += '</ol>';
-                  return html;
-                })(designSections[key]) %></div>
-              </div>
-            <% } %>
-          <% }) %>
-        </div>
-      <% } else { %>
-        <div><%- design.designHtml || '<p>No design content available.</p>' %></div>
-      <% } %>
-    </div>
+      <div class="design-grid">
+        <%
+          const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate','CostBenefitAnalysis','TechnicalReadiness','TechnicalReference'];
+          const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate', CostBenefitAnalysis:'Cost / Benefit Analysis', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' };
+          const fullWidthSections = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Phase2Enhancements','TechnicalReference'];
+          const allKeys = Object.keys(designSections);
+          const orderedKeys = sectionOrder.filter(k => designSections[k]);
+          const extraKeys = allKeys.filter(k => !sectionOrder.includes(k));
+          const renderKeys = orderedKeys.concat(extraKeys);
+        %>
+        <% renderKeys.forEach(key => { %>
+          <% if (designSections[key]) { %>
+            <div class="design-item <%= fullWidthSections.includes(key) ? 'full-width' : '' %>">
+              <h4><%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></h4>
+              <div class="section-body"><%- renderText(designSections[key]) %></div>
+            </div>
+          <% } %>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div style="text-align:center;padding:40px;color:#94a3b8;"><%- design.designHtml || '<p>No design content available.</p>' %></div>
+    <% } %>
 
     <!-- Flowchart -->
     <% if (design.flowchart) { %>
-    <div class="card">
-      <h3 style="margin-bottom:12px;">🗺️ System Architecture</h3>
+    <div class="section-card">
+      <h3><span class="icon">🗺️</span> System Architecture</h3>
       <div id="flowchartRender" style="min-height:100px;display:flex;align-items:center;justify-content:center;"></div>
     </div>
     <% } %>
 
     <!-- Customer Questions -->
-    <div class="card">
-      <h3 style="margin-bottom:12px;">❓ Questions for You</h3>
+    <div class="section-card">
+      <h3><span class="icon">❓</span> Questions for You</h3>
       <%
         const customerQuestions = (design.questions || []).filter(q => {
           return (typeof q === 'object' && q.assignedTo === 'customer');
@@ -221,40 +226,50 @@
       <% } %>
     </div>
   </main>
-  <% if (design.flowchart || design.coreWorkflowFlowchart) { %>
+
+  <% if (design.flowchart || (hasNewFormat && customerDesign && customerDesign.HowItWorks)) { %>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>
     mermaid.initialize({ startOnLoad: false, theme: 'default' });
-    <% if (designSections.CoreWorkflow) { %>
+
+    // HowItWorks step flow
+    <% if (hasNewFormat && customerDesign && customerDesign.HowItWorks) { %>
     (function() {
-      const cwText = `<%- (designSections.CoreWorkflow || '').replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`;
-      const container = document.getElementById('cwRollupContent');
-      if (!container || !cwText) return;
+      const text = `<%- (customerDesign.HowItWorks || '').replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`;
+      const container = document.getElementById('howItWorksFlow');
+      if (!container || !text) return;
+      const lines = text.split('\n');
       const steps = [];
-      const lines = cwText.split('\n');
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
-        const numbered = line.match(/^(\d+)\.\s+\*\*(.+?)\*\*(.*)$/);
-        if (numbered) {
-          const title = numbered[2].trim();
-          let desc = numbered[3].replace(/^\s*[-:—–]\s*/, '').trim();
+        const m = line.match(/^(\d+)\.\s+\*\*(.+?)\*\*\s*[-—:]*\s*(.*)/);
+        if (m) {
+          let desc = m[3].trim();
           if (!desc) {
-            for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+            for (let j = i+1; j < Math.min(i+4, lines.length); j++) {
               const next = lines[j].trim();
-              if (next && next.match(/^\(?[a-z]\)/)) { desc = next.replace(/^\(?[a-z]\)\s*/, '').substring(0, 140); break; }
-              else if (next && !next.startsWith('(')) { desc = next.replace(/^[-•]\s*/, '').substring(0, 140); break; }
+              if (next && !next.match(/^\d+\./)) { desc = next.replace(/^[-•]\s*/, ''); break; }
             }
           }
-          steps.push({ num: numbered[1], title, desc: desc.substring(0, 140) });
+          steps.push({ num: m[1], title: m[2], desc: desc.substring(0, 200) });
         }
       }
-      if (steps.length === 0) { document.getElementById('coreWorkflowRollup').style.display = 'none'; return; }
+      if (steps.length === 0) {
+        container.style.paddingLeft = '0';
+        container.className = 'section-body';
+        container.innerHTML = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        return;
+      }
       container.innerHTML = steps.map(s =>
-        '<div class="cw-rollup-step"><span class="step-num">' + s.num + '</span><span class="step-title">' + s.title + '</span>' +
-        (s.desc ? '<div class="step-desc">' + s.desc + '</div>' : '') + '</div>'
+        '<div class="step-item">' +
+          '<div class="step-num">' + s.num + '</div>' +
+          '<div class="step-title">' + s.title + '</div>' +
+          (s.desc ? '<div class="step-desc">' + s.desc + '</div>' : '') +
+        '</div>'
       ).join('');
     })();
     <% } %>
+
     <% if (design.flowchart) { %>
     (async () => {
       try {

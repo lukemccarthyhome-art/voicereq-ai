@@ -6,33 +6,56 @@
   <title><%= title %> - Morti Projects</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f0f2f5; line-height:1.6; color:#0f172a; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f0f2f5; line-height:1.6; color:#0f172a; }
     .main { max-width:1100px; margin:0 auto; padding:24px 20px; }
     .breadcrumb { font-size:13px; color:#64748b; margin-bottom:16px; }
     .breadcrumb a { color:#667eea; text-decoration:none; }
     .breadcrumb a:hover { text-decoration:underline; }
     .card { background:white; border-radius:12px; padding:24px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); }
-    .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:12px; }
     .card-header h2 { font-size:20px; color:#0f172a; }
     .badge { display:inline-block; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
     .badge-draft { background:#fef3c7; color:#92400e; }
     .badge-final { background:#d1fae5; color:#065f46; }
     .meta-row { display:flex; gap:24px; font-size:13px; color:#64748b; margin-bottom:4px; }
-    .section { margin-top:20px; }
-    .section h3 { font-size:16px; color:#334155; margin-bottom:8px; padding-bottom:6px; border-bottom:2px solid #eef2ff; }
-    .section-body { font-size:14px; color:#334155; line-height:1.7; }
-    .design-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
-    .design-item { padding:16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; }
-    .design-item h4 { font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:#667eea; margin-bottom:6px; }
-    .design-item p, .design-item .section-body { font-size:13px; color:#475569; line-height:1.7; }
-    .design-item .section-body p { margin-bottom:8px; }
-    .full-width { grid-column: 1 / -1; }
     .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border:none; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer; transition:all 0.15s; text-decoration:none; }
     .btn:hover { transform:translateY(-1px); box-shadow:0 2px 4px rgba(0,0,0,0.1); }
     .btn-primary { background:#667eea; color:white; }
     .btn-amber { background:#f59e0b; color:white; }
     .btn-cyan { background:#06b6d4; color:white; }
     .btn-sm { padding:6px 12px; font-size:12px; }
+    .empty-state { text-align:center; padding:24px; color:#94a3b8; font-size:14px; }
+
+    /* Tabs */
+    .tabs { display:flex; gap:0; border-bottom:2px solid #e2e8f0; margin-bottom:20px; }
+    .tab { padding:12px 24px; font-size:14px; font-weight:600; color:#64748b; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; user-select:none; }
+    .tab:hover { color:#4f46e5; }
+    .tab.active { color:#4f46e5; border-bottom-color:#4f46e5; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    /* Customer View Cards */
+    .section-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px 24px; margin-bottom:16px; }
+    .section-card h3 { font-size:15px; font-weight:700; color:#1e293b; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+    .section-card h3 .icon { font-size:18px; }
+    .section-body { font-size:14px; color:#334155; line-height:1.7; }
+    .section-body p { margin-bottom:8px; }
+    .section-body strong { color:#0f172a; }
+
+    /* Step Flow for HowItWorks */
+    .step-flow { display:flex; flex-direction:column; gap:0; position:relative; padding-left:40px; }
+    .step-flow::before { content:''; position:absolute; left:18px; top:20px; bottom:20px; width:2px; background:linear-gradient(to bottom, #667eea, #a78bfa); }
+    .step-item { position:relative; padding:12px 16px 12px 20px; }
+    .step-num { position:absolute; left:-40px; top:12px; width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #667eea, #4f46e5); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; box-shadow:0 2px 8px rgba(79,70,229,0.3); z-index:1; }
+    .step-title { font-weight:700; color:#1e293b; font-size:14px; margin-bottom:4px; }
+    .step-desc { color:#64748b; font-size:13px; line-height:1.5; }
+
+    /* Build Spec (engine) items */
+    .engine-section { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:18px 22px; margin-bottom:14px; }
+    .engine-section h4 { font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:#4f46e5; margin-bottom:10px; font-weight:700; }
+    .engine-section .section-body { font-size:13px; color:#475569; }
+
+    /* Questions */
     .question-card { padding:12px 16px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; margin-bottom:10px; }
     .question-card .q-id { display:inline-block; background:#667eea; color:white; width:24px; height:24px; border-radius:50%; text-align:center; line-height:24px; font-size:12px; font-weight:700; margin-right:8px; }
     .question-card .q-text { font-weight:600; color:#0f172a; font-size:14px; }
@@ -40,15 +63,17 @@
     .question-card .q-answer { margin-top:8px; padding:8px 12px; background:#d1fae5; border-radius:6px; color:#065f46; font-size:13px; }
     .answer-form { display:flex; gap:8px; margin-top:8px; }
     .answer-form input[type="text"] { flex:1; padding:8px 12px; border:1px solid #dbeafe; border-radius:6px; font-size:13px; }
-    .answer-form button { padding:8px 16px; }
+
+    /* Chat */
     .chat-bubble { margin-bottom:10px; padding:10px 14px; border-radius:8px; background:#f1f5f9; }
     .chat-bubble .chat-meta { font-size:12px; color:#64748b; margin-bottom:4px; }
     .chat-bubble .chat-meta strong { color:#0f172a; }
     .chat-bubble .chat-text { font-size:14px; color:#0f172a; }
     .chat-input { display:flex; gap:8px; margin-top:12px; }
     .chat-input textarea { flex:1; padding:10px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; font-family:inherit; resize:vertical; min-height:60px; }
+
+    /* Flowchart */
     #flowchartContainer { margin-top:16px; padding:24px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; }
-    #flowchartContainer h3 { margin-bottom:16px; color:#334155; }
     #flowchartRender { min-height:200px; max-height:600px; overflow:auto; display:flex; align-items:center; justify-content:center; padding:16px; border:1px solid #f1f5f9; border-radius:8px; background:#fafbfc; position:relative; }
     #flowchartRender svg { max-width:100%; height:auto; }
     .flowchart-zoom { display:flex; gap:6px; margin-bottom:12px; }
@@ -56,25 +81,19 @@
     .flowchart-zoom button:hover { background:#eef2ff; border-color:#4f46e5; }
     .flowchart-error { color:#ef4444; padding:16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; }
     .flowchart-error pre { font-size:11px; background:#f8fafc; padding:8px; border-radius:4px; overflow-x:auto; margin-top:8px; white-space:pre-wrap; }
-    .cw-rollup-step { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; flex:1 1 calc(50% - 10px); min-width:260px; }
-    .cw-rollup-step .step-num { display:inline-block; background:#4f46e5; color:#fff; border-radius:50%; width:22px; height:22px; text-align:center; line-height:22px; font-size:12px; font-weight:600; margin-right:8px; }
-    .cw-rollup-step .step-title { font-weight:600; color:#1e293b; font-size:14px; }
-    .cw-rollup-step .step-desc { color:#64748b; font-size:13px; margin-top:4px; }
-    .empty-state { text-align:center; padding:24px; color:#94a3b8; font-size:14px; }
+
     @media (max-width:768px) {
-      .design-grid { grid-template-columns:1fr; }
-      .card-header { flex-direction:column; gap:12px; align-items:flex-start; }
+      .card-header { flex-direction:column; align-items:flex-start; }
+      .step-flow { padding-left:36px; }
     }
   </style>
 </head>
 <body>
-    <%- include('../partials/admin-nav', { currentPage: 'projects', user: user }) %>
+  <%- include('../partials/admin-nav', { currentPage: 'projects', user: user }) %>
 
   <main class="main">
     <div class="breadcrumb">
-      <a href="/admin">Dashboard</a> › <a href="/admin/projects">Projects</a>
-                <a href="/admin/projects">Projects</a>
-                <a href="/admin/feature-requests">Feature Requests</a> › <a href="/admin/projects/<%= encodeId(projectId) %>">Project <%= projectId %></a> › Design
+      <a href="/admin">Dashboard</a> › <a href="/admin/projects">Projects</a> › <a href="/admin/projects/<%= encodeId(projectId) %>">Project <%= projectId %></a> › Design
     </div>
 
     <% if (locals.generating && !design) { %>
@@ -96,10 +115,8 @@
         try {
           const res = await fetch(`/admin/projects/${projectId}/generation-status`);
           const data = await res.json();
-          if (data.status === 'done') {
-            clearInterval(interval);
-            window.location.reload();
-          } else if (data.status === 'error') {
+          if (data.status === 'done') { clearInterval(interval); window.location.reload(); }
+          else if (data.status === 'error') {
             clearInterval(interval);
             document.getElementById('genSpinner').textContent = '❌';
             document.getElementById('genTitle').textContent = 'Extraction Failed';
@@ -109,7 +126,7 @@
             clearInterval(interval);
             document.getElementById('genMsg').textContent = 'Taking longer than expected. Try refreshing the page.';
           }
-        } catch(e) { /* retry */ }
+        } catch(e) {}
       }, 2000);
     })();
     </script>
@@ -122,10 +139,14 @@
     </div>
     <% } else if (design) { %>
     <%
-      // Use pre-parsed sections from server if available, otherwise try parsing markdown
+      // Detect new format vs old format
+      const hasNewFormat = !!(design.customerDesign || design.engineDesign);
+      const customerDesign = design.customerDesign || null;
+      const engineDesign = design.engineDesign || null;
+      // Fallback: old format sections
       let designSections = design.sections || null;
       let designSummary = design.summary || '';
-      if (!designSections) {
+      if (!designSections && !hasNewFormat) {
         try {
           if (design.designMarkdown && design.designMarkdown.trim().startsWith('```json')) {
             const jsonText = design.designMarkdown.replace(/```json\s*|```/g, '').trim();
@@ -153,10 +174,7 @@
         try {
           const res = await fetch(`/admin/projects/${projectId}/generation-status`);
           const data = await res.json();
-          if (data.status === 'done' || data.status === 'error') {
-            clearInterval(interval);
-            window.location.reload();
-          }
+          if (data.status === 'done' || data.status === 'error') { clearInterval(interval); window.location.reload(); }
         } catch(e) {}
       }, 2000);
     })();
@@ -174,7 +192,7 @@
             <% if (design.version) { %><span>v<%= design.version %></span><% } %>
           </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <span class="badge <%= (design.status === 'final') ? 'badge-final' : 'badge-draft' %>"><%= design.status || 'draft' %></span>
           <form method="POST" action="/admin/projects/<%= encodeId(projectId) %>/extract-design" style="margin:0">
             <button type="submit" class="btn btn-amber btn-sm">🔄 Refresh</button>
@@ -190,7 +208,6 @@
               <button type="submit" class="btn btn-sm" style="background:#10b981;color:white;">📤 Publish to Customer</button>
             </form>
           <% } %>
-
           <% if (design.approvedAt) { %>
             <% if (design.sentToEngineAt) { %>
               <span class="badge badge-final" style="font-size:10px;">✅ Sent to Engine <%= melbDate(design.sentToEngineAt) %></span>
@@ -204,78 +221,113 @@
         </div>
       </div>
 
-      <%/* Summary bar removed — Executive Summary section covers this */%>
+      <% if (hasNewFormat) { %>
+        <!-- NEW FORMAT: Tabbed layout -->
+        <div class="tabs">
+          <div class="tab active" data-tab="customer">👤 Customer View</div>
+          <div class="tab" data-tab="engine">⚙️ Build Spec</div>
+        </div>
 
-      <% if (designSections) { %>
-        <div class="design-grid">
-          <% const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate','CostBenefitAnalysis','TechnicalReadiness','TechnicalReference']; %>
-          <% const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements (Out of Scope)', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate', CostBenefitAnalysis:'Cost / Benefit Analysis', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' }; %>
-          <% const fullWidthSections = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Phase2Enhancements','TechnicalReference']; %>
+        <!-- Customer View Tab -->
+        <div class="tab-content active" id="tab-customer">
+          <% if (customerDesign) { %>
+            <%
+              const custSections = [
+                { key: 'ExecutiveSummary', label: 'Executive Summary', icon: '📋' },
+                { key: 'HowItWorks', label: 'How It Works', icon: '⚡' },
+                { key: 'WhatYouGet', label: 'What You Get', icon: '🎯' },
+                { key: 'WhatWeNeedFromYou', label: 'What We Need From You', icon: '🤝' },
+                { key: 'TimelineAndInvestment', label: 'Timeline & Investment', icon: '📅' },
+                { key: 'AutomatedVsManual', label: 'Automated vs Manual', icon: '🤖' }
+              ];
+              // Also pick up any extra keys
+              const custKeys = Object.keys(customerDesign);
+              const extraCustKeys = custKeys.filter(k => !custSections.find(s => s.key === k));
+            %>
+            <% custSections.forEach(sec => { %>
+              <% if (customerDesign[sec.key]) { %>
+                <div class="section-card">
+                  <h3><span class="icon"><%= sec.icon %></span> <%= sec.label %></h3>
+                  <% if (sec.key === 'HowItWorks') { %>
+                    <div class="step-flow" id="howItWorksFlow"></div>
+                    <noscript><div class="section-body"><%- renderText(customerDesign[sec.key]) %></div></noscript>
+                  <% } else { %>
+                    <div class="section-body"><%- renderText(customerDesign[sec.key]) %></div>
+                  <% } %>
+                </div>
+              <% } %>
+            <% }) %>
+            <% extraCustKeys.forEach(key => { %>
+              <% if (customerDesign[key]) { %>
+                <div class="section-card">
+                  <h3><%= key.replace(/([A-Z])/g, ' $1').trim() %></h3>
+                  <div class="section-body"><%- renderText(customerDesign[key]) %></div>
+                </div>
+              <% } %>
+            <% }) %>
+          <% } else { %>
+            <div class="empty-state">No customer design sections generated yet.</div>
+          <% } %>
+        </div>
+
+        <!-- Build Spec Tab -->
+        <div class="tab-content" id="tab-engine">
+          <% if (engineDesign) { %>
+            <%
+              const engSections = [
+                { key: 'TechnicalArchitecture', label: 'Technical Architecture', icon: '🏗️' },
+                { key: 'DataModel', label: 'Data Model', icon: '🗄️' },
+                { key: 'IntegrationsAndAPIs', label: 'Integrations & APIs', icon: '🔌' },
+                { key: 'BuildSpecification', label: 'Build Specification', icon: '📐' },
+                { key: 'RiskRegister', label: 'Risk Register', icon: '⚠️' }
+              ];
+              const engKeys = Object.keys(engineDesign);
+              const extraEngKeys = engKeys.filter(k => !engSections.find(s => s.key === k));
+            %>
+            <% engSections.forEach(sec => { %>
+              <% if (engineDesign[sec.key]) { %>
+                <div class="engine-section">
+                  <h4><%= sec.icon %> <%= sec.label %></h4>
+                  <div class="section-body"><%- renderText(engineDesign[sec.key]) %></div>
+                </div>
+              <% } %>
+            <% }) %>
+            <% extraEngKeys.forEach(key => { %>
+              <% if (engineDesign[key]) { %>
+                <div class="engine-section">
+                  <h4><%= key.replace(/([A-Z])/g, ' $1').trim() %></h4>
+                  <div class="section-body"><%- renderText(engineDesign[key]) %></div>
+                </div>
+              <% } %>
+            <% }) %>
+          <% } else { %>
+            <div class="empty-state">No engine design sections generated yet.</div>
+          <% } %>
+        </div>
+
+      <% } else if (designSections) { %>
+        <!-- OLD FORMAT: Flat sections (backward compat) -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
           <%
-            // Also render any sections not in the predefined order
+            const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate','CostBenefitAnalysis','TechnicalReadiness','TechnicalReference'];
+            const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements (Out of Scope)', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate', CostBenefitAnalysis:'Cost / Benefit Analysis', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' };
+            const fullWidthSections = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Phase2Enhancements','TechnicalReference'];
             const allKeys = Object.keys(designSections);
             const orderedKeys = sectionOrder.filter(k => designSections[k]);
             const extraKeys = allKeys.filter(k => !sectionOrder.includes(k));
             const renderKeys = orderedKeys.concat(extraKeys);
           %>
           <% renderKeys.forEach(key => { %>
-            <% if (key === 'CoreWorkflow' && designSections.CoreWorkflow) { %>
-              <div class="design-item full-width" id="coreWorkflowRollup">
-                <h4>📋 Workflow Overview <span style="font-size:12px;color:#94a3b8;font-weight:400;">(scroll down for full detail)</span></h4>
-                <div id="cwRollupContent" style="display:flex;flex-wrap:wrap;gap:10px;padding:8px 0;"></div>
-              </div>
-            <% } %>
             <% if (designSections[key]) { %>
-              <div class="design-item <%= fullWidthSections.includes(key) ? 'full-width' : '' %>">
-                <h4><%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></h4>
-                <div class="section-body"><%- (function(txt) {
-                  let s = txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                  s = s.replace(/\[ASSUMPTION\]/g,'<span style="background:#fef3c7;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;color:#92400e;">ASSUMPTION</span>');
-                  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-                  const lines = s.split('\n');
-                  let html = '';
-                  let inOl = false;
-                  let inSub = false;
-                  for (let i = 0; i < lines.length; i++) {
-                    const raw = lines[i];
-                    const line = raw.trim();
-                    if (!line) {
-                      if (inSub) { html += '</ul>'; inSub = false; }
-                      if (!inOl) html += '<div style="height:8px"></div>';
-                      continue;
-                    }
-                    const numbered = line.match(/^(\d+)\.\s+(.+)/);
-                    const subItem = line.match(/^\(?([a-h])\)\s+(.+)/);
-                    const bullet = line.match(/^[-•]\s+(.+)/);
-                    const indented = raw.match(/^   +(.+)/);
-                    if (numbered) {
-                      if (inSub) { html += '</ul>'; inSub = false; }
-                      if (!inOl) { html += '<ol style="margin:8px 0 8px 0;padding:0;list-style:none;counter-reset:none;">'; inOl = true; }
-                      html += '<li style="margin-bottom:12px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;list-style:none;"><span style="display:inline-block;background:#4f46e5;color:#fff;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;font-size:12px;font-weight:700;margin-right:10px;">' + numbered[1] + '</span>' + numbered[2] + '</li>';
-                    } else if (subItem) {
-                      if (!inSub) { html += '<ul style="margin:6px 0 4px 36px;padding:0;list-style:none;">'; inSub = true; }
-                      html += '<li style="margin-bottom:4px;font-size:13px;color:#475569;"><span style="color:#6366f1;font-weight:600;margin-right:4px;">(' + subItem[1] + ')</span>' + subItem[2] + '</li>';
-                    } else if (bullet) {
-                      if (!inSub) { html += '<ul style="margin:4px 0 4px 36px;padding:0;">'; inSub = true; }
-                      html += '<li style="margin-bottom:3px;font-size:13px;color:#475569;">' + bullet[1] + '</li>';
-                    } else if (indented && inOl) {
-                      html += '<div style="margin:2px 0 2px 36px;font-size:13px;color:#475569;">' + line + '</div>';
-                    } else {
-                      if (inSub) { html += '</ul>'; inSub = false; }
-                      if (inOl) { html += '</ol>'; inOl = false; }
-                      html += '<p style="margin:0 0 4px 0;">' + line + '</p>';
-                    }
-                  }
-                  if (inSub) html += '</ul>';
-                  if (inOl) html += '</ol>';
-                  return html;
-                })(designSections[key]) %></div>
+              <div style="padding:16px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;<%= fullWidthSections.includes(key) ? 'grid-column:1/-1;' : '' %>">
+                <h4 style="font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:#667eea;margin-bottom:6px;"><%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></h4>
+                <div class="section-body"><%- renderText(designSections[key]) %></div>
               </div>
             <% } %>
           <% }) %>
         </div>
       <% } else { %>
-        <div class="empty-state" style="padding:24px;text-align:center;color:#94a3b8;">No design content generated yet. Click Refresh to generate.</div>
+        <div class="empty-state">No design content generated yet. Click Refresh to generate.</div>
       <% } %>
     </div>
 
@@ -303,6 +355,8 @@
             const qId = isObj ? q.id : (i+1);
             const qAssumption = isObj ? q.assumption : '';
             const answered = (design.answers || []).find(a => a.question === qText);
+            const customerAnswered = (design.customerAnswers || []).find(a => a.question === qText);
+            const assignedTo = isObj && q.assignedTo ? q.assignedTo : 'admin';
           %>
           <div class="question-card">
             <div>
@@ -312,10 +366,6 @@
             <% if (qAssumption) { %>
               <div class="q-assumption">💡 <%= qAssumption %></div>
             <% } %>
-            <%
-              const customerAnswered = (design.customerAnswers || []).find(a => a.question === qText);
-              const assignedTo = isObj && q.assignedTo ? q.assignedTo : 'admin';
-            %>
             <% if (answered) { %>
               <div class="q-answer">✅ <strong>Answer:</strong> <%= answered.answer %> <span style="font-size:11px;color:#6b7280">— <%= answered.from %>, <%= melb(answered.ts) %></span></div>
             <% } else if (customerAnswered) { %>
@@ -328,11 +378,11 @@
                   <input type="text" name="answer" placeholder="Type your answer…" />
                   <button type="submit" class="btn btn-primary btn-sm">Save</button>
                 </form>
-                <button onclick="assignQuestion(this, '<%= qText.replace(/'/g, "\\'") %>')" class="btn btn-sm" style="background:<%= assignedTo === 'customer' ? '#f59e0b' : '#94a3b8' %>;color:white;white-space:nowrap;font-size:11px;" title="<%= assignedTo === 'customer' ? 'Assigned to customer' : 'Click to assign to customer' %>">
+                <button onclick="assignQuestion(this, '<%= qText.replace(/'/g, "\\'") %>')" class="btn btn-sm" style="background:<%= assignedTo === 'customer' ? '#f59e0b' : '#94a3b8' %>;color:white;white-space:nowrap;font-size:11px;">
                   👤 <%= assignedTo === 'customer' ? 'Customer ✓' : 'Assign to Customer' %>
                 </button>
                 <% if (qAssumption) { %>
-                <button onclick="acceptAssumption(this, '<%= qText.replace(/'/g, "\\'") %>', '<%= qAssumption.replace(/'/g, "\\'") %>')" class="btn btn-sm" style="background:#8b5cf6;color:white;white-space:nowrap;font-size:11px;" title="Accept the assumption and move this question out">
+                <button onclick="acceptAssumption(this, '<%= qText.replace(/'/g, "\\'") %>', '<%= qAssumption.replace(/'/g, "\\'") %>')" class="btn btn-sm" style="background:#8b5cf6;color:white;white-space:nowrap;font-size:11px;">
                   💡 Accept Assumption
                 </button>
                 <% } %>
@@ -386,23 +436,64 @@
       startOnLoad: false,
       theme: 'base',
       themeVariables: {
-        primaryColor: '#eef2ff',
-        primaryTextColor: '#1e293b',
-        primaryBorderColor: '#4f46e5',
-        lineColor: '#4f46e5',
-        secondaryColor: '#f8fafc',
-        tertiaryColor: '#f1f5f9',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        fontSize: '14px',
-        nodeBorder: '#4f46e5',
-        mainBkg: '#eef2ff',
-        clusterBkg: '#f8fafc',
-        clusterBorder: '#cbd5e1',
-        edgeLabelBackground: '#ffffff'
+        primaryColor: '#eef2ff', primaryTextColor: '#1e293b', primaryBorderColor: '#4f46e5',
+        lineColor: '#4f46e5', secondaryColor: '#f8fafc', tertiaryColor: '#f1f5f9',
+        fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: '14px',
+        nodeBorder: '#4f46e5', mainBkg: '#eef2ff', clusterBkg: '#f8fafc',
+        clusterBorder: '#cbd5e1', edgeLabelBackground: '#ffffff'
       }
     });
-    let flowchartZoom = 1;
 
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // HowItWorks step flow rendering
+    <% if (hasNewFormat && customerDesign && customerDesign.HowItWorks) { %>
+    (function() {
+      const text = `<%- (customerDesign.HowItWorks || '').replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`;
+      const container = document.getElementById('howItWorksFlow');
+      if (!container || !text) return;
+      const lines = text.split('\n');
+      const steps = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const m = line.match(/^(\d+)\.\s+\*\*(.+?)\*\*\s*[-—:]*\s*(.*)/);
+        if (m) {
+          let desc = m[3].trim();
+          if (!desc) {
+            for (let j = i+1; j < Math.min(i+4, lines.length); j++) {
+              const next = lines[j].trim();
+              if (next && !next.match(/^\d+\./)) { desc = next.replace(/^[-•]\s*/, ''); break; }
+            }
+          }
+          steps.push({ num: m[1], title: m[2], desc: desc.substring(0, 200) });
+        }
+      }
+      if (steps.length === 0) {
+        // Fallback: just render as formatted text
+        container.style.paddingLeft = '0';
+        container.className = 'section-body';
+        container.innerHTML = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        return;
+      }
+      container.innerHTML = steps.map(s =>
+        '<div class="step-item">' +
+          '<div class="step-num">' + s.num + '</div>' +
+          '<div class="step-title">' + s.title + '</div>' +
+          (s.desc ? '<div class="step-desc">' + s.desc + '</div>' : '') +
+        '</div>'
+      ).join('');
+    })();
+    <% } %>
+
+    let flowchartZoom = 1;
     function zoomFlowchart(delta) {
       if (delta === 0) flowchartZoom = 1;
       else flowchartZoom = Math.max(0.4, Math.min(3, flowchartZoom + delta));
@@ -412,57 +503,16 @@
 
     async function renderMermaidSafe(elementId, code, container) {
       try {
-        // Remove previous render element if exists (mermaid needs unique IDs)
         const prev = document.getElementById(elementId);
         if (prev) prev.remove();
         const { svg } = await mermaid.render(elementId, code);
         container.innerHTML = svg;
       } catch(e) {
-        console.warn('Mermaid render failed:', e);
         container.innerHTML = '<div class="flowchart-error"><strong>⚠️ Flowchart rendering failed</strong><p>' + (e.message || 'Unknown error') + '</p><pre>' + code.replace(/</g,'&lt;') + '</pre></div>';
       }
     }
 
-    // Core Workflow Rollup — extract step headings from CoreWorkflow text
-    <% if (designSections.CoreWorkflow) { %>
-    (function() {
-      const cwText = `<%- (designSections.CoreWorkflow || '').replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`;
-      const container = document.getElementById('cwRollupContent');
-      if (!container || !cwText) return;
-      const steps = [];
-      const lines = cwText.split('\n');
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        // Match: "1. **Title**" or "1. **Title** — desc" or "1. **Title**: desc"
-        const numbered = line.match(/^(\d+)\.\s+\*\*(.+?)\*\*(.*)$/);
-        if (numbered) {
-          const title = numbered[2].trim();
-          let desc = numbered[3].replace(/^\s*[-:—–]\s*/, '').trim();
-          // If no inline desc, grab from next (a) line
-          if (!desc) {
-            for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
-              const next = lines[j].trim();
-              if (next && next.match(/^\(?[a-z]\)/)) {
-                desc = next.replace(/^\(?[a-z]\)\s*/, '').substring(0, 140);
-                break;
-              } else if (next && !next.startsWith('(')) {
-                desc = next.replace(/^[-•]\s*/, '').substring(0, 140);
-                break;
-              }
-            }
-          }
-          steps.push({ num: numbered[1], title, desc: desc.substring(0, 140) });
-        }
-      }
-      if (steps.length === 0) { document.getElementById('coreWorkflowRollup').style.display = 'none'; return; }
-      container.innerHTML = steps.map(s =>
-        '<div class="cw-rollup-step"><span class="step-num">' + s.num + '</span><span class="step-title">' + s.title + '</span>' +
-        (s.desc ? '<div class="step-desc">' + s.desc + '</div>' : '') + '</div>'
-      ).join('');
-    })();
-    <% } %>
-
-    // Render saved flowchart on page load
+    // Render saved flowchart
     <% if (design.flowchart) { %>
     (async () => {
       await renderMermaidSafe('flowchart-svg-saved', `<%- design.flowchart.replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`, document.getElementById('flowchartRender'));
@@ -477,19 +527,13 @@
       const btn = document.getElementById('chatSendBtn');
       btn.disabled = true; btn.textContent = '⏳…';
       input.value = '';
-
-      // Remove empty state
       const empty = document.getElementById('chatEmpty');
       if (empty) empty.remove();
-
-      // Show user message immediately
       const msgs = document.getElementById('chatMessages');
       const userBubble = document.createElement('div');
       userBubble.className = 'chat-bubble';
       userBubble.innerHTML = '<div class="chat-meta"><strong>👤 You</strong> — just now</div><div class="chat-text">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
       msgs.appendChild(userBubble);
-
-      // Show typing indicator
       const typing = document.createElement('div');
       typing.className = 'chat-bubble';
       typing.style.background = '#eef2ff';
@@ -497,11 +541,9 @@
       typing.innerHTML = '<div class="chat-meta"><strong>🤖 AI</strong></div><div class="chat-text" style="color:#64748b;">Thinking…</div>';
       msgs.appendChild(typing);
       msgs.scrollTop = msgs.scrollHeight;
-
       try {
         const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/design/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ designId: '<%= design.id %>', text })
         });
         if (!res.ok) throw new Error('Server returned ' + res.status);
@@ -516,7 +558,6 @@
         msgs.scrollTop = msgs.scrollHeight;
       }
     }
-
     document.getElementById('chatInput').addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
     });
@@ -526,77 +567,57 @@
       const btn = document.getElementById('sendToEngineBtn');
       if (!btn) return;
       if (!confirm('Send this approved design to Morti Engine for build planning?')) return;
-      btn.disabled = true;
-      btn.textContent = '⏳ Sending to Engine...';
+      btn.disabled = true; btn.textContent = '⏳ Sending to Engine...';
       try {
-        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/send-to-engine', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
+        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/send-to-engine', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed');
         btn.textContent = '✅ Sent to Engine';
         btn.style.background = '#10b981';
         setTimeout(() => window.location.reload(), 2000);
       } catch (e) {
-        btn.disabled = false;
-        btn.textContent = '🚀 Send to Engine';
+        btn.disabled = false; btn.textContent = '🚀 Send to Engine';
         alert('Failed to send to engine: ' + e.message);
       }
     }
 
-    // Assign question to customer
+    // Assign/Accept question handlers
     async function acceptAssumption(btn, questionText, assumption) {
       try {
         const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/design/accept-assumption', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ designId: '<%= design.id %>', questionText, assumption })
         });
         if (res.ok) {
-          // Remove the question card from the UI
           const card = btn.closest('.question-card');
-          card.style.transition = 'opacity 0.3s';
-          card.style.opacity = '0';
+          card.style.transition = 'opacity 0.3s'; card.style.opacity = '0';
           setTimeout(() => card.remove(), 300);
-        } else {
-          alert('Failed to accept assumption');
-        }
+        } else { alert('Failed to accept assumption'); }
       } catch (e) { alert('Error: ' + e.message); }
     }
 
     async function assignQuestion(btn, questionText) {
       try {
         const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/design/assign-question', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ designId: '<%= design.id %>', questionText, assignedTo: 'customer' })
         });
-        if (res.ok) {
-          btn.style.background = '#f59e0b';
-          btn.textContent = '👤 Customer ✓';
-        } else {
-          alert('Failed to assign question');
-        }
+        if (res.ok) { btn.style.background = '#f59e0b'; btn.textContent = '👤 Customer ✓'; }
+        else { alert('Failed to assign question'); }
       } catch (e) { alert('Error: ' + e.message); }
     }
 
     document.getElementById('generateFlowchart').addEventListener('click', async function() {
       const btn = this;
-      btn.disabled = true;
-      btn.textContent = '⏳ Generating…';
+      btn.disabled = true; btn.textContent = '⏳ Generating…';
       const container = document.getElementById('flowchartContainer');
       const render = document.getElementById('flowchartRender');
       let responseData = null;
       try {
-        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/design/flowchart', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
+        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/design/flowchart', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
         if (!res.ok) throw new Error('Server returned ' + res.status);
         responseData = await res.json();
         if (!responseData.mermaid) throw new Error('No flowchart data returned');
-
         container.style.display = 'block';
         flowchartZoom = 1;
         await renderMermaidSafe('flowchart-svg', responseData.mermaid, render);
@@ -604,8 +625,7 @@
         container.style.display = 'block';
         render.innerHTML = '<div class="flowchart-error"><strong>⚠️ Flowchart generation failed</strong><p>' + e.message + '</p>' + (responseData && responseData.mermaid ? '<pre>' + responseData.mermaid.replace(/</g,'&lt;') + '</pre>' : '') + '</div>';
       } finally {
-        btn.disabled = false;
-        btn.textContent = '🗺️ Flowchart';
+        btn.disabled = false; btn.textContent = '🗺️ Flowchart';
       }
     });
   </script>
