@@ -224,8 +224,18 @@ const createUser = async (email, name, company, role, plainPassword) => {
 
 const getAllUsers = async () => {
   const result = await pool.query(`
-    SELECT id, email, name, company, phone, role, approved, created_at 
-    FROM users WHERE role = 'customer' ORDER BY created_at DESC
+    SELECT u.id, u.email, u.name, u.company, u.phone, u.role, u.approved, u.created_at,
+      COALESCE(p.project_count, 0) AS project_count,
+      al.last_login
+    FROM users u
+    LEFT JOIN (
+      SELECT user_id, COUNT(*) AS project_count FROM projects GROUP BY user_id
+    ) p ON p.user_id = u.id
+    LEFT JOIN (
+      SELECT user_id, MAX(created_at) AS last_login FROM audit_logs WHERE action = 'login' GROUP BY user_id
+    ) al ON al.user_id = u.id
+    WHERE u.role = 'customer'
+    ORDER BY al.last_login DESC NULLS LAST, u.created_at DESC
   `);
   return result.rows;
 };
