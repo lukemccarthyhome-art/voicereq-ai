@@ -871,17 +871,21 @@
 
         /* ===== MOBILE ===== */
         @media (max-width: 768px) {
+            body { height: 100vh; height: 100dvh; overflow: hidden; }
             .main-area {
                 grid-template-columns: 1fr;
                 grid-template-rows: 1fr;
+                height: calc(100vh - 44px); height: calc(100dvh - 44px);
             }
             .sidebar { display: none; }
             .sidebar.mobile-open {
                 display: flex;
                 position: fixed;
                 inset: 0;
+                top: 44px;
+                bottom: 56px;
                 z-index: 50;
-                grid-template-columns: 1fr;
+                background: var(--bg-deep);
             }
             .mobile-tabs {
                 display: flex !important;
@@ -890,9 +894,10 @@
                 left: 0;
                 right: 0;
                 background: var(--bg-primary);
+                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
                 border-top: 1px solid var(--border-glass);
                 z-index: 40;
-                padding: 4px 0;
+                padding: 6px 0 env(safe-area-inset-bottom, 6px);
             }
             .mobile-tab {
                 flex: 1;
@@ -908,14 +913,60 @@
                 border: none;
                 background: none;
                 font-family: var(--font);
+                transition: color 0.2s;
             }
             .mobile-tab.active { color: var(--accent); }
             .mobile-tab svg { width: 20px; height: 20px; }
-            .req-body { padding-bottom: 80px; }
-            .toolbar-brand span { display: none; }
+
+            /* Toolbar: compact single row */
+            .toolbar {
+                padding: 6px 10px; gap: 6px;
+                min-height: 44px;
+            }
+            .toolbar-brand { display: none; }
+            .toolbar-brand + .toolbar-divider { display: none; }
+            .toolbar-status { font-size: 0.7rem; padding: 4px 10px; }
+            .toolbar-timer { font-size: 0.75rem; }
+            .toolbar-divider { display: none; }
+            .save-indicator { font-size: 0.72rem; }
+            .save-indicator svg { width: 12px; height: 12px; }
+            .tb-text-btn { padding: 6px 12px; font-size: 0.75rem; }
             .tb-text-btn span { display: none; }
-            .hero-voice-btn { width: 120px; height: 120px; }
-            .hero-voice-btn svg { width: 40px; height: 40px; }
+            .tb-text-btn svg { width: 14px; height: 14px; }
+            .tb-icon { width: 32px; height: 32px; }
+
+            /* Requirements header: scrollable tabs */
+            .req-header {
+                padding: 10px 12px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .req-header h2 { font-size: 0.88rem; white-space: nowrap; }
+            .req-header h2 svg { width: 16px; height: 16px; }
+            .req-header-actions { flex-shrink: 0; gap: 6px; }
+            .pill-btn { padding: 5px 10px; font-size: 0.72rem; }
+            .pill-btn svg { width: 12px; height: 12px; }
+            .pill-btn span, .pill-btn:not(:has(span)) { white-space: nowrap; }
+            /* Hide project info on mobile toolbar area */
+            .project-info { display: none; }
+            .req-header > div:first-child > div[style*="width:1px"] { display: none; }
+
+            /* Hero section: use more space */
+            .req-body { padding-bottom: 72px; }
+            .hero-voice-btn { width: 130px; height: 130px; }
+            .hero-voice-btn svg { width: 44px; height: 44px; }
+            .empty-hero h3 { font-size: 1.1rem; }
+            .empty-hero p { font-size: 0.88rem; padding: 0 20px; }
+            /* Hide keyboard hint on mobile */
+            .empty-hero .hint { display: none; }
+            .req-panel { padding-bottom: 56px; }
+
+            /* File upload area */
+            .upload-zone { padding: 16px; }
+            .upload-zone p { font-size: 0.82rem; }
+            /* Modal fix */
+            .modal-content { width: 95%; max-width: none; margin: 12px; }
         }
 
         .mobile-tabs { display: none; }

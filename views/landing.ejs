@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Morti — You Talk. Morti Builds.</title>
-    <meta name="description" content="From a conversation to a complete project — requirements, design, proposal, and beyond. AI-powered project delivery for Australian SMBs.">
+    <meta name="description" content="Tell Morti what slows your business down. We turn manual processes into working automations — from invoice approvals to onboarding workflows. Built for Australian SMBs.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -146,7 +146,6 @@
             padding: 140px 24px 100px; text-align: center; color: #fff;
             position: relative; overflow: hidden;
         }
-        /* Ambient gradient orbs */
         .hero-orb {
             position: absolute; border-radius: 50%; pointer-events: none;
             filter: blur(100px); animation: orbFloat 16s ease-in-out infinite;
@@ -159,7 +158,6 @@
             33% { transform: translate(40px, -30px) scale(1.08); }
             66% { transform: translate(-30px, 20px) scale(0.92); }
         }
-        /* Subtle grid */
         .hero-grid {
             position: absolute; inset: 0; opacity: 0.03;
             background-image:
@@ -178,9 +176,17 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
         .hero .hero-sub {
-            font-size: clamp(1.05rem, 2vw, 1.25rem); max-width: 600px; margin: 0 auto 52px;
+            font-size: clamp(1.05rem, 2vw, 1.25rem); max-width: 640px; margin: 0 auto 20px;
             color: var(--text-secondary); line-height: 1.8; font-weight: 300;
             animation: fadeUp 0.8s ease-out 0.15s both;
+        }
+        .hero .hero-explainer {
+            font-size: 0.92rem; max-width: 580px; margin: 0 auto 48px;
+            color: var(--text-muted); line-height: 1.7; font-weight: 400;
+            animation: fadeUp 0.8s ease-out 0.2s both;
+            padding: 16px 24px; border-radius: var(--radius-sm);
+            background: rgba(17, 153, 250, 0.06);
+            border: 1px solid rgba(17, 153, 250, 0.1);
         }
         .hero-video-wrap {
             max-width: 820px; margin: 0 auto 52px;
@@ -198,7 +204,6 @@
         .hero-video {
             width: 100%; display: block; border-radius: 19px;
         }
-        /* Play button overlay */
         .video-play-overlay {
             position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
             cursor: pointer; z-index: 2; transition: opacity 0.4s;
@@ -240,6 +245,73 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* ========== WHO IS THIS FOR ========== */
+        .who-section {
+            padding: 100px 24px 0; position: relative;
+        }
+        .who-section::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .who-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+            max-width: 1000px; margin: 0 auto;
+        }
+        .who-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: var(--radius); padding: 32px 28px;
+            border: 1px solid var(--border-glass);
+            transition: all 0.3s;
+        }
+        .who-card:hover {
+            border-color: var(--border-glass-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+        }
+        .who-card .who-icon {
+            font-size: 1.8rem; margin-bottom: 16px;
+        }
+        .who-card h3 {
+            font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; color: var(--text-primary);
+        }
+        .who-card p {
+            font-size: 0.92rem; color: var(--text-secondary); line-height: 1.7; font-weight: 300;
+        }
+
+        /* ========== EXAMPLES STRIP ========== */
+        .examples-section {
+            padding: 100px 24px; position: relative;
+        }
+        .examples-section::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .examples-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;
+            max-width: 900px; margin: 0 auto;
+        }
+        .example-item {
+            display: flex; align-items: flex-start; gap: 16px;
+            padding: 24px; border-radius: var(--radius-sm);
+            background: rgba(17, 153, 250, 0.04);
+            border: 1px solid rgba(17, 153, 250, 0.08);
+            transition: all 0.3s;
+        }
+        .example-item:hover {
+            background: rgba(17, 153, 250, 0.07);
+            border-color: rgba(17, 153, 250, 0.15);
+        }
+        .example-item .example-icon {
+            font-size: 1.4rem; flex-shrink: 0; margin-top: 2px;
+        }
+        .example-item .example-text strong {
+            display: block; font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;
+        }
+        .example-item .example-text span {
+            font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;
+        }
+
         /* ========== JOURNEY / HOW IT WORKS ========== */
         .journey { padding: 0; }
         .journey-step {
@@ -274,6 +346,10 @@
             font-size: 1.05rem; color: var(--text-secondary); line-height: 1.8; font-weight: 300;
             max-width: 480px;
         }
+        .journey-content .journey-example {
+            margin-top: 14px; font-size: 0.88rem; color: var(--text-muted); font-style: italic;
+            padding-left: 16px; border-left: 2px solid rgba(17, 153, 250, 0.2);
+        }
         .journey-visual {
             display: flex; align-items: center; justify-content: center;
         }
@@ -298,7 +374,6 @@
             transition: transform 0.4s;
         }
         .journey-icon-box:hover img { transform: scale(1.06) translateY(-4px); }
-        /* Coloured glow behind each icon box */
         .journey-step:nth-child(1) .journey-icon-box { box-shadow: 0 8px 40px rgba(17, 153, 250, 0.08); }
         .journey-step:nth-child(2) .journey-icon-box { box-shadow: 0 8px 40px rgba(139, 92, 246, 0.08); }
         .journey-step:nth-child(3) .journey-icon-box { box-shadow: 0 8px 40px rgba(0, 158, 126, 0.08); }
@@ -399,7 +474,13 @@
             font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em;
             color: var(--accent); font-weight: 600; margin-bottom: 10px;
         }
-        .pricing-card h3 { font-size: 1.3rem; margin-bottom: 12px; color: var(--text-primary); font-weight: 700; }
+        .pricing-card h3 { font-size: 1.3rem; margin-bottom: 6px; color: var(--text-primary); font-weight: 700; }
+        .pricing-card .pricing-from {
+            font-size: 1.6rem; font-weight: 800; color: var(--accent); margin-bottom: 12px;
+        }
+        .pricing-card .pricing-from span {
+            font-size: 0.85rem; font-weight: 400; color: var(--text-muted);
+        }
         .pricing-card .pricing-desc { font-size: 0.92rem; color: var(--text-muted); line-height: 1.75; margin-bottom: 24px; font-weight: 300; }
         .pricing-includes { list-style: none; padding: 0; }
         .pricing-includes li {
@@ -499,6 +580,8 @@
             .hero h1 { font-size: clamp(2.4rem, 9vw, 3.2rem); }
             .hero-buttons { flex-direction: column; align-items: center; }
             .hero-video-wrap { margin-bottom: 40px; }
+            .who-grid { grid-template-columns: 1fr; }
+            .examples-grid { grid-template-columns: 1fr; }
             .journey-step { padding: 80px 20px; }
             .journey-inner { grid-template-columns: 1fr; gap: 40px; }
             .journey-step:nth-child(even) .journey-inner { direction: ltr; }
@@ -527,7 +610,7 @@
         <a href="/#pricing" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'pricing' ? ' active' : '' %>">Pricing</a>
         <a href="/contact" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'contact' ? ' active' : '' %>">Contact</a>
         <a href="/login" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'login' ? ' active' : '' %>">Login</a>
-        <a href="/signup" class="nav-cta">Get Started</a>
+        <a href="/signup" class="nav-cta">Get Started Free</a>
     </div>
 </nav>
 
@@ -539,7 +622,11 @@
     <div class="hero-orb hero-orb-3"></div>
     <div class="hero-inner">
         <h1>You Talk.<br><span class="gradient-text">Morti Builds.</span></h1>
-        <p class="hero-sub">From a conversation to a complete project — requirements, design, proposal, and beyond. No templates. No jargon. Just results.</p>
+        <p class="hero-sub">Describe the manual work that slows your business down. We turn it into a working automation — designed, built, and managed for you.</p>
+
+        <div class="hero-explainer">
+            <strong style="color: var(--text-primary); font-weight: 600;">What is Morti?</strong> An AI-powered automation consultancy for Australian SMBs. Have a conversation about your business problem — we deliver a running, managed solution. No technical knowledge required.
+        </div>
 
         <div class="hero-video-wrap">
             <div class="hero-video-container">
@@ -553,27 +640,108 @@
         </div>
 
         <div class="hero-buttons">
-            <a href="/signup" class="btn btn-primary btn-lg">Get Started</a>
+            <a href="/signup" class="btn btn-primary btn-lg">Start a Conversation</a>
             <a href="#how-it-works" class="btn btn-glass btn-lg">See How It Works</a>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== WHO IS THIS FOR ==================== -->
+<section class="who-section">
+    <div class="container">
+        <div class="section-label fade-in">Who Is This For</div>
+        <div class="section-divider fade-in"></div>
+        <h2 class="section-title fade-in">Built for business people, not developers</h2>
+        <p class="section-sub fade-in">If you manage people, operations, or a business — and you're tired of manual processes eating your time — Morti is for you.</p>
+        <div class="who-grid">
+            <div class="who-card fade-in">
+                <div class="who-icon">📋</div>
+                <h3>Operations Managers</h3>
+                <p>You know exactly which processes waste time. You just need someone to automate them without a six-month IT project.</p>
+            </div>
+            <div class="who-card fade-in fade-in-delay-1">
+                <div class="who-icon">🏢</div>
+                <h3>Business Owners</h3>
+                <p>You're wearing too many hats. Morti takes the repetitive work off your plate so you can focus on growing the business.</p>
+            </div>
+            <div class="who-card fade-in fade-in-delay-2">
+                <div class="who-icon">👥</div>
+                <h3>Team Leaders</h3>
+                <p>Your team is stuck doing the same thing every week. Free them up for work that actually matters.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== WHAT WE AUTOMATE ==================== -->
+<section id="products" class="examples-section">
+    <div class="container">
+        <div class="section-label fade-in">What We Automate</div>
+        <div class="section-divider fade-in"></div>
+        <h2 class="section-title fade-in">Real problems we solve every day</h2>
+        <p class="section-sub fade-in">These are the kinds of things our clients used to do manually. Now they don't.</p>
+        <div class="examples-grid">
+            <div class="example-item fade-in">
+                <div class="example-icon">📄</div>
+                <div class="example-text">
+                    <strong>Invoice &amp; approval workflows</strong>
+                    <span>Invoices arrive, get routed, approved, and paid — without anyone chasing signatures.</span>
+                </div>
+            </div>
+            <div class="example-item fade-in fade-in-delay-1">
+                <div class="example-icon">🧑‍💼</div>
+                <div class="example-text">
+                    <strong>Employee onboarding</strong>
+                    <span>New starter? Accounts created, docs sent, training scheduled — automatically on day one.</span>
+                </div>
+            </div>
+            <div class="example-item fade-in">
+                <div class="example-icon">📊</div>
+                <div class="example-text">
+                    <strong>Reporting &amp; dashboards</strong>
+                    <span>Data pulled from multiple systems into one report, delivered to your inbox every Monday morning.</span>
+                </div>
+            </div>
+            <div class="example-item fade-in fade-in-delay-1">
+                <div class="example-icon">📬</div>
+                <div class="example-text">
+                    <strong>Lead capture &amp; follow-up</strong>
+                    <span>Enquiry comes in, CRM updated, follow-up email sent, task assigned — in seconds.</span>
+                </div>
+            </div>
+            <div class="example-item fade-in">
+                <div class="example-icon">🔄</div>
+                <div class="example-text">
+                    <strong>System integrations</strong>
+                    <span>Your accounting, CRM, email, and spreadsheets talking to each other — finally.</span>
+                </div>
+            </div>
+            <div class="example-item fade-in fade-in-delay-1">
+                <div class="example-icon">📝</div>
+                <div class="example-text">
+                    <strong>Document generation</strong>
+                    <span>Proposals, contracts, and reports assembled from templates and data — no copy-pasting.</span>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
 <!-- ==================== THE JOURNEY ==================== -->
 <div id="how-it-works" class="journey">
-    <div id="products" style="position:absolute;"></div>
 
     <!-- Step 1: Talk -->
     <div class="journey-step">
         <div class="journey-inner">
             <div class="journey-content fade-in">
                 <div class="journey-num">1</div>
-                <div class="journey-label">The Starting Point</div>
-                <h2>Just talk.</h2>
-                <p>No forms. No templates. No jargon. Just have a conversation — tell Morti what you need, the way you'd tell a colleague over coffee. Voice, text, documents — however works for you.</p>
+                <div class="journey-label">Describe The Problem</div>
+                <h2>Just tell us what's slowing you down.</h2>
+                <p>No forms. No jargon. Just have a conversation — by voice or text — about the manual work you want to eliminate. Morti asks the right follow-up questions to understand the full picture.</p>
+                <p class="journey-example">"Every week I spend half a day copying data from our CRM into a spreadsheet for the Monday meeting."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box"><img src="/images/journey/step1-talk.webp" alt="Conversation" loading="lazy"></div>
+                <div class="journey-icon-box"><img src="/images/journey/step1-talk.webp" alt="Describe the problem" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -583,12 +751,13 @@
         <div class="journey-inner">
             <div class="journey-content fade-in">
                 <div class="journey-num">2</div>
-                <div class="journey-label">Capture Everything</div>
-                <h2>Smart requirements from a natural conversation.</h2>
-                <p>While you talk, Morti captures everything — goals, constraints, edge cases, integrations. Structured, organized, and complete. It even asks the follow-up questions your team would miss.</p>
+                <div class="journey-label">We Capture Everything</div>
+                <h2>Your conversation becomes a structured brief.</h2>
+                <p>While you talk, Morti captures every detail — goals, edge cases, systems involved, who does what. You get a clear, organised requirements document you can review and edit.</p>
+                <p class="journey-example">"I didn't even think of half these edge cases — Morti caught them all from our conversation."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box"><img src="/images/journey/step2-requirements.webp" alt="Requirements" loading="lazy"></div>
+                <div class="journey-icon-box"><img src="/images/journey/step2-requirements.webp" alt="Requirements captured" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -598,12 +767,13 @@
         <div class="journey-inner">
             <div class="journey-content fade-in">
                 <div class="journey-num">3</div>
-                <div class="journey-label">Architecture</div>
-                <h2>Your solution, designed automatically.</h2>
-                <p>Components, data flows, integrations — all mapped out. A full solution architecture built from your conversation, ready for review. No guesswork, no hand-waving.</p>
+                <div class="journey-label">Solution Design</div>
+                <h2>We design the solution. You approve it.</h2>
+                <p>Morti produces a clear solution design showing exactly what will be built, what systems it connects to, and how it works. Written in plain language — not developer-speak.</p>
+                <p class="journey-example">"For the first time, I could actually understand the technical plan before it was built."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box"><img src="/images/journey/step3-design.webp" alt="Architecture" loading="lazy"></div>
+                <div class="journey-icon-box"><img src="/images/journey/step3-design.webp" alt="Solution design" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -613,12 +783,13 @@
         <div class="journey-inner">
             <div class="journey-content fade-in">
                 <div class="journey-num">4</div>
-                <div class="journey-label">Ready to Share</div>
-                <h2>A professional proposal, ready to go.</h2>
-                <p>Pricing, timelines, deliverables — all in a polished proposal you can share with stakeholders, partners, or your team. No more "let me get back to you on that."</p>
+                <div class="journey-label">Clear Pricing</div>
+                <h2>A fixed-price proposal. No surprises.</h2>
+                <p>You get a professional proposal with clear deliverables, a fixed price, and a timeline — before any work starts. Share it with your team, your board, or your accountant.</p>
+                <p class="journey-example">"I knew exactly what I was paying for before I said yes. That's rare."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box"><img src="/images/journey/step4-proposal.webp" alt="Proposal" loading="lazy"></div>
+                <div class="journey-icon-box"><img src="/images/journey/step4-proposal.webp" alt="Fixed-price proposal" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -628,12 +799,13 @@
         <div class="journey-inner">
             <div class="journey-content fade-in">
                 <div class="journey-num">5</div>
-                <div class="journey-label">Make It Real</div>
-                <h2>From design to working automation.</h2>
-                <p>Approve the design, and Morti builds it. Real workflows, real integrations, running on your own dedicated instance. Regular check-ins keep you in the loop.</p>
+                <div class="journey-label">We Build It</div>
+                <h2>Approve and we get to work.</h2>
+                <p>Morti builds the automation on your own dedicated instance. You get regular progress updates and a working solution — typically in days, not months.</p>
+                <p class="journey-example">"It was running in production within two weeks. Our last IT project took eight months."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box"><img src="/images/journey/step5-build.webp" alt="Build" loading="lazy"></div>
+                <div class="journey-icon-box"><img src="/images/journey/step5-build.webp" alt="Build in progress" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -643,55 +815,50 @@
         <div class="journey-inner">
             <div class="journey-content fade-in">
                 <div class="journey-num">6</div>
-                <div class="journey-label">Stay Healthy</div>
-                <h2>Maintained, monitored, and secure.</h2>
-                <p>Your automation doesn't just launch and get forgotten. Ongoing monitoring, updates, and security patches keep everything running smoothly. You focus on your business.</p>
+                <div class="journey-label">We Keep It Running</div>
+                <h2>Managed, monitored, always on.</h2>
+                <p>Your automation doesn't get handed off and forgotten. We monitor it, fix issues, and improve it over time. You focus on your business — we handle the technology.</p>
+                <p class="journey-example">"I haven't thought about it once since launch. It just works."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
-                <div class="journey-icon-box"><img src="/images/journey/step6-maintain.webp" alt="Maintain" loading="lazy"></div>
+                <div class="journey-icon-box"><img src="/images/journey/step6-maintain.webp" alt="Ongoing management" loading="lazy"></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ==================== SOCIAL PROOF ==================== -->
+<!-- ==================== EXAMPLE WORKFLOWS ==================== -->
 <section class="social-proof">
     <div class="container">
-        <div class="section-label fade-in">Social Proof</div>
-        <h2 class="fade-in">Trusted by Australian SMBs</h2>
-        <p class="section-sub fade-in">Real businesses, real automation, real results.</p>
+        <div class="section-label fade-in">Example Workflows</div>
+        <h2 class="fade-in">See what Morti builds</h2>
+        <p class="section-sub fade-in">Real automations, running in production for Australian businesses right now.</p>
         <div class="testimonial-grid">
             <div class="testimonial-card fade-in">
-                <div class="stars">⭐⭐⭐⭐⭐</div>
-                <p>"Morti took a messy internal process and turned it into a clean, running automation in weeks. The handover documentation was exceptional."</p>
-                <div class="testimonial-author">
-                    <div class="testimonial-avatar">SM</div>
-                    <div>
-                        <div class="testimonial-name">Operations Manager</div>
-                        <div class="testimonial-role">Australian SMB</div>
-                    </div>
+                <div style="font-size:2rem;margin-bottom:16px;">📄→✅→💰</div>
+                <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Invoice Approval Pipeline</h3>
+                <p>Supplier invoice lands in the inbox. Morti extracts the details, matches it to a PO, routes it to the right approver based on amount and department, and pushes it to Xero once approved. What took 2 hours a day now takes zero.</p>
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-glass);">
+                    <span style="font-size:0.78rem;color:var(--accent);font-weight:600;">CONNECTS</span>
+                    <span style="font-size:0.82rem;color:var(--text-muted);display:block;margin-top:4px;">Gmail · Google Sheets · Xero · Slack</span>
                 </div>
             </div>
             <div class="testimonial-card fade-in fade-in-delay-1">
-                <div class="stars">⭐⭐⭐⭐⭐</div>
-                <p>"What impressed me most was the no lock-in approach. They genuinely want you to stay because the service is good, not because you're trapped."</p>
-                <div class="testimonial-author">
-                    <div class="testimonial-avatar">JD</div>
-                    <div>
-                        <div class="testimonial-name">Agency Director</div>
-                        <div class="testimonial-role">Professional Services</div>
-                    </div>
+                <div style="font-size:2rem;margin-bottom:16px;">🧑‍💼→📧→🗂️</div>
+                <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--text-primary);">New Starter Onboarding</h3>
+                <p>HR marks a candidate as hired. Morti creates their Google Workspace account, sends the welcome pack, assigns training modules, notifies their manager, and adds them to the right Slack channels. Day one, sorted — automatically.</p>
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-glass);">
+                    <span style="font-size:0.78rem;color:var(--accent);font-weight:600;">CONNECTS</span>
+                    <span style="font-size:0.82rem;color:var(--text-muted);display:block;margin-top:4px;">Google Workspace · Slack · Notion · Gmail</span>
                 </div>
             </div>
             <div class="testimonial-card fade-in fade-in-delay-2">
-                <div class="stars">⭐⭐⭐⭐⭐</div>
-                <p>"The AI-powered requirements capture saved us hours of back-and-forth. We talked through the idea and got a detailed design back fast."</p>
-                <div class="testimonial-author">
-                    <div class="testimonial-avatar">KT</div>
-                    <div>
-                        <div class="testimonial-name">Founder</div>
-                        <div class="testimonial-role">Tech Startup</div>
-                    </div>
+                <div style="font-size:2rem;margin-bottom:16px;">📊→📧→👀</div>
+                <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Weekly Ops Report</h3>
+                <p>Every Monday at 7am, Morti pulls sales from Shopify, support tickets from Zendesk, and financials from Xero. Compiles a single-page summary with trends and flags, and emails it to the leadership team. No analyst required.</p>
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-glass);">
+                    <span style="font-size:0.78rem;color:var(--accent);font-weight:600;">CONNECTS</span>
+                    <span style="font-size:0.82rem;color:var(--text-muted);display:block;margin-top:4px;">Shopify · Zendesk · Xero · Gmail</span>
                 </div>
             </div>
         </div>
@@ -703,26 +870,28 @@
     <div class="section-label fade-in">Pricing</div>
     <div class="section-divider fade-in"></div>
     <h2 class="section-title fade-in">Simple, transparent pricing</h2>
-    <p class="section-sub fade-in">Value-based, not time-based. You pay for outcomes, not hours.</p>
+    <p class="section-sub fade-in">You pay for outcomes, not hours. No lock-in. You own your IP. Always.</p>
     <div class="pricing-grid">
         <div class="pricing-card fade-in">
             <div class="pricing-phase">Upfront</div>
             <h3>Build Fee</h3>
-            <p class="pricing-desc">Covers discovery, design, and implementation. Scoped and quoted based on the agreed solution — you know exactly what you're paying for before we start.</p>
+            <div class="pricing-from">From $2,500 <span>+ GST</span></div>
+            <p class="pricing-desc">Fixed price, scoped before we start. Covers everything from discovery to a running automation.</p>
             <ul class="pricing-includes">
-                <li>Requirements capture &amp; analysis</li>
+                <li>Voice/text requirements capture</li>
                 <li>Solution design &amp; proposal</li>
-                <li>Full implementation &amp; testing</li>
-                <li>Deployment to your dedicated instance</li>
+                <li>Full build, testing &amp; deployment</li>
+                <li>Your own dedicated instance</li>
                 <li>Handover documentation included</li>
             </ul>
         </div>
         <div class="pricing-card fade-in fade-in-delay-1">
             <div class="pricing-phase">Ongoing</div>
-            <h3>Annual Automation Fee</h3>
-            <p class="pricing-desc">Keeps your automation running, maintained, and improving. Priced as a share of the value it delivers — you keep the majority of savings.</p>
+            <h3>Management Fee</h3>
+            <div class="pricing-from">From $199/mo <span>+ GST</span></div>
+            <p class="pricing-desc">We keep it running, monitored, and improving. Priced as a fraction of the value it delivers.</p>
             <ul class="pricing-includes">
-                <li>24/7 managed hosting &amp; monitoring</li>
+                <li>24/7 hosting &amp; monitoring</li>
                 <li>Bug fixes &amp; maintenance</li>
                 <li>Feature updates &amp; improvements</li>
                 <li>Priority support</li>
@@ -731,20 +900,20 @@
         </div>
     </div>
     <p class="pricing-note fade-in">
-        Every project is different, so we price based on what you actually need. No lock-in — cancel anytime and get a full export. You own your IP. Always.
+        Every project is different, so we quote based on what you actually need. The discovery conversation is free — no commitment, no pressure.
         <br><br>
-        <a href="/signup">Sign up</a> to get started, or <a href="/contact">get in touch</a> to discuss your project.
+        <a href="/signup">Sign up to start a conversation</a>, or <a href="/contact">get in touch</a> to ask questions first.
     </p>
 </section>
 
 <!-- ==================== FINAL CTA ==================== -->
 <section class="cta-section">
     <div class="cta fade-in">
-        <h2>Ready to build something?</h2>
-        <p>You talk. We build. It's that simple. Start a conversation and see what Morti can do for your business.</p>
+        <h2>Still doing it manually?</h2>
+        <p>Tell us what's eating your time. The conversation takes 20 minutes. The automation saves you hours every week.</p>
         <div class="cta-buttons">
-            <a href="/signup" class="btn btn-primary btn-lg">Get Started</a>
-            <a href="/contact" class="btn btn-glass">Get in Touch</a>
+            <a href="/signup" class="btn btn-primary btn-lg">Start a Conversation</a>
+            <a href="/contact" class="btn btn-glass">Ask Us Anything</a>
         </div>
     </div>
 </section>
@@ -754,13 +923,13 @@
     <div class="footer-grid">
         <div>
             <div class="footer-brand">◆ Morti</div>
-            <p class="footer-brand-desc">You talk, we build. AI-powered project delivery and managed automation for Australian small and medium businesses.</p>
+            <p class="footer-brand-desc">Business automation for Australian SMBs. Describe the problem, we build the solution. No technical knowledge required.</p>
         </div>
         <div class="footer-col">
             <h4>Product</h4>
             <a href="#how-it-works">How It Works</a>
             <a href="#pricing">Pricing</a>
-            <a href="#products">Products</a>
+            <a href="#products">What We Automate</a>
         </div>
         <div class="footer-col">
             <h4>Company</h4>
@@ -772,7 +941,7 @@
         <div class="footer-col">
             <h4>Contact</h4>
             <a href="mailto:info@morti.com.au">Email Us</a>
-            <span style="display:block;font-size:0.88rem;padding:5px 0;">Australia</span>
+            <span style="display:block;font-size:0.88rem;padding:5px 0;">Melbourne, Australia</span>
             <a href="https://morti.com.au">morti.com.au</a>
         </div>
     </div>

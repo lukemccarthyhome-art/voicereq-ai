@@ -67,9 +67,109 @@
         .btn-primary { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
         .btn-primary:hover { background: #2aa8ff; transform: translateY(-2px); box-shadow: 0 0 32px var(--accent-glow); }
         .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
-        .btn-success { background: var(--accent-secondary); box-shadow: 0 0 16px rgba(0, 158, 126, 0.3); }
+        .btn-success { background: var(--accent-secondary); color: #fff; box-shadow: 0 0 16px rgba(0, 158, 126, 0.3); }
         .btn-success:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(0, 158, 126, 0.4); }
+        .btn-lg { padding: 18px 44px; font-size: 1.1rem; }
 
+        /* ========== WIZARD (first-time user) ========== */
+        .wizard-container {
+            display: flex; align-items: center; justify-content: center;
+            min-height: calc(100vh - 120px); position: relative;
+        }
+        .wizard-orb {
+            position: absolute; border-radius: 50%; pointer-events: none;
+            filter: blur(100px);
+        }
+        .wizard-orb-1 { width: 500px; height: 500px; background: rgba(17, 153, 250, 0.08); top: -10%; left: -5%; }
+        .wizard-orb-2 { width: 400px; height: 400px; background: rgba(139, 92, 246, 0.06); bottom: -5%; right: -5%; }
+        .wizard-inner {
+            max-width: 600px; width: 100%; text-align: center; position: relative; z-index: 1;
+        }
+
+        /* Step transitions */
+        .wizard-step {
+            display: none; animation: wizardFadeIn 0.5s ease-out;
+        }
+        .wizard-step.active { display: block; }
+        @keyframes wizardFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Step 1: Welcome */
+        .wizard-welcome h1 {
+            font-size: clamp(2rem, 5vw, 3rem); font-weight: 900;
+            letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 20px;
+        }
+        .wizard-welcome h1 .gradient-text {
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .wizard-welcome p {
+            font-size: 1.15rem; color: var(--text-secondary); line-height: 1.8;
+            font-weight: 300; max-width: 480px; margin: 0 auto 40px;
+        }
+        .wizard-steps-preview {
+            display: flex; gap: 32px; justify-content: center; margin-bottom: 48px;
+        }
+        .wizard-preview-item {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+        .wizard-preview-num {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--accent-dim); border: 1px solid rgba(17, 153, 250, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.82rem; font-weight: 700; color: var(--accent);
+        }
+        .wizard-preview-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; }
+
+        /* Step 2: Project name */
+        .wizard-name h2 {
+            font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800;
+            letter-spacing: -0.03em; margin-bottom: 12px;
+        }
+        .wizard-name p {
+            font-size: 1rem; color: var(--text-muted); margin-bottom: 36px; font-weight: 300;
+        }
+        .wizard-input-group {
+            max-width: 440px; margin: 0 auto 32px;
+        }
+        .wizard-input {
+            width: 100%; padding: 16px 20px; border: 1px solid var(--border-glass);
+            border-radius: 14px; font-size: 1.1rem; font-family: 'Inter', sans-serif;
+            background: rgba(5, 13, 26, 0.6); color: var(--text-primary);
+            text-align: center; transition: all 0.3s; font-weight: 500;
+        }
+        .wizard-input::placeholder { color: var(--text-muted); font-weight: 300; }
+        .wizard-input:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim), 0 0 20px var(--accent-glow);
+        }
+        .wizard-hint {
+            font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; font-weight: 300;
+        }
+        .wizard-back {
+            display: inline-block; margin-top: 16px; font-size: 0.85rem;
+            color: var(--text-muted); cursor: pointer; transition: color 0.2s;
+        }
+        .wizard-back:hover { color: var(--text-secondary); }
+
+        /* Step 3: Creating */
+        .wizard-creating h2 {
+            font-size: 1.5rem; font-weight: 700; margin-bottom: 12px;
+        }
+        .wizard-creating p {
+            color: var(--text-muted); font-size: 1rem; font-weight: 300;
+        }
+        .wizard-spinner {
+            width: 48px; height: 48px; border: 3px solid var(--border-glass);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 32px auto 24px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ========== NORMAL DASHBOARD (has projects) ========== */
         .overview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
         .overview-card {
             background: var(--bg-glass);
@@ -113,6 +213,8 @@
             .nav { flex-wrap: wrap; justify-content: center; }
             .main { padding: 16px; }
             .overview-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .wizard-steps-preview { gap: 20px; }
+            .wizard-welcome h1 { font-size: 2rem; }
         }
     </style>
 </head>
@@ -130,6 +232,126 @@
         </div>
     </div>
 
+<% if (projects.length === 0) { %>
+    <!-- ==================== WIZARD MODE ==================== -->
+    <div class="wizard-container">
+        <div class="wizard-orb wizard-orb-1"></div>
+        <div class="wizard-orb wizard-orb-2"></div>
+        <div class="wizard-inner">
+
+            <!-- Step 1: Welcome -->
+            <div class="wizard-step active" id="wizard-step-1">
+                <div class="wizard-welcome">
+                    <h1>Welcome, <%= user.name.split(' ')[0] %>.<br><span class="gradient-text">Let's build something.</span></h1>
+                    <p>In just a few minutes, you'll go from an idea to a structured project — just by talking. No forms, no jargon.</p>
+                    <div class="wizard-steps-preview">
+                        <div class="wizard-preview-item">
+                            <div class="wizard-preview-num">1</div>
+                            <div class="wizard-preview-label">Name it</div>
+                        </div>
+                        <div class="wizard-preview-item">
+                            <div class="wizard-preview-num">2</div>
+                            <div class="wizard-preview-label">Talk it through</div>
+                        </div>
+                        <div class="wizard-preview-item">
+                            <div class="wizard-preview-num">3</div>
+                            <div class="wizard-preview-label">Get your design</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-lg" onclick="showStep(2)">
+                        Let's Go →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Project Name -->
+            <div class="wizard-step" id="wizard-step-2">
+                <div class="wizard-name">
+                    <h2>What's your project about?</h2>
+                    <p>Give it a short name — you can always change it later.</p>
+                    <div class="wizard-input-group">
+                        <input type="text" class="wizard-input" id="wizard-project-name"
+                            placeholder="e.g. Client Onboarding Automation"
+                            autofocus
+                            onkeydown="if(event.key==='Enter')createAndStart()">
+                        <div class="wizard-hint">Press Enter or click below to start your first session</div>
+                    </div>
+                    <button class="btn btn-primary btn-lg" id="wizard-start-btn" onclick="createAndStart()">
+                        🎙️ Start Talking
+                    </button>
+                    <div>
+                        <span class="wizard-back" onclick="showStep(1)">← Back</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Creating -->
+            <div class="wizard-step" id="wizard-step-3">
+                <div class="wizard-creating">
+                    <div class="wizard-spinner"></div>
+                    <h2>Setting up your project...</h2>
+                    <p>Preparing your voice session</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+    function showStep(n) {
+        document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+        const step = document.getElementById('wizard-step-' + n);
+        step.classList.add('active');
+        if (n === 2) {
+            setTimeout(() => document.getElementById('wizard-project-name').focus(), 100);
+        }
+    }
+
+    async function createAndStart() {
+        const name = document.getElementById('wizard-project-name').value.trim();
+        if (!name) {
+            document.getElementById('wizard-project-name').focus();
+            document.getElementById('wizard-project-name').style.borderColor = '#ef4444';
+            setTimeout(() => {
+                document.getElementById('wizard-project-name').style.borderColor = '';
+            }, 1500);
+            return;
+        }
+
+        const btn = document.getElementById('wizard-start-btn');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+        showStep(3);
+
+        try {
+            const res = await fetch('/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ name, description: '' }),
+                redirect: 'follow'
+            });
+
+            // Response URL will be /projects/:id?message=...
+            // Extract the project path and go straight to session
+            const url = new URL(res.url);
+            const match = url.pathname.match(/^\/projects\/([^/]+)/);
+            if (match) {
+                window.location.href = '/projects/' + match[1] + '/session';
+                return;
+            }
+
+            window.location.href = '/projects';
+        } catch (e) {
+            console.error('Failed to create project:', e);
+            showStep(2);
+            btn.disabled = false;
+            btn.textContent = '🎙️ Start Talking';
+        }
+    }
+    </script>
+
+<% } else { %>
+    <!-- ==================== NORMAL DASHBOARD ==================== -->
     <main class="main">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
             <div>
@@ -139,119 +361,109 @@
             <a href="/projects/new" class="btn btn-success">➕ New Project</a>
         </div>
 
-        <% if (projects.length > 0) { %>
-            <%
-            const counts = { new: 0, session: 0, design: 0, proposal: 0, approved: 0 };
-            projects.forEach(p => counts[p.stage] = (counts[p.stage] || 0) + 1);
-            const inProgress = counts.new + counts.session;
-            
-            const stageConfig = {
-                approved: { icon: '✅', label: 'Approved', color: '#009e7e', bg: 'rgba(0,158,126,0.12)', border: 'rgba(0,158,126,0.3)' },
-                proposal: { icon: '💰', label: 'Proposal Ready', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)' },
-                design:   { icon: '📐', label: 'Design Ready', color: '#1199fa', bg: 'rgba(17,153,250,0.12)', border: 'rgba(17,153,250,0.3)' },
-                session:  { icon: '🎙️', label: 'In Session', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-                new:      { icon: '🆕', label: 'Getting Started', color: 'rgba(240,244,248,0.4)', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.08)' }
-            };
-            %>
+        <%
+        const counts = { new: 0, session: 0, design: 0, proposal: 0, approved: 0 };
+        projects.forEach(p => counts[p.stage] = (counts[p.stage] || 0) + 1);
+        const inProgress = counts.new + counts.session;
+        
+        const stageConfig = {
+            approved: { icon: '✅', label: 'Approved', color: '#009e7e', bg: 'rgba(0,158,126,0.12)', border: 'rgba(0,158,126,0.3)' },
+            proposal: { icon: '💰', label: 'Proposal Ready', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)' },
+            design:   { icon: '📐', label: 'Design Ready', color: '#1199fa', bg: 'rgba(17,153,250,0.12)', border: 'rgba(17,153,250,0.3)' },
+            session:  { icon: '🎙️', label: 'In Session', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
+            new:      { icon: '🆕', label: 'Getting Started', color: 'rgba(240,244,248,0.4)', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.08)' }
+        };
+        %>
 
-            <div class="overview-grid">
-                <div class="overview-card">
-                    <div class="count" style="color: var(--text-primary);"><%= projects.length %></div>
-                    <div class="label">Total Projects</div>
-                </div>
-                <div class="overview-card">
-                    <div class="count" style="color: #f59e0b;"><%= inProgress %></div>
-                    <div class="label">In Progress</div>
-                </div>
-                <div class="overview-card">
-                    <div class="count" style="color: #8b5cf6;"><%= counts.proposal + counts.design %></div>
-                    <div class="label">Awaiting Review</div>
-                </div>
-                <div class="overview-card">
-                    <div class="count" style="color: #009e7e;"><%= counts.approved %></div>
-                    <div class="label">Approved</div>
-                </div>
+        <div class="overview-grid">
+            <div class="overview-card">
+                <div class="count" style="color: var(--text-primary);"><%= projects.length %></div>
+                <div class="label">Total Projects</div>
             </div>
+            <div class="overview-card">
+                <div class="count" style="color: #f59e0b;"><%= inProgress %></div>
+                <div class="label">In Progress</div>
+            </div>
+            <div class="overview-card">
+                <div class="count" style="color: #8b5cf6;"><%= counts.proposal + counts.design %></div>
+                <div class="label">Awaiting Review</div>
+            </div>
+            <div class="overview-card">
+                <div class="count" style="color: #009e7e;"><%= counts.approved %></div>
+                <div class="label">Approved</div>
+            </div>
+        </div>
 
-            <% const stageOrder = ['approved', 'proposal', 'design', 'session', 'new'];
-               stageOrder.forEach(stage => {
-                 const stageProjects = projects.filter(p => p.stage === stage);
-                 if (stageProjects.length === 0) return;
-                 const cfg = stageConfig[stage];
-            %>
-            <div class="stage-section">
-                <div class="stage-header">
-                    <span style="font-size: 20px;"><%= cfg.icon %></span>
-                    <h3><%= cfg.label %></h3>
-                    <span class="stage-badge" style="background: <%= cfg.bg %>; color: <%= cfg.color %>; border: 1px solid <%= cfg.border %>;"><%= stageProjects.length %></span>
-                </div>
-                <% stageProjects.forEach(p => { %>
-                    <a href="/projects/<%= encodeId(p.id) %>" class="project-row">
-                        <div>
-                            <div class="project-name"><%= p.name %></div>
-                            <div class="project-meta">
-                                <% if (p.description) { %><%= p.description.substring(0, 80) %><%= p.description.length > 80 ? '...' : '' %> · <% } %>
-                                Updated <%= melbDate(p.updated_at) %>
-                            </div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <% if (stage === 'proposal') { %>
-                                <span class="btn btn-sm" style="background: #8b5cf6; box-shadow: 0 0 12px rgba(139,92,246,0.3);">View Proposal</span>
-                            <% } else if (stage === 'design') { %>
-                                <span class="btn btn-sm" style="background: var(--accent); box-shadow: 0 0 12px var(--accent-glow);">View Design</span>
-                            <% } else if (stage === 'approved') { %>
-                                <span class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,158,126,0.3);">View Project</span>
-                            <% } else { %>
-                                <span class="btn btn-sm btn-success"><%= (p.session_count || 0) > 0 ? '🎙️ Continue' : '🎙️ Start' %></span>
-                            <% } %>
-                        </div>
-                    </a>
-                <% }) %>
+        <% const stageOrder = ['approved', 'proposal', 'design', 'session', 'new'];
+           stageOrder.forEach(stage => {
+             const stageProjects = projects.filter(p => p.stage === stage);
+             if (stageProjects.length === 0) return;
+             const cfg = stageConfig[stage];
+        %>
+        <div class="stage-section">
+            <div class="stage-header">
+                <span style="font-size: 20px;"><%= cfg.icon %></span>
+                <h3><%= cfg.label %></h3>
+                <span class="stage-badge" style="background: <%= cfg.bg %>; color: <%= cfg.color %>; border: 1px solid <%= cfg.border %>;"><%= stageProjects.length %></span>
             </div>
+            <% stageProjects.forEach(p => { %>
+                <a href="/projects/<%= encodeId(p.id) %>" class="project-row">
+                    <div>
+                        <div class="project-name"><%= p.name %></div>
+                        <div class="project-meta">
+                            <% if (p.description) { %><%= p.description.substring(0, 80) %><%= p.description.length > 80 ? '...' : '' %> · <% } %>
+                            Updated <%= melbDate(p.updated_at) %>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <% if (stage === 'proposal') { %>
+                            <span class="btn btn-sm" style="background: #8b5cf6; box-shadow: 0 0 12px rgba(139,92,246,0.3);">View Proposal</span>
+                        <% } else if (stage === 'design') { %>
+                            <span class="btn btn-sm" style="background: var(--accent); box-shadow: 0 0 12px var(--accent-glow);">View Design</span>
+                        <% } else if (stage === 'approved') { %>
+                            <span class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,158,126,0.3);">View Project</span>
+                        <% } else { %>
+                            <span class="btn btn-sm btn-success"><%= (p.session_count || 0) > 0 ? '🎙️ Continue' : '🎙️ Start' %></span>
+                        <% } %>
+                    </div>
+                </a>
             <% }) %>
-
-        <% } else { %>
-            <div class="card">
-                <div class="empty-state">
-                    <span class="emoji">📋</span>
-                    <h3>No projects yet</h3>
-                    <p>Create your first project to start gathering requirements with voice AI</p>
-                    <a href="/projects/new" class="btn btn-primary" style="margin-top: 16px;">🚀 Create Your First Project</a>
-                </div>
-            </div>
-        <% } %>
+        </div>
+        <% }) %>
     </main>
 
-<!-- Feature Request Button & Modal -->
-<button onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:var(--accent);color:white;border:none;padding:12px 24px;border-radius:var(--radius-pill);font-size:0.88rem;font-weight:600;cursor:pointer;box-shadow:0 0 20px var(--accent-glow);z-index:999;transition:all 0.3s;font-family:'Inter',sans-serif;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 32px rgba(17,153,250,0.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 0 20px rgba(17,153,250,0.4)'">💡 Feature Request</button>
-<div id="featureModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
-  <div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius);padding:28px;width:90%;max-width:500px;box-shadow:0 16px 48px rgba(0,0,0,0.4);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="color:var(--text-primary);font-weight:700;">💡 Submit a Feature Request</h3>
-      <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);">&times;</button>
+    <!-- Feature Request Button & Modal -->
+    <button onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:var(--accent);color:white;border:none;padding:12px 24px;border-radius:var(--radius-pill);font-size:0.88rem;font-weight:600;cursor:pointer;box-shadow:0 0 20px var(--accent-glow);z-index:999;transition:all 0.3s;font-family:'Inter',sans-serif;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 32px rgba(17,153,250,0.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 0 20px rgba(17,153,250,0.4)'">💡 Feature Request</button>
+    <div id="featureModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+      <div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius);padding:28px;width:90%;max-width:500px;box-shadow:0 16px 48px rgba(0,0,0,0.4);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 style="color:var(--text-primary);font-weight:700;">💡 Submit a Feature Request</h3>
+          <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);">&times;</button>
+        </div>
+        <textarea id="featureText" rows="5" placeholder="Describe the feature you'd like to see..." style="width:100%;padding:12px;border:1px solid var(--border-glass);border-radius:12px;font-size:0.88rem;font-family:'Inter',sans-serif;resize:vertical;background:rgba(5,13,26,0.6);color:var(--text-primary);"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+          <button onclick="document.getElementById('featureModal').style.display='none'" style="padding:10px 24px;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:transparent;cursor:pointer;font-size:0.88rem;color:var(--text-secondary);font-family:'Inter',sans-serif;">Cancel</button>
+          <button onclick="submitFeature()" style="padding:10px 24px;border:none;border-radius:var(--radius-pill);background:var(--accent);color:white;cursor:pointer;font-weight:600;font-size:0.88rem;box-shadow:0 0 16px var(--accent-glow);font-family:'Inter',sans-serif;">Submit</button>
+        </div>
+        <div id="featureStatus" style="margin-top:8px;font-size:0.82rem;"></div>
+      </div>
     </div>
-    <textarea id="featureText" rows="5" placeholder="Describe the feature you'd like to see..." style="width:100%;padding:12px;border:1px solid var(--border-glass);border-radius:12px;font-size:0.88rem;font-family:'Inter',sans-serif;resize:vertical;background:rgba(5,13,26,0.6);color:var(--text-primary);"></textarea>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
-      <button onclick="document.getElementById('featureModal').style.display='none'" style="padding:10px 24px;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:transparent;cursor:pointer;font-size:0.88rem;color:var(--text-secondary);font-family:'Inter',sans-serif;">Cancel</button>
-      <button onclick="submitFeature()" style="padding:10px 24px;border:none;border-radius:var(--radius-pill);background:var(--accent);color:white;cursor:pointer;font-weight:600;font-size:0.88rem;box-shadow:0 0 16px var(--accent-glow);font-family:'Inter',sans-serif;">Submit</button>
-    </div>
-    <div id="featureStatus" style="margin-top:8px;font-size:0.82rem;"></div>
-  </div>
-</div>
-<script>
-async function submitFeature(){
-  const text=document.getElementById('featureText').value.trim();
-  if(!text)return;
-  const st=document.getElementById('featureStatus');
-  st.innerHTML='Submitting...';st.style.color='var(--text-muted)';
-  try{
-    const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'dashboard'})});
-    if(!r.ok)throw new Error('Failed');
-    st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#009e7e';
-    document.getElementById('featureText').value='';
-    setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
-  }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}
-}
-</script>
+    <script>
+    async function submitFeature(){
+      const text=document.getElementById('featureText').value.trim();
+      if(!text)return;
+      const st=document.getElementById('featureStatus');
+      st.innerHTML='Submitting...';st.style.color='var(--text-muted)';
+      try{
+        const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'dashboard'})});
+        if(!r.ok)throw new Error('Failed');
+        st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#009e7e';
+        document.getElementById('featureText').value='';
+        setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
+      }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}
+    }
+    </script>
+<% } %>
+
 </body>
 </html>
