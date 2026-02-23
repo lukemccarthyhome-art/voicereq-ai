@@ -115,7 +115,7 @@
     <div class="header-container">
         <a href="/dashboard" class="logo">◆ Morti</a>
         <nav class="nav">
-            <a href="/dashboard">Dashboard</a>
+            <a href="/dashboard">Projects</a>
             <a href="/projects">Projects</a>
             <a href="/profile">Profile</a>
             <a href="/logout">Logout</a>
@@ -125,7 +125,7 @@
 
 <div class="main">
     <div class="breadcrumb">
-        <a href="/dashboard">Dashboard</a> → <a href="/projects">Projects</a> → <a href="/projects/<%= encodeId(project.id) %>"><%= project.name %></a> → Proposal
+        <a href="/dashboard">Projects</a> → <a href="/projects">Projects</a> → <a href="/projects/<%= encodeId(project.id) %>"><%= project.name %></a> → Proposal
     </div>
 
     <% if (proposal.approvedAt) { %>

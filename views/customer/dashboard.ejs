@@ -43,6 +43,8 @@
         .nav a { color: var(--text-muted); font-size: 0.88rem; padding: 8px 14px; border-radius: var(--radius-pill); transition: all 0.2s; font-weight: 500; }
         .nav a:hover { color: #fff; background: rgba(255,255,255,0.06); }
         .nav a.active { color: var(--accent); background: var(--accent-dim); }
+        .nav a.feature-link { color: var(--accent-purple); }
+        .nav a.feature-link:hover { background: rgba(139,92,246,0.12); color: #a78bfa; }
         .user-name { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); padding: 8px 14px; border-radius: var(--radius-pill); font-weight: 500; font-size: 0.88rem; color: var(--text-secondary); }
 
         .main { max-width: 1200px; margin: 0 auto; padding: 24px; min-height: calc(100vh - 200px); }
@@ -69,6 +71,8 @@
         .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
         .btn-success { background: var(--accent-secondary); color: #fff; box-shadow: 0 0 16px rgba(0, 158, 126, 0.3); }
         .btn-success:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(0, 158, 126, 0.4); }
+        .btn-secondary { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: var(--text-secondary); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); border-color: var(--border-glass-hover); }
         .btn-lg { padding: 18px 44px; font-size: 1.1rem; }
 
         /* ========== WIZARD (first-time user) ========== */
@@ -85,8 +89,6 @@
         .wizard-inner {
             max-width: 600px; width: 100%; text-align: center; position: relative; z-index: 1;
         }
-
-        /* Step transitions */
         .wizard-step {
             display: none; animation: wizardFadeIn 0.5s ease-out;
         }
@@ -95,8 +97,6 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        /* Step 1: Welcome */
         .wizard-welcome h1 {
             font-size: clamp(2rem, 5vw, 3rem); font-weight: 900;
             letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 20px;
@@ -122,8 +122,6 @@
             font-size: 0.82rem; font-weight: 700; color: var(--accent);
         }
         .wizard-preview-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; }
-
-        /* Step 2: Project name */
         .wizard-name h2 {
             font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800;
             letter-spacing: -0.03em; margin-bottom: 12px;
@@ -153,8 +151,6 @@
             color: var(--text-muted); cursor: pointer; transition: color 0.2s;
         }
         .wizard-back:hover { color: var(--text-secondary); }
-
-        /* Step 3: Creating */
         .wizard-creating h2 {
             font-size: 1.5rem; font-weight: 700; margin-bottom: 12px;
         }
@@ -169,7 +165,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ========== NORMAL DASHBOARD (has projects) ========== */
+        /* ========== NORMAL DASHBOARD ========== */
         .overview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
         .overview-card {
             background: var(--bg-glass);
@@ -204,9 +200,45 @@
         .project-name { font-weight: 600; color: var(--text-primary); font-size: 0.95rem; }
         .project-meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
 
+        /* New project inline form */
+        .new-project-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(17, 153, 250, 0.2);
+            border-radius: var(--radius);
+            padding: 28px;
+            margin-bottom: 28px;
+            animation: wizardFadeIn 0.3s ease-out;
+        }
+        .new-project-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-primary); font-size: 0.88rem; }
+        .form-control { width: 100%; padding: 12px 16px; border: 1px solid var(--border-glass); border-radius: 12px; font-size: 0.88rem; background: rgba(5,13,26,0.6); color: var(--text-primary); font-family: 'Inter', sans-serif; transition: all 0.2s; }
+        .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+        .form-control::placeholder { color: var(--text-muted); }
+
+        /* Shared projects */
+        .shared-label {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 2px 10px; border-radius: var(--radius-pill);
+            font-size: 0.72rem; font-weight: 600;
+        }
+
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
         .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
         .empty-state h3 { color: var(--text-secondary); margin-bottom: 8px; }
+
+        /* Feature modal */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); z-index: 1000;
+            align-items: center; justify-content: center; backdrop-filter: blur(8px);
+        }
+        .modal-card {
+            background: var(--bg-card); border: 1px solid var(--border-glass);
+            border-radius: var(--radius); padding: 28px; width: 90%; max-width: 500px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+        }
 
         @media (max-width: 768px) {
             .header-container { flex-direction: column; gap: 12px; text-align: center; }
@@ -215,6 +247,8 @@
             .overview-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .wizard-steps-preview { gap: 20px; }
             .wizard-welcome h1 { font-size: 2rem; }
+            .top-bar { flex-direction: column; gap: 12px; align-items: flex-start !important; }
+            .top-bar-actions { width: 100%; justify-content: space-between; }
         }
     </style>
 </head>
@@ -223,16 +257,16 @@
         <div class="header-container">
             <a href="/dashboard" class="logo">◆ Morti</a>
             <nav class="nav">
-                <a href="/dashboard" class="active">Dashboard</a>
-                <a href="/projects">My Projects</a>
+                <a href="/dashboard" class="active">Projects</a>
                 <a href="/profile">Profile</a>
+                <a href="#" class="feature-link" onclick="document.getElementById('featureModal').style.display='flex';return false;">💡 Feedback</a>
                 <div class="user-name">👤 <%= user.name %></div>
                 <a href="/logout">Logout</a>
             </nav>
         </div>
     </div>
 
-<% if (projects.length === 0) { %>
+<% if (projects.length === 0 && (!sharedProjects || sharedProjects.length === 0)) { %>
     <!-- ==================== WIZARD MODE ==================== -->
     <div class="wizard-container">
         <div class="wizard-orb wizard-orb-1"></div>
@@ -312,17 +346,13 @@
         if (!name) {
             document.getElementById('wizard-project-name').focus();
             document.getElementById('wizard-project-name').style.borderColor = '#ef4444';
-            setTimeout(() => {
-                document.getElementById('wizard-project-name').style.borderColor = '';
-            }, 1500);
+            setTimeout(() => { document.getElementById('wizard-project-name').style.borderColor = ''; }, 1500);
             return;
         }
-
         const btn = document.getElementById('wizard-start-btn');
         btn.disabled = true;
         btn.textContent = 'Creating...';
         showStep(3);
-
         try {
             const res = await fetch('/projects', {
                 method: 'POST',
@@ -330,17 +360,13 @@
                 body: new URLSearchParams({ name, description: '' }),
                 redirect: 'follow'
             });
-
-            // Response URL will be /projects/:id?message=...
-            // Extract the project path and go straight to session
             const url = new URL(res.url);
             const match = url.pathname.match(/^\/projects\/([^/]+)/);
             if (match) {
                 window.location.href = '/projects/' + match[1] + '/session';
                 return;
             }
-
-            window.location.href = '/projects';
+            window.location.href = '/dashboard';
         } catch (e) {
             console.error('Failed to create project:', e);
             showStep(2);
@@ -353,18 +379,39 @@
 <% } else { %>
     <!-- ==================== NORMAL DASHBOARD ==================== -->
     <main class="main">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div class="top-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
             <div>
-                <h1 style="font-weight: 800; letter-spacing: -0.03em;">Welcome back, <%= user.name %> 👋</h1>
+                <h1 style="font-weight: 800; letter-spacing: -0.03em;">Welcome back, <%= user.name.split(' ')[0] %> 👋</h1>
                 <p style="color: var(--text-muted); margin-top: 4px; font-weight: 300;">Here's where your projects stand</p>
             </div>
-            <a href="/projects/new" class="btn btn-success">➕ New Project</a>
+            <div class="top-bar-actions" style="display:flex;gap:12px;align-items:center;">
+                <a href="/projects/archived" style="color:var(--text-muted);font-size:0.85rem;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color=''">📦 Archived</a>
+                <button class="btn btn-success" onclick="toggleNewProject()">➕ New Project</button>
+            </div>
+        </div>
+
+        <!-- Inline new project form (hidden by default) -->
+        <div class="new-project-card" id="newProjectForm" style="display:none;">
+            <h3>🚀 New Project</h3>
+            <form method="POST" action="/projects">
+                <div class="form-group">
+                    <label for="name">Project Name</label>
+                    <input type="text" id="newProjectName" name="name" class="form-control" required placeholder="e.g., Client Onboarding Automation">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description <span style="color:var(--text-muted);font-weight:300;">(optional)</span></label>
+                    <textarea id="description" name="description" class="form-control" rows="2" placeholder="Brief description of what you need automated..."></textarea>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" class="btn btn-success">✅ Create Project</button>
+                    <button type="button" class="btn btn-secondary" onclick="toggleNewProject()">Cancel</button>
+                </div>
+            </form>
         </div>
 
         <%
         const counts = { new: 0, session: 0, design: 0, proposal: 0, approved: 0 };
         projects.forEach(p => counts[p.stage] = (counts[p.stage] || 0) + 1);
-        const inProgress = counts.new + counts.session;
         
         const stageConfig = {
             approved: { icon: '✅', label: 'Approved', color: '#009e7e', bg: 'rgba(0,158,126,0.12)', border: 'rgba(0,158,126,0.3)' },
@@ -373,25 +420,67 @@
             session:  { icon: '🎙️', label: 'In Session', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
             new:      { icon: '🆕', label: 'Getting Started', color: 'rgba(240,244,248,0.4)', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.08)' }
         };
+
+        // Build smart status nudges
+        const nudges = [];
+        if (counts.new > 0) {
+          nudges.push({ icon: '🎙️', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)',
+            text: counts.new === 1
+              ? 'You have <strong>1 project</strong> that hasn\'t had a session yet.'
+              : 'You have <strong>' + counts.new + ' projects</strong> that haven\'t had a session yet.',
+            action: 'Start talking', actionColor: '#f59e0b', actionBg: 'rgba(245,158,11,0.15)', stage: 'new' });
+        }
+        if (counts.session > 0) {
+          nudges.push({ icon: '💬', color: '#1199fa', bg: 'rgba(17,153,250,0.06)', border: 'rgba(17,153,250,0.15)',
+            text: counts.session === 1
+              ? '<strong>1 project</strong> is in session — continue the conversation to move it forward.'
+              : '<strong>' + counts.session + ' projects</strong> are in session — continue the conversation to move them forward.',
+            action: 'Continue session', actionColor: '#1199fa', actionBg: 'rgba(17,153,250,0.15)', stage: 'session' });
+        }
+        if (counts.design > 0) {
+          nudges.push({ icon: '📐', color: '#1199fa', bg: 'rgba(17,153,250,0.06)', border: 'rgba(17,153,250,0.15)',
+            text: counts.design === 1
+              ? '<strong>1 project</strong> has a design ready for your review.'
+              : '<strong>' + counts.design + ' projects</strong> have designs ready for your review.',
+            action: 'Review design', actionColor: '#1199fa', actionBg: 'rgba(17,153,250,0.15)', stage: 'design' });
+        }
+        if (counts.proposal > 0) {
+          nudges.push({ icon: '💰', color: '#8b5cf6', bg: 'rgba(139,92,246,0.06)', border: 'rgba(139,92,246,0.15)',
+            text: counts.proposal === 1
+              ? '<strong>1 project</strong> has a proposal awaiting your approval.'
+              : '<strong>' + counts.proposal + ' projects</strong> have proposals awaiting your approval.',
+            action: 'View proposal', actionColor: '#8b5cf6', actionBg: 'rgba(139,92,246,0.15)', stage: 'proposal' });
+        }
+        if (counts.approved > 0 && nudges.length === 0) {
+          nudges.push({ icon: '✅', color: '#009e7e', bg: 'rgba(0,158,126,0.06)', border: 'rgba(0,158,126,0.15)',
+            text: counts.approved === 1
+              ? '<strong>1 project</strong> is approved and in progress. We\'ll keep you updated.'
+              : 'All <strong>' + counts.approved + ' projects</strong> are approved and in progress. We\'ll keep you updated.',
+            action: null, stage: 'approved' });
+        }
+        if (nudges.length === 0) {
+          nudges.push({ icon: '🚀', color: 'var(--accent-secondary)', bg: 'rgba(0,158,126,0.06)', border: 'rgba(0,158,126,0.15)',
+            text: 'All caught up! Ready to <strong>start a new project</strong>?',
+            action: 'New Project', actionColor: 'var(--accent-secondary)', actionBg: 'rgba(0,158,126,0.15)', isNew: true });
+        }
         %>
 
-        <div class="overview-grid">
-            <div class="overview-card">
-                <div class="count" style="color: var(--text-primary);"><%= projects.length %></div>
-                <div class="label">Total Projects</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
+          <% nudges.forEach(n => { %>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:<%= n.bg %>;border:1px solid <%= n.border %>;border-radius:12px;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:1.3rem;"><%= n.icon %></span>
+                <span style="font-size:0.9rem;color:var(--text-secondary);line-height:1.5;"><%- n.text %></span>
+              </div>
+              <% if (n.action) { %>
+                <% if (n.isNew) { %>
+                  <button onclick="toggleNewProject()" style="white-space:nowrap;padding:8px 18px;border-radius:var(--radius-pill);border:none;background:<%= n.actionBg %>;color:<%= n.actionColor %>;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"><%= n.action %> →</button>
+                <% } else { %>
+                  <a href="#stage-<%= n.stage %>" style="white-space:nowrap;padding:8px 18px;border-radius:var(--radius-pill);background:<%= n.actionBg %>;color:<%= n.actionColor %>;font-size:0.82rem;font-weight:600;transition:all 0.2s;display:inline-block;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"><%= n.action %> →</a>
+                <% } %>
+              <% } %>
             </div>
-            <div class="overview-card">
-                <div class="count" style="color: #f59e0b;"><%= inProgress %></div>
-                <div class="label">In Progress</div>
-            </div>
-            <div class="overview-card">
-                <div class="count" style="color: #8b5cf6;"><%= counts.proposal + counts.design %></div>
-                <div class="label">Awaiting Review</div>
-            </div>
-            <div class="overview-card">
-                <div class="count" style="color: #009e7e;"><%= counts.approved %></div>
-                <div class="label">Approved</div>
-            </div>
+          <% }) %>
         </div>
 
         <% const stageOrder = ['approved', 'proposal', 'design', 'session', 'new'];
@@ -400,7 +489,7 @@
              if (stageProjects.length === 0) return;
              const cfg = stageConfig[stage];
         %>
-        <div class="stage-section">
+        <div class="stage-section" id="stage-<%= stage %>">
             <div class="stage-header">
                 <span style="font-size: 20px;"><%= cfg.icon %></span>
                 <h3><%= cfg.label %></h3>
@@ -412,7 +501,7 @@
                         <div class="project-name"><%= p.name %></div>
                         <div class="project-meta">
                             <% if (p.description) { %><%= p.description.substring(0, 80) %><%= p.description.length > 80 ? '...' : '' %> · <% } %>
-                            Updated <%= melbDate(p.updated_at) %>
+                            💬 <%= p.session_count || 0 %> session<%= (p.session_count || 0) === 1 ? '' : 's' %> · 📎 <%= p.file_count || 0 %> file<%= (p.file_count || 0) === 1 ? '' : 's' %> · Updated <%= melbDate(p.updated_at) %>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -423,47 +512,89 @@
                         <% } else if (stage === 'approved') { %>
                             <span class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,158,126,0.3);">View Project</span>
                         <% } else { %>
-                            <span class="btn btn-sm btn-success"><%= (p.session_count || 0) > 0 ? '🎙️ Continue' : '🎙️ Start' %></span>
+                            <span class="btn btn-sm btn-success" onclick="event.preventDefault();event.stopPropagation();window.location.href='/projects/<%= encodeId(p.id) %>/session';"><%= (p.session_count || 0) > 0 ? '🎙️ Continue' : '🎙️ Start' %></span>
                         <% } %>
                     </div>
                 </a>
             <% }) %>
         </div>
         <% }) %>
+
+        <% if (typeof sharedProjects !== 'undefined' && sharedProjects.length > 0) { %>
+        <div style="margin-top: 32px;">
+            <div class="stage-header">
+                <span style="font-size: 20px;">🔗</span>
+                <h3>Shared with me</h3>
+                <span class="stage-badge" style="background: rgba(17,153,250,0.12); color: var(--accent); border: 1px solid rgba(17,153,250,0.3);"><%= sharedProjects.length %></span>
+            </div>
+            <% sharedProjects.forEach(project => { %>
+                <a href="/projects/<%= encodeId(project.id) %>" class="project-row" style="border-left: 3px solid var(--accent);">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="project-name"><%= project.name %></span>
+                            <span class="shared-label" style="background: <%= project.permission === 'admin' ? 'rgba(139,92,246,0.2)' : 'rgba(17,153,250,0.2)' %>; color: <%= project.permission === 'admin' ? '#8b5cf6' : '#1199fa' %>;"><%= project.permission %></span>
+                        </div>
+                        <div class="project-meta">
+                            <% if (project.description) { %><%= project.description.substring(0, 80) %> · <% } %>
+                            Shared by <%= project.owner_name %> · Updated <%= melbDate(project.updated_at) %>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 20px; font-size: 0.82rem; color: var(--text-muted);">
+                        <span>💬 <%= project.session_count || 0 %></span>
+                        <span>📎 <%= project.file_count || 0 %></span>
+                    </div>
+                </a>
+            <% }) %>
+        </div>
+        <% } %>
     </main>
 
-    <!-- Feature Request Button & Modal -->
-    <button onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:var(--accent);color:white;border:none;padding:12px 24px;border-radius:var(--radius-pill);font-size:0.88rem;font-weight:600;cursor:pointer;box-shadow:0 0 20px var(--accent-glow);z-index:999;transition:all 0.3s;font-family:'Inter',sans-serif;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 32px rgba(17,153,250,0.5)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 0 20px rgba(17,153,250,0.4)'">💡 Feature Request</button>
-    <div id="featureModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
-      <div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius);padding:28px;width:90%;max-width:500px;box-shadow:0 16px 48px rgba(0,0,0,0.4);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h3 style="color:var(--text-primary);font-weight:700;">💡 Submit a Feature Request</h3>
-          <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);">&times;</button>
-        </div>
-        <textarea id="featureText" rows="5" placeholder="Describe the feature you'd like to see..." style="width:100%;padding:12px;border:1px solid var(--border-glass);border-radius:12px;font-size:0.88rem;font-family:'Inter',sans-serif;resize:vertical;background:rgba(5,13,26,0.6);color:var(--text-primary);"></textarea>
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
-          <button onclick="document.getElementById('featureModal').style.display='none'" style="padding:10px 24px;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:transparent;cursor:pointer;font-size:0.88rem;color:var(--text-secondary);font-family:'Inter',sans-serif;">Cancel</button>
-          <button onclick="submitFeature()" style="padding:10px 24px;border:none;border-radius:var(--radius-pill);background:var(--accent);color:white;cursor:pointer;font-weight:600;font-size:0.88rem;box-shadow:0 0 16px var(--accent-glow);font-family:'Inter',sans-serif;">Submit</button>
-        </div>
-        <div id="featureStatus" style="margin-top:8px;font-size:0.82rem;"></div>
-      </div>
-    </div>
     <script>
-    async function submitFeature(){
-      const text=document.getElementById('featureText').value.trim();
-      if(!text)return;
-      const st=document.getElementById('featureStatus');
-      st.innerHTML='Submitting...';st.style.color='var(--text-muted)';
-      try{
-        const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'dashboard'})});
-        if(!r.ok)throw new Error('Failed');
-        st.innerHTML='✅ Thank you! Your request has been submitted.';st.style.color='#009e7e';
-        document.getElementById('featureText').value='';
-        setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
-      }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}
+    function toggleNewProject() {
+        const form = document.getElementById('newProjectForm');
+        const isHidden = form.style.display === 'none';
+        form.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) {
+            setTimeout(() => document.getElementById('newProjectName').focus(), 100);
+        }
     }
+    <% if (typeof isNewProject !== 'undefined' && isNewProject) { %>
+    document.addEventListener('DOMContentLoaded', () => toggleNewProject());
+    <% } %>
     </script>
+
 <% } %>
+
+<!-- ==================== FEATURE REQUEST MODAL ==================== -->
+<div class="modal-overlay" id="featureModal">
+  <div class="modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="color:var(--text-primary);font-weight:700;">💡 Submit Feedback</h3>
+      <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);">&times;</button>
+    </div>
+    <textarea id="featureText" rows="5" placeholder="Tell us what you'd like to see, or what could be better..." style="width:100%;padding:12px;border:1px solid var(--border-glass);border-radius:12px;font-size:0.88rem;font-family:'Inter',sans-serif;resize:vertical;background:rgba(5,13,26,0.6);color:var(--text-primary);"></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+      <button onclick="document.getElementById('featureModal').style.display='none'" style="padding:10px 24px;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:transparent;cursor:pointer;font-size:0.88rem;color:var(--text-secondary);font-family:'Inter',sans-serif;">Cancel</button>
+      <button onclick="submitFeature()" style="padding:10px 24px;border:none;border-radius:var(--radius-pill);background:var(--accent);color:white;cursor:pointer;font-weight:600;font-size:0.88rem;box-shadow:0 0 16px var(--accent-glow);font-family:'Inter',sans-serif;">Submit</button>
+    </div>
+    <div id="featureStatus" style="margin-top:8px;font-size:0.82rem;"></div>
+  </div>
+</div>
+<script>
+async function submitFeature(){
+  const text=document.getElementById('featureText').value.trim();
+  if(!text)return;
+  const st=document.getElementById('featureStatus');
+  st.innerHTML='Submitting...';st.style.color='var(--text-muted)';
+  try{
+    const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:'dashboard'})});
+    if(!r.ok)throw new Error('Failed');
+    st.innerHTML='✅ Thank you! Your feedback has been submitted.';st.style.color='#009e7e';
+    document.getElementById('featureText').value='';
+    setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
+  }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}
+}
+</script>
 
 </body>
 </html>

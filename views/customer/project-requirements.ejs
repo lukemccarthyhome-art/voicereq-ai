@@ -48,8 +48,8 @@
         <div class="header-container">
             <a href="/dashboard" class="logo">◆ Morti</a>
             <nav class="nav">
-                <a href="/dashboard">Dashboard</a>
-                <a href="/projects">My Projects</a>
+                <a href="/dashboard">Projects</a>
+                <!-- merged into dashboard -->
                 <a href="/profile">Profile</a>
                 <a href="/logout">Logout</a>
             </nav>
@@ -57,7 +57,7 @@
     </div>
     <main class="main">
         <div class="breadcrumb">
-            <a href="/dashboard">Dashboard</a> › <a href="/projects">Projects</a> › <a href="/projects/<%= encodeId(project.id) %>"><%= project.name %></a> › Requirements
+            <a href="/dashboard">Projects</a> › <a href="/projects">Projects</a> › <a href="/projects/<%= encodeId(project.id) %>"><%= project.name %></a> › Requirements
         </div>
         <div class="card">
             <h2 style="margin-bottom: 16px; font-weight: 800; letter-spacing: -0.02em;">📋 Project Requirements</h2>

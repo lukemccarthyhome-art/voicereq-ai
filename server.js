@@ -244,7 +244,7 @@ app.use((req, res, next) => {
   res.locals.renderText = function(txt) {
     if (!txt) return '';
     let s = String(txt).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    s = s.replace(/\[ASSUMPTION\]/g,'<span style="background:#fef3c7;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;color:#92400e;">ASSUMPTION</span>');
+    s = s.replace(/\[ASSUMPTION\]/g,'<span style="background:rgba(245,158,11,0.15);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:600;color:#f59e0b;">ASSUMPTION</span>');
     s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     const lines = s.split('\n');
     let html = '', inOl = false, inUl = false;
@@ -260,11 +260,11 @@ app.use((req, res, next) => {
       if (numbered) {
         if (inUl) { html += '</ul>'; inUl = false; }
         if (!inOl) { html += '<ol style="margin:8px 0;padding:0;list-style:none;">'; inOl = true; }
-        html += '<li style="margin-bottom:10px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;list-style:none;"><span style="display:inline-block;background:#4f46e5;color:#fff;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;font-size:12px;font-weight:700;margin-right:10px;">' + numbered[1] + '</span>' + numbered[2] + '</li>';
+        html += '<li style="margin-bottom:10px;padding:10px 14px;background:rgba(15,29,50,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:8px;list-style:none;color:rgba(240,244,248,0.7);"><span style="display:inline-block;background:linear-gradient(135deg,#1199fa,#8b5cf6);color:#fff;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;font-size:12px;font-weight:700;margin-right:10px;">' + numbered[1] + '</span>' + numbered[2] + '</li>';
       } else if (bullet) {
         if (inOl) { html += '</ol>'; inOl = false; }
         if (!inUl) { html += '<ul style="margin:4px 0 4px 16px;padding:0;">'; inUl = true; }
-        html += '<li style="margin-bottom:3px;font-size:13px;color:#475569;">' + bullet[1] + '</li>';
+        html += '<li style="margin-bottom:3px;font-size:13px;color:rgba(240,244,248,0.7);">' + bullet[1] + '</li>';
       } else {
         if (inUl) { html += '</ul>'; inUl = false; }
         if (inOl) { html += '</ol>'; inOl = false; }
@@ -3096,34 +3096,21 @@ app.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, res) 
     user: req.user,
     projects: enriched,
     sharedProjects,
+    isNewProject: req.query.new === 'true',
     title: 'Dashboard',
     currentPage: 'customer-dashboard',
     breadcrumbs: [{ name: 'Dashboard' }]
   });
 });
 
-app.get('/projects', auth.authenticate, auth.requireCustomer, async (req, res) => {
-  const projects = await db.getProjectsByUser(req.user.id);
-  const user = await db.getUserById(req.user.id);
-  const sharedProjects = (user && typeof db.getSharedProjects === 'function') ? await db.getSharedProjects(req.user.id, user.email) : [];
-  const isNewProject = req.query.new === 'true';
-  
-  res.render('customer/projects', {
-    user: req.user,
-    projects,
-    sharedProjects,
-    isNewProject,
-    title: 'My Projects',
-    currentPage: 'customer-projects',
-    breadcrumbs: [
-      { name: 'Dashboard', url: '/dashboard' },
-      { name: 'Projects' }
-    ]
-  });
+// Redirect /projects to /dashboard (merged pages)
+app.get('/projects', auth.authenticate, auth.requireCustomer, (req, res) => {
+  const query = req.query.new === 'true' ? '?new=true' : '';
+  res.redirect('/dashboard' + query);
 });
 
-app.get('/projects/new', auth.authenticate, auth.requireCustomer, async (req, res) => {
-  res.redirect('/projects?new=true');
+app.get('/projects/new', auth.authenticate, auth.requireCustomer, (req, res) => {
+  res.redirect('/dashboard?new=true');
 });
 
 app.post('/projects', auth.authenticate, auth.requireCustomer, async (req, res) => {
