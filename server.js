@@ -4741,14 +4741,6 @@ app.use((err, req, res, next) => {
 
 // Wait for database to be ready, then start server
 db.ready.then(async () => {
-  // One-time project rename migration (remove after deploy)
-  try {
-    if (db.pool) { // Postgres only
-      await db.pool.query("UPDATE projects SET name='Warehouse Ops Automation', description='Automate warehouse receiving, stock updates and dispatch notifications' WHERE id='gJ6xMGq2'");
-      console.log('✅ One-time project rename applied');
-    }
-  } catch(e) { console.warn('Project rename skipped:', e.message); }
-
   // HTTP
   app.listen(PORT, () => {
     console.log(`🎙️  Morti Projects running on http://localhost:${PORT}`);
