@@ -2932,6 +2932,10 @@ app.get('/profile', auth.authenticate, async (req, res) => {
   });
 });
 
+app.get('/help', auth.authenticate, (req, res) => {
+  res.render('customer/help', { user: req.user, title: 'Help & Support', currentPage: 'help' });
+});
+
 app.post('/profile/password', auth.authenticate, async (req, res) => {
   try {
     const { currentPassword, newPassword, confirmPassword } = req.body;

@@ -25,8 +25,9 @@
 13. [Deployment (Render.com)](#deployment-rendercom)
 14. [Local Development](#local-development)
 15. [Environment Variables](#environment-variables)
-16. [Key Design Decisions](#key-design-decisions)
-17. [Known Limitations](#known-limitations)
+16. [Billing & Subscriptions](#billing--subscriptions)
+17. [Key Design Decisions](#key-design-decisions)
+18. [Known Limitations](#known-limitations)
 
 ---
 
@@ -713,6 +714,198 @@ SQLite is used automatically when `DATABASE_URL` is not set. Database file creat
 | `OPENAI_API_KEY` | Yes | — | OpenAI key (gpt-3.5-turbo for server-side analysis) |
 | `VAPI_PUBLIC_KEY` | Yes | — | Vapi client-side API key |
 | `VAPI_PRIVATE_KEY` | No | — | Vapi server-side key (for future API calls) |
+
+---
+
+## Billing & Subscriptions
+
+### Overview
+
+Billing is powered by **Stripe** for subscription management, payment processing, and card-on-file handling. The system supports per-project subscriptions with a setup fee + recurring monthly charge. Stripe webhooks drive all payment state changes — the server never polls Stripe.
+
+```
+Admin activates billing on project
+    │
+    ├─ Creates Stripe Customer (if not exists)
+    ├─ Creates Stripe Subscription (setup fee + monthly)
+    └─ Stores subscription record in DB
+         │
+         ▼
+Stripe sends webhooks ──→ POST /api/billing/stripe-webhook
+    │
+    ├─ invoice.paid         → Record payment, send receipt email
+    ├─ invoice.payment_failed → Escalation sequence (3 attempts)
+    ├─ payment_method.expiring → Send card expiry warning
+    └─ customer.subscription.updated/deleted → Sync status
+```
+
+### Database Tables
+
+Three tables support billing. All created via `CREATE TABLE IF NOT EXISTS` in `database-pg.js`.
+
+```sql
+subscriptions
+├── id                      SERIAL PRIMARY KEY
+├── user_id                 INTEGER → users(id)
+├── project_id              INTEGER → projects(id)
+├── stripe_customer_id      TEXT
+├── stripe_subscription_id  TEXT UNIQUE
+├── status                  TEXT ('active' | 'past_due' | 'paused' | 'cancelled')
+├── plan_name               TEXT
+├── monthly_amount          INTEGER (cents)
+├── setup_amount            INTEGER (cents)
+├── current_period_start    TIMESTAMPTZ
+├── current_period_end      TIMESTAMPTZ
+├── build_ids               JSONB DEFAULT '[]'
+├── created_at              TIMESTAMPTZ DEFAULT NOW()
+└── updated_at              TIMESTAMPTZ DEFAULT NOW()
+
+billing_events
+├── id                      SERIAL PRIMARY KEY
+├── subscription_id         INTEGER → subscriptions(id)
+├── stripe_event_id         TEXT UNIQUE
+├── event_type              TEXT NOT NULL
+├── status                  TEXT ('succeeded' | 'failed' | 'pending')
+├── amount                  INTEGER (cents)
+├── failure_reason          TEXT
+├── attempt_count           INTEGER DEFAULT 0
+├── raw_event               JSONB
+└── created_at              TIMESTAMPTZ DEFAULT NOW()
+
+payment_warnings
+├── id                      SERIAL PRIMARY KEY
+├── subscription_id         INTEGER → subscriptions(id)
+├── warning_type            TEXT NOT NULL
+├── sent_at                 TIMESTAMPTZ DEFAULT NOW()
+└── email_to                TEXT
+```
+
+### API Endpoints
+
+All billing endpoints require authentication. Customer endpoints are role-gated to the project owner; admin endpoints require `requireAdmin`.
+
+#### Customer-Facing
+
+| Method | Endpoint | Body/Params | Response |
+|--------|----------|-------------|----------|
+| `GET` | `/api/billing/history?projectId=X` | — | `{payments: [{date, amount, status}]}` |
+| `GET` | `/api/billing/subscriptions?projectId=X` | — | `{subscription: {...}}` |
+| `POST` | `/api/billing/update-card` | `{subscriptionId}` | `{url}` (Stripe portal session URL) |
+
+#### Admin
+
+| Method | Endpoint | Body | Response |
+|--------|----------|------|----------|
+| `GET` | `/api/admin/billing/overview` | — | `{mrr, activeCount, pastDueCount, alerts}` |
+| `GET` | `/api/admin/billing/tenant/:userId` | — | `{subscriptions, events}` |
+| `POST` | `/api/admin/billing/activate` | `{userId, projectId, planName, monthlyAmount, setupAmount}` | `{subscription}` |
+| `POST` | `/api/admin/billing/pause` | `{subscriptionId, reason}` | `{success: true}` |
+| `POST` | `/api/admin/billing/resume` | `{subscriptionId}` | `{success: true}` |
+
+#### Webhook
+
+| Method | Endpoint | Auth | Response |
+|--------|----------|------|----------|
+| `POST` | `/api/billing/stripe-webhook` | Stripe signature (`stripe-signature` header) | `{received: true}` |
+
+The webhook endpoint uses `express.raw()` for body parsing (Stripe requires the raw body for signature verification). It is excluded from the global JSON body parser.
+
+### Webhook Handling Flow
+
+```
+POST /api/billing/stripe-webhook
+    │
+    ├─ Verify signature: stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET)
+    │
+    ├─ Deduplicate: check billing_events.stripe_event_id (UNIQUE constraint)
+    │
+    ├─ Switch on event.type:
+    │
+    │   invoice.paid
+    │   ├─ Update subscription status → 'active'
+    │   ├─ Update current_period_start/end from invoice
+    │   ├─ Record billing_event (status: 'succeeded')
+    │   └─ Send receipt email
+    │
+    │   invoice.payment_failed
+    │   ├─ Count previous failures for this subscription
+    │   ├─ Record billing_event (status: 'failed', attempt_count)
+    │   └─ Trigger escalation (see below)
+    │
+    │   payment_method.expiring
+    │   ├─ Record payment_warning (warning_type: 'card_expiry')
+    │   └─ Send card expiry email
+    │
+    │   customer.subscription.updated
+    │   └─ Sync status, plan, amounts from Stripe object
+    │
+    │   customer.subscription.deleted
+    │   └─ Update subscription status → 'cancelled'
+    │
+    └─ Return 200 (always, to prevent Stripe retries on processing errors)
+```
+
+### Payment Failure Escalation
+
+Failed payments follow a 3-attempt escalation before automatic service pause:
+
+| Attempt | Action | Email Template |
+|---------|--------|----------------|
+| **1st failure** | Record warning, notify customer | `payment_failed_1` — "Payment failed, we'll retry automatically" |
+| **2nd failure** | Record warning, urgent notification | `payment_failed_2` — "Urgent: update your card to avoid interruption" |
+| **3rd failure** | Pause subscription, notify customer + admin | `payment_failed_final` + `automation_paused` |
+
+On 3rd failure, the server:
+1. Updates subscription status → `'paused'`
+2. Sends pause request to the Engine: `POST ENGINE_URL/api/billing/pause` with `{userId, buildIds, reason}`
+3. Records `payment_warning` with type `'automation_paused'`
+4. Sends `automation_paused` email to customer
+
+When the customer updates their card (via Stripe portal session from `/api/billing/update-card`), Stripe automatically retries the failed invoice. On success, the `invoice.paid` webhook fires and the server:
+1. Updates subscription status → `'active'`
+2. Sends resume request to the Engine: `POST ENGINE_URL/api/billing/resume` with `{userId, buildIds}`
+3. Sends `automation_resumed` email to customer
+
+Engine requests use `Bearer ENGINE_API_SECRET` for authentication.
+
+### Email Templates
+
+All emails are sent via the existing `sendMortiEmail(to, subject, html)` function (nodemailer/SMTP).
+
+| Template | Trigger | Content |
+|----------|---------|---------|
+| `receipt` | `invoice.paid` | Payment confirmation with amount, date, next billing date |
+| `card_expiry` | `payment_method.expiring` | Card expiring in 30 days, link to update |
+| `payment_failed_1` | 1st failed payment | Informational — will retry automatically |
+| `payment_failed_2` | 2nd failed payment | Urgent — update card to avoid service interruption |
+| `payment_failed_final` | 3rd failed payment | Final warning — service pausing in 24 hours |
+| `automation_paused` | Service paused after 3rd failure | Service paused, link to update card and resume |
+| `automation_resumed` | Successful payment after pause | Service restored confirmation |
+
+### UI
+
+**Customer view** — The billing section lives in `/profile` (accessible to any authenticated user):
+- Subscription status and plan details
+- Payment history (date, amount, status)
+- "Update Card" button (redirects to Stripe customer portal)
+- Warning banners on the dashboard when subscription is `past_due` or `paused`
+
+**Admin view** — The admin portal (`/admin`) includes a billing overview:
+- MRR (monthly recurring revenue) and active subscription count
+- Past-due and paused subscription alerts
+- Per-user billing details (via `/api/admin/billing/tenant/:userId`)
+- "Activate Billing" button on approved proposals (enters setup fee + monthly amount)
+- Manual pause/resume controls per subscription
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `STRIPE_SECRET_KEY` | Yes | Stripe API secret key (server-side) |
+| `STRIPE_WEBHOOK_SECRET` | Yes | Webhook endpoint signing secret (from Stripe dashboard) |
+| `STRIPE_PUBLISHABLE_KEY` | Yes | Stripe publishable key (client-side, for Stripe.js) |
+| `ENGINE_URL` | Yes | Engine service URL for pause/resume automation |
+| `ENGINE_API_SECRET` | Yes | Bearer token for Engine API requests |
 
 ---
 
