@@ -76,11 +76,12 @@
   <div class="header">
     <div class="header-container">
       <a href="/dashboard" class="logo">◆ Morti</a>
-      <nav class="nav">
+      <nav class="nav" style="display:flex;gap:8px;align-items:center;">
         <a href="/dashboard">Projects</a>
-        <!-- merged into dashboard -->
         <a href="/profile">Profile</a>
-        <a href="/logout">Logout</a>
+        <a href="#" onclick="if(document.getElementById('featureModal'))document.getElementById('featureModal').style.display='flex';return false;" style="color:#8b5cf6;">💡 Feedback</a>
+                <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);padding:8px 14px;border-radius:50px;font-weight:500;font-size:0.88rem;color:rgba(240,244,248,0.7);">👤 <%= user.name %></span>
+                <a href="/logout">Logout</a>
       </nav>
     </div>
   </div>

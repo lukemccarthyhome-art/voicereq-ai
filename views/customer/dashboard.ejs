@@ -258,6 +258,7 @@
             <a href="/dashboard" class="logo">◆ Morti</a>
             <nav class="nav">
                 <a href="/dashboard" class="active">Projects</a>
+                <a href="/billing">Billing</a>
                 <a href="/profile">Profile</a>
                 <a href="#" class="feature-link" onclick="document.getElementById('featureModal').style.display='flex';return false;">💡 Feedback</a>
                 <div class="user-name">👤 <%= user.name %></div>
@@ -379,6 +380,16 @@
 <% } else { %>
     <!-- ==================== NORMAL DASHBOARD ==================== -->
     <main class="main">
+        <% if (typeof billingWarnings !== 'undefined' && billingWarnings.includes('past_due')) { %>
+        <div style="padding:16px 20px;border-radius:16px;margin-bottom:20px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;font-size:0.9rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            ⚠️ <strong>Payment issue</strong> — Your latest payment didn't go through. <a href="/billing" style="color:#1199fa;font-weight:600;text-decoration:underline;">Update payment method →</a>
+        </div>
+        <% } %>
+        <% if (typeof billingWarnings !== 'undefined' && billingWarnings.includes('paused')) { %>
+        <div style="padding:16px 20px;border-radius:16px;margin-bottom:20px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;font-size:0.9rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            ⏸️ <strong>Automations paused</strong> — Service is paused due to outstanding payment. <a href="/billing" style="color:#1199fa;font-weight:600;text-decoration:underline;">Restore service →</a>
+        </div>
+        <% } %>
         <div class="top-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
             <div>
                 <h1 style="font-weight: 800; letter-spacing: -0.03em;">Welcome back, <%= user.name.split(' ')[0] %> 👋</h1>

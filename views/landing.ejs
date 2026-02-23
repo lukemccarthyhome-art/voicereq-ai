@@ -141,10 +141,10 @@
 
         /* ========== HERO ========== */
         .hero {
-            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; display: flex; align-items: flex-start; justify-content: center;
             background: var(--bg-deep);
-            padding: 140px 24px 100px; text-align: center; color: #fff;
-            position: relative; overflow: hidden;
+            padding: 140px 24px 0; text-align: center; color: #fff;
+            position: relative; overflow: visible;
         }
         .hero-orb {
             position: absolute; border-radius: 50%; pointer-events: none;
@@ -188,11 +188,114 @@
             background: rgba(17, 153, 250, 0.06);
             border: 1px solid rgba(17, 153, 250, 0.1);
         }
-        .hero-video-wrap {
-            max-width: 820px; margin: 0 auto 52px;
-            animation: fadeUp 0.8s ease-out 0.25s both;
+        /* Hero image (crypto.com bleed style) */
+        .hero-image-wrap {
+            max-width: 1100px; margin: 0 auto;
+            animation: fadeUp 1s ease-out 0.25s both;
+            position: relative;
+            perspective: 1000px;
         }
-        .hero-video-container {
+        .hero-image-inner {
+            transform: rotateX(8deg);
+            transform-origin: center top;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+        /* Multi-edge gradient mask — dissolves into background on all sides */
+        .hero-image-inner::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+            border-radius: 16px;
+            background:
+                linear-gradient(to bottom, transparent 30%, var(--bg-deep) 98%),
+                linear-gradient(to right, var(--bg-deep) 0%, transparent 12%, transparent 88%, var(--bg-deep) 100%);
+        }
+        /* Fake dashboard app styles */
+        .hero-app {
+            background: #0b1221; border-radius: 16px; overflow: hidden;
+            font-family: 'Inter', sans-serif; color: #f0f4f8;
+            font-size: 13px; text-align: left;
+        }
+        .hero-app-nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 24px; border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.02);
+        }
+        .hero-app-logo { display: flex; align-items: center; }
+        .hero-app-nav-links { display: flex; gap: 24px; }
+        .hero-app-nav-links span { color: rgba(240,244,248,0.4); font-size: 13px; font-weight: 500; }
+        .hero-app-nav-links span.active { color: #f0f4f8; }
+        .hero-app-nav-right { display: flex; align-items: center; gap: 12px; }
+        .hero-app-pill {
+            background: rgba(17,153,250,0.15); color: #1199fa; font-size: 11px; font-weight: 600;
+            padding: 4px 12px; border-radius: 20px;
+        }
+        .hero-app-avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #1199fa, #8b5cf6);
+            display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+        }
+        .hero-app-body { display: flex; min-height: 340px; }
+        .hero-app-sidebar {
+            width: 240px; padding: 20px; border-right: 1px solid rgba(255,255,255,0.06);
+            display: flex; flex-direction: column; gap: 16px;
+        }
+        .hero-app-stat {
+            padding: 14px; border-radius: 10px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .hero-app-stat-label { font-size: 11px; color: rgba(240,244,248,0.4); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .hero-app-stat-value { font-size: 28px; font-weight: 800; color: #f0f4f8; line-height: 1; }
+        .hero-app-stat-change { font-size: 11px; margin-top: 4px; }
+        .hero-app-stat-change.positive { color: #00c896; }
+        .hero-app-recent { margin-top: auto; }
+        .hero-app-recent-title { font-size: 11px; color: rgba(240,244,248,0.4); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .hero-app-recent-item { font-size: 12px; color: rgba(240,244,248,0.6); padding: 6px 0; display: flex; align-items: center; gap: 8px; }
+        .hero-app-recent-item em { color: rgba(240,244,248,0.3); font-style: normal; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .dot.green { background: #00c896; }
+        .dot.blue { background: #1199fa; }
+        .dot.purple { background: #8b5cf6; }
+        .hero-app-main { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+        .hero-app-chart-header { display: flex; justify-content: space-between; align-items: center; }
+        .hero-app-chart-tabs { display: flex; gap: 4px; }
+        .hero-app-chart-tabs span {
+            padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            color: rgba(240,244,248,0.4); cursor: default;
+        }
+        .hero-app-chart-tabs span.active { background: rgba(17,153,250,0.15); color: #1199fa; }
+        .hero-app-chart { height: 180px; border-radius: 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+        .hero-app-projects { display: flex; flex-direction: column; gap: 2px; }
+        .hero-app-project-row {
+            display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+            border-radius: 8px; background: rgba(255,255,255,0.02);
+        }
+        .hero-app-project-name { flex: 1; font-weight: 500; color: #f0f4f8; }
+        .hero-app-project-status {
+            font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600;
+        }
+        .hero-app-project-status.running { background: rgba(0,200,150,0.12); color: #00c896; }
+        .hero-app-project-metric { font-size: 12px; color: rgba(240,244,248,0.4); min-width: 100px; text-align: right; }
+        @media (max-width: 768px) {
+            .hero-app-body { flex-direction: column; }
+            .hero-app-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); flex-direction: row; flex-wrap: wrap; }
+            .hero-app-stat { flex: 1; min-width: 120px; }
+            .hero-app-recent { display: none; }
+            .hero-app-nav-links { display: none; }
+            .hero-app-project-metric { display: none; }
+        }
+
+        /* Video section (moved lower) */
+        .video-section {
+            padding: 100px 24px; position: relative;
+        }
+        .video-section::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .video-wrap {
+            max-width: 820px; margin: 0 auto;
+        }
+        .video-container {
             position: relative; border-radius: 20px; overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.1);
             background: var(--bg-glass);
@@ -201,7 +304,7 @@
                 0 20px 60px rgba(0, 0, 0, 0.5),
                 inset 0 1px 0 rgba(255, 255, 255, 0.06);
         }
-        .hero-video {
+        .video-container video {
             width: 100%; display: block; border-radius: 19px;
         }
         .video-play-overlay {
@@ -239,6 +342,7 @@
         .hero-buttons {
             display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
             animation: fadeUp 0.8s ease-out 0.35s both;
+            margin-bottom: 60px;
         }
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(32px); }
@@ -628,20 +732,99 @@
             <strong style="color: var(--text-primary); font-weight: 600;">What is Morti?</strong> An AI-powered automation consultancy for Australian SMBs. Have a conversation about your business problem — we deliver a running, managed solution. No technical knowledge required.
         </div>
 
-        <div class="hero-video-wrap">
-            <div class="hero-video-container">
-                <video class="hero-video" playsinline preload="metadata" poster="/morti-poster.jpg" id="hero-vid">
-                    <source src="/morti.mp4" type="video/mp4">
-                </video>
-                <div class="video-play-overlay" id="play-overlay" onclick="playHeroVideo()">
-                    <div class="video-play-btn"></div>
-                </div>
-            </div>
-        </div>
-
         <div class="hero-buttons">
             <a href="/signup" class="btn btn-primary btn-lg">Start a Conversation</a>
             <a href="#how-it-works" class="btn btn-glass btn-lg">See How It Works</a>
+        </div>
+
+        <div class="hero-image-wrap">
+            <div class="hero-image-inner">
+                <!-- Fake dashboard "screenshot" -->
+                <div class="hero-app">
+                    <div class="hero-app-nav">
+                        <div class="hero-app-logo">
+                            <span style="font-size:18px;margin-right:6px;">⚡</span> <span style="font-weight:700;font-size:15px;color:#f0f4f8;">Morti</span>
+                            <span style="font-weight:400;font-size:13px;color:rgba(240,244,248,0.5);margin-left:4px;">Projects</span>
+                        </div>
+                        <div class="hero-app-nav-links">
+                            <span class="active">Dashboard</span>
+                            <span>Automations</span>
+                            <span>Analytics</span>
+                            <span>Settings</span>
+                        </div>
+                        <div class="hero-app-nav-right">
+                            <span class="hero-app-pill">3 Active</span>
+                            <span class="hero-app-avatar">LM</span>
+                        </div>
+                    </div>
+                    <div class="hero-app-body">
+                        <div class="hero-app-sidebar">
+                            <div class="hero-app-stat">
+                                <div class="hero-app-stat-label">Automations Running</div>
+                                <div class="hero-app-stat-value">12</div>
+                                <div class="hero-app-stat-change positive">+3 this week</div>
+                            </div>
+                            <div class="hero-app-stat">
+                                <div class="hero-app-stat-label">Hours Saved</div>
+                                <div class="hero-app-stat-value">847</div>
+                                <div class="hero-app-stat-change positive">+62 this month</div>
+                            </div>
+                            <div class="hero-app-stat">
+                                <div class="hero-app-stat-label">Tasks Completed</div>
+                                <div class="hero-app-stat-value">3,241</div>
+                                <div class="hero-app-stat-change positive">99.2% success</div>
+                            </div>
+                            <div class="hero-app-recent">
+                                <div class="hero-app-recent-title">Recent Activity</div>
+                                <div class="hero-app-recent-item"><span class="dot green"></span>Invoice approval — <em>2m ago</em></div>
+                                <div class="hero-app-recent-item"><span class="dot blue"></span>Onboarding flow — <em>18m ago</em></div>
+                                <div class="hero-app-recent-item"><span class="dot purple"></span>Weekly report sent — <em>1h ago</em></div>
+                                <div class="hero-app-recent-item"><span class="dot green"></span>Lead sync to CRM — <em>2h ago</em></div>
+                            </div>
+                        </div>
+                        <div class="hero-app-main">
+                            <div class="hero-app-chart-header">
+                                <span style="font-weight:600;color:#f0f4f8;">Automation Performance</span>
+                                <div class="hero-app-chart-tabs">
+                                    <span class="active">24H</span><span>1W</span><span>1M</span><span>6M</span>
+                                </div>
+                            </div>
+                            <div class="hero-app-chart">
+                                <svg viewBox="0 0 600 180" preserveAspectRatio="none" style="width:100%;height:100%;">
+                                    <defs>
+                                        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#1199fa" stop-opacity="0.3"/>
+                                            <stop offset="100%" stop-color="#1199fa" stop-opacity="0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M0,140 C30,135 60,130 100,120 C140,110 170,125 210,105 C250,85 280,90 320,70 C360,50 400,55 440,35 C480,20 520,25 560,15 L600,10 L600,180 L0,180Z" fill="url(#chartGrad)"/>
+                                    <path d="M0,140 C30,135 60,130 100,120 C140,110 170,125 210,105 C250,85 280,90 320,70 C360,50 400,55 440,35 C480,20 520,25 560,15 L600,10" fill="none" stroke="#1199fa" stroke-width="2.5"/>
+                                </svg>
+                            </div>
+                            <div class="hero-app-projects">
+                                <div class="hero-app-project-row">
+                                    <span class="dot green"></span>
+                                    <span class="hero-app-project-name">Invoice Approval Pipeline</span>
+                                    <span class="hero-app-project-status running">Running</span>
+                                    <span class="hero-app-project-metric">↑ 142 tasks/wk</span>
+                                </div>
+                                <div class="hero-app-project-row">
+                                    <span class="dot blue"></span>
+                                    <span class="hero-app-project-name">New Starter Onboarding</span>
+                                    <span class="hero-app-project-status running">Running</span>
+                                    <span class="hero-app-project-metric">↑ 23 tasks/wk</span>
+                                </div>
+                                <div class="hero-app-project-row">
+                                    <span class="dot purple"></span>
+                                    <span class="hero-app-project-name">Weekly Ops Report</span>
+                                    <span class="hero-app-project-status running">Running</span>
+                                    <span class="hero-app-project-metric">Every Monday</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -888,7 +1071,7 @@
         <div class="pricing-card fade-in fade-in-delay-1">
             <div class="pricing-phase">Ongoing</div>
             <h3>Management Fee</h3>
-            <div class="pricing-from">From $199/mo <span>+ GST</span></div>
+            <div class="pricing-from">From $299/mo <span>+ GST</span></div>
             <p class="pricing-desc">We keep it running, monitored, and improving. Priced as a fraction of the value it delivers.</p>
             <ul class="pricing-includes">
                 <li>24/7 hosting &amp; monitoring</li>
@@ -904,6 +1087,24 @@
         <br><br>
         <a href="/signup">Sign up to start a conversation</a>, or <a href="/contact">get in touch</a> to ask questions first.
     </p>
+</section>
+
+<!-- ==================== SEE IT IN ACTION ==================== -->
+<section class="video-section">
+    <div class="container" style="text-align:center;">
+        <div class="section-label fade-in">Morti. Just Works.</div>
+        <div class="section-divider fade-in"></div>
+        <div class="video-wrap fade-in">
+            <div class="video-container">
+                <video playsinline preload="metadata" poster="/morti-poster.jpg" id="hero-vid">
+                    <source src="/morti.mp4" type="video/mp4">
+                </video>
+                <div class="video-play-overlay" id="play-overlay" onclick="playHeroVideo()">
+                    <div class="video-play-btn"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 
 <!-- ==================== FINAL CTA ==================== -->

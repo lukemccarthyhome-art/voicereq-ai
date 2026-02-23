@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing - Morti Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a1628;
+            --bg-primary: #0f1d32;
+            --bg-card: #142640;
+            --bg-glass: rgba(15, 29, 50, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --accent: #1199fa;
+            --accent-glow: rgba(17, 153, 250, 0.4);
+            --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #009e7e;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f0f4f8;
+            --text-secondary: rgba(240, 244, 248, 0.7);
+            --text-muted: rgba(240, 244, 248, 0.4);
+            --radius: 16px;
+            --radius-pill: 50px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        .header { background: rgba(5, 13, 26, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-glass); padding: 16px 0; }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+        .logo { font-size: 1.3rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        .nav { display: flex; gap: 8px; align-items: center; }
+        .nav a { color: var(--text-muted); font-size: 0.88rem; padding: 8px 14px; border-radius: var(--radius-pill); transition: all 0.2s; font-weight: 500; }
+        .nav a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+        .nav a.active { color: var(--accent); background: var(--accent-dim); }
+        .user-name { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); padding: 8px 14px; border-radius: var(--radius-pill); font-weight: 500; font-size: 0.88rem; color: var(--text-secondary); }
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; min-height: calc(100vh - 200px); }
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+        .card h2 { margin-bottom: 16px; color: var(--text-primary); font-size: 1.3rem; font-weight: 700; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .badge-active { background: rgba(0, 158, 126, 0.15); color: #34d399; }
+        .badge-past-due { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .badge-paused { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .badge-cancelled { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; }
+        .btn-primary { background: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn-primary:hover { background: #2aa8ff; transform: translateY(-2px); box-shadow: 0 0 32px var(--accent-glow); }
+        .alert { padding: 16px 20px; border-radius: var(--radius); margin-bottom: 20px; font-size: 0.9rem; }
+        .alert-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; }
+        .alert-danger { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; }
+        .sub-card { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(15, 29, 50, 0.4); border: 1px solid var(--border-glass); border-radius: 12px; margin-bottom: 12px; }
+        .sub-info h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+        .sub-info p { color: var(--text-secondary); font-size: 0.88rem; }
+        .sub-amount { text-align: right; }
+        .sub-amount .price { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+        .sub-amount .period { color: var(--text-muted); font-size: 0.82rem; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-glass); }
+        .table th { font-weight: 600; color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .table tbody tr:hover { background: rgba(17, 153, 250, 0.05); }
+        .page-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 24px; letter-spacing: -0.03em; }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
+        @media (max-width: 768px) {
+            .main { padding: 16px; }
+            .sub-card { flex-direction: column; gap: 12px; text-align: center; }
+            .sub-amount { text-align: center; }
+            .header-container { flex-direction: column; gap: 12px; text-align: center; }
+            .nav { flex-wrap: wrap; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-container">
+            <a href="/dashboard" class="logo">◆ Morti</a>
+            <nav class="nav">
+                <a href="/dashboard">Projects</a>
+                <a href="/billing" class="active">Billing</a>
+                <a href="/profile">Profile</a>
+                <div class="user-name">👤 <%= user.name %></div>
+                <a href="/logout">Logout</a>
+            </nav>
+        </div>
+    </div>
+
+    <main class="main">
+        <h1 class="page-title">💳 Billing</h1>
+
+        <% const pastDue = subscriptions.filter(s => s.status === 'past_due'); %>
+        <% const paused = subscriptions.filter(s => s.status === 'paused'); %>
+
+        <% if (pastDue.length > 0) { %>
+        <div class="alert alert-warning">
+            ⚠️ You have a payment issue. Please update your payment method to keep your automations running.
+            <button class="btn btn-primary" style="margin-left:12px;padding:8px 18px;font-size:0.82rem;" onclick="updateCard()">Update Card</button>
+        </div>
+        <% } %>
+
+        <% if (paused.length > 0) { %>
+        <div class="alert alert-danger">
+            ⏸️ Your automations are paused due to outstanding payment. Update your payment method to restore service.
+            <button class="btn btn-primary" style="margin-left:12px;padding:8px 18px;font-size:0.82rem;" onclick="updateCard()">Update Card</button>
+        </div>
+        <% } %>
+
+        <% if (subscriptions.length === 0) { %>
+        <div class="card">
+            <div class="empty-state">
+                <span class="emoji">💰</span>
+                <h3>No Active Subscriptions</h3>
+                <p>Once your project is approved and billing is activated, your subscription details will appear here.</p>
+            </div>
+        </div>
+        <% } else { %>
+        <div class="card">
+            <h2>Your Subscriptions</h2>
+            <% subscriptions.forEach(sub => { %>
+            <div class="sub-card">
+                <div class="sub-info">
+                    <h3><%= sub.plan_name || 'Morti Automation' %></h3>
+                    <p><%= sub.project_name || 'Project' %> · <span class="badge badge-<%= sub.status === 'active' ? 'active' : sub.status === 'past_due' ? 'past-due' : sub.status === 'paused' ? 'paused' : 'cancelled' %>"><%= sub.status %></span></p>
+                    <p style="margin-top:6px;font-size:0.82rem;color:var(--text-muted);">
+                        <% if (sub.current_period_end) { %>
+                        Next billing: <%= new Date(sub.current_period_end).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+                        <% } %>
+                    </p>
+                </div>
+                <div class="sub-amount">
+                    <div class="price">$<%= (sub.monthly_amount / 100).toFixed(2) %></div>
+                    <div class="period">per month</div>
+                </div>
+            </div>
+            <% }); %>
+            <div style="margin-top:16px;">
+                <button class="btn btn-primary" onclick="updateCard()">Update Payment Method</button>
+            </div>
+        </div>
+        <% } %>
+
+        <% if (events.length > 0) { %>
+        <div class="card">
+            <h2>Payment History</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <% events.forEach(ev => { %>
+                    <tr>
+                        <td style="color:var(--text-secondary);font-size:0.85rem;"><%= new Date(ev.created_at).toLocaleDateString('en-AU') %></td>
+                        <td><%= ev.event_type === 'invoice.paid' ? 'Payment' : ev.event_type === 'invoice.payment_failed' ? 'Failed Payment' : ev.event_type %><% if (ev.plan_name) { %> — <%= ev.plan_name %><% } %></td>
+                        <td style="font-weight:600;"><%= ev.amount ? '$' + (ev.amount / 100).toFixed(2) : '—' %></td>
+                        <td>
+                            <span class="badge badge-<%= ev.status === 'succeeded' ? 'active' : ev.status === 'failed' ? 'past-due' : 'cancelled' %>">
+                                <%= ev.status %>
+                            </span>
+                        </td>
+                    </tr>
+                <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } %>
+    </main>
+    <script>
+    async function updateCard() {
+        try {
+            const r = await fetch('/api/billing/update-card', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const data = await r.json();
+            if (data.url) window.location.href = data.url;
+            else alert(data.error || 'Unable to open payment portal');
+        } catch (e) {
+            alert('Failed to open payment portal');
+        }
+    }
+    </script>
+</body>
+</html>

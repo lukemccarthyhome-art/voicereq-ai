@@ -128,6 +128,50 @@ const initDB = async (retries = 3) => {
       )
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        project_id INTEGER REFERENCES projects(id),
+        stripe_customer_id TEXT,
+        stripe_subscription_id TEXT UNIQUE,
+        status TEXT DEFAULT 'active',
+        plan_name TEXT,
+        monthly_amount INTEGER,
+        setup_amount INTEGER,
+        current_period_start TIMESTAMPTZ,
+        current_period_end TIMESTAMPTZ,
+        build_ids JSONB DEFAULT '[]',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS billing_events (
+        id SERIAL PRIMARY KEY,
+        subscription_id INTEGER REFERENCES subscriptions(id),
+        stripe_event_id TEXT UNIQUE,
+        event_type TEXT NOT NULL,
+        status TEXT,
+        amount INTEGER,
+        failure_reason TEXT,
+        attempt_count INTEGER DEFAULT 0,
+        raw_event JSONB,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS payment_warnings (
+        id SERIAL PRIMARY KEY,
+        subscription_id INTEGER REFERENCES subscriptions(id),
+        warning_type TEXT NOT NULL,
+        sent_at TIMESTAMPTZ DEFAULT NOW(),
+        email_to TEXT
+      )
+    `);
+
     // Migrations
     try { await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret TEXT'); } catch (e) {}
     try { await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT'); } catch (e) {}
@@ -604,6 +648,90 @@ const getAllSessions = async () => {
   return result.rows;
 };
 
+// ==================== Billing operations ====================
+
+const createSubscription = async (userId, projectId, stripeCustomerId, stripeSubscriptionId, planName, monthlyAmount, setupAmount, periodStart, periodEnd) => {
+  const result = await pool.query(`
+    INSERT INTO subscriptions (user_id, project_id, stripe_customer_id, stripe_subscription_id, plan_name, monthly_amount, setup_amount, current_period_start, current_period_end)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *
+  `, [userId, projectId, stripeCustomerId, stripeSubscriptionId, planName, monthlyAmount, setupAmount, periodStart, periodEnd]);
+  return result.rows[0];
+};
+
+const getSubscriptionByStripeId = async (stripeSubscriptionId) => {
+  const result = await pool.query('SELECT * FROM subscriptions WHERE stripe_subscription_id = $1', [stripeSubscriptionId]);
+  return result.rows[0];
+};
+
+const getSubscriptionsByUser = async (userId) => {
+  const result = await pool.query(`
+    SELECT s.*, p.name as project_name FROM subscriptions s
+    LEFT JOIN projects p ON p.id = s.project_id
+    WHERE s.user_id = $1 ORDER BY s.created_at DESC
+  `, [userId]);
+  return result.rows;
+};
+
+const getSubscriptionsByProject = async (projectId) => {
+  const result = await pool.query('SELECT * FROM subscriptions WHERE project_id = $1 ORDER BY created_at DESC', [projectId]);
+  return result.rows;
+};
+
+const getAllSubscriptions = async () => {
+  const result = await pool.query(`
+    SELECT s.*, u.name as user_name, u.email as user_email, u.company, p.name as project_name
+    FROM subscriptions s
+    JOIN users u ON u.id = s.user_id
+    LEFT JOIN projects p ON p.id = s.project_id
+    ORDER BY s.created_at DESC
+  `);
+  return result.rows;
+};
+
+const updateSubscriptionStatus = async (id, status) => {
+  await pool.query('UPDATE subscriptions SET status = $1, updated_at = NOW() WHERE id = $2', [status, id]);
+};
+
+const updateSubscriptionPeriod = async (id, periodStart, periodEnd) => {
+  await pool.query('UPDATE subscriptions SET current_period_start = $1, current_period_end = $2, updated_at = NOW() WHERE id = $3', [periodStart, periodEnd, id]);
+};
+
+const createBillingEvent = async (subscriptionId, stripeEventId, eventType, status, amount, failureReason, attemptCount, rawEvent) => {
+  const result = await pool.query(`
+    INSERT INTO billing_events (subscription_id, stripe_event_id, event_type, status, amount, failure_reason, attempt_count, raw_event)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
+  `, [subscriptionId, stripeEventId, eventType, status, amount, failureReason, attemptCount, rawEvent ? JSON.stringify(rawEvent) : null]);
+  return result.rows[0];
+};
+
+const getBillingEventsBySubscription = async (subscriptionId) => {
+  const result = await pool.query('SELECT * FROM billing_events WHERE subscription_id = $1 ORDER BY created_at DESC', [subscriptionId]);
+  return result.rows;
+};
+
+const getPaymentWarnings = async (subscriptionId) => {
+  const result = await pool.query('SELECT * FROM payment_warnings WHERE subscription_id = $1 ORDER BY sent_at DESC', [subscriptionId]);
+  return result.rows;
+};
+
+const createPaymentWarning = async (subscriptionId, warningType, emailTo) => {
+  await pool.query('INSERT INTO payment_warnings (subscription_id, warning_type, email_to) VALUES ($1, $2, $3)', [subscriptionId, warningType, emailTo]);
+};
+
+const getBillingOverview = async () => {
+  const activeResult = await pool.query("SELECT COUNT(*) as count, COALESCE(SUM(monthly_amount), 0) as mrr FROM subscriptions WHERE status = 'active'");
+  const pastDueResult = await pool.query("SELECT COUNT(*) as count FROM subscriptions WHERE status = 'past_due'");
+  const pausedResult = await pool.query("SELECT COUNT(*) as count FROM subscriptions WHERE status = 'paused'");
+  const totalRevenueResult = await pool.query("SELECT COALESCE(SUM(amount), 0) as total FROM billing_events WHERE status = 'succeeded'");
+  return {
+    activeCount: parseInt(activeResult.rows[0].count),
+    mrr: parseInt(activeResult.rows[0].mrr),
+    pastDueCount: parseInt(pastDueResult.rows[0].count),
+    pausedCount: parseInt(pausedResult.rows[0].count),
+    totalRevenue: parseInt(totalRevenueResult.rows[0].total)
+  };
+};
+
 // ==================== Init ====================
 
 const ready = initDB().catch(err => { 
@@ -681,4 +809,17 @@ module.exports = {
   getShareById,
   linkPendingShares,
   getShareByToken,
+  // Billing
+  createSubscription,
+  getSubscriptionByStripeId,
+  getSubscriptionsByUser,
+  getSubscriptionsByProject,
+  getAllSubscriptions,
+  updateSubscriptionStatus,
+  updateSubscriptionPeriod,
+  createBillingEvent,
+  getBillingEventsBySubscription,
+  getPaymentWarnings,
+  createPaymentWarning,
+  getBillingOverview,
 };

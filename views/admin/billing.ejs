@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing Overview - Morti Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a1628;
+            --bg-primary: #0f1d32;
+            --bg-card: #142640;
+            --bg-glass: rgba(15, 29, 50, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --accent: #1199fa;
+            --accent-glow: rgba(17, 153, 250, 0.4);
+            --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #009e7e;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f0f4f8;
+            --text-secondary: rgba(240, 244, 248, 0.7);
+            --text-muted: rgba(240, 244, 248, 0.4);
+            --radius: 16px;
+            --radius-pill: 50px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        .main { max-width: 1200px; margin: 0 auto; padding: 24px; min-height: calc(100vh - 200px); }
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; transition: border-color 0.3s; }
+        .card:hover { border-color: var(--border-glass-hover); }
+        .card h2 { margin-bottom: 16px; color: var(--text-primary); font-size: 1.3rem; font-weight: 700; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .stat-card { background: var(--bg-glass); backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; text-align: center; transition: all 0.3s; }
+        .stat-card:hover { border-color: var(--border-glass-hover); transform: translateY(-2px); }
+        .stat-number { font-size: 2rem; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+        .stat-number.green { color: var(--accent-secondary); }
+        .stat-number.red { color: #ef4444; }
+        .stat-number.yellow { color: #f59e0b; }
+        .stat-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-glass); }
+        .table th { background: rgba(15, 29, 50, 0.4); font-weight: 600; color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .table tbody tr:hover { background: rgba(17, 153, 250, 0.05); }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .badge-active { background: rgba(0, 158, 126, 0.15); color: #34d399; }
+        .badge-past-due { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .badge-paused { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .badge-cancelled { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 18px; border-radius: var(--radius-pill); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; }
+        .btn-primary { background: var(--accent); box-shadow: 0 0 16px var(--accent-glow); }
+        .btn-primary:hover { background: #2aa8ff; transform: translateY(-1px); }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-success { background: var(--accent-secondary); }
+        .btn-success:hover { background: #00b894; }
+        .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
+        .alert { padding: 16px 20px; border-radius: var(--radius); margin-bottom: 20px; font-size: 0.9rem; }
+        .alert-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; }
+        .page-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 24px; letter-spacing: -0.03em; }
+        @media (max-width: 768px) {
+            .main { padding: 16px; }
+            .card { padding: 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .table { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/admin-nav', { currentPage: 'billing', user: user }) %>
+    <main class="main">
+        <h1 class="page-title">💳 Billing Overview</h1>
+
+        <% if (overview.pastDueCount > 0) { %>
+        <div class="alert alert-warning">
+            ⚠️ <strong><%= overview.pastDueCount %></strong> subscription<%= overview.pastDueCount > 1 ? 's' : '' %> past due — requires attention
+        </div>
+        <% } %>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number green">$<%= (overview.mrr / 100).toFixed(0) %></div>
+                <div class="stat-label">Monthly Recurring Revenue</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><%= overview.activeCount %></div>
+                <div class="stat-label">Active Subscriptions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number yellow"><%= overview.pastDueCount %></div>
+                <div class="stat-label">Past Due</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number red"><%= overview.pausedCount %></div>
+                <div class="stat-label">Paused</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number green">$<%= (overview.totalRevenue / 100).toFixed(0) %></div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Subscriptions</h2>
+            <% if (subscriptions.length === 0) { %>
+                <div style="text-align:center;padding:40px;color:var(--text-muted);">
+                    <div style="font-size:48px;margin-bottom:12px;">💰</div>
+                    <p>No subscriptions yet</p>
+                </div>
+            <% } else { %>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Project</th>
+                        <th>Plan</th>
+                        <th>Monthly</th>
+                        <th>Status</th>
+                        <th>Period End</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <% subscriptions.forEach(sub => { %>
+                    <tr>
+                        <td><strong><%= sub.user_name %></strong><br><span style="color:var(--text-muted);font-size:0.82rem;"><%= sub.user_email %></span></td>
+                        <td><%= sub.project_name || '—' %></td>
+                        <td><%= sub.plan_name || 'Standard' %></td>
+                        <td>$<%= (sub.monthly_amount / 100).toFixed(2) %></td>
+                        <td>
+                            <span class="badge badge-<%= sub.status === 'active' ? 'active' : sub.status === 'past_due' ? 'past-due' : sub.status === 'paused' ? 'paused' : 'cancelled' %>">
+                                <%= sub.status %>
+                            </span>
+                        </td>
+                        <td style="color:var(--text-secondary);font-size:0.85rem;"><%= sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString('en-AU') : '—' %></td>
+                        <td>
+                            <% if (sub.status === 'active' || sub.status === 'past_due') { %>
+                                <button class="btn btn-danger btn-sm" onclick="pauseSub(<%= sub.id %>)">Pause</button>
+                            <% } else if (sub.status === 'paused') { %>
+                                <button class="btn btn-success btn-sm" onclick="resumeSub(<%= sub.id %>)">Resume</button>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }); %>
+                </tbody>
+            </table>
+            <% } %>
+        </div>
+    </main>
+    <script>
+    async function pauseSub(id) {
+        if (!confirm('Pause this subscription? Automations will stop.')) return;
+        const r = await fetch('/api/admin/billing/pause', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: id }) });
+        if (r.ok) location.reload();
+        else alert('Failed to pause: ' + (await r.json()).error);
+    }
+    async function resumeSub(id) {
+        if (!confirm('Resume this subscription?')) return;
+        const r = await fetch('/api/admin/billing/resume', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: id }) });
+        if (r.ok) location.reload();
+        else alert('Failed to resume: ' + (await r.json()).error);
+    }
+    </script>
+</body>
+</html>
