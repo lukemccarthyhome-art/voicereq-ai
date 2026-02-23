@@ -141,10 +141,10 @@
 
         /* ========== HERO ========== */
         .hero {
-            min-height: 100vh; display: flex; align-items: flex-start; justify-content: center;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
             background: var(--bg-deep);
-            padding: 140px 24px 0; text-align: center; color: #fff;
-            position: relative; overflow: visible;
+            padding: 120px 24px 40px; text-align: left; color: #fff;
+            position: relative; overflow: hidden;
         }
         .hero-orb {
             position: absolute; border-radius: 50%; pointer-events: none;
@@ -165,7 +165,11 @@
                 linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
             background-size: 80px 80px;
         }
-        .hero-inner { position: relative; z-index: 1; max-width: 900px; }
+        .hero-inner {
+            position: relative; z-index: 1; max-width: 1200px; width: 100%;
+            display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: center;
+        }
+        .hero-text { display: flex; flex-direction: column; }
         .hero h1 {
             font-size: clamp(3rem, 6.5vw, 5.2rem); font-weight: 900; margin-bottom: 28px;
             line-height: 1.02; letter-spacing: -0.05em;
@@ -176,12 +180,12 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
         .hero .hero-sub {
-            font-size: clamp(1.05rem, 2vw, 1.25rem); max-width: 640px; margin: 0 auto 20px;
+            font-size: clamp(1.05rem, 2vw, 1.25rem); max-width: 640px; margin: 0 0 20px;
             color: var(--text-secondary); line-height: 1.8; font-weight: 300;
             animation: fadeUp 0.8s ease-out 0.15s both;
         }
         .hero .hero-explainer {
-            font-size: 0.92rem; max-width: 580px; margin: 0 auto 48px;
+            font-size: 0.92rem; max-width: 580px; margin: 0 0 32px;
             color: var(--text-muted); line-height: 1.7; font-weight: 400;
             animation: fadeUp 0.8s ease-out 0.2s both;
             padding: 16px 24px; border-radius: var(--radius-sm);
@@ -190,14 +194,14 @@
         }
         /* Hero image (crypto.com bleed style) */
         .hero-image-wrap {
-            max-width: 1100px; margin: 0 auto;
+            width: 100%;
             animation: fadeUp 1s ease-out 0.25s both;
             position: relative;
-            perspective: 1000px;
+            perspective: 1200px;
         }
         .hero-image-inner {
-            transform: rotateX(8deg);
-            transform-origin: center top;
+            transform: rotateY(-6deg) rotateX(4deg);
+            transform-origin: center center;
             border-radius: 16px;
             overflow: hidden;
             position: relative;
@@ -340,9 +344,8 @@
             .video-play-btn::after { border-width: 9px 0 9px 16px; margin-left: 3px; }
         }
         .hero-buttons {
-            display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+            display: flex; gap: 16px; justify-content: flex-start; flex-wrap: wrap;
             animation: fadeUp 0.8s ease-out 0.35s both;
-            margin-bottom: 60px;
         }
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(32px); }
@@ -680,9 +683,14 @@
 
         /* ========== RESPONSIVE ========== */
         @media (max-width: 768px) {
-            .hero { padding: 120px 20px 70px; min-height: auto; }
+            .hero { padding: 100px 20px 40px; min-height: auto; text-align: center; }
+            .hero-inner { grid-template-columns: 1fr; }
+            .hero-text { align-items: center; }
+            .hero .hero-sub { margin: 0 auto 20px; }
+            .hero .hero-explainer { margin: 0 auto 32px; }
             .hero h1 { font-size: clamp(2.4rem, 9vw, 3.2rem); }
-            .hero-buttons { flex-direction: column; align-items: center; }
+            .hero-buttons { flex-direction: column; align-items: center; justify-content: center; }
+            .hero-image-inner { transform: none; }
             .hero-video-wrap { margin-bottom: 40px; }
             .who-grid { grid-template-columns: 1fr; }
             .examples-grid { grid-template-columns: 1fr; }
@@ -725,16 +733,18 @@
     <div class="hero-orb hero-orb-2"></div>
     <div class="hero-orb hero-orb-3"></div>
     <div class="hero-inner">
-        <h1>You Talk.<br><span class="gradient-text">Morti Builds.</span></h1>
-        <p class="hero-sub">Describe the manual work that slows your business down. We turn it into a working automation — designed, built, and managed for you.</p>
+        <div class="hero-text">
+            <h1>You Talk.<br><span class="gradient-text">Morti Builds.</span></h1>
+            <p class="hero-sub">Describe the manual work that slows your business down. We turn it into a working automation — designed, built, and managed for you.</p>
 
-        <div class="hero-explainer">
-            <strong style="color: var(--text-primary); font-weight: 600;">What is Morti?</strong> An AI-powered automation consultancy for Australian SMBs. Have a conversation about your business problem — we deliver a running, managed solution. No technical knowledge required.
-        </div>
+            <div class="hero-explainer">
+                <strong style="color: var(--text-primary); font-weight: 600;">What is Morti?</strong> An AI-powered automation consultancy for Australian SMBs. Have a conversation about your business problem — we deliver a running, managed solution. No technical knowledge required.
+            </div>
 
-        <div class="hero-buttons">
-            <a href="/signup" class="btn btn-primary btn-lg">Start a Conversation</a>
-            <a href="#how-it-works" class="btn btn-glass btn-lg">See How It Works</a>
+            <div class="hero-buttons">
+                <a href="/signup" class="btn btn-primary btn-lg">Start a Conversation</a>
+                <a href="#how-it-works" class="btn btn-glass btn-lg">See How It Works</a>
+            </div>
         </div>
 
         <div class="hero-image-wrap">
