@@ -420,13 +420,14 @@
         </div>
 
         <%
-        const counts = { new: 0, session: 0, design: 0, proposal: 0, approved: 0 };
+        const counts = { new: 0, session: 0, submitted: 0, design: 0, proposal: 0, approved: 0 };
         projects.forEach(p => counts[p.stage] = (counts[p.stage] || 0) + 1);
         
         const stageConfig = {
             approved: { icon: '✅', label: 'Approved', color: '#009e7e', bg: 'rgba(0,158,126,0.12)', border: 'rgba(0,158,126,0.3)' },
             proposal: { icon: '💰', label: 'Proposal Ready', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)' },
             design:   { icon: '📐', label: 'Design Ready', color: '#1199fa', bg: 'rgba(17,153,250,0.12)', border: 'rgba(17,153,250,0.3)' },
+            submitted: { icon: '📤', label: 'Submitted for Design', color: '#06b6d4', bg: 'rgba(6,182,212,0.12)', border: 'rgba(6,182,212,0.3)' },
             session:  { icon: '🎙️', label: 'In Session', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
             new:      { icon: '🆕', label: 'Getting Started', color: 'rgba(240,244,248,0.4)', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.08)' }
         };
@@ -446,6 +447,13 @@
               ? '<strong>1 project</strong> is in session — continue the conversation to move it forward.'
               : '<strong>' + counts.session + ' projects</strong> are in session — continue the conversation to move them forward.',
             action: 'Continue session', actionColor: '#1199fa', actionBg: 'rgba(17,153,250,0.15)', stage: 'session' });
+        }
+        if (counts.submitted > 0) {
+          nudges.push({ icon: '📤', color: '#06b6d4', bg: 'rgba(6,182,212,0.06)', border: 'rgba(6,182,212,0.15)',
+            text: counts.submitted === 1
+              ? '<strong>1 project</strong> has been submitted for design review — we\'re working on it.'
+              : '<strong>' + counts.submitted + ' projects</strong> are submitted and awaiting design.',
+            action: 'View', actionColor: '#06b6d4', actionBg: 'rgba(6,182,212,0.15)', stage: 'submitted' });
         }
         if (counts.design > 0) {
           nudges.push({ icon: '📐', color: '#1199fa', bg: 'rgba(17,153,250,0.06)', border: 'rgba(17,153,250,0.15)',
@@ -493,7 +501,7 @@
           <% }) %>
         </div>
 
-        <% const stageOrder = ['approved', 'proposal', 'design', 'session', 'new'];
+        <% const stageOrder = ['approved', 'proposal', 'design', 'submitted', 'session', 'new'];
            stageOrder.forEach(stage => {
              const stageProjects = projects.filter(p => p.stage === stage);
              if (stageProjects.length === 0) return;
@@ -521,8 +529,13 @@
                             <span class="btn btn-sm" style="background: var(--accent); box-shadow: 0 0 12px var(--accent-glow);">View Design</span>
                         <% } else if (stage === 'approved') { %>
                             <span class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,158,126,0.3);">View Project</span>
+                        <% } else if (stage === 'submitted') { %>
+                            <span style="font-size:0.78rem;color:#06b6d4;padding:4px 12px;border-radius:20px;background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.25);white-space:nowrap;">⏳ Awaiting Design</span>
+                        <% } else if (stage === 'session') { %>
+                            <span class="btn btn-sm" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);font-size:0.78rem;" onclick="event.preventDefault();event.stopPropagation();submitForDesign('<%= p.id %>',this)">📤 Submit for Design</span>
+                            <span class="btn btn-sm btn-success" onclick="event.preventDefault();event.stopPropagation();window.location.href='/projects/<%= encodeId(p.id) %>/session';">🎙️ Continue</span>
                         <% } else { %>
-                            <span class="btn btn-sm btn-success" onclick="event.preventDefault();event.stopPropagation();window.location.href='/projects/<%= encodeId(p.id) %>/session';"><%= (p.session_count || 0) > 0 ? '🎙️ Continue' : '🎙️ Start' %></span>
+                            <span class="btn btn-sm btn-success" onclick="event.preventDefault();event.stopPropagation();window.location.href='/projects/<%= encodeId(p.id) %>/session';">🎙️ Start</span>
                         <% } %>
                     </div>
                 </a>
@@ -591,6 +604,25 @@
   </div>
 </div>
 <script>
+async function submitForDesign(projectId, btn) {
+  if (!confirm('Submit this project for design review? Our team will review your requirements and create a solution design.')) return;
+  const origText = btn.innerHTML;
+  btn.innerHTML = '⏳ Submitting...';
+  btn.style.pointerEvents = 'none';
+  try {
+    const r = await fetch('/api/projects/' + projectId + '/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    if (!r.ok) throw new Error('Failed');
+    btn.innerHTML = '✅ Submitted!';
+    btn.style.background = 'rgba(0,200,150,0.15)';
+    btn.style.color = '#00c896';
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) {
+    btn.innerHTML = origText;
+    btn.style.pointerEvents = '';
+    alert('Failed to submit. Please try again.');
+  }
+}
+
 async function submitFeature(){
   const text=document.getElementById('featureText').value.trim();
   if(!text)return;

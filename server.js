@@ -3094,8 +3094,9 @@ app.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, res) 
     if (proposalFiles.length > 0) {
       try { const pr = JSON.parse(fs.readFileSync(path.join(PROPOSALS_DIR, proposalFiles[0]), 'utf8')); hasProposal = !!pr.published; isApproved = !!pr.approvedAt; } catch {}
     }
-    const stage = isApproved ? 'approved' : hasProposal ? 'proposal' : hasDesign ? 'design' : (p.session_count > 0 ? 'session' : 'new');
-    return { ...p, stage, hasDesign, hasProposal, isApproved };
+    const isSubmitted = p.status === 'completed' && !hasDesign;
+    const stage = isApproved ? 'approved' : hasProposal ? 'proposal' : hasDesign ? 'design' : isSubmitted ? 'submitted' : (p.session_count > 0 ? 'session' : 'new');
+    return { ...p, stage, hasDesign, hasProposal, isApproved, isSubmitted };
   });
   
   // Fetch billing status for warning banners
