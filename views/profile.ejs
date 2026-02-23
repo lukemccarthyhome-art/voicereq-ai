@@ -99,7 +99,6 @@
                     <a href="/profile" class="active">Profile</a>
                 <% } else { %>
                     <a href="/dashboard">Dashboard</a>
-                    <a href="/projects">My Projects</a>
                     <a href="/profile" class="active">Profile</a>
                 <% } %>
                 <div class="user-name">👤 <%= user.name %></div>
@@ -206,6 +205,35 @@
             <% } %>
         </div>
 
+        <% if (user.role !== 'admin') { %>
+        <div class="card">
+            <h2>💳 Billing</h2>
+            <% if (!subscriptions || subscriptions.length === 0) { %>
+                <div style="text-align:center;padding:24px;color:var(--text-muted);">
+                    <span style="font-size:32px;display:block;margin-bottom:12px;">💰</span>
+                    <p>No active subscriptions. Once your project is approved and billing is activated, details will appear here.</p>
+                </div>
+            <% } else { %>
+                <% subscriptions.forEach(sub => { %>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:16px;background:rgba(15,29,50,0.4);border:1px solid var(--border-glass);border-radius:12px;margin-bottom:10px;">
+                    <div>
+                        <strong><%= sub.plan_name || 'Morti Automation' %></strong>
+                        <p style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;"><%= sub.project_name || 'Project' %> · <span style="padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:600;background:<%= sub.status==='active'?'rgba(0,200,150,0.12)':sub.status==='past_due'?'rgba(245,158,11,0.12)':'rgba(239,68,68,0.12)' %>;color:<%= sub.status==='active'?'#00c896':sub.status==='past_due'?'#f59e0b':'#ef4444' %>;"><%= sub.status %></span></p>
+                        <% if (sub.current_period_end) { %>
+                        <p style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">Next billing: <%= new Date(sub.current_period_end).toLocaleDateString('en-AU', { day:'numeric', month:'long', year:'numeric' }) %></p>
+                        <% } %>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:1.4rem;font-weight:800;color:var(--text-primary);">$<%= (sub.monthly_amount / 100).toFixed(2) %></div>
+                        <div style="font-size:0.78rem;color:var(--text-muted);">per month</div>
+                    </div>
+                </div>
+                <% }); %>
+                <button class="btn btn-primary" style="margin-top:12px;" onclick="updateCard()">Update Payment Method</button>
+            <% } %>
+        </div>
+        <% } %>
+
         <div class="card">
             <h2>🔧 Account Actions</h2>
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -224,6 +252,16 @@
                 setTimeout(() => alert.remove(), 300);
             });
         }, 5000);
+
+        // Billing
+        async function updateCard() {
+            try {
+                const r = await fetch('/api/billing/update-card', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                const data = await r.json();
+                if (data.url) window.location.href = data.url;
+                else alert(data.error || 'Could not open payment update page');
+            } catch(e) { alert('Error: ' + e.message); }
+        }
 
         // Form validation
         document.querySelector('form').addEventListener('submit', function(e) {

@@ -2920,8 +2920,11 @@ app.post('/admin/customers/:id/password', auth.authenticate, auth.requireAdmin, 
 
 app.get('/profile', auth.authenticate, async (req, res) => {
   const fullUser = await db.getUserById(req.user.id) || req.user;
+  let subscriptions = [];
+  try { if (db.getSubscriptionsByUser) subscriptions = await db.getSubscriptionsByUser(req.user.id); } catch(e) {}
   res.render('profile', {
     user: { ...req.user, mfa_secret: fullUser.mfa_secret },
+    subscriptions,
     title: 'Profile Settings',
     currentPage: req.user.role === 'admin' ? 'admin-profile' : 'customer-profile',
     message: req.query.message,
