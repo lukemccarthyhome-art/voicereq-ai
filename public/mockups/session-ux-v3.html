@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session UX V3 — Proposed Changes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-deep: #0a1628;
+    --bg-primary: #0f1d32;
+    --bg-glass: rgba(15, 29, 50, 0.6);
+    --border-glass: rgba(255, 255, 255, 0.08);
+    --accent: #1199fa;
+    --accent-dim: rgba(17, 153, 250, 0.12);
+    --accent-secondary: #009e7e;
+    --accent-purple: #8b5cf6;
+    --text-primary: #f0f4f8;
+    --text-secondary: rgba(240, 244, 248, 0.7);
+    --text-muted: rgba(240, 244, 248, 0.4);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:#050d1a; color:var(--text-primary); padding:20px; }
+h1 { font-size:1.6rem; margin-bottom:8px; }
+.subtitle { color:var(--text-secondary); margin-bottom:40px; font-size:0.95rem; }
+.mockup-label { font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent); font-weight:700; margin-bottom:12px; margin-top:48px; }
+.mockup-note { color:var(--text-secondary); font-size:0.85rem; margin-bottom:20px; line-height:1.6; }
+.change-tag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:0.7rem; font-weight:700; margin-left:8px; }
+.change-new { background:rgba(0,200,150,0.15); color:#00c896; }
+.change-updated { background:rgba(17,153,250,0.15); color:#1199fa; }
+.change-removed { background:rgba(239,68,68,0.15); color:#ef4444; }
+
+/* ===== MOCKUP 1: Session toolbar + Refresh ===== */
+.toolbar-mock {
+    background: rgba(10,22,40,0.95); border:1px solid var(--border-glass);
+    border-radius:12px; padding:12px 20px; display:flex; align-items:center; gap:12px;
+    margin-bottom:20px;
+}
+.tb-brand { font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:6px; }
+.tb-status { padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:600; background:rgba(0,158,126,0.12); color:#009e7e; border:1px solid rgba(0,158,126,0.3); }
+.tb-timer { font-size:0.85rem; color:var(--text-muted); font-variant-numeric:tabular-nums; }
+.tb-spacer { flex:1; }
+.tb-btn { padding:8px 16px; border-radius:50px; border:1px solid var(--border-glass); background:none; color:var(--text-secondary); font-size:0.82rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; }
+.tb-btn:hover { background:rgba(255,255,255,0.05); color:var(--text-primary); }
+.tb-btn.primary { background:var(--accent); border-color:var(--accent); color:white; }
+.tb-btn.primary:hover { box-shadow:0 0 16px rgba(17,153,250,0.4); }
+.tb-btn.success { background:#009e7e; border-color:#009e7e; color:white; }
+.tb-divider { width:1px; height:24px; background:var(--border-glass); }
+
+/* ===== MOCKUP 2: Save & Exit modal ===== */
+.modal-mock {
+    background:var(--bg-primary); border:1px solid var(--border-glass); border-radius:16px;
+    padding:32px; max-width:500px; margin:0 auto;
+}
+.modal-mock h3 { font-size:1.2rem; margin-bottom:8px; }
+.modal-mock .sub { color:var(--text-secondary); margin-bottom:24px; font-size:0.9rem; }
+.option-card {
+    border:1px solid var(--border-glass); border-radius:12px; padding:20px; margin-bottom:12px;
+    cursor:pointer; transition:all 0.2s;
+}
+.option-card:hover { border-color:rgba(255,255,255,0.15); }
+.option-card.selected { border-color:var(--accent); background:var(--accent-dim); }
+.option-card h4 { font-size:1rem; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+.option-card p { color:var(--text-secondary); font-size:0.85rem; line-height:1.5; }
+.option-card .badge { font-size:0.7rem; padding:2px 8px; border-radius:20px; background:rgba(0,200,150,0.12); color:#00c896; font-weight:600; }
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+/* ===== MOCKUP 3: Dashboard ===== */
+.dash-mock {
+    background:var(--bg-deep); border:1px solid var(--border-glass); border-radius:16px;
+    padding:24px; max-width:800px;
+}
+.dash-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+.dash-header h2 { font-size:1.3rem; }
+.stage-group { margin-bottom:24px; }
+.stage-label { display:flex; align-items:center; gap:8px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.04); }
+.stage-label .icon { font-size:1.1rem; }
+.stage-label h4 { font-size:0.88rem; font-weight:600; }
+.stage-count { font-size:0.72rem; padding:2px 8px; border-radius:20px; font-weight:700; }
+.project-card {
+    display:flex; justify-content:space-between; align-items:center; padding:14px 16px;
+    background:rgba(255,255,255,0.02); border:1px solid var(--border-glass); border-radius:10px;
+    margin-bottom:8px; transition:border-color 0.2s;
+}
+.project-card:hover { border-color:rgba(255,255,255,0.12); }
+.project-card .name { font-weight:600; font-size:0.9rem; }
+.project-card .meta { font-size:0.78rem; color:var(--text-muted); margin-top:4px; }
+.project-card .status-pill {
+    padding:4px 12px; border-radius:20px; font-size:0.72rem; font-weight:700; white-space:nowrap;
+}
+.project-card .actions { display:flex; gap:8px; align-items:center; }
+.question-badge {
+    display:flex; align-items:center; gap:4px; padding:4px 10px; border-radius:20px;
+    font-size:0.72rem; font-weight:600; background:rgba(245,158,11,0.12); color:#f59e0b;
+    border:1px solid rgba(245,158,11,0.25); cursor:pointer;
+}
+
+hr.divider { border:none; border-top:1px solid rgba(255,255,255,0.06); margin:48px 0; }
+</style>
+</head>
+<body>
+
+<h1>🎨 Session & Dashboard UX — Proposed V3</h1>
+<p class="subtitle">Visual mockups for Luke's review — 24 Feb 2026</p>
+
+<!-- ==================== CHANGE 1: TOOLBAR ==================== -->
+<div class="mockup-label">Change 1: Session Toolbar <span class="change-tag change-updated">Updated</span></div>
+<p class="mockup-note">
+    <strong>Problem:</strong> Users don't see the Refresh button or understand what it does.<br>
+    <strong>Fix:</strong> Replace "Refresh" with <strong>"Analyse Requirements"</strong> — bigger, primary-coloured, with descriptive tooltip. Auto-triggers after first call ends. Move it into the main action area.
+</p>
+
+<div class="toolbar-mock">
+    <div class="tb-brand">🎙️ Morti</div>
+    <div class="tb-divider"></div>
+    <div class="tb-status">● Listening</div>
+    <div class="tb-timer">04:32</div>
+    <div class="tb-spacer"></div>
+    <div class="tb-btn" title="Hold the AI">⏸️ Hold</div>
+    <div class="tb-btn" title="Attach files">📎</div>
+    <div class="tb-btn" title="Send feedback">💬</div>
+    <div class="tb-divider"></div>
+    <div class="tb-btn primary" title="AI analyses your conversation and builds requirements" style="font-size:0.85rem;">
+        🔍 Analyse Requirements
+    </div>
+    <div class="tb-divider"></div>
+    <div class="tb-btn success" title="Save and choose next step">
+        💾 Done
+    </div>
+</div>
+
+<p class="mockup-note" style="font-size:0.8rem;">
+    ✦ "Refresh" → <strong>"Analyse Requirements"</strong> — tells user exactly what it does<br>
+    ✦ "Save & Exit" → <strong>"Done"</strong> — shorter, leads to the choice modal (see below)<br>
+    ✦ Auto-analyse after first call: requirements panel auto-populates when conversation ends, no button click needed
+</p>
+
+<hr class="divider">
+
+<!-- ==================== CHANGE 2: SAVE & EXIT MODAL ==================== -->
+<div class="mockup-label">Change 2: "Done" Modal — Clear Choices <span class="change-tag change-updated">Updated</span></div>
+<p class="mockup-note">
+    <strong>Problem:</strong> Users don't understand the difference between saving and submitting for review.<br>
+    <strong>Fix:</strong> Two clear cards with distinct language and visual weight. "Submit for Design Review" is the prominent option with a status change callout.
+</p>
+
+<div class="modal-mock">
+    <h3>What would you like to do?</h3>
+    <p class="sub">Your conversation has been saved automatically.</p>
+
+    <div class="option-card selected">
+        <h4>📤 Submit for Design Review <span class="badge">Recommended</span></h4>
+        <p>You're happy with the requirements. Our team will review them and create a solution design for your project. <strong>You'll be notified when it's ready.</strong></p>
+        <p style="margin-top:8px; font-size:0.78rem; color:#06b6d4;">→ Project status changes to "Submitted for Review"</p>
+    </div>
+
+    <div class="option-card">
+        <h4>💬 Keep Session Open</h4>
+        <p>Come back anytime to continue the conversation. Your progress is saved — pick up exactly where you left off.</p>
+        <p style="margin-top:8px; font-size:0.78rem; color:var(--text-muted);">→ Project stays in "In Session" status</p>
+    </div>
+
+    <div class="modal-actions">
+        <div class="tb-btn" style="padding:10px 24px;">Cancel</div>
+        <div class="tb-btn primary" style="padding:10px 24px;">Confirm</div>
+    </div>
+</div>
+
+<hr class="divider">
+
+<!-- ==================== CHANGE 3: DASHBOARD ==================== -->
+<div class="mockup-label">Change 3: Customer Dashboard — Clean Categories <span class="change-tag change-updated">Updated</span></div>
+<p class="mockup-note">
+    <strong>Problem:</strong> Banner nudges are noisy and confuse users. Projects aren't clearly visible.<br>
+    <strong>Fix:</strong> Remove banners. Show projects grouped by stage with clear status pills. Unanswered design questions show as a badge on the project row.
+</p>
+
+<div class="dash-mock">
+    <div class="dash-header">
+        <h2>My Projects</h2>
+        <div class="tb-btn primary" style="font-size:0.82rem;">+ New Project</div>
+    </div>
+
+    <!-- Submitted for Review -->
+    <div class="stage-group">
+        <div class="stage-label">
+            <span class="icon">📤</span>
+            <h4>Submitted for Review</h4>
+            <span class="stage-count" style="background:rgba(6,182,212,0.12);color:#06b6d4;">1</span>
+        </div>
+        <div class="project-card">
+            <div>
+                <div class="name">Warehouse Ops Automation</div>
+                <div class="meta">Automate receiving, stock updates & dispatch · 💬 3 sessions · Updated 24/02</div>
+            </div>
+            <div class="actions">
+                <span class="status-pill" style="background:rgba(6,182,212,0.12);color:#06b6d4;border:1px solid rgba(6,182,212,0.25);">⏳ Awaiting Design</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Design Ready -->
+    <div class="stage-group">
+        <div class="stage-label">
+            <span class="icon">📐</span>
+            <h4>Design Ready</h4>
+            <span class="stage-count" style="background:rgba(17,153,250,0.12);color:#1199fa;">1</span>
+        </div>
+        <div class="project-card">
+            <div>
+                <div class="name">Invoice Approval Pipeline</div>
+                <div class="meta">Auto-route invoices for 3-tier approval · 💬 2 sessions · Updated 23/02</div>
+            </div>
+            <div class="actions">
+                <span class="question-badge" title="3 questions from our team">❓ 3 Questions</span>
+                <span class="status-pill" style="background:rgba(17,153,250,0.12);color:#1199fa;border:1px solid rgba(17,153,250,0.25);">📐 Review Design</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- In Session -->
+    <div class="stage-group">
+        <div class="stage-label">
+            <span class="icon">🎙️</span>
+            <h4>In Session</h4>
+            <span class="stage-count" style="background:rgba(245,158,11,0.12);color:#f59e0b;">2</span>
+        </div>
+        <div class="project-card">
+            <div>
+                <div class="name">Employee Onboarding Flow</div>
+                <div class="meta">IT provisioning + HR checklist · 💬 1 session · Updated 22/02</div>
+            </div>
+            <div class="actions">
+                <div class="tb-btn" style="padding:6px 14px;font-size:0.78rem;background:rgba(6,182,212,0.1);color:#06b6d4;border-color:rgba(6,182,212,0.25);">📤 Submit</div>
+                <div class="tb-btn" style="padding:6px 14px;font-size:0.78rem;background:rgba(245,158,11,0.1);color:#f59e0b;border-color:rgba(245,158,11,0.25);">🎙️ Continue</div>
+            </div>
+        </div>
+        <div class="project-card">
+            <div>
+                <div class="name">Weekly Ops Report</div>
+                <div class="meta">Auto-generate Monday report from 5 data sources · 💬 1 session · Updated 21/02</div>
+            </div>
+            <div class="actions">
+                <div class="tb-btn" style="padding:6px 14px;font-size:0.78rem;background:rgba(6,182,212,0.1);color:#06b6d4;border-color:rgba(6,182,212,0.25);">📤 Submit</div>
+                <div class="tb-btn" style="padding:6px 14px;font-size:0.78rem;background:rgba(245,158,11,0.1);color:#f59e0b;border-color:rgba(245,158,11,0.25);">🎙️ Continue</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Getting Started -->
+    <div class="stage-group">
+        <div class="stage-label">
+            <span class="icon">🆕</span>
+            <h4>Getting Started</h4>
+            <span class="stage-count" style="background:rgba(255,255,255,0.06);color:var(--text-muted);">1</span>
+        </div>
+        <div class="project-card">
+            <div>
+                <div class="name">CRM Lead Routing</div>
+                <div class="meta">No sessions yet · Created 20/02</div>
+            </div>
+            <div class="actions">
+                <div class="tb-btn" style="padding:6px 14px;font-size:0.78rem;background:rgba(245,158,11,0.1);color:#f59e0b;border-color:rgba(245,158,11,0.25);">🎙️ Start</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p class="mockup-note" style="margin-top:16px; font-size:0.8rem;">
+    ✦ <span class="change-tag change-removed">Removed</span> Banner nudges — projects now speak for themselves<br>
+    ✦ <span class="change-tag change-new">New</span> <strong>❓ Questions badge</strong> on Design Ready projects — links directly to design questions<br>
+    ✦ <span class="change-tag change-updated">Updated</span> Clear status pills on every project row<br>
+    ✦ <span class="change-tag change-updated">Updated</span> Submit button visible on all "In Session" projects
+</p>
+
+<hr class="divider">
+
+<div class="mockup-label">Summary of All Changes</div>
+<div style="background:var(--bg-primary);border:1px solid var(--border-glass);border-radius:12px;padding:24px;max-width:700px;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:10px 0;font-weight:600;">Session: "Refresh" button</td>
+            <td style="padding:10px 0;color:var(--text-secondary);">→ "Analyse Requirements" (primary blue, auto-triggers after call)</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:10px 0;font-weight:600;">Session: "Save & Exit"</td>
+            <td style="padding:10px 0;color:var(--text-secondary);">→ "Done" → modal with two clear choices</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:10px 0;font-weight:600;">Done modal: options</td>
+            <td style="padding:10px 0;color:var(--text-secondary);">📤 Submit for Design Review (recommended) or 💬 Keep Session Open</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:10px 0;font-weight:600;">Status after submit</td>
+            <td style="padding:10px 0;color:var(--text-secondary);">"Submitted for Review" everywhere (dashboard, project page, session)</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:10px 0;font-weight:600;">Dashboard: banners</td>
+            <td style="padding:10px 0;color:var(--text-secondary);">Removed — clean category grouping with status pills</td>
+        </tr>
+        <tr>
+            <td style="padding:10px 0;font-weight:600;">Dashboard: questions</td>
+            <td style="padding:10px 0;color:var(--text-secondary);">❓ badge on project rows when design questions are pending</td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

@@ -3091,16 +3091,16 @@ app.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, res) 
   const enriched = projects.map(p => {
     const designFiles = fs.existsSync(DESIGNS_DIR) ? fs.readdirSync(DESIGNS_DIR).filter(f => f.startsWith(`design-${p.id}-`)).sort().reverse() : [];
     const proposalFiles = fs.existsSync(PROPOSALS_DIR) ? fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${p.id}-`)).sort().reverse() : [];
-    let hasDesign = false, hasProposal = false, isApproved = false;
+    let hasDesign = false, hasProposal = false, isApproved = false, questionCount = 0;
     if (designFiles.length > 0) {
-      try { const d = JSON.parse(fs.readFileSync(path.join(DESIGNS_DIR, designFiles[0]), 'utf8')); hasDesign = !!d.published; } catch {}
+      try { const d = JSON.parse(fs.readFileSync(path.join(DESIGNS_DIR, designFiles[0]), 'utf8')); hasDesign = !!d.published; if (d.questions) questionCount = d.questions.filter(q => !q.answered).length; } catch {}
     }
     if (proposalFiles.length > 0) {
       try { const pr = JSON.parse(fs.readFileSync(path.join(PROPOSALS_DIR, proposalFiles[0]), 'utf8')); hasProposal = !!pr.published; isApproved = !!pr.approvedAt; } catch {}
     }
     const isSubmitted = p.status === 'completed' && !hasDesign;
     const stage = isApproved ? 'approved' : hasProposal ? 'proposal' : hasDesign ? 'design' : isSubmitted ? 'submitted' : (p.session_count > 0 ? 'session' : 'new');
-    return { ...p, stage, hasDesign, hasProposal, isApproved, isSubmitted };
+    return { ...p, stage, hasDesign, hasProposal, isApproved, isSubmitted, questionCount };
   });
   
   // Fetch billing status for warning banners

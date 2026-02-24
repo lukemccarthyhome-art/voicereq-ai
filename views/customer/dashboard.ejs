@@ -433,74 +433,9 @@
             new:      { icon: '🆕', label: 'Getting Started', color: 'rgba(240,244,248,0.4)', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.08)' }
         };
 
-        // Build smart status nudges
-        const nudges = [];
-        if (counts.new > 0) {
-          nudges.push({ icon: '🎙️', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)',
-            text: counts.new === 1
-              ? 'You have <strong>1 project</strong> that hasn\'t had a session yet.'
-              : 'You have <strong>' + counts.new + ' projects</strong> that haven\'t had a session yet.',
-            action: 'Start talking', actionColor: '#f59e0b', actionBg: 'rgba(245,158,11,0.15)', stage: 'new' });
-        }
-        if (counts.session > 0) {
-          nudges.push({ icon: '💬', color: '#1199fa', bg: 'rgba(17,153,250,0.06)', border: 'rgba(17,153,250,0.15)',
-            text: counts.session === 1
-              ? '<strong>1 project</strong> is in session — continue the conversation to move it forward.'
-              : '<strong>' + counts.session + ' projects</strong> are in session — continue the conversation to move them forward.',
-            action: 'Continue session', actionColor: '#1199fa', actionBg: 'rgba(17,153,250,0.15)', stage: 'session' });
-        }
-        if (counts.submitted > 0) {
-          nudges.push({ icon: '📤', color: '#06b6d4', bg: 'rgba(6,182,212,0.06)', border: 'rgba(6,182,212,0.15)',
-            text: counts.submitted === 1
-              ? '<strong>1 project</strong> has been submitted for design review — we\'re working on it.'
-              : '<strong>' + counts.submitted + ' projects</strong> are submitted and awaiting design.',
-            action: 'View', actionColor: '#06b6d4', actionBg: 'rgba(6,182,212,0.15)', stage: 'submitted' });
-        }
-        if (counts.design > 0) {
-          nudges.push({ icon: '📐', color: '#1199fa', bg: 'rgba(17,153,250,0.06)', border: 'rgba(17,153,250,0.15)',
-            text: counts.design === 1
-              ? '<strong>1 project</strong> has a design ready for your review.'
-              : '<strong>' + counts.design + ' projects</strong> have designs ready for your review.',
-            action: 'Review design', actionColor: '#1199fa', actionBg: 'rgba(17,153,250,0.15)', stage: 'design' });
-        }
-        if (counts.proposal > 0) {
-          nudges.push({ icon: '💰', color: '#8b5cf6', bg: 'rgba(139,92,246,0.06)', border: 'rgba(139,92,246,0.15)',
-            text: counts.proposal === 1
-              ? '<strong>1 project</strong> has a proposal awaiting your approval.'
-              : '<strong>' + counts.proposal + ' projects</strong> have proposals awaiting your approval.',
-            action: 'View proposal', actionColor: '#8b5cf6', actionBg: 'rgba(139,92,246,0.15)', stage: 'proposal' });
-        }
-        if (counts.approved > 0 && nudges.length === 0) {
-          nudges.push({ icon: '✅', color: '#009e7e', bg: 'rgba(0,158,126,0.06)', border: 'rgba(0,158,126,0.15)',
-            text: counts.approved === 1
-              ? '<strong>1 project</strong> is approved and in progress. We\'ll keep you updated.'
-              : 'All <strong>' + counts.approved + ' projects</strong> are approved and in progress. We\'ll keep you updated.',
-            action: null, stage: 'approved' });
-        }
-        if (nudges.length === 0) {
-          nudges.push({ icon: '🚀', color: 'var(--accent-secondary)', bg: 'rgba(0,158,126,0.06)', border: 'rgba(0,158,126,0.15)',
-            text: 'All caught up! Ready to <strong>start a new project</strong>?',
-            action: 'New Project', actionColor: 'var(--accent-secondary)', actionBg: 'rgba(0,158,126,0.15)', isNew: true });
-        }
         %>
 
-        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
-          <% nudges.forEach(n => { %>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:<%= n.bg %>;border:1px solid <%= n.border %>;border-radius:12px;">
-              <div style="display:flex;align-items:center;gap:12px;">
-                <span style="font-size:1.3rem;"><%= n.icon %></span>
-                <span style="font-size:0.9rem;color:var(--text-secondary);line-height:1.5;"><%- n.text %></span>
-              </div>
-              <% if (n.action) { %>
-                <% if (n.isNew) { %>
-                  <button onclick="toggleNewProject()" style="white-space:nowrap;padding:8px 18px;border-radius:var(--radius-pill);border:none;background:<%= n.actionBg %>;color:<%= n.actionColor %>;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"><%= n.action %> →</button>
-                <% } else { %>
-                  <a href="#stage-<%= n.stage %>" style="white-space:nowrap;padding:8px 18px;border-radius:var(--radius-pill);background:<%= n.actionBg %>;color:<%= n.actionColor %>;font-size:0.82rem;font-weight:600;transition:all 0.2s;display:inline-block;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"><%= n.action %> →</a>
-                <% } %>
-              <% } %>
-            </div>
-          <% }) %>
-        </div>
+        <!-- Banners removed — projects grouped by stage below -->
 
         <% const stageOrder = ['approved', 'proposal', 'design', 'submitted', 'session', 'new'];
            stageOrder.forEach(stage => {
@@ -527,6 +462,9 @@
                         <% if (stage === 'proposal') { %>
                             <span class="btn btn-sm" style="background: #8b5cf6; box-shadow: 0 0 12px rgba(139,92,246,0.3);">View Proposal</span>
                         <% } else if (stage === 'design') { %>
+                            <% if (p.questionCount > 0) { %>
+                                <span style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.25);white-space:nowrap;" onclick="event.preventDefault();event.stopPropagation();window.location.href='/projects/<%= encodeId(p.id) %>/design';">❓ <%= p.questionCount %> Question<%= p.questionCount === 1 ? '' : 's' %></span>
+                            <% } %>
                             <span class="btn btn-sm" style="background: var(--accent); box-shadow: 0 0 12px var(--accent-glow);">View Design</span>
                         <% } else if (stage === 'approved') { %>
                             <span class="btn btn-sm" style="background: var(--accent-secondary); box-shadow: 0 0 12px rgba(0,158,126,0.3);">View Project</span>
