@@ -24,6 +24,8 @@ const ipaddr = require('ipaddr.js');
 const otplib = require('otplib');
 const qrcode = require('qrcode');
 const nodemailer = require('nodemailer');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 require('dotenv').config();
 
@@ -234,6 +236,20 @@ async function sendSecurityAlert(type, details) {
 
 app.use(cloudflareOnly);
 app.use(sanitizeInput);
+
+// --- Google OAuth (Passport) ---
+if (process.env.GOOGLE_OAUTH_CLIENT_ID && process.env.GOOGLE_OAUTH_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_OAUTH_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+    callbackURL: '/auth/google/callback'
+  }, (accessToken, refreshToken, profile, done) => {
+    done(null, profile);
+  }));
+  passport.serializeUser((user, done) => done(null, user));
+  passport.deserializeUser((user, done) => done(null, user));
+  app.use(passport.initialize());
+}
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -533,7 +549,8 @@ app.get('/login', async (req, res) => {
       return;
     } catch {}
   }
-  res.render('login', { error: null, email: '' });
+  const queryError = req.query.error ? decodeURIComponent(req.query.error.replace(/\+/g, ' ')) : null;
+  res.render('login', { error: queryError, email: '', success: null });
 });
 
 // Track failed logins per IP
@@ -616,6 +633,77 @@ app.get('/logout', async (req, res) => {
   res.clearCookie('authToken');
   res.clearCookie('mfaPending');
   res.redirect('/login');
+});
+
+// --- Google OAuth Routes ---
+app.get('/auth/google', (req, res, next) => {
+  if (!process.env.GOOGLE_OAUTH_CLIENT_ID) return res.redirect('/login?error=Google+sign-in+not+configured');
+  passport.authenticate('google', { scope: ['profile', 'email'], session: false })(req, res, next);
+});
+
+app.get('/auth/google/callback', (req, res, next) => {
+  passport.authenticate('google', { session: false, failureRedirect: '/login?error=Google+sign-in+failed' }, async (err, profile) => {
+    if (err || !profile) return res.redirect('/login?error=Google+sign-in+failed');
+    try {
+      const email = profile.emails && profile.emails[0] && profile.emails[0].value;
+      const displayName = profile.displayName || (email ? email.split('@')[0] : 'Google User');
+      if (!email) return res.redirect('/login?error=No+email+from+Google');
+
+      // Check if user already exists
+      let user = await db.getUser(email);
+
+      if (user) {
+        // Existing user — check approval
+        if (user.approved === 0) {
+          return res.render('login', { error: 'Your account is pending approval. We\'ll be in touch soon.', email: '' });
+        }
+        // Log in
+        sendSecurityAlert('Google Login', { email: user.email, ip: req.ip, userAgent: req.get('User-Agent') });
+        await db.logAction(user.id, 'login', { email: user.email, method: 'google' }, req.ip);
+
+        const token = require('jsonwebtoken').sign(
+          { id: user.id, email: user.email, role: user.role, name: user.name },
+          auth.JWT_SECRET,
+          { expiresIn: '2h' }
+        );
+        res.cookie('authToken', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 2 * 60 * 60 * 1000
+        });
+        return res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
+      }
+
+      // New user — create pending account (no password for Google users)
+      const bcrypt = require('bcryptjs');
+      const placeholderHash = bcrypt.hashSync(require('crypto').randomBytes(32).toString('hex'), 10);
+      await db.createPendingUser(email, displayName, '', '', placeholderHash);
+
+      // Telegram notification
+      const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+      const tgChat = process.env.TELEGRAM_CHAT_ID;
+      if (tgToken && tgChat) {
+        try {
+          const tgMsg = `🆕 New Google signup!\n\nName: ${displayName}\nEmail: ${email}\n\nAccount is pending approval.`;
+          await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: tgChat, text: tgMsg })
+          });
+        } catch (err) { console.error('Telegram notify failed:', err.message); }
+      }
+
+      // Send welcome email
+      const welcome = emails.welcomeEmail(displayName);
+      sendMortiEmail(email, welcome.subject, welcome.html).catch(() => {});
+
+      res.render('login', { error: null, success: 'Account created! We\'ll review and approve it shortly.', email: '' });
+    } catch (e) {
+      console.error('Google OAuth error:', e);
+      res.redirect('/login?error=Something+went+wrong');
+    }
+  })(req, res, next);
 });
 
 // === ADMIN ROUTES ===
