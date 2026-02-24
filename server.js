@@ -3287,7 +3287,6 @@ app.post('/api/upload', optionalAuth, uploadLimiter, upload.single('file'), asyn
         const parser = new PDFParse(dataBuffer);
         await parser.load();
         const result = await parser.getText();
-        // result is { pages: [{ text: "..." }, ...] }
         if (result && result.pages) {
           content = result.pages.map(p => p.text).join('\n\n');
         } else if (typeof result === 'string') {
@@ -3295,12 +3294,38 @@ app.post('/api/upload', optionalAuth, uploadLimiter, upload.single('file'), asyn
         } else {
           content = JSON.stringify(result);
         }
+        if (!content || content.trim().length === 0) {
+          content = '[PDF: ' + file.originalname + ' — document appears to be image-based or empty. Text extraction returned no content.]';
+        }
       } catch (e) {
         console.log('pdf-parse error:', e.message);
-        content = '[PDF: ' + file.originalname + ' — failed to extract text: ' + e.message + ']';
+        content = '[PDF: ' + file.originalname + ' — text extraction failed: ' + e.message + ']';
       }
+    } else if (['.xlsx', '.xls'].includes(ext)) {
+      try {
+        const XLSX = require('xlsx');
+        const workbook = XLSX.readFile(filePath);
+        const sheets = workbook.SheetNames.map(name => {
+          const sheet = workbook.Sheets[name];
+          return '## ' + name + '\n' + XLSX.utils.sheet_to_csv(sheet);
+        });
+        content = sheets.join('\n\n');
+      } catch (e) {
+        console.log('xlsx error:', e.message);
+        content = '[Excel: ' + file.originalname + ' — install xlsx for extraction: npm install xlsx]';
+      }
+    } else if (['.pptx'].includes(ext)) {
+      content = '[PowerPoint: ' + file.originalname + ' — uploaded successfully. Text extraction for .pptx is not yet supported.]';
+    } else if (['.rtf'].includes(ext)) {
+      try {
+        content = fs.readFileSync(filePath, 'utf8').replace(/\\[a-z]+\d* ?/g, '').replace(/[{}]/g, '');
+      } catch (e) {
+        content = '[RTF: ' + file.originalname + ' — failed to extract text]';
+      }
+    } else if (['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg'].includes(ext)) {
+      content = '[Image: ' + file.originalname + ' — uploaded successfully. Image content available for visual review.]';
     } else {
-      content = '[File: ' + file.originalname + ' (' + ext + ') — unsupported format for text extraction]';
+      content = '[File: ' + file.originalname + ' (' + ext + ') — uploaded successfully. Text extraction not available for this format.]';
     }
 
     // Keep the file — rename to original name

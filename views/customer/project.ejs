@@ -399,9 +399,9 @@
                          style="border: 2px dashed var(--border-glass); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; margin: 16px 0; transition: all 0.2s; color: var(--text-secondary);"
                          onmouseover="this.style.borderColor='var(--accent)'; this.style.background='var(--accent-dim)'"
                          onmouseout="this.style.borderColor='var(--border-glass)'; this.style.background='transparent'">
-                        <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)" style="display: none;">
+                        <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)" style="display: none;" accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.pptx,.rtf,.md,.json,.xml,.yaml,.yml,.html,.css,.js,.png,.jpg,.jpeg,.gif,.webp,.svg">
                         📁 Click to upload files<br>
-                        <small style="color: var(--text-muted);">Documents, specs, mockups</small>
+                        <small style="color: var(--text-muted);">PDF, Word, Excel, text, images, and more</small>
                     </div>
                     
                     <div id="uploadStatus" style="display: none; padding: 8px; border-radius: 8px; font-size: 0.78rem; margin-bottom: 12px;"></div>
