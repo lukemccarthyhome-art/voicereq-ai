@@ -1255,7 +1255,7 @@ async function extractDesignAsync(projectId, user) {
   "summary": "3-5 sentence executive summary: what this system actually is, the core operating loop, what problem it solves, and what it is NOT.",
   "customerDesign": {
     "ExecutiveSummary": "Plain English explanation of what this system is. What problem it solves, for whom, and the core value proposition. 2-4 paragraphs max. Write for a business stakeholder, not an engineer.",
-    "HowItWorks": "Step-by-step operational flow from the USER'S perspective as a NUMBERED LIST. Each step: a short bold title, then 1-2 sentences describing what happens. Focus on what the user sees/does, not internal plumbing. Keep it to 4-8 steps max. Example format: 1. **Submit Request** — You upload your brief and the system extracts key requirements automatically.",
+    "HowItWorks": "Step-by-step operational flow from the USER'S perspective as a NUMBERED LIST, grouped by workflow where applicable. Each step: a short bold title, then 1-2 sentences describing what happens. Focus on what the user sees/does, not internal plumbing. If there are multiple workflows, label them clearly (e.g., 'Workflow 1: New Lead Intake'). Keep each workflow to 4-8 steps max. Example format: 1. **Submit Request** — You upload your brief and the system extracts key requirements automatically.",
     "WhatYouGet": "Concrete deliverables and outcomes as a BULLETED LIST. What the customer will actually receive — screens, dashboards, automations, reports, integrations. Be specific and tangible. Include any key metrics or KPIs the system will track.",
     "WhatWeNeedFromYou": "BULLETED LIST of everything needed from the customer to proceed: access credentials, decisions to make, content to provide, approvals needed, stakeholder availability. Tag each as (Before Build), (During Build), or (Before Launch).",
     "TimelineAndInvestment": "Phases with timeline and what gets delivered in each phase. Include complexity rating (Low/Medium/High) and rough effort estimate. Be practical and specific. If cost data was not provided, note this clearly.",
@@ -1265,11 +1265,14 @@ async function extractDesignAsync(projectId, user) {
     "TechnicalArchitecture": "Architecture as a BULLETED LIST of components. For each: component name, specific tool/service recommended, rationale, and how it connects to other components. Include hosting, deployment, and a 'NOT required for MVP' list. Avoid microservices and enterprise over-engineering.",
     "DataModel": "BULLETED LIST of entities. For each: **Entity Name** — all key fields with types/descriptions, relationships to other entities, purpose in the system. Include example values where helpful.",
     "IntegrationsAndAPIs": "COMPREHENSIVE list of all external services, APIs, webhooks needed. For each: service name, what it's used for, endpoint/auth details if known, cost tier, and tag as (Critical) or (Optional). Include: APIs & Endpoints (URLs, methods, auth, request/response formats, rate limits), Integration Specifics (webhook formats, callback URLs, polling intervals), Configuration (env vars, feature flags). Quote directly from source material where possible.",
-    "BuildSpecification": "DETAILED step-by-step build specification as a NUMBERED LIST. This is the engineering team's primary reference. For EACH step include: (a) **Bold step name**, (b) Detailed description — inputs, processing, outputs, (c) Data flow — what comes in and goes out, (d) Error handling — what happens if this step fails, (e) Specific tools/services used, (f) Business rules, conditions, and logic that apply, (g) Human control/review points if applicable. There is NO length limit — be exhaustive. Also include: assumptions made (mark with [ASSUMPTION]), dependencies between steps, and any technical details extracted from requirements (field names, data types, regex patterns, code snippets, URLs, compliance requirements).",
+    "BuildSpecification": "DETAILED build specification ORGANISED BY WORKFLOW. For each workflow from the 'workflows' array, provide a numbered step list. This is the engineering team's primary reference. For EACH step include: (a) **Bold step name**, (b) Detailed description — inputs, processing, outputs, (c) Data flow — what comes in and goes out, (d) Error handling — what happens if this step fails, (e) Specific tools/services used, (f) Business rules, conditions, and logic that apply, (g) Human control/review points if applicable. There is NO length limit — be exhaustive. Also include: assumptions made (mark with [ASSUMPTION]), dependencies between workflows, and any technical details extracted from requirements (field names, data types, regex patterns, code snippets, URLs, compliance requirements). IMPORTANT: If a step involves waiting for an external event (webhook, callback, human action), that is a WORKFLOW BOUNDARY — the next steps belong to a separate workflow.",
     "RiskRegister": "BULLETED LIST of realistic risks. For each: **Risk** — likelihood, impact, detailed mitigation strategy, and who is responsible. Include technical risks, dependency risks, and timeline risks. No theatrical or enterprise-only risks."
   },
+  "workflows": [
+    {"id": "wf-1", "name": "Descriptive workflow name", "trigger": "What kicks this workflow off (webhook, schedule, manual, form submission, email, etc.)", "summary": "1-2 sentence description of what this workflow does end-to-end", "steps": "Numbered list of steps in this specific workflow — inputs, processing, outputs for each step", "outputsTo": "What happens at the end — triggers another workflow, sends notification, updates sheet, etc."}
+  ],
   "assets": [
-    {"id": "asset-1", "name": "Descriptive name", "type": "google-sheet | google-script | web-app | static-page | google-doc", "purpose": "What this asset is for and how it connects to the automation", "buildNotes": "Specific instructions for building — columns/structure for sheets, functionality for apps, content for docs", "linkedToSteps": [0, 1]}
+    {"id": "asset-1", "name": "Descriptive name", "type": "google-sheet | google-script | web-app | web-form | static-page | google-doc | dashboard", "purpose": "What this asset is for and how it connects to the automation", "buildNotes": "Specific instructions for building — columns/structure for sheets, functionality for apps, content for docs, fields for forms", "linkedToWorkflows": ["wf-1"], "buildOrIntegrate": "build | integrate | question", "integrationNotes": "If 'question' — what we need to ask the customer about their existing infrastructure"}
   ],
   "questions": [
     {"id": 1, "text": "Specific question about a gap or ambiguity", "assumption": "What we'll assume if unanswered"}
@@ -1305,13 +1308,23 @@ BUILD PLATFORM — MORTI ENGINE:
 - The TechnicalArchitecture section should specify: (a) primarily a Pipedream automation pipeline, (b) a web app with Pipedream automations supporting it, (c) an n8n workflow (self-hosted needs), or (d) a custom build.
 - Each customer gets isolated multi-tenant deployment via Pipedream external_user_id.
 
+WORKFLOWS — CRITICAL:
+- A project typically contains MULTIPLE distinct workflows, not one monolithic pipeline. Your #1 job is to identify and separate them.
+- Each workflow has a distinct TRIGGER (what starts it) and a distinct OUTCOME (what it produces).
+- WEBHOOK RULE: If a workflow has a webhook trigger waiting midway through a process (e.g., "wait for approval callback", "wait for payment confirmation"), that webhook is the START of a NEW workflow. Split it there. The first workflow ends by sending/triggering whatever creates the webhook event. The second workflow starts when that webhook fires.
+- Examples of workflow boundaries: form submission → processing pipeline, scheduled report generation, webhook from payment provider, email received trigger, manual admin action.
+- Name each workflow clearly (e.g., "New Lead Intake", "Weekly Report Generation", "Payment Confirmation Handler").
+- Show how workflows connect to each other (outputsTo field).
+
 ASSETS — REQUIRED RESOURCES:
-- Identify any assets that need to exist BEFORE or ALONGSIDE the automation pipeline. These are NOT automation steps — they are resources the automation depends on.
-- Asset types: google-sheet (tracking/data storage), google-script (Apps Script custom logic/web apps), web-app (frontend input pages, dashboards), static-page (landing pages, confirmation pages), google-doc (templates, documents).
-- For each asset, specify: a clear name, the type, what it's for (purpose), specific build instructions (buildNotes — e.g. column names for sheets, page functionality for web apps), and which pipeline steps use it (linkedToSteps by step number).
-- Examples of assets: "A Google Sheet to track blog draft status and approvals", "A simple voice input web page for capturing ideas", "A Google Doc template for client proposals".
-- If the project mentions spreadsheets, forms, dashboards, tracking, input pages, or templates — these are assets, not automation steps.
-- The customer will choose whether to provide an existing asset or have the engine build it.
+- Identify any assets that need to exist BEFORE or ALONGSIDE the automation workflows. These are NOT automation steps — they are resources the workflows depend on.
+- Asset types: google-sheet (tracking/data storage), google-script (Apps Script custom logic/web apps), web-app (frontend input pages, dashboards), web-form (data collection forms), static-page (landing pages, confirmation pages), google-doc (templates, documents), dashboard (reporting/monitoring views).
+- For each asset, specify: a clear name, the type, what it's for (purpose), specific build instructions (buildNotes — e.g. column names for sheets, page functionality for apps, fields for forms), and which workflows use it (linkedToWorkflows).
+- WEB ASSETS ARE CRITICAL: Any mention of input forms, portals, dashboards, customer-facing pages, or data entry interfaces MUST be identified as assets.
+- For EVERY web asset (web-app, web-form, dashboard, static-page), you MUST flag whether to BUILD it fresh or INTEGRATE with the customer's existing web infrastructure (website, CRM, portal). Set buildOrIntegrate to "question" and write a specific integrationNotes question if unclear.
+- Examples: "A Google Sheet to track blog draft status", "A web form for new client intake", "A customer dashboard showing project status", "A Google Doc template for proposals".
+- If the project mentions spreadsheets, forms, dashboards, tracking, input pages, portals, or templates — these are assets.
+- Generate a QUESTION for each web asset where it's unclear whether the customer wants us to build it or integrate with their existing systems. E.g., "You mentioned needing an intake form — should we build a standalone web form, or do you have an existing website/portal where this should be embedded?"
 
 DESIGN PRINCIPLES:
 - Humans steer; systems automate repetition.

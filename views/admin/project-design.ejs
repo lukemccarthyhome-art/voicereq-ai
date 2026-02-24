@@ -252,6 +252,8 @@
         <!-- NEW FORMAT: Tabbed layout -->
         <div class="tabs">
           <div class="tab active" data-tab="customer">👤 Customer View</div>
+          <div class="tab" data-tab="workflows">🔄 Workflows</div>
+          <div class="tab" data-tab="assets">📦 Assets</div>
           <div class="tab" data-tab="engine">⚙️ Build Spec</div>
         </div>
 
@@ -294,6 +296,61 @@
             <% }) %>
           <% } else { %>
             <div class="empty-state">No customer design sections generated yet.</div>
+          <% } %>
+        </div>
+
+        <!-- Workflows Tab -->
+        <div class="tab-content" id="tab-workflows">
+          <% const workflows = design.workflows || []; %>
+          <% if (workflows.length > 0) { %>
+            <div style="display:grid;gap:16px;">
+              <% workflows.forEach((wf, i) => { %>
+                <div style="padding:20px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-glass);border-left:4px solid var(--accent);">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <span style="background:var(--accent);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;"><%- wf.id ? wf.id.replace('wf-','') : (i+1) %></span>
+                    <h4 style="margin:0;color:var(--text-primary);font-size:1rem;"><%= wf.name %></h4>
+                  </div>
+                  <div style="display:grid;gap:8px;font-size:0.88rem;">
+                    <div><strong style="color:var(--accent);">Trigger:</strong> <span style="color:var(--text-secondary);"><%= wf.trigger %></span></div>
+                    <div style="color:var(--text-secondary);"><%- renderText(wf.summary || '') %></div>
+                    <% if (wf.steps) { %><div style="margin-top:8px;"><%- renderText(wf.steps) %></div><% } %>
+                    <% if (wf.outputsTo) { %><div style="margin-top:4px;"><strong style="color:#8b5cf6;">→ Outputs to:</strong> <span style="color:var(--text-secondary);"><%= wf.outputsTo %></span></div><% } %>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <div class="empty-state">No workflows identified yet. Re-extract the design to generate workflow analysis.</div>
+          <% } %>
+        </div>
+
+        <!-- Assets Tab -->
+        <div class="tab-content" id="tab-assets">
+          <% const assets = design.assets || []; %>
+          <% if (assets.length > 0) { %>
+            <div style="display:grid;gap:16px;">
+              <% assets.forEach(asset => { %>
+                <div style="padding:20px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-glass);border-left:4px solid <%= asset.buildOrIntegrate === 'question' ? '#f59e0b' : (asset.buildOrIntegrate === 'build' ? '#009e7e' : '#8b5cf6') %>;">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <h4 style="margin:0;color:var(--text-primary);font-size:0.95rem;"><%= asset.name %></h4>
+                    <span style="font-size:0.72rem;padding:2px 10px;border-radius:20px;background:rgba(17,153,250,0.12);color:var(--accent);font-weight:600;"><%= asset.type %></span>
+                    <% if (asset.buildOrIntegrate === 'question') { %>
+                      <span style="font-size:0.72rem;padding:2px 10px;border-radius:20px;background:rgba(245,158,11,0.12);color:#f59e0b;font-weight:600;">❓ Needs Clarification</span>
+                    <% } else if (asset.buildOrIntegrate === 'build') { %>
+                      <span style="font-size:0.72rem;padding:2px 10px;border-radius:20px;background:rgba(0,158,126,0.12);color:#009e7e;font-weight:600;">🔨 Build New</span>
+                    <% } else { %>
+                      <span style="font-size:0.72rem;padding:2px 10px;border-radius:20px;background:rgba(139,92,246,0.12);color:#8b5cf6;font-weight:600;">🔗 Integrate</span>
+                    <% } %>
+                  </div>
+                  <div style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:8px;"><%= asset.purpose %></div>
+                  <% if (asset.buildNotes) { %><div style="font-size:0.82rem;color:var(--text-muted);padding:10px;background:rgba(5,13,26,0.4);border-radius:8px;margin-bottom:8px;"><%- renderText(asset.buildNotes) %></div><% } %>
+                  <% if (asset.integrationNotes) { %><div style="font-size:0.82rem;color:#f59e0b;font-style:italic;">💡 <%= asset.integrationNotes %></div><% } %>
+                  <% if (asset.linkedToWorkflows && asset.linkedToWorkflows.length) { %><div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;">Linked to: <%= asset.linkedToWorkflows.join(', ') %></div><% } %>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <div class="empty-state">No assets identified yet. Re-extract the design to generate asset analysis.</div>
           <% } %>
         </div>
 
