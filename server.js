@@ -1250,6 +1250,8 @@ async function extractDesignAsync(projectId, user) {
     let designParsedCustomerDesign = null;
     let designParsedEngineDesign = null;
     let designSummary = '';
+    let designWorkflows = [];
+    let designAssets = [];
 
     const DESIGN_SECTIONS_SCHEMA = `{
   "summary": "3-5 sentence executive summary: what this system actually is, the core operating loop, what problem it solves, and what it is NOT.",
@@ -1456,18 +1458,44 @@ ${context}`;
       promptContext = newInfo.join('\n\n---\n\n');
     }
 
-    if (OPENAI_KEY) {
+    const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+    const LLM_KEY = ANTHROPIC_KEY || OPENAI_KEY;
+    if (LLM_KEY) {
       try {
         const prompt = buildPrompt(promptContext, prevAnswersText, previousDesign);
-        const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1';
-        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-          body: JSON.stringify({ model: model, max_completion_tokens: 16000, messages: [{ role: 'system', content: 'You are a senior solutions architect and business analyst. You produce detailed, actionable solution designs. The CoreWorkflow section should be your most detailed section — expand fully with no length limit.' }, { role: 'user', content: prompt }] })
-        });
-        if (resp.ok) {
-          const data = await resp.json();
-          let content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        let content = '';
+        
+        if (ANTHROPIC_KEY) {
+          // Use Anthropic Claude API
+          const anthropicModel = process.env.LLM_MODEL || 'claude-sonnet-4-20250514';
+          const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+            body: JSON.stringify({ model: anthropicModel, max_tokens: 16000, system: 'You are a senior solutions architect and business analyst. You produce detailed, actionable solution designs. Output valid JSON only, no markdown wrapping.', messages: [{ role: 'user', content: prompt }] })
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            content = data.content && data.content[0] && data.content[0].text;
+          } else {
+            console.error('Anthropic call failed:', resp.status, await resp.text().catch(()=>''));
+          }
+        } else {
+          // Fallback to OpenAI
+          const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1';
+          const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
+            body: JSON.stringify({ model: model, max_completion_tokens: 16000, messages: [{ role: 'system', content: 'You are a senior solutions architect and business analyst. You produce detailed, actionable solution designs. Output valid JSON only, no markdown wrapping.' }, { role: 'user', content: prompt }] })
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+          } else {
+            console.error('OpenAI call failed:', resp.status);
+          }
+        }
+        
+        if (content) {
           // Parse JSON safely: try to extract JSON substring
           try {
             // Strip markdown code fences if present
@@ -1551,6 +1579,14 @@ ${context}`;
             if (parsed.questions && Array.isArray(parsed.questions)) {
               llmQuestions = parsed.questions;
             }
+
+            // Store workflows and assets
+            if (parsed.workflows && Array.isArray(parsed.workflows)) {
+              designWorkflows = parsed.workflows;
+            }
+            if (parsed.assets && Array.isArray(parsed.assets)) {
+              designAssets = parsed.assets;
+            }
             
             // Store split designs for later use
             if (parsedCustomerDesign) designParsedCustomerDesign = parsedCustomerDesign;
@@ -1560,8 +1596,6 @@ ${context}`;
             // fallback: treat entire content as markdown
             llmDesignMarkdown = content || '';
           }
-        } else {
-          console.error('LLM call failed with status', resp.status);
         }
       } catch (e) { console.error('LLM call error:', e.message); }
     } else {
@@ -1650,6 +1684,8 @@ ${summarizeRequirements(reqText)}
       sections: designParsedSections,
       customerDesign: designParsedCustomerDesign,
       engineDesign: designParsedEngineDesign,
+      workflows: designWorkflows,
+      assets: designAssets,
       questions: llmQuestions,
       chat: [],
       answers: [],
