@@ -661,6 +661,17 @@ app.get('/auth/google/callback', (req, res, next) => {
         sendSecurityAlert('Google Login', { email: user.email, ip: req.ip, userAgent: req.get('User-Agent') });
         await db.logAction(user.id, 'login', { email: user.email, method: 'google' }, req.ip);
 
+        // MFA check for Google logins
+        if (user.mfa_secret) {
+          const mfaToken = require('jsonwebtoken').sign(
+            { id: user.id, partial: true },
+            auth.JWT_SECRET,
+            { expiresIn: '5m' }
+          );
+          res.cookie('mfaPending', mfaToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 300000 });
+          return res.redirect('/login/mfa');
+        }
+
         const token = require('jsonwebtoken').sign(
           { id: user.id, email: user.email, role: user.role, name: user.name },
           auth.JWT_SECRET,
@@ -672,6 +683,12 @@ app.get('/auth/google/callback', (req, res, next) => {
           sameSite: 'lax',
           maxAge: 2 * 60 * 60 * 1000
         });
+
+        // Prompt MFA setup if not configured
+        if (!user.mfa_secret) {
+          return res.redirect('/profile/mfa/prompt');
+        }
+
         return res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
       }
 
