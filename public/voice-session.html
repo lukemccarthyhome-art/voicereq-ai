@@ -871,6 +871,10 @@
         .modal p { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px; }
         .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
+        /* ===== MOBILE: desktop defaults ===== */
+        .mobile-tabs { display: none; }
+        .mobile-controls-panel { display: none; }
+
         /* ===== MOBILE ===== */
         @media (max-width: 768px) {
             body { height: 100vh; height: 100dvh; overflow: hidden; }
@@ -1002,6 +1006,35 @@
                 max-width: 100%;
                 padding: 0 16px;
             }
+            .mobile-controls-topbar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--border-glass);
+                background: rgba(10, 22, 40, 0.8);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+            }
+            .mobile-back-btn {
+                color: var(--accent);
+                font-size: 0.85rem;
+                font-weight: 600;
+                text-decoration: none;
+            }
+            .mobile-project-name {
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                max-width: 200px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
             .mobile-tabs {
                 display: flex !important;
                 position: fixed;
@@ -1033,14 +1066,13 @@
             .mobile-tab.active { color: var(--accent); }
             .mobile-tab svg { width: 20px; height: 20px; }
 
-            /* Toolbar: hidden by default on mobile (controls tab), shown when switching tabs */
+            /* Toolbar: hidden by default on mobile (controls tab is default), shown for other tabs */
             .toolbar {
                 padding: 6px 10px; gap: 6px;
                 min-height: 44px;
-                display: none;
+                display: none !important;
             }
-            .toolbar.mobile-visible { display: flex; }
-            .toolbar.mobile-hidden { display: none; }
+            .toolbar.mobile-visible { display: flex !important; }
             .toolbar-brand { display: none; }
             .toolbar-brand + .toolbar-divider { display: none; }
             .toolbar-status { font-size: 0.7rem; padding: 4px 10px; }
@@ -1094,8 +1126,7 @@
             .modal-content { width: 95%; max-width: none; margin: 12px; }
         }
 
-        .mobile-tabs { display: none; }
-        .mobile-controls-panel { display: none; }
+        /* Hidden on desktop — media query overrides for mobile */
 
         /* ===== KEYBOARD SHORTCUT HINTS ===== */
         .kbd {
@@ -1258,6 +1289,11 @@
 
             <!-- Mobile controls panel (visible only on mobile) -->
             <div class="mobile-controls-panel" id="mobileControlsPanel">
+                <div class="mobile-controls-topbar">
+                    <a href="/dashboard" class="mobile-back-btn">← Back</a>
+                    <span class="mobile-project-name" id="mobileProjectName"></span>
+                    <span style="width:48px"></span>
+                </div>
                 <div class="mobile-controls-inner">
                     <div class="mobile-status" id="mobileStatus">Ready</div>
                     <button class="mobile-mic-btn" id="mobileMicBtn" onclick="toggleCall()">
@@ -1888,6 +1924,8 @@
                     sessionContext.projectName = proj.name||'';
                     document.getElementById('projectName').textContent = proj.name||'Project';
                     document.getElementById('projectDesc').textContent = proj.description||'';
+                    const mpn = document.getElementById('mobileProjectName');
+                    if (mpn) mpn.textContent = proj.name||'Project';
                 }
             } catch(e) { console.log('Could not load project info:',e); }
         }
