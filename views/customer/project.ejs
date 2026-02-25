@@ -122,9 +122,12 @@
             </div>
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <h1 style="font-weight: 800; letter-spacing: -0.03em;"><%= project.name %></h1>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <h1 id="projectTitle" style="font-weight: 800; letter-spacing: -0.03em;"><%= project.name %></h1>
+                        <button onclick="editProjectName()" title="Rename project" style="background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text-muted);opacity:0.5;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'">✏️</button>
+                    </div>
                     <% if (project.description) { %>
-                        <p style="color: var(--text-secondary); margin-top: 8px; font-size: 1rem; font-weight: 300;"><%= project.description %></p>
+                        <p id="projectDesc" style="color: var(--text-secondary); margin-top: 8px; font-size: 1rem; font-weight: 300;"><%= project.description %></p>
                     <% } %>
                     <div style="margin-top: 12px;">
                         <span class="status-badge status-<%= project.status %>">● <%= project.status === 'completed' && !designReady ? 'Submitted for Design' : project.status.charAt(0).toUpperCase() + project.status.slice(1) %></span>
@@ -729,6 +732,54 @@ async function submitForDesign() {
     btn.innerHTML = '📤 Submit for Design Review';
     alert('Failed to submit. Please try again.');
   }
+}
+
+function editProjectName() {
+  const titleEl = document.getElementById('projectTitle');
+  const current = titleEl.textContent.trim();
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = current;
+  input.style.cssText = 'font-size:1.8rem;font-weight:800;letter-spacing:-0.03em;background:rgba(255,255,255,0.06);border:1px solid var(--accent);border-radius:8px;padding:4px 12px;color:var(--text-primary);font-family:Inter,sans-serif;width:100%;outline:none;';
+  titleEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const save = async () => {
+    const newName = input.value.trim();
+    if (!newName || newName === current) {
+      const h1 = document.createElement('h1');
+      h1.id = 'projectTitle';
+      h1.style.cssText = 'font-weight:800;letter-spacing:-0.03em;';
+      h1.textContent = current;
+      input.replaceWith(h1);
+      return;
+    }
+    try {
+      const r = await fetch('/api/projects/<%= project.id %>/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName })
+      });
+      if (!r.ok) throw new Error('Failed');
+      const h1 = document.createElement('h1');
+      h1.id = 'projectTitle';
+      h1.style.cssText = 'font-weight:800;letter-spacing:-0.03em;';
+      h1.textContent = newName;
+      input.replaceWith(h1);
+      document.title = newName + ' - Morti Projects';
+    } catch (e) {
+      alert('Failed to rename project');
+      const h1 = document.createElement('h1');
+      h1.id = 'projectTitle';
+      h1.style.cssText = 'font-weight:800;letter-spacing:-0.03em;';
+      h1.textContent = current;
+      input.replaceWith(h1);
+    }
+  };
+
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } if (e.key === 'Escape') { input.value = current; input.blur(); } });
 }
 </script>
 </body>

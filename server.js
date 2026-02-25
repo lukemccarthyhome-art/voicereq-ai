@@ -921,6 +921,19 @@ app.get('/admin/projects/archived', auth.authenticate, auth.requireAdmin, async 
 });
 
 // Mark project as complete (customer action from voice session)
+app.post('/api/projects/:id/rename', apiAuth, async (req, res) => {
+  try {
+    const project = await db.getProject(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Not found' });
+    if (project.user_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+    const name = (req.body.name || '').trim();
+    if (!name) return res.status(400).json({ error: 'Name required' });
+    await db.updateProject(req.params.id, name, project.description, project.status);
+    await db.logAction(req.user.id, 'rename_project', { projectId: req.params.id, oldName: project.name, newName: name }, req.ip);
+    res.json({ ok: true });
+  } catch (e) { console.error('Rename error:', e); res.status(500).json({ error: 'Failed' }); }
+});
+
 app.post('/api/projects/:id/complete', apiAuth, async (req, res) => {
   try {
     const projectId = req.params.id;
