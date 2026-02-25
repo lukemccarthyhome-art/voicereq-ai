@@ -74,14 +74,67 @@
 
         .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
 
+        .mobile-menu-toggle { display: none; background: none; border: 1px solid var(--border-glass); border-radius: 8px; padding: 8px; cursor: pointer; flex-direction: column; gap: 4px; align-items: center; justify-content: center; }
+        .mobile-menu-toggle span { display: block; width: 20px; height: 2px; background: var(--text-secondary); border-radius: 2px; transition: all 0.2s; }
+
         @media (max-width: 768px) {
-            .header-container { flex-direction: column; gap: 12px; text-align: center; }
-            .nav { flex-wrap: wrap; justify-content: center; }
+            /* Nav hamburger */
+            .mobile-menu-toggle { display: flex; }
+            .header-container { flex-direction: row; flex-wrap: wrap; }
+            .nav { display: none; flex-direction: column; width: 100%; gap: 2px; padding-top: 12px; border-top: 1px solid var(--border-glass); margin-top: 8px; }
+            .nav.nav-open { display: flex; }
+            .nav a { padding: 10px 14px; font-size: 0.92rem; text-align: left; border-radius: 8px; }
+            .user-name { padding: 10px 14px; font-size: 0.92rem; text-align: left; border: none; background: none; }
+
             .main { padding: 16px; }
             .card { padding: 16px; }
             .two-col { grid-template-columns: 1fr; }
-            .milestone-tracker { flex-wrap: wrap; gap: 8px; }
-            .milestone-connector { display: none; }
+
+            /* Project header: stack title + button */
+            .project-header-top { flex-direction: column !important; align-items: flex-start !important; gap: 16px; }
+            .project-header-top .btn { width: 100%; text-align: center; padding: 14px 20px; }
+            .project-header-top h1 { font-size: 1.4rem; }
+
+            /* Milestone tracker: horizontal scroll or compact */
+            .milestone-tracker { gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 8px; }
+            .milestone { min-width: 60px; flex-shrink: 0; }
+            .milestone-icon { width: 40px; height: 40px; font-size: 16px; }
+            .milestone-label { font-size: 0.7rem; }
+            .milestone-connector { width: 24px; min-width: 24px; }
+
+            /* Status/milestone cards: stack content vertically */
+            .milestone-card > div { flex-direction: column !important; align-items: flex-start !important; gap: 12px; }
+            .milestone-card .btn { width: 100%; text-align: center; }
+
+            /* Session rows: stack */
+            .session-row { flex-direction: column !important; align-items: flex-start !important; gap: 8px; }
+            .session-row .btn { width: 100%; text-align: center; }
+
+            /* Conversation header card */
+            .conversation-header { flex-direction: column !important; gap: 12px; text-align: center; }
+            .conversation-header .btn { width: 100%; }
+
+            /* File cards */
+            .file-card-actions { margin-top: 8px; display: flex; gap: 8px; }
+            .file-card-actions .btn { flex: 1; text-align: center; }
+
+            /* Share form */
+            .share-form-inner { flex-direction: column !important; align-items: stretch !important; }
+            .share-form-inner > div { width: 100% !important; }
+            .share-form-inner .btn { width: 100%; }
+
+            /* Share list items */
+            .share-item { flex-direction: column !important; align-items: flex-start !important; gap: 8px; }
+            .share-item > div:last-child { width: 100%; justify-content: space-between; }
+
+            /* Stage help box */
+            .stage-help { flex-direction: column; gap: 12px; }
+
+            /* Feature request FAB */
+            .feature-fab { bottom: 16px !important; right: 16px !important; padding: 10px 18px !important; font-size: 0.82rem !important; }
+
+            /* Archive/delete footer */
+            .project-footer { flex-direction: column !important; gap: 12px !important; }
         }
     </style>
 </head>
@@ -89,7 +142,10 @@
     <div class="header">
         <div class="header-container">
             <a href="/dashboard" class="logo">◆ Morti</a>
-            <nav class="nav" style="display:flex;gap:8px;align-items:center;">
+            <button class="mobile-menu-toggle" onclick="document.querySelector('.nav').classList.toggle('nav-open')" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <nav class="nav">
                 <a href="/dashboard">Dashboard</a>
                 <a href="/help">Help</a>
                 <a href="/dashboard" class="active">Projects</a>
@@ -120,7 +176,7 @@
             <div style="margin-bottom: 8px;">
                 <a href="/dashboard" style="color: var(--accent); font-size: 0.88rem;">← Back to Projects</a>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="project-header-top" style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <div style="display:flex;align-items:center;gap:10px;">
                         <h1 id="projectTitle" style="font-weight: 800; letter-spacing: -0.03em;"><%= project.name %></h1>
@@ -229,7 +285,7 @@
         %>
 
         <% if (stageHelp) { %>
-        <div style="padding:18px 22px;background:<%= stageHelp.bg %>;border:1px solid <%= stageHelp.border %>;border-radius:var(--radius);margin-bottom:20px;display:flex;gap:16px;align-items:flex-start;">
+        <div class="stage-help" style="padding:18px 22px;background:<%= stageHelp.bg %>;border:1px solid <%= stageHelp.border %>;border-radius:var(--radius);margin-bottom:20px;display:flex;gap:16px;align-items:flex-start;">
             <span style="font-size:1.5rem;flex-shrink:0;margin-top:2px;"><%= stageHelp.icon %></span>
             <div style="flex:1;">
                 <div style="font-weight:700;color:<%= stageHelp.color %>;margin-bottom:8px;font-size:0.95rem;"><%= stageHelp.title %></div>
@@ -343,7 +399,7 @@
                 <div class="card">
                     <h2>💬 Your Conversation</h2>
                     <% if (sessions.length > 0) { %>
-                        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--accent-dim); border: 1px solid rgba(17,153,250,0.2); border-radius: 12px; margin-bottom: 16px;">
+                        <div class="conversation-header" style="display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--accent-dim); border: 1px solid rgba(17,153,250,0.2); border-radius: 12px; margin-bottom: 16px;">
                             <div style="font-size: 36px;">🎙️</div>
                             <div style="flex: 1;">
                                 <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);"><%= totalMessages %> message<%= totalMessages === 1 ? '' : 's' %> exchanged</div>
@@ -368,7 +424,7 @@
                             try { requirements = JSON.parse(session.requirements || '{}'); } catch {}
                             const reqCount = Object.values(requirements).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
                             %>
-                            <div style="border: 1px solid var(--border-glass); border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-card);">
+                            <div class="session-row" style="border: 1px solid var(--border-glass); border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-card);">
                                 <div style="font-size: 0.82rem; color: var(--text-secondary);">
                                     📝 <%= transcript.length %> messages • ✅ <%= reqCount %> requirements •
                                     <% if (session.status === 'active') { %>
@@ -459,7 +515,7 @@
             </div>
             
             <div id="shareForm" style="display: none; margin-bottom: 20px; padding: 16px; background: var(--accent-dim); border: 1px solid rgba(17,153,250,0.2); border-radius: 12px;">
-                <div style="display: flex; gap: 8px; align-items: flex-end;">
+                <div class="share-form-inner" style="display: flex; gap: 8px; align-items: flex-end;">
                     <div style="flex: 1;">
                         <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Email</label>
                         <input type="email" id="shareEmail" placeholder="colleague@company.com" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-glass); border-radius: 8px; font-size: 0.88rem; background: rgba(5,13,26,0.6); color: var(--text-primary); font-family: 'Inter', sans-serif;">
@@ -496,7 +552,7 @@
         <% } %>
 
         <!-- Archive / Delete project -->
-        <div style="text-align: center; margin-top: 40px; padding: 20px; display: flex; justify-content: center; gap: 24px;">
+        <div class="project-footer" style="text-align: center; margin-top: 40px; padding: 20px; display: flex; justify-content: center; gap: 24px;">
             <% if (project.status !== 'archived') { %>
             <form method="POST" action="/customer/projects/<%= encodeId(project.id) %>/archive" onsubmit="return confirm('Archive this project? You can unarchive it later.');" style="display: inline;">
                 <button type="submit" style="background: none; border: none; color: var(--text-muted); font-size: 0.82rem; cursor: pointer; text-decoration: underline; font-family: 'Inter', sans-serif;">📦 Archive this project</button>
@@ -683,7 +739,7 @@
     </main>
 
 <!-- Feature Request Button & Modal -->
-<button onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:var(--accent);color:white;border:none;padding:12px 24px;border-radius:var(--radius-pill);font-size:0.88rem;font-weight:600;cursor:pointer;box-shadow:0 0 20px var(--accent-glow);z-index:999;transition:all 0.3s;font-family:'Inter',sans-serif;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">💡 Feature Request</button>
+<button class="feature-fab" onclick="document.getElementById('featureModal').style.display='flex'" style="position:fixed;bottom:24px;right:24px;background:var(--accent);color:white;border:none;padding:12px 24px;border-radius:var(--radius-pill);font-size:0.88rem;font-weight:600;cursor:pointer;box-shadow:0 0 20px var(--accent-glow);z-index:999;transition:all 0.3s;font-family:'Inter',sans-serif;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">💡 Feature Request</button>
 <div id="featureModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
   <div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius);padding:28px;width:90%;max-width:500px;box-shadow:0 16px 48px rgba(0,0,0,0.4);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">

@@ -299,6 +299,11 @@ window.addEventListener('scroll', () => {
     const nav = document.querySelector('nav');
     if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
 });
+document.querySelectorAll('.nav-dropdown-trigger').forEach(trigger => {
+    trigger.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) { e.preventDefault(); this.closest('.nav-dropdown').classList.toggle('open'); }
+    });
+});
 </script>
 
 </body>
