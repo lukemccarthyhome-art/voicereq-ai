@@ -17,6 +17,12 @@
 <div class="m-content">
   <!-- Overview Tab -->
   <div id="tab-overview" class="tab-panel">
+    <!-- Rename Project -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span id="mProjectName" style="font-size:1.1rem;font-weight:700;color:var(--text-primary);flex:1;"><%= project.name %></span>
+      <button onclick="mEditName()" style="background:none;border:none;font-size:0.9rem;cursor:pointer;color:var(--text-muted);">✏️</button>
+    </div>
+
     <!-- Voice CTA -->
     <a href="/m/projects/<%= encodeId(project.id) %>/voice" class="m-quick-voice">
       <div class="m-quick-voice-icon">🎙️</div>
@@ -142,6 +148,26 @@ document.querySelectorAll('#projectTabs .m-tab-item').forEach(tab => {
     document.getElementById('tab-' + this.dataset.tab).style.display = 'block';
   });
 });
+
+function mEditName() {
+  const el = document.getElementById('mProjectName');
+  const current = el.textContent.trim();
+  const input = document.createElement('input');
+  input.type = 'text'; input.value = current;
+  input.style.cssText = 'font-size:1.1rem;font-weight:700;background:rgba(255,255,255,0.06);border:1px solid var(--accent,#1199fa);border-radius:8px;padding:6px 10px;color:var(--text-primary,#f0f4f8);font-family:Inter,sans-serif;width:100%;outline:none;';
+  el.replaceWith(input); input.focus(); input.select();
+  const save = async () => {
+    const n = input.value.trim();
+    if (!n || n === current) { const s = document.createElement('span'); s.id='mProjectName'; s.style.cssText='font-size:1.1rem;font-weight:700;color:var(--text-primary);flex:1;'; s.textContent=current; input.replaceWith(s); return; }
+    try {
+      const r = await fetch('/api/projects/<%= project.id %>/rename', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:n}) });
+      if (!r.ok) throw new Error();
+      const s = document.createElement('span'); s.id='mProjectName'; s.style.cssText='font-size:1.1rem;font-weight:700;color:var(--text-primary);flex:1;'; s.textContent=n; input.replaceWith(s);
+    } catch { alert('Failed to rename'); const s = document.createElement('span'); s.id='mProjectName'; s.style.cssText='font-size:1.1rem;font-weight:700;color:var(--text-primary);flex:1;'; s.textContent=current; input.replaceWith(s); }
+  };
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', (e) => { if(e.key==='Enter'){e.preventDefault();input.blur();} if(e.key==='Escape'){input.value=current;input.blur();} });
+}
 </script>
 
 <%- include('layout-bottom', { activeTab: 'projects' }) %>
