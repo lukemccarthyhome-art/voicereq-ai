@@ -240,9 +240,17 @@
             box-shadow: 0 16px 48px rgba(0,0,0,0.4);
         }
 
+                .mobile-menu-toggle { display: none; background: none; border: 1px solid var(--border-glass); border-radius: 8px; padding: 8px; cursor: pointer; flex-direction: column; gap: 4px; align-items: center; justify-content: center; }
+        .mobile-menu-toggle span { display: block; width: 20px; height: 2px; background: var(--text-secondary); border-radius: 2px; transition: all 0.2s; }
+
         @media (max-width: 768px) {
-            .header-container { flex-direction: column; gap: 12px; text-align: center; }
-            .nav { flex-wrap: wrap; justify-content: center; }
+            .mobile-menu-toggle { display: flex; }
+            .header-container { flex-direction: row; flex-wrap: wrap; }
+            .nav { display: none; flex-direction: column; width: 100%; gap: 2px; padding-top: 12px; border-top: 1px solid var(--border-glass); margin-top: 8px; }
+            .nav.nav-open { display: flex; }
+            .nav a { padding: 10px 14px; font-size: 0.92rem; text-align: left; border-radius: 8px; }
+            .nav a:hover { background: rgba(255,255,255,0.06); }
+            .user-name { padding: 10px 14px; font-size: 0.92rem; text-align: left; border: none; background: none; }
             .main { padding: 16px; }
             .overview-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .wizard-steps-preview { gap: 20px; }
@@ -256,11 +264,14 @@
     <div class="header">
         <div class="header-container">
             <a href="/dashboard" class="logo">◆ Morti</a>
+            <button class="mobile-menu-toggle" onclick="document.querySelector('.nav').classList.toggle('nav-open')" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
             <nav class="nav">
                 <a href="/dashboard" class="active">Dashboard</a>
                 <a href="/help">Help</a>
                 <a href="/profile">Profile</a>
-                <a href="#" class="feature-link" onclick="document.getElementById('featureModal').style.display='flex';return false;">💡 Feedback</a>
+                <a href="#" class="feature-link" onclick="document.getElementById('featureModal').style.display='flex';return false;">💡 Feature Request</a>
                 <div class="user-name">👤 <%= user.name %></div>
                 <a href="/logout">Logout</a>
             </nav>
@@ -531,7 +542,7 @@
 <div class="modal-overlay" id="featureModal">
   <div class="modal-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="color:var(--text-primary);font-weight:700;">💡 Submit Feedback</h3>
+      <h3 style="color:var(--text-primary);font-weight:700;">💡 Feature Request</h3>
       <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);">&times;</button>
     </div>
     <textarea id="featureText" rows="5" placeholder="Tell us what you'd like to see, or what could be better..." style="width:100%;padding:12px;border:1px solid var(--border-glass);border-radius:12px;font-size:0.88rem;font-family:'Inter',sans-serif;resize:vertical;background:rgba(5,13,26,0.6);color:var(--text-primary);"></textarea>

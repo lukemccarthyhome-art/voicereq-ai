@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Morti — You Talk. Morti Builds.</title>
-    <meta name="description" content="Tell Morti what slows your business down. We turn manual processes into working automations — from invoice approvals to onboarding workflows. Built for Australian SMBs.">
+    <title>Morti — Speak. Automate. Done. Forever.</title>
+    <meta name="description" content="Describe your business process to Morti. We deploy an AI agent that automates the workflow — from invoice approvals to onboarding. Built for Australian SMBs. No technical knowledge needed.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -380,10 +380,10 @@
             font-size: 1.8rem; margin-bottom: 16px;
         }
         .who-card h3 {
-            font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; color: var(--text-primary);
+            font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);
         }
         .who-card p {
-            font-size: 0.92rem; color: var(--text-secondary); line-height: 1.7; font-weight: 300;
+            font-size: 0.98rem; color: var(--text-secondary); line-height: 1.7; font-weight: 300;
         }
 
         /* ========== EXAMPLES STRIP ========== */
@@ -413,10 +413,10 @@
             font-size: 1.4rem; flex-shrink: 0; margin-top: 2px;
         }
         .example-item .example-text strong {
-            display: block; font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;
+            display: block; font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;
         }
         .example-item .example-text span {
-            font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;
+            font-size: 0.92rem; color: var(--text-muted); line-height: 1.7;
         }
 
         /* ========== JOURNEY / HOW IT WORKS ========== */
@@ -442,7 +442,7 @@
             margin-bottom: 20px;
         }
         .journey-label {
-            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.16em;
+            font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.16em;
             color: var(--accent); font-weight: 600; margin-bottom: 14px;
         }
         .journey-content h2 {
@@ -537,6 +537,81 @@
         .testimonial-name { font-size: 0.88rem; font-weight: 600; color: var(--text-primary); }
         .testimonial-role { font-size: 0.78rem; color: var(--text-muted); font-weight: 400; }
 
+        /* ========== AI READINESS REVIEW ========== */
+        .readiness-section {
+            padding: 120px 24px; position: relative; overflow: hidden;
+        }
+        .readiness-section::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .readiness-section::after {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 800px; height: 800px; border-radius: 50%; pointer-events: none;
+            background: radial-gradient(circle, rgba(17, 153, 250, 0.06) 0%, transparent 70%);
+        }
+        .readiness-steps {
+            display: flex; align-items: flex-start; justify-content: center; gap: 0;
+            max-width: 1000px; margin: 0 auto 64px; position: relative; z-index: 1;
+        }
+        .readiness-step {
+            flex: 1; max-width: 280px; text-align: center;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass); border-radius: var(--radius);
+            padding: 36px 28px; transition: all 0.3s;
+        }
+        .readiness-step:hover {
+            border-color: var(--border-glass-hover); transform: translateY(-6px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 40px rgba(17, 153, 250, 0.08);
+        }
+        .readiness-step-num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 10px; font-size: 0.9rem; font-weight: 800;
+            background: var(--accent-dim); color: var(--accent);
+            border: 1px solid rgba(17, 153, 250, 0.2); margin-bottom: 16px;
+        }
+        .readiness-step-icon { font-size: 2.2rem; margin-bottom: 16px; }
+        .readiness-step h3 {
+            font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px;
+        }
+        .readiness-step p {
+            font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; font-weight: 300;
+        }
+        .readiness-step-connector {
+            display: flex; align-items: center; justify-content: center;
+            padding-top: 80px; flex-shrink: 0; width: 48px;
+        }
+        .readiness-benefits {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+            max-width: 1000px; margin: 0 auto 56px; position: relative; z-index: 1;
+        }
+        .readiness-benefit {
+            display: flex; align-items: flex-start; gap: 16px; padding: 24px;
+            border-radius: var(--radius-sm);
+            background: rgba(17, 153, 250, 0.04); border: 1px solid rgba(17, 153, 250, 0.08);
+            transition: all 0.3s;
+        }
+        .readiness-benefit:hover {
+            background: rgba(17, 153, 250, 0.07); border-color: rgba(17, 153, 250, 0.15);
+        }
+        .readiness-benefit-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+        .readiness-benefit strong {
+            display: block; font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;
+        }
+        .readiness-benefit span {
+            font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;
+        }
+        .readiness-cta {
+            text-align: center; position: relative; z-index: 1;
+        }
+        @media (max-width: 768px) {
+            .readiness-steps { flex-direction: column; align-items: center; gap: 16px; }
+            .readiness-step { max-width: 100%; }
+            .readiness-step-connector { padding-top: 0; transform: rotate(90deg); width: auto; }
+            .readiness-benefits { grid-template-columns: 1fr; }
+        }
+
         /* ========== PRICING ========== */
         .pricing-section {
             padding: 120px 24px; position: relative;
@@ -546,16 +621,16 @@
             background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
         }
         .section-label {
-            text-align: center; font-size: 0.72rem; text-transform: uppercase;
-            letter-spacing: 0.16em; color: var(--accent); font-weight: 600; margin-bottom: 14px;
+            text-align: center; font-size: 0.82rem; text-transform: uppercase;
+            letter-spacing: 0.16em; color: var(--accent); font-weight: 600; margin-bottom: 16px;
         }
         .section-title {
-            text-align: center; font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 800;
-            margin-bottom: 16px; color: var(--text-primary); letter-spacing: -0.03em; line-height: 1.15;
+            text-align: center; font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 800;
+            margin-bottom: 20px; color: var(--text-primary); letter-spacing: -0.03em; line-height: 1.2;
         }
         .section-sub {
-            text-align: center; color: var(--text-muted); max-width: 560px;
-            margin: 0 auto 64px; line-height: 1.8; font-size: 1.05rem; font-weight: 300;
+            text-align: center; color: var(--text-muted); max-width: 620px;
+            margin: 0 auto 64px; line-height: 1.8; font-size: 1.1rem; font-weight: 300;
         }
         .section-divider {
             width: 48px; height: 2px; margin: 0 auto 20px; border-radius: 2px;
@@ -734,11 +809,11 @@
     <div class="hero-orb hero-orb-3"></div>
     <div class="hero-inner">
         <div class="hero-text">
-            <h1>You Talk.<br><span class="gradient-text">Morti Builds.</span></h1>
-            <p class="hero-sub">Describe the manual work that slows your business down. We turn it into a working automation — designed, built, and managed for you.</p>
+            <h1>Speak. Automate.<br><span class="gradient-text">Done. Forever.</span></h1>
+            <p class="hero-sub">Describe how a process works today — by voice or text. Morti deploys an AI agent that handles it going forward. 24/7, no mistakes, no chasing.</p>
 
             <div class="hero-explainer">
-                <strong style="color: var(--text-primary); font-weight: 600;">What is Morti?</strong> An AI-powered automation consultancy for Australian SMBs. Have a conversation about your business problem — we deliver a running, managed solution. No technical knowledge required.
+                <strong style="color: var(--text-primary); font-weight: 600;">What is Morti?</strong> An AI automation platform for Australian SMBs. Have a conversation about your business process, and we deploy an intelligent AI agent that runs it — ongoing, managed, and always improving. No technical knowledge required. Just describe how the work gets done today.
             </div>
 
             <div class="hero-buttons">
@@ -845,22 +920,22 @@
         <div class="section-label fade-in">Who Is This For</div>
         <div class="section-divider fade-in"></div>
         <h2 class="section-title fade-in">Built for business people, not developers</h2>
-        <p class="section-sub fade-in">If you manage people, operations, or a business — and you're tired of manual processes eating your time — Morti is for you.</p>
+        <p class="section-sub fade-in">If you manage people, operations, or a business — your AI agent handles the repetitive work so your team can focus on what actually matters.</p>
         <div class="who-grid">
             <div class="who-card fade-in">
                 <div class="who-icon">📋</div>
                 <h3>Operations Managers</h3>
-                <p>You know exactly which processes waste time. You just need someone to automate them without a six-month IT project.</p>
+                <p>You know exactly which processes waste time. Describe them to Morti and get an AI agent that handles the busywork — no six-month IT project required.</p>
             </div>
             <div class="who-card fade-in fade-in-delay-1">
                 <div class="who-icon">🏢</div>
                 <h3>Business Owners</h3>
-                <p>You're wearing too many hats. Morti takes the repetitive work off your plate so you can focus on growing the business.</p>
+                <p>You're wearing too many hats. Your AI agent takes the repetitive work off your plate — like a tireless team member who handles processes 24/7.</p>
             </div>
             <div class="who-card fade-in fade-in-delay-2">
                 <div class="who-icon">👥</div>
                 <h3>Team Leaders</h3>
-                <p>Your team is stuck doing the same thing every week. Free them up for work that actually matters.</p>
+                <p>Your team is stuck doing the same thing every week. An AI agent handles the heavy lifting so your people can focus on higher-value work.</p>
             </div>
         </div>
     </div>
@@ -871,49 +946,49 @@
     <div class="container">
         <div class="section-label fade-in">What We Automate</div>
         <div class="section-divider fade-in"></div>
-        <h2 class="section-title fade-in">Real problems we solve every day</h2>
-        <p class="section-sub fade-in">These are the kinds of things our clients used to do manually. Now they don't.</p>
+        <h2 class="section-title fade-in">Real problems your AI agent solves</h2>
+        <p class="section-sub fade-in">These are the kinds of things our clients used to do manually. Now their AI agent handles it.</p>
         <div class="examples-grid">
             <div class="example-item fade-in">
                 <div class="example-icon">📄</div>
                 <div class="example-text">
                     <strong>Invoice &amp; approval workflows</strong>
-                    <span>Invoices arrive, get routed, approved, and paid — without anyone chasing signatures.</span>
+                    <span>Your AI agent receives invoices, routes them for approval, and pushes payment — no one chases signatures.</span>
                 </div>
             </div>
             <div class="example-item fade-in fade-in-delay-1">
                 <div class="example-icon">🧑‍💼</div>
                 <div class="example-text">
                     <strong>Employee onboarding</strong>
-                    <span>New starter? Accounts created, docs sent, training scheduled — automatically on day one.</span>
+                    <span>Your AI agent handles new starter onboarding — accounts created, docs sent, training scheduled. Day one, sorted.</span>
                 </div>
             </div>
             <div class="example-item fade-in">
                 <div class="example-icon">📊</div>
                 <div class="example-text">
                     <strong>Reporting &amp; dashboards</strong>
-                    <span>Data pulled from multiple systems into one report, delivered to your inbox every Monday morning.</span>
+                    <span>Your AI agent pulls data from multiple systems, compiles the report, and delivers it to your inbox every Monday morning.</span>
                 </div>
             </div>
             <div class="example-item fade-in fade-in-delay-1">
                 <div class="example-icon">📬</div>
                 <div class="example-text">
                     <strong>Lead capture &amp; follow-up</strong>
-                    <span>Enquiry comes in, CRM updated, follow-up email sent, task assigned — in seconds.</span>
+                    <span>Your AI agent catches every enquiry — CRM updated, follow-up sent, task assigned — in seconds, 24/7.</span>
                 </div>
             </div>
             <div class="example-item fade-in">
                 <div class="example-icon">🔄</div>
                 <div class="example-text">
                     <strong>System integrations</strong>
-                    <span>Your accounting, CRM, email, and spreadsheets talking to each other — finally.</span>
+                    <span>Your AI agent keeps your accounting, CRM, email, and spreadsheets in sync — no manual data entry.</span>
                 </div>
             </div>
             <div class="example-item fade-in fade-in-delay-1">
                 <div class="example-icon">📝</div>
                 <div class="example-text">
                     <strong>Document generation</strong>
-                    <span>Proposals, contracts, and reports assembled from templates and data — no copy-pasting.</span>
+                    <span>Your AI agent assembles proposals, contracts, and reports from templates and data — no copy-pasting.</span>
                 </div>
             </div>
         </div>
@@ -930,7 +1005,7 @@
                 <div class="journey-num">1</div>
                 <div class="journey-label">Describe The Problem</div>
                 <h2>Just tell us what's slowing you down.</h2>
-                <p>No forms. No jargon. Just have a conversation — by voice or text — about the manual work you want to eliminate. Morti asks the right follow-up questions to understand the full picture.</p>
+                <p>No forms. No jargon. Just have a conversation — by voice or text — about the process you want an AI agent to handle. Morti asks the right follow-up questions to understand the full picture.</p>
                 <p class="journey-example">"Every week I spend half a day copying data from our CRM into a spreadsheet for the Monday meeting."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
@@ -961,8 +1036,8 @@
             <div class="journey-content fade-in">
                 <div class="journey-num">3</div>
                 <div class="journey-label">Solution Design</div>
-                <h2>We design the solution. You approve it.</h2>
-                <p>Morti produces a clear solution design showing exactly what will be built, what systems it connects to, and how it works. Written in plain language — not developer-speak.</p>
+                <h2>We design your AI agent. You approve it.</h2>
+                <p>Morti produces a clear design showing exactly what your AI agent will do, what systems it connects to, and how it works. Written in plain language — not developer-speak.</p>
                 <p class="journey-example">"For the first time, I could actually understand the technical plan before it was built."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
@@ -992,9 +1067,9 @@
         <div class="journey-inner">
             <div class="journey-content fade-in">
                 <div class="journey-num">5</div>
-                <div class="journey-label">We Build It</div>
-                <h2>Approve and we get to work.</h2>
-                <p>Morti builds the automation on your own dedicated instance. You get regular progress updates and a working solution — typically in days, not months.</p>
+                <div class="journey-label">We Deploy It</div>
+                <h2>Approve and your AI agent gets to work.</h2>
+                <p>Morti builds and deploys your AI agent on a dedicated instance. You get regular progress updates and a working agent — typically in days, not months.</p>
                 <p class="journey-example">"It was running in production within two weeks. Our last IT project took eight months."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
@@ -1009,8 +1084,8 @@
             <div class="journey-content fade-in">
                 <div class="journey-num">6</div>
                 <div class="journey-label">We Keep It Running</div>
-                <h2>Managed, monitored, always on.</h2>
-                <p>Your automation doesn't get handed off and forgotten. We monitor it, fix issues, and improve it over time. You focus on your business — we handle the technology.</p>
+                <h2>Your AI agent: managed, monitored, always on.</h2>
+                <p>Your AI agent doesn't get handed off and forgotten. We monitor it, fine-tune it, and improve it over time. You focus on your business — your agent handles the process.</p>
                 <p class="journey-example">"I haven't thought about it once since launch. It just works."</p>
             </div>
             <div class="journey-visual fade-in fade-in-delay-1">
@@ -1024,13 +1099,13 @@
 <section class="social-proof">
     <div class="container">
         <div class="section-label fade-in">Example Workflows</div>
-        <h2 class="fade-in">See what Morti builds</h2>
-        <p class="section-sub fade-in">Real automations, running in production for Australian businesses right now.</p>
+        <h2 class="fade-in">See what your AI agent does</h2>
+        <p class="section-sub fade-in">Real AI agents, running live for Australian businesses right now.</p>
         <div class="testimonial-grid">
             <div class="testimonial-card fade-in">
                 <div style="font-size:2rem;margin-bottom:16px;">📄→✅→💰</div>
                 <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Invoice Approval Pipeline</h3>
-                <p>Supplier invoice lands in the inbox. Morti extracts the details, matches it to a PO, routes it to the right approver based on amount and department, and pushes it to Xero once approved. What took 2 hours a day now takes zero.</p>
+                <p>Supplier invoice lands in the inbox. Your AI agent extracts the details, matches it to a PO, routes it to the right approver based on amount and department, and pushes it to Xero once approved. What took 2 hours a day now takes zero.</p>
                 <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-glass);">
                     <span style="font-size:0.78rem;color:var(--accent);font-weight:600;">CONNECTS</span>
                     <span style="font-size:0.82rem;color:var(--text-muted);display:block;margin-top:4px;">Gmail · Google Sheets · Xero · Slack</span>
@@ -1039,7 +1114,7 @@
             <div class="testimonial-card fade-in fade-in-delay-1">
                 <div style="font-size:2rem;margin-bottom:16px;">🧑‍💼→📧→🗂️</div>
                 <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--text-primary);">New Starter Onboarding</h3>
-                <p>HR marks a candidate as hired. Morti creates their Google Workspace account, sends the welcome pack, assigns training modules, notifies their manager, and adds them to the right Slack channels. Day one, sorted — automatically.</p>
+                <p>HR marks a candidate as hired. Your AI agent creates their Google Workspace account, sends the welcome pack, assigns training modules, notifies their manager, and adds them to the right Slack channels. Day one, sorted.</p>
                 <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-glass);">
                     <span style="font-size:0.78rem;color:var(--accent);font-weight:600;">CONNECTS</span>
                     <span style="font-size:0.82rem;color:var(--text-muted);display:block;margin-top:4px;">Google Workspace · Slack · Notion · Gmail</span>
@@ -1048,12 +1123,82 @@
             <div class="testimonial-card fade-in fade-in-delay-2">
                 <div style="font-size:2rem;margin-bottom:16px;">📊→📧→👀</div>
                 <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--text-primary);">Weekly Ops Report</h3>
-                <p>Every Monday at 7am, Morti pulls sales from Shopify, support tickets from Zendesk, and financials from Xero. Compiles a single-page summary with trends and flags, and emails it to the leadership team. No analyst required.</p>
+                <p>Every Monday at 7am, your AI agent pulls sales from Shopify, support tickets from Zendesk, and financials from Xero. Compiles a single-page summary with trends and flags, and emails it to the leadership team. Your team focuses on decisions, not data wrangling.</p>
                 <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-glass);">
                     <span style="font-size:0.78rem;color:var(--accent);font-weight:600;">CONNECTS</span>
                     <span style="font-size:0.82rem;color:var(--text-muted);display:block;margin-top:4px;">Shopify · Zendesk · Xero · Gmail</span>
                 </div>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== AI READINESS REVIEW ==================== -->
+<section class="readiness-section">
+    <div class="container">
+        <!-- Section header -->
+        <div class="section-label fade-in">AI Readiness Review</div>
+        <div class="section-divider fade-in"></div>
+        <h2 class="section-title fade-in" style="max-width:700px;margin-left:auto;margin-right:auto;">Is Your Business Ready for AI?</h2>
+        <p class="section-sub fade-in">Most businesses know AI could help — but don't know where to start. Our AI Readiness Review gives you a clear, practical assessment of where automation will have the biggest impact in your operation.</p>
+
+        <!-- 3-step flow -->
+        <div class="readiness-steps">
+            <div class="readiness-step fade-in">
+                <div class="readiness-step-num">1</div>
+                <div class="readiness-step-icon">🎙️</div>
+                <h3>Voice Interview</h3>
+                <p>Morti's AI conducts structured interviews with your team to understand workflows, pain points, and the manual work that's costing you time.</p>
+            </div>
+            <div class="readiness-step-connector fade-in fade-in-delay-1">
+                <svg width="48" height="24" viewBox="0 0 48 24"><path d="M0 12h40m-8-8l8 8-8 8" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="readiness-step fade-in fade-in-delay-1">
+                <div class="readiness-step-num">2</div>
+                <div class="readiness-step-icon">📊</div>
+                <h3>Analysis</h3>
+                <p>We cross-reference your processes against industry benchmarks and identify the highest-value automation opportunities across your operation.</p>
+            </div>
+            <div class="readiness-step-connector fade-in fade-in-delay-2">
+                <svg width="48" height="24" viewBox="0 0 48 24"><path d="M0 12h40m-8-8l8 8-8 8" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="readiness-step fade-in fade-in-delay-2">
+                <div class="readiness-step-num">3</div>
+                <div class="readiness-step-icon">🗺️</div>
+                <h3>Roadmap</h3>
+                <p>Receive a prioritised AI implementation roadmap with ROI estimates — so you know exactly what to automate first and what it's worth.</p>
+            </div>
+        </div>
+
+        <!-- Benefits row -->
+        <div class="readiness-benefits">
+            <div class="readiness-benefit fade-in">
+                <span class="readiness-benefit-icon">🔍</span>
+                <div>
+                    <strong>Full operational scan</strong>
+                    <span>Identify automation opportunities across your entire operation — not just the obvious ones.</span>
+                </div>
+            </div>
+            <div class="readiness-benefit fade-in fade-in-delay-1">
+                <span class="readiness-benefit-icon">📋</span>
+                <div>
+                    <strong>Actionable, not theoretical</strong>
+                    <span>You get specific recommendations with estimated time savings and costs — not a generic whitepaper.</span>
+                </div>
+            </div>
+            <div class="readiness-benefit fade-in fade-in-delay-2">
+                <span class="readiness-benefit-icon">💰</span>
+                <div>
+                    <strong>ROI before you commit</strong>
+                    <span>See the projected return on every recommendation before you invest a dollar.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="readiness-cta fade-in">
+            <a href="/contact" class="btn btn-primary btn-lg">Book Your AI Readiness Review</a>
+            <p style="margin-top:16px;font-size:0.88rem;color:var(--text-muted);">Included with every engagement — or available as a standalone assessment.</p>
         </div>
     </div>
 </section>
@@ -1121,7 +1266,7 @@
 <section class="cta-section">
     <div class="cta fade-in">
         <h2>Still doing it manually?</h2>
-        <p>Tell us what's eating your time. The conversation takes 20 minutes. The automation saves you hours every week.</p>
+        <p>Tell us what's eating your time. The conversation takes 20 minutes. Your AI agent saves you hours every week.</p>
         <div class="cta-buttons">
             <a href="/signup" class="btn btn-primary btn-lg">Start a Conversation</a>
             <a href="/contact" class="btn btn-glass">Ask Us Anything</a>
@@ -1134,7 +1279,7 @@
     <div class="footer-grid">
         <div>
             <div class="footer-brand">◆ Morti</div>
-            <p class="footer-brand-desc">Business automation for Australian SMBs. Describe the problem, we build the solution. No technical knowledge required.</p>
+            <p class="footer-brand-desc">AI agents for Australian SMBs. Describe your process, we deploy an AI agent that handles it. No technical knowledge required.</p>
         </div>
         <div class="footer-col">
             <h4>Product</h4>
