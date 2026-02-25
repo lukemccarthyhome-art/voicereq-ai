@@ -903,20 +903,26 @@
             #heroArea { display: none; }
             #emptyState { display: none; }
 
-            /* Mobile controls panel */
+            /* Mobile controls panel — full screen overlay above toolbar */
             .mobile-controls-panel {
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                height: 100%;
-                padding: 24px 20px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 56px;
+                padding: 0 20px;
                 text-align: center;
+                background: var(--bg-deep);
+                z-index: 45;
             }
             .mobile-controls-inner {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 20px;
+                gap: 16px;
                 width: 100%;
                 max-width: 320px;
             }
@@ -989,11 +995,12 @@
             .mobile-action-btn:active { background: rgba(255,255,255,0.08); }
             .mobile-action-btn.complete { background: rgba(0,158,126,0.12); color: var(--accent-secondary); border-color: rgba(0,158,126,0.3); }
             .mobile-hint {
-                font-size: 0.82rem;
+                font-size: 0.8rem;
                 color: var(--text-muted);
                 font-weight: 300;
-                line-height: 1.6;
-                max-width: 280px;
+                line-height: 1.5;
+                max-width: 100%;
+                padding: 0 16px;
             }
             .mobile-tabs {
                 display: flex !important;
@@ -1026,11 +1033,14 @@
             .mobile-tab.active { color: var(--accent); }
             .mobile-tab svg { width: 20px; height: 20px; }
 
-            /* Toolbar: compact single row */
+            /* Toolbar: hidden by default on mobile (controls tab), shown when switching tabs */
             .toolbar {
                 padding: 6px 10px; gap: 6px;
                 min-height: 44px;
+                display: none;
             }
+            .toolbar.mobile-visible { display: flex; }
+            .toolbar.mobile-hidden { display: none; }
             .toolbar-brand { display: none; }
             .toolbar-brand + .toolbar-divider { display: none; }
             .toolbar-status { font-size: 0.7rem; padding: 4px 10px; }
@@ -1523,9 +1533,14 @@
         const controlsPanel = document.getElementById('mobileControlsPanel');
         const reqPanel = document.querySelector('.req-panel');
         const sidebar = document.querySelector('.sidebar');
+        const toolbar = document.querySelector('.toolbar');
         if (controlsPanel) controlsPanel.style.display = 'none';
         if (reqPanel) reqPanel.classList.remove('mobile-open');
         if (sidebar) sidebar.classList.remove('mobile-open');
+        // Show toolbar only on requirements/chat tabs
+        if (toolbar) {
+            toolbar.classList.toggle('mobile-visible', tab !== 'controls');
+        }
         if (tab === 'controls') {
             if (controlsPanel) controlsPanel.style.display = 'flex';
         } else if (tab === 'requirements') {
