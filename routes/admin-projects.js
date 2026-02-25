@@ -9,6 +9,12 @@ const { apiAuth } = require('../middleware/auth-middleware');
 const { loadNewestDesign, saveDesign } = require('./design');
 const { loadNewestProposal } = require('./proposals');
 
+// Decode hashed IDs in :id route params
+router.param('id', (req, res, next, val) => {
+  req.params.id = resolveProjectId(val);
+  next();
+});
+
 // === ARCHIVED PROJECTS (admin) ===
 router.get('/admin/projects/archived', auth.authenticate, auth.requireAdmin, async (req, res) => {
   const projects = await db.getAllArchivedProjects();

@@ -4,10 +4,16 @@ const path = require('path');
 const db = require('../database-adapter');
 const auth = require('../auth');
 const { DESIGNS_DIR, PROPOSALS_DIR, uploadsDir } = require('../helpers/paths');
-const { encodeProjectId } = require('../helpers/ids');
+const { encodeProjectId, resolveProjectId } = require('../helpers/ids');
 const { PERMISSION_LEVELS } = require('../middleware/auth-middleware');
 const { loadNewestDesign } = require('./design');
 const { loadNewestProposal, getEngineBuildId } = require('./proposals');
+
+// Decode hashed IDs in :id route params
+router.param('id', (req, res, next, val) => {
+  req.params.id = resolveProjectId(val);
+  next();
+});
 
 // Customer: archive project
 router.post('/customer/projects/:id/archive', auth.authenticate, auth.requireCustomer, async (req, res) => {

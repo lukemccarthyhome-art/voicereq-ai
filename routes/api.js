@@ -13,6 +13,12 @@ const { optionalAuth } = require('../middleware/auth-middleware');
 const { upload, importUpload } = require('../middleware/uploads');
 const { uploadLimiter } = require('../middleware/rate-limiters');
 
+// Decode hashed IDs in :id route params
+router.param('id', (req, res, next, val) => {
+  req.params.id = resolveProjectId(val);
+  next();
+});
+
 // File upload and text extraction endpoint
 router.post('/api/upload', optionalAuth, uploadLimiter, upload.single('file'), async (req, res) => {
   try {

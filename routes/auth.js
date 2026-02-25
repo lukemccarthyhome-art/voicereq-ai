@@ -135,6 +135,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.render('login', { error: 'Your account is pending approval. We\'ll be in touch soon.', email });
     }
 
+    console.log('[LOGIN DEBUG]', email, 'found:', !!user, 'approved:', user?.approved, 'hash_len:', user?.password_hash?.length, 'pwd_hex:', Buffer.from(password).toString('hex'), 'verify:', user ? auth.verifyPassword(password, user.password_hash) : 'n/a');
     if (!user || !auth.verifyPassword(password, user.password_hash)) {
       const count = (failedLogins.get(req.ip) || 0) + 1;
       failedLogins.set(req.ip, count);
@@ -179,10 +180,6 @@ router.post('/login', loginLimiter, async (req, res) => {
       sameSite: 'lax',
       maxAge: 2 * 60 * 60 * 1000
     });
-
-    if (!user.mfa_secret) {
-      return res.redirect('/profile/mfa/prompt');
-    }
 
     res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
   } catch (e) {

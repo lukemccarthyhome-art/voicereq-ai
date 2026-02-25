@@ -6,8 +6,14 @@ const auth = require('../auth');
 const emails = require('../emails');
 const { apiAuth, verifyFileOwnership } = require('../middleware/auth-middleware');
 const { uploadsDir } = require('../helpers/paths');
-const { encodeProjectId } = require('../helpers/ids');
+const { encodeProjectId, resolveProjectId } = require('../helpers/ids');
 const { sendSecurityAlert, sendMortiEmail } = require('../helpers/email-sender');
+
+// Decode hashed IDs in :id route params
+router.param('id', (req, res, next, val) => {
+  req.params.id = resolveProjectId(val);
+  next();
+});
 
 // === ADMIN DASHBOARD ===
 

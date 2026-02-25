@@ -4,12 +4,18 @@ const path = require('path');
 const db = require('../database-adapter');
 const auth = require('../auth');
 const { DESIGNS_DIR, PROPOSALS_DIR } = require('../helpers/paths');
-const { encodeProjectId } = require('../helpers/ids');
+const { encodeProjectId, resolveProjectId } = require('../helpers/ids');
 const { PERMISSION_LEVELS } = require('../middleware/auth-middleware');
 
 // Helper to load newest design for a project (imported from design module)
 const { loadNewestDesign } = require('./design');
 const { loadNewestProposal } = require('./proposals');
+
+// Decode hashed IDs in :id route params
+router.param('id', (req, res, next, val) => {
+  req.params.id = resolveProjectId(val);
+  next();
+});
 
 // === MOBILE CUSTOMER ROUTES ===
 

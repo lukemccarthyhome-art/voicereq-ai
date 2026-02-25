@@ -2,8 +2,14 @@ const router = require('express').Router();
 const crypto = require('crypto');
 const db = require('../database-adapter');
 const auth = require('../auth');
-const { encodeProjectId } = require('../helpers/ids');
+const { encodeProjectId, resolveProjectId } = require('../helpers/ids');
 const { sendInviteEmail, isValidEmail } = require('../helpers/email-sender');
+
+// Decode hashed IDs in :id route params
+router.param('id', (req, res, next, val) => {
+  req.params.id = resolveProjectId(val);
+  next();
+});
 
 // Helper: check if user can manage shares (owner or admin permission)
 const canManageShares = async (req, res) => {

@@ -25,7 +25,7 @@ const auth = require('./auth');
 
 // Import helpers
 const { uploadsDir } = require('./helpers/paths');
-const { encodeProjectId, resolveProjectId } = require('./helpers/ids');
+const { encodeProjectId } = require('./helpers/ids');
 const { melb, melbDate, renderText } = require('./helpers/formatting');
 
 // Import middleware
@@ -106,12 +106,6 @@ app.use((req, res, next) => {
   res.locals.melbDate = melbDate;
   res.locals.encodeId = encodeProjectId;
   res.locals.renderText = renderText;
-  next();
-});
-
-// Decode hashed IDs in route params (backward compatible with numeric IDs)
-app.param('id', (req, res, next, val) => {
-  req.params.id = resolveProjectId(val);
   next();
 });
 

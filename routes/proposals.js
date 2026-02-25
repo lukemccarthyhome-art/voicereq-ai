@@ -10,6 +10,12 @@ const { sendMortiEmail } = require('../helpers/email-sender');
 const generationStatus = require('../helpers/generation-status');
 const { loadNewestDesign, saveDesign } = require('./design');
 
+// Decode hashed IDs in :id route params
+router.param('id', (req, res, next, val) => {
+  req.params.id = resolveProjectId(val);
+  next();
+});
+
 // Helper: load newest proposal for a project
 const loadNewestProposal = (projectId) => {
   const files = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${projectId}-`)).sort().reverse();

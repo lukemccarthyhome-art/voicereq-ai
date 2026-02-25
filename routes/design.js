@@ -10,6 +10,12 @@ const { escapeHtml, summarizeRequirements, generateFollowupQuestions } = require
 const { sendMortiEmail } = require('../helpers/email-sender');
 const generationStatus = require('../helpers/generation-status');
 
+// Decode hashed IDs in :id route params
+router.param('id', (req, res, next, val) => {
+  req.params.id = resolveProjectId(val);
+  next();
+});
+
 // Helper: load newest design for a project
 function loadNewestDesign(projectId) {
   const designsDir = DESIGNS_DIR;
