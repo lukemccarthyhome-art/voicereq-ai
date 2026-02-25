@@ -879,6 +879,17 @@
                 grid-template-rows: 1fr;
                 height: calc(100vh - 44px); height: calc(100dvh - 44px);
             }
+            .mobile-controls-panel { display: flex; }
+            .req-panel { display: none; }
+            .req-panel.mobile-open {
+                display: flex;
+                position: fixed;
+                inset: 0;
+                top: 44px;
+                bottom: 56px;
+                z-index: 50;
+                background: var(--bg-deep);
+            }
             .sidebar { display: none; }
             .sidebar.mobile-open {
                 display: flex;
@@ -888,6 +899,101 @@
                 bottom: 56px;
                 z-index: 50;
                 background: var(--bg-deep);
+            }
+            #heroArea { display: none; }
+            #emptyState { display: none; }
+
+            /* Mobile controls panel */
+            .mobile-controls-panel {
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                padding: 24px 20px;
+                text-align: center;
+            }
+            .mobile-controls-inner {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+                width: 100%;
+                max-width: 320px;
+            }
+            .mobile-status {
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--text-muted);
+                padding: 6px 16px;
+                border-radius: 50px;
+                background: rgba(255,255,255,0.04);
+                border: 1px solid var(--border-glass);
+            }
+            .mobile-status.active { color: #ef4444; background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); animation: pulse-status 2s infinite; }
+            @keyframes pulse-status { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+            .mobile-mic-btn {
+                width: 140px;
+                height: 140px;
+                border-radius: 50%;
+                border: 3px solid rgba(255,255,255,0.1);
+                background: var(--bg-card);
+                color: var(--text-secondary);
+                cursor: pointer;
+                transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .mobile-mic-btn svg { width: 56px; height: 56px; }
+            .mobile-mic-btn:active { transform: scale(0.95); }
+            .mobile-mic-btn.active {
+                border-color: #ef4444;
+                background: rgba(239,68,68,0.15);
+                color: #ef4444;
+                box-shadow: 0 0 40px rgba(239,68,68,0.3);
+                animation: pulse-mic 2s infinite;
+            }
+            @keyframes pulse-mic {
+                0%,100% { box-shadow: 0 0 40px rgba(239,68,68,0.3); }
+                50% { box-shadow: 0 0 60px rgba(239,68,68,0.5); }
+            }
+            .mobile-timer {
+                font-size: 1.8rem;
+                font-weight: 300;
+                color: var(--text-muted);
+                font-variant-numeric: tabular-nums;
+            }
+            .mobile-actions {
+                display: flex;
+                gap: 12px;
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .mobile-action-btn {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 10px 16px;
+                border-radius: 50px;
+                border: 1px solid var(--border-glass);
+                background: rgba(255,255,255,0.04);
+                color: var(--text-secondary);
+                font-size: 0.78rem;
+                font-weight: 600;
+                cursor: pointer;
+                font-family: 'Inter', sans-serif;
+                transition: all 0.2s;
+            }
+            .mobile-action-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+            .mobile-action-btn:active { background: rgba(255,255,255,0.08); }
+            .mobile-action-btn.complete { background: rgba(0,158,126,0.12); color: var(--accent-secondary); border-color: rgba(0,158,126,0.3); }
+            .mobile-hint {
+                font-size: 0.82rem;
+                color: var(--text-muted);
+                font-weight: 300;
+                line-height: 1.6;
+                max-width: 280px;
             }
             .mobile-tabs {
                 display: flex !important;
@@ -979,6 +1085,7 @@
         }
 
         .mobile-tabs { display: none; }
+        .mobile-controls-panel { display: none; }
 
         /* ===== KEYBOARD SHORTCUT HINTS ===== */
         .kbd {
@@ -1136,6 +1243,32 @@
 
                     <!-- Requirements will render here -->
                     <div id="reqSections" style="display:none"></div>
+                </div>
+            </div>
+
+            <!-- Mobile controls panel (visible only on mobile) -->
+            <div class="mobile-controls-panel" id="mobileControlsPanel">
+                <div class="mobile-controls-inner">
+                    <div class="mobile-status" id="mobileStatus">Ready</div>
+                    <button class="mobile-mic-btn" id="mobileMicBtn" onclick="toggleCall()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                    </button>
+                    <div class="mobile-timer" id="mobileTimer">00:00</div>
+                    <div class="mobile-actions">
+                        <button class="mobile-action-btn" onclick="refreshRequirements()" title="Refresh requirements">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                            Refresh Reqs
+                        </button>
+                        <button class="mobile-action-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                            Attach
+                        </button>
+                        <button class="mobile-action-btn complete" onclick="showCompleteModal()" title="Done">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+                            Done
+                        </button>
+                    </div>
+                    <p class="mobile-hint" id="mobileHint">Tap the mic to start talking. The AI will guide you through requirements gathering.</p>
                 </div>
             </div>
 
@@ -1356,6 +1489,13 @@
         document.getElementById('callTimer').style.display = 'block';
         setStatus('listening', 'Listening');
         startTimer(); startWaveform();
+        // Sync mobile controls
+        const mobileMic = document.getElementById('mobileMicBtn');
+        const mobileStatus = document.getElementById('mobileStatus');
+        const mobileHint = document.getElementById('mobileHint');
+        if (mobileMic) mobileMic.classList.add('active');
+        if (mobileStatus) { mobileStatus.textContent = '● Recording'; mobileStatus.classList.add('active'); }
+        if (mobileHint) mobileHint.style.display = 'none';
     }
     function exitCallUI() {
         document.getElementById('tbStartBtn').style.display = 'inline-flex';
@@ -1367,9 +1507,42 @@
         setStatus('idle', 'Ready');
         stopTimer(); stopWaveform();
         document.getElementById('callTimer').style.display = 'none';
+        // Sync mobile controls
+        const mobileMic2 = document.getElementById('mobileMicBtn');
+        const mobileStatus2 = document.getElementById('mobileStatus');
+        const mobileHint2 = document.getElementById('mobileHint');
+        if (mobileMic2) mobileMic2.classList.remove('active');
+        if (mobileStatus2) { mobileStatus2.textContent = 'Ready'; mobileStatus2.classList.remove('active'); }
+        if (mobileHint2) mobileHint2.style.display = 'block';
     }
 
     // ── Call actions ──
+    function switchMobileTab(tab) {
+        document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('.mobile-tab[data-tab="'+tab+'"]').classList.add('active');
+        const controlsPanel = document.getElementById('mobileControlsPanel');
+        const reqPanel = document.querySelector('.req-panel');
+        const sidebar = document.querySelector('.sidebar');
+        if (controlsPanel) controlsPanel.style.display = 'none';
+        if (reqPanel) reqPanel.classList.remove('mobile-open');
+        if (sidebar) sidebar.classList.remove('mobile-open');
+        if (tab === 'controls') {
+            if (controlsPanel) controlsPanel.style.display = 'flex';
+        } else if (tab === 'requirements') {
+            if (reqPanel) reqPanel.classList.add('mobile-open');
+        } else if (tab === 'chat') {
+            if (sidebar) {
+                sidebar.classList.add('mobile-open');
+                document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+                const transcriptTab = document.querySelector('.sidebar-tab');
+                if (transcriptTab) transcriptTab.classList.add('active');
+                document.querySelectorAll('.sidebar-content > div').forEach(d => d.style.display = 'none');
+                const transcript = document.querySelector('.transcript');
+                if (transcript) transcript.style.display = 'block';
+            }
+        }
+    }
+
     function toggleCall() { inCall ? endCall() : startCall(); }
 
     function buildFileContext() {
@@ -1755,7 +1928,7 @@
     function setStatus(state,label){document.getElementById('statusIndicator').setAttribute('data-state',state);document.getElementById('statusLabel').textContent=label;}
     function startTimer(){seconds=0;updateTimerDisplay();timerInterval=setInterval(()=>{seconds++;updateTimerDisplay();},1000);}
     function stopTimer(){clearInterval(timerInterval);}
-    function updateTimerDisplay(){const m=String(Math.floor(seconds/60)).padStart(2,'0');const s=String(seconds%60).padStart(2,'0');document.getElementById('callTimer').textContent=m+':'+s;}
+    function updateTimerDisplay(){const m=String(Math.floor(seconds/60)).padStart(2,'0');const s=String(seconds%60).padStart(2,'0');document.getElementById('callTimer').textContent=m+':'+s;const mt=document.getElementById('mobileTimer');if(mt)mt.textContent=m+':'+s;}
     function startWaveform(){document.getElementById('waveform').classList.add('active');const bars=document.querySelectorAll('.waveform-bar');waveInterval=setInterval(()=>{bars.forEach(bar=>{bar.style.height=(3+Math.random()*18)+'px';});},120);}
     function stopWaveform(){document.getElementById('waveform').classList.remove('active');clearInterval(waveInterval);document.querySelectorAll('.waveform-bar').forEach(bar=>bar.style.height='4px');}
     function showToast(){const t=document.getElementById('updatedToast');t.textContent='✓ Requirements updated';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -1870,5 +2043,19 @@ async function submitFeedback(){
   }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}
 }
 </script>
+    <div class="mobile-tabs" id="mobileTabs">
+        <button class="mobile-tab active" data-tab="controls" onclick="switchMobileTab('controls')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+            Controls
+        </button>
+        <button class="mobile-tab" data-tab="requirements" onclick="switchMobileTab('requirements')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Requirements
+        </button>
+        <button class="mobile-tab" data-tab="chat" onclick="switchMobileTab('chat')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Chat
+        </button>
+    </div>
 </body>
 </html>
