@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Morti Projects is a monolithic Express.js application for AI-powered software requirements gathering through voice conversations. It uses server-side rendered EJS templates, vanilla JavaScript on the frontend, and Vapi.ai WebRTC for voice sessions.
+Morti Projects is a modular Express.js application for AI-powered software requirements gathering through voice conversations. It uses server-side rendered EJS templates, vanilla JavaScript on the frontend, and Vapi.ai WebRTC for voice sessions.
 
 ## Commands
 
@@ -19,7 +19,41 @@ There is no build step, test suite, or linter configured.
 
 ### Server Entry Point
 
-`server.js` (~5000 lines) is the Express application containing all routes, middleware, and business logic. There is no router modularization — all endpoints are defined inline.
+`server.js` (~200 lines) is the Express application entry point. It handles app initialization, global middleware, Google OAuth setup, view engine config, template locals, `app.param` ID decoding, static file serving, route module mounting, error handling, and server startup.
+
+### Module Structure
+
+```
+helpers/
+  paths.js              — DATA_DIR, DESIGNS_DIR, PROPOSALS_DIR, uploadsDir
+  ids.js                — Hashids instance, encodeProjectId, resolveProjectId
+  formatting.js         — melb, melbDate, escapeHtml, renderText, summarizeRequirements
+  email-sender.js       — sendMortiEmail, sendSecurityAlert, sendInviteEmail, isValidEmail
+  generation-status.js  — shared in-memory status object for async design/proposal generation
+
+middleware/
+  rate-limiters.js      — generalLimiter, loginLimiter, uploadLimiter, signupLimiter, contactLimiter
+  security.js           — sanitizeInput (XSS), cloudflareOnly
+  uploads.js            — multer configs (upload disk 10MB, importUpload memory 50MB)
+  auth-middleware.js    — apiAuth, optionalAuth, verifySessionOwnership, verifyProjectOwnership,
+                           verifyProjectAccess, verifyFileOwnership, PERMISSION_LEVELS
+
+routes/
+  public-pages.js       — signup, about, contact, landing page
+  auth.js               — login/logout, MFA, Google OAuth callbacks
+  profile.js            — profile settings, password change, help page
+  admin-dashboard.js    — /admin dashboard, customer CRUD, feature requests
+  admin-projects.js     — admin project detail, archive, requirements, sessions
+  design.js             — design extraction (extractDesignAsync), view, chat, publish, flowchart
+  proposals.js          — proposal generation, chat, publish, approval, onboarding, send-to-engine
+  sharing.js            — admin + customer share CRUD
+  customer-mobile.js    — /m/* mobile routes
+  customer.js           — customer dashboard, project CRUD, voice session
+  api.js                — file upload, analyze, chat, sessions, export/import, health, backup
+  billing-routes.js     — Stripe webhook, billing email templates, billing CRUD, billing pages
+```
+
+Each route file creates an Express Router with full paths (no prefix mounting) and exports it. Cross-module exports: `design.js` exports `loadNewestDesign`, `saveDesign`; `proposals.js` exports `loadNewestProposal`, `getEngineBuildId`.
 
 ### Database Dual-Mode
 
@@ -35,12 +69,10 @@ SQLite seed user: `luke@voicereq.ai` / `admin123` (role: admin).
 
 `auth.js` handles JWT generation and bcrypt password hashing. Tokens are stored in HTTP-only cookies (`authToken`), 2-hour expiry.
 
-Key middleware in `server.js`:
-- `authenticate` — verifies JWT, redirects to `/login` (for page routes)
-- `apiAuth` — verifies JWT, returns 401 JSON (for API routes)
-- `optionalAuth` — sets `req.user` if valid, doesn't block
-- `requireAdmin` / `requireCustomer` — role checks
-- `verifyProjectOwnership` / `verifyProjectAccess(permission)` — ownership and share-based access
+Key middleware:
+- `authenticate` / `requireAdmin` / `requireCustomer` — in `auth.js` (page routes)
+- `apiAuth` / `optionalAuth` — in `middleware/auth-middleware.js` (API routes)
+- `verifyProjectOwnership` / `verifyProjectAccess(permission)` / `verifyFileOwnership` — in `middleware/auth-middleware.js`
 
 Google OAuth via Passport. MFA via TOTP (otplib + qrcode).
 
@@ -62,11 +94,11 @@ Frontend voice session logic is in `public/session.js` (the `VoiceSession` class
 - **Anthropic Claude** (primary): design extraction, proposal generation, chat endpoints
 - **OpenAI**: file analysis, session analysis (fallback/secondary)
 
-LLM prompts are inline in `server.js` route handlers.
+LLM prompts are inline in route handlers (`routes/design.js`, `routes/proposals.js`, `routes/api.js`).
 
 ### Billing
 
-Stripe integration in `billing.js`. Subscriptions, billing events, and payment history tracked in database. Webhook endpoint at `/api/billing/stripe-webhook` uses raw body parsing for signature verification — this route is registered before the JSON body parser middleware.
+Stripe integration in `billing.js` (SDK wrapper) and `routes/billing-routes.js` (routes + email templates). Subscriptions, billing events, and payment history tracked in database. Webhook endpoint at `/api/billing/stripe-webhook` uses raw body parsing for signature verification — this raw body middleware is registered in `server.js` before `express.json()`.
 
 ### File Processing
 
@@ -99,7 +131,9 @@ Helmet (HTTP headers), express-rate-limit (300 req/15min general, 10 login/15min
 
 - Pure JavaScript (no TypeScript)
 - No frontend framework — vanilla JS with EJS server-side rendering
-- All routes in `server.js` — admin routes prefixed `/admin/`, API routes prefixed `/api/`
+- Routes in `routes/*.js` as Express Routers with full paths (no prefix mounting, keeps routes greppable)
+- Admin routes prefixed `/admin/`, API routes prefixed `/api/`, customer routes at `/dashboard`, `/projects/*`, `/customer/*`
+- Shared state: `helpers/generation-status.js` exports a plain object imported by `design.js` and `proposals.js`
 - Database functions exported as `db.functionName()` — both SQLite and PG modules must maintain the same interface
 - New database fields added via `ALTER TABLE` in try/catch blocks within `initDB()`
 - HTTPS via self-signed certs (`certs/`) for local dev (required for iOS microphone access)

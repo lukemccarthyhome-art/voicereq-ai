@@ -1,160 +1,123 @@
-# Morti Projects - Voice-Powered Requirements Gathering
+# Morti Projects - AI-Powered Requirements Gathering
 
-An AI-powered web application that gathers software requirements through natural voice conversations.
+A web application that gathers software requirements through natural voice conversations, then extracts structured designs and generates commercial proposals.
 
 ## Features
 
-- 🎙️ **Voice-First Interface**: Speak naturally with AI assistant
-- 🤖 **AI-Guided Conversation**: Structured requirements gathering flow
-- 📝 **Real-time Transcription**: See conversation as it happens
-- 🔊 **Natural AI Voice**: ElevenLabs text-to-speech integration
-- 📄 **Document Export**: Generate professional requirements documents
-- 🎯 **Comprehensive Coverage**: Project goals, stakeholders, functional/non-functional requirements, constraints
+- **Voice Sessions**: WebRTC-based voice conversations via Vapi.ai for requirements discovery
+- **AI Design Extraction**: Anthropic Claude analyses sessions to produce structured designs (customer-facing + engineering specs)
+- **Proposal Generation**: OpenAI generates commercial pricing proposals from designs
+- **Document Upload & Analysis**: PDF, DOCX, XLSX file parsing with AI-generated descriptions
+- **Two Portals**: Admin portal for project management, customer portal for self-service
+- **Mobile Support**: Dedicated mobile views at `/m/*` routes
+- **Project Sharing**: Invite collaborators with admin/user/readonly permissions
+- **Billing**: Stripe subscription management with automated payment dunning emails
+- **Engine Integration**: Send approved designs to Morti Engine for automated builds
 
 ## Tech Stack
 
-- **Frontend**: HTML5, CSS3, JavaScript (Web Speech API)
-- **Backend**: Node.js, Express.js
-- **AI**: Anthropic Claude for conversational logic
-- **Voice**: ElevenLabs for text-to-speech, Web Speech API for speech-to-text
-- **Styling**: Modern CSS with responsive design
+- **Backend**: Node.js, Express.js, EJS templates
+- **Frontend**: Vanilla JavaScript (no framework)
+- **Database**: PostgreSQL (production) / SQLite (local dev) — auto-selected by `database-adapter.js`
+- **AI**: Anthropic Claude (design extraction, chat), OpenAI (file analysis, proposals, session analysis)
+- **Voice**: Vapi.ai WebRTC SDK (loaded via CDN)
+- **Billing**: Stripe (subscriptions, webhooks, portal)
+- **Email**: Nodemailer (SMTP)
+- **Auth**: JWT cookies, Google OAuth, TOTP MFA
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
-- Chrome or Edge browser (for Web Speech API)
+- Node.js (v18+)
 - Anthropic API key
-- Microphone access
+- OpenAI API key
 
 ### Installation
 
-1. **Clone and setup:**
-   ```bash
-   cd voicereq-app
-   npm install
-   ```
-
-2. **Configure API key:**
-   ```bash
-   export ANTHROPIC_API_KEY="your_anthropic_api_key_here"
-   ```
-   
-   Or create a `.env` file:
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your Anthropic API key
-   ```
-
-3. **Start the server:**
-   ```bash
-   npm start
-   ```
-
-4. **Open the app:**
-   Navigate to `http://localhost:3000`
-
-## Usage
-
-1. **Allow microphone access** when prompted by your browser
-2. **Click "Start Conversation"** to begin
-3. **Speak naturally** when the AI asks questions
-4. **Follow the guided flow** through all requirement areas:
-   - Project basics (name, description, goals)
-   - Stakeholders identification
-   - Functional requirements
-   - Non-functional requirements (performance, security, etc.)
-   - Constraints (budget, timeline, technology)
-   - Success criteria
-5. **Export document** when conversation is complete
-
-## Browser Compatibility
-
-- ✅ Chrome (recommended)
-- ✅ Edge
-- ✅ Safari (limited Web Speech API support)
-- ❌ Firefox (no Web Speech API support)
-
-## API Configuration
-
-### Anthropic API
-- Model: Claude 3 Sonnet
-- Required environment variable: `ANTHROPIC_API_KEY`
-- Used for conversational AI logic and document generation
-
-### ElevenLabs API
-- Voice: Bella (default, natural-sounding female voice)
-- API key: Hardcoded in server.js for demo (move to env in production)
-- Used for AI text-to-speech output
-
-## Architecture
-
-```
-Frontend (Browser)
-├── Web Speech API (STT)
-├── Audio playback (TTS)
-└── Modern responsive UI
-
-Backend (Node.js)
-├── Express server (port 3000)
-├── Anthropic API integration
-├── ElevenLabs API integration
-└── Static file serving
-
-APIs
-├── Anthropic Claude (conversational AI)
-└── ElevenLabs (text-to-speech)
+```bash
+npm install
 ```
 
-## File Structure
+### Configuration
+
+Create a `.env` file:
+
+```bash
+ANTHROPIC_API_KEY=your_key
+OPENAI_API_KEY=your_key
+JWT_SECRET=your_secret
+# Optional:
+# DATABASE_URL=postgres://...   (defaults to SQLite)
+# STRIPE_SECRET_KEY=...
+# STRIPE_WEBHOOK_SECRET=...
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USER=...
+# SMTP_PASS=...
+# GOOGLE_OAUTH_CLIENT_ID=...
+# GOOGLE_OAUTH_CLIENT_SECRET=...
+# DATA_DIR=./data
+```
+
+### Start
+
+```bash
+npm start
+# Server runs on http://localhost:3000
+# HTTPS on https://localhost:3443 (if certs/ exist)
+```
+
+Default admin login (SQLite): `luke@voicereq.ai` / `admin123`
+
+## Project Structure
 
 ```
-voicereq-app/
-├── server.js              # Node.js Express server
-├── package.json           # Dependencies and scripts
-├── .env.example          # Environment variables template
-├── README.md             # This file
-└── public/               # Frontend files
-    ├── index.html        # Main app interface
-    ├── styles.css        # CSS styling
-    └── app.js            # JavaScript application logic
+server.js                 # App init, middleware, route mounting (~200 lines)
+database-adapter.js       # Auto-selects PostgreSQL or SQLite
+auth.js                   # JWT + bcrypt auth helpers
+billing.js                # Stripe SDK wrapper
+
+helpers/
+  paths.js                # DATA_DIR, DESIGNS_DIR, PROPOSALS_DIR, uploadsDir
+  ids.js                  # Hashids encoding/decoding
+  formatting.js           # Timezone helpers, HTML rendering, text formatting
+  email-sender.js         # sendMortiEmail, sendSecurityAlert, sendInviteEmail
+  generation-status.js    # Shared in-memory async generation status
+
+middleware/
+  rate-limiters.js        # Express rate limiters (general, login, upload, signup, contact)
+  security.js             # XSS sanitization, Cloudflare middleware
+  uploads.js              # Multer configs (disk + memory)
+  auth-middleware.js      # apiAuth, optionalAuth, ownership/access verification
+
+routes/
+  public-pages.js         # Signup, about, contact, landing
+  auth.js                 # Login/logout, MFA, Google OAuth
+  profile.js              # Profile settings, password change
+  admin-dashboard.js      # Admin dashboard, customer CRUD, feature requests
+  admin-projects.js       # Admin project detail, archive, requirements
+  design.js               # Design extraction, view, chat, publish, flowchart
+  proposals.js            # Proposal generation, chat, publish, onboarding, engine
+  sharing.js              # Project sharing (admin + customer)
+  customer-mobile.js      # /m/* mobile routes
+  customer.js             # Customer dashboard, project CRUD, voice sessions
+  api.js                  # File upload, analyze, chat, sessions, export/import
+  billing-routes.js       # Stripe webhook, billing CRUD, billing pages
+
+views/                    # EJS templates
+  admin/                  # Admin portal views
+  customer/               # Customer portal views
+    mobile/               # Mobile-specific views
+public/                   # Static assets (JS, CSS, images)
+  session.js              # VoiceSession class (Vapi.ai WebRTC)
+emails.js                 # Email template functions
 ```
 
-## Troubleshooting
+## Deployment
 
-### Common Issues
-
-**"Speech recognition not supported"**
-- Use Chrome or Edge browser
-- Ensure HTTPS connection (required for Web Speech API)
-
-**"Microphone access denied"**
-- Allow microphone permissions in browser
-- Check system microphone settings
-- Refresh page after granting permissions
-
-**"Anthropic API key not configured"**
-- Set ANTHROPIC_API_KEY environment variable
-- Check .env file configuration
-- Restart server after setting environment variables
-
-**Audio not playing**
-- Check browser audio settings
-- Ensure speakers/headphones are connected
-- Try clicking on the page before starting (browsers require user interaction for audio)
-
-### Debug Mode
-
-Check browser console (F12) for detailed logs and error messages.
-
-## Security Notes
-
-- ElevenLabs API key is currently hardcoded for demo purposes
-- In production, move all API keys to environment variables
-- Consider implementing rate limiting and user authentication
-- Voice data is processed in real-time and not stored
+Hosted on Render.com (`render.yaml`). PostgreSQL for production, persistent disk at `/var/data` for uploads and file-based designs/proposals.
 
 ## License
 
-MIT License - feel free to modify and use for your projects.
+MIT
