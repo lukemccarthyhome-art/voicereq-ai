@@ -579,6 +579,8 @@
             outline: none;
             min-height: 1.5em;
             color: var(--text-primary);
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
         .req-text:empty::before {
             content: 'Type a requirement...';
@@ -961,6 +963,13 @@
             /* Hide keyboard hint on mobile */
             .empty-hero .hint { display: none; }
             .req-panel { padding-bottom: 56px; }
+
+            /* Requirements: reduce padding, prevent text overflow */
+            .req-items { padding: 0 0 0 12px; }
+            .req-item { padding: 10px 10px; gap: 6px; }
+            .req-section { padding: 0 4px; }
+            .req-text { font-size: 0.84rem; }
+            .req-body { padding: 12px 8px; }
 
             /* File upload area */
             .upload-zone { padding: 16px; }
