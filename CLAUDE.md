@@ -19,7 +19,7 @@ There is no build step, test suite, or linter configured.
 
 ### Server Entry Point
 
-`server.js` (~5000 lines) is the monolithic Express application containing all routes, middleware, and business logic. There is no router modularization — all endpoints are defined inline.
+`server.js` (~5000 lines) is the Express application containing all routes, middleware, and business logic. There is no router modularization — all endpoints are defined inline.
 
 ### Database Dual-Mode
 
