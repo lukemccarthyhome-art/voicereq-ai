@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Morti — Speak. Automate. Done. Forever.</title>
+    <title>Morti — Talk. Automate. Done. Forever.</title>
     <meta name="description" content="Describe your business process to Morti. We deploy an AI agent that automates the workflow — from invoice approvals to onboarding. Built for Australian SMBs. No technical knowledge needed.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -124,6 +124,28 @@
             transition: all 0.3s;
         }
         .nav-cta:hover { background: #2aa8ff; box-shadow: 0 0 24px var(--accent-glow); transform: translateY(-1px); }
+        /* Nav dropdown */
+        .nav-dropdown { position: relative; }
+        .nav-dropdown-trigger { cursor: pointer; }
+        .nav-arrow { font-size: 0.7em; margin-left: 2px; transition: transform 0.2s; display: inline-block; }
+        .nav-dropdown:hover .nav-arrow { transform: rotate(180deg); }
+        .nav-dropdown-menu {
+            position: absolute; top: calc(100% + 12px); left: 50%; transform: translateX(-50%);
+            min-width: 220px; padding: 8px;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-glass); border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s;
+            z-index: 200;
+        }
+        .nav-dropdown:hover .nav-dropdown-menu { opacity: 1; visibility: visible; }
+        .nav-dropdown-item {
+            display: block; padding: 10px 16px; font-size: 0.88rem; font-weight: 500;
+            color: var(--text-muted); border-radius: 8px; transition: all 0.2s;
+        }
+        .nav-dropdown-item:hover { color: #fff; background: rgba(255,255,255,0.06); }
+
         .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #fff; }
         @media (max-width: 768px) {
             nav { padding: 12px 20px; }
@@ -137,6 +159,14 @@
             .nav-links.open { display: flex; }
             .nav-links a.nav-text { padding: 12px 0; font-size: 1rem; }
             .nav-cta { text-align: center; margin-top: 8px; display: block; }
+            .nav-dropdown-menu {
+                position: static; transform: none; opacity: 1; visibility: visible;
+                background: transparent; border: none; box-shadow: none;
+                backdrop-filter: none; padding: 0 0 0 16px;
+                display: none;
+            }
+            .nav-dropdown.open .nav-dropdown-menu { display: block; }
+            .nav-dropdown-trigger { padding: 12px 0; font-size: 1rem; }
         }
 
         /* ========== HERO ========== */
@@ -537,81 +567,6 @@
         .testimonial-name { font-size: 0.88rem; font-weight: 600; color: var(--text-primary); }
         .testimonial-role { font-size: 0.78rem; color: var(--text-muted); font-weight: 400; }
 
-        /* ========== AI READINESS REVIEW ========== */
-        .readiness-section {
-            padding: 120px 24px; position: relative; overflow: hidden;
-        }
-        .readiness-section::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
-        }
-        .readiness-section::after {
-            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 800px; height: 800px; border-radius: 50%; pointer-events: none;
-            background: radial-gradient(circle, rgba(17, 153, 250, 0.06) 0%, transparent 70%);
-        }
-        .readiness-steps {
-            display: flex; align-items: flex-start; justify-content: center; gap: 0;
-            max-width: 1000px; margin: 0 auto 64px; position: relative; z-index: 1;
-        }
-        .readiness-step {
-            flex: 1; max-width: 280px; text-align: center;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glass); border-radius: var(--radius);
-            padding: 36px 28px; transition: all 0.3s;
-        }
-        .readiness-step:hover {
-            border-color: var(--border-glass-hover); transform: translateY(-6px);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 40px rgba(17, 153, 250, 0.08);
-        }
-        .readiness-step-num {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px; border-radius: 10px; font-size: 0.9rem; font-weight: 800;
-            background: var(--accent-dim); color: var(--accent);
-            border: 1px solid rgba(17, 153, 250, 0.2); margin-bottom: 16px;
-        }
-        .readiness-step-icon { font-size: 2.2rem; margin-bottom: 16px; }
-        .readiness-step h3 {
-            font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px;
-        }
-        .readiness-step p {
-            font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; font-weight: 300;
-        }
-        .readiness-step-connector {
-            display: flex; align-items: center; justify-content: center;
-            padding-top: 80px; flex-shrink: 0; width: 48px;
-        }
-        .readiness-benefits {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
-            max-width: 1000px; margin: 0 auto 56px; position: relative; z-index: 1;
-        }
-        .readiness-benefit {
-            display: flex; align-items: flex-start; gap: 16px; padding: 24px;
-            border-radius: var(--radius-sm);
-            background: rgba(17, 153, 250, 0.04); border: 1px solid rgba(17, 153, 250, 0.08);
-            transition: all 0.3s;
-        }
-        .readiness-benefit:hover {
-            background: rgba(17, 153, 250, 0.07); border-color: rgba(17, 153, 250, 0.15);
-        }
-        .readiness-benefit-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
-        .readiness-benefit strong {
-            display: block; font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;
-        }
-        .readiness-benefit span {
-            font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;
-        }
-        .readiness-cta {
-            text-align: center; position: relative; z-index: 1;
-        }
-        @media (max-width: 768px) {
-            .readiness-steps { flex-direction: column; align-items: center; gap: 16px; }
-            .readiness-step { max-width: 100%; }
-            .readiness-step-connector { padding-top: 0; transform: rotate(90deg); width: auto; }
-            .readiness-benefits { grid-template-columns: 1fr; }
-        }
-
         /* ========== PRICING ========== */
         .pricing-section {
             padding: 120px 24px; position: relative;
@@ -792,7 +747,13 @@
     <a href="/" class="nav-brand">◆ Morti</a>
     <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
     <div class="nav-links">
-        <a href="/#products" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'products' ? ' active' : '' %>">What We Do</a>
+        <div class="nav-dropdown">
+            <a href="/#products" class="nav-text nav-dropdown-trigger<%= typeof currentPage !== 'undefined' && (currentPage === 'products' || currentPage === 'ai-readiness') ? ' active' : '' %>">Products <span class="nav-arrow">▾</span></a>
+            <div class="nav-dropdown-menu">
+                <a href="/#products" class="nav-dropdown-item">Morti — Talk, Automate</a>
+                <a href="/ai-readiness" class="nav-dropdown-item">AI Readiness Review</a>
+            </div>
+        </div>
         <a href="/about" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'about' ? ' active' : '' %>">About</a>
         <a href="/#pricing" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'pricing' ? ' active' : '' %>">Pricing</a>
         <a href="/contact" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'contact' ? ' active' : '' %>">Contact</a>
@@ -809,7 +770,7 @@
     <div class="hero-orb hero-orb-3"></div>
     <div class="hero-inner">
         <div class="hero-text">
-            <h1>Speak. Automate.<br><span class="gradient-text">Done. Forever.</span></h1>
+            <h1>Talk. Automate.<br><span class="gradient-text">Done. Forever.</span></h1>
             <p class="hero-sub">Describe how a process works today — by voice or text. Morti deploys an AI agent that handles it going forward. 24/7, no mistakes, no chasing.</p>
 
             <div class="hero-explainer">
@@ -1134,75 +1095,6 @@
 </section>
 
 <!-- ==================== AI READINESS REVIEW ==================== -->
-<section class="readiness-section">
-    <div class="container">
-        <!-- Section header -->
-        <div class="section-label fade-in">AI Readiness Review</div>
-        <div class="section-divider fade-in"></div>
-        <h2 class="section-title fade-in" style="max-width:700px;margin-left:auto;margin-right:auto;">Is Your Business Ready for AI?</h2>
-        <p class="section-sub fade-in">Most businesses know AI could help — but don't know where to start. Our AI Readiness Review gives you a clear, practical assessment of where automation will have the biggest impact in your operation.</p>
-
-        <!-- 3-step flow -->
-        <div class="readiness-steps">
-            <div class="readiness-step fade-in">
-                <div class="readiness-step-num">1</div>
-                <div class="readiness-step-icon">🎙️</div>
-                <h3>Voice Interview</h3>
-                <p>Morti's AI conducts structured interviews with your team to understand workflows, pain points, and the manual work that's costing you time.</p>
-            </div>
-            <div class="readiness-step-connector fade-in fade-in-delay-1">
-                <svg width="48" height="24" viewBox="0 0 48 24"><path d="M0 12h40m-8-8l8 8-8 8" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div class="readiness-step fade-in fade-in-delay-1">
-                <div class="readiness-step-num">2</div>
-                <div class="readiness-step-icon">📊</div>
-                <h3>Analysis</h3>
-                <p>We cross-reference your processes against industry benchmarks and identify the highest-value automation opportunities across your operation.</p>
-            </div>
-            <div class="readiness-step-connector fade-in fade-in-delay-2">
-                <svg width="48" height="24" viewBox="0 0 48 24"><path d="M0 12h40m-8-8l8 8-8 8" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div class="readiness-step fade-in fade-in-delay-2">
-                <div class="readiness-step-num">3</div>
-                <div class="readiness-step-icon">🗺️</div>
-                <h3>Roadmap</h3>
-                <p>Receive a prioritised AI implementation roadmap with ROI estimates — so you know exactly what to automate first and what it's worth.</p>
-            </div>
-        </div>
-
-        <!-- Benefits row -->
-        <div class="readiness-benefits">
-            <div class="readiness-benefit fade-in">
-                <span class="readiness-benefit-icon">🔍</span>
-                <div>
-                    <strong>Full operational scan</strong>
-                    <span>Identify automation opportunities across your entire operation — not just the obvious ones.</span>
-                </div>
-            </div>
-            <div class="readiness-benefit fade-in fade-in-delay-1">
-                <span class="readiness-benefit-icon">📋</span>
-                <div>
-                    <strong>Actionable, not theoretical</strong>
-                    <span>You get specific recommendations with estimated time savings and costs — not a generic whitepaper.</span>
-                </div>
-            </div>
-            <div class="readiness-benefit fade-in fade-in-delay-2">
-                <span class="readiness-benefit-icon">💰</span>
-                <div>
-                    <strong>ROI before you commit</strong>
-                    <span>See the projected return on every recommendation before you invest a dollar.</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- CTA -->
-        <div class="readiness-cta fade-in">
-            <a href="/contact" class="btn btn-primary btn-lg">Book Your AI Readiness Review</a>
-            <p style="margin-top:16px;font-size:0.88rem;color:var(--text-muted);">Included with every engagement — or available as a standalone assessment.</p>
-        </div>
-    </div>
-</section>
-
 <!-- ==================== PRICING ==================== -->
 <section id="pricing" class="pricing-section">
     <div class="section-label fade-in">Pricing</div>
@@ -1322,6 +1214,16 @@ window.addEventListener('scroll', () => {
     const nav = document.querySelector('nav');
     if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
     btt.classList.toggle('show', window.scrollY > 600);
+});
+
+// Mobile dropdown toggle
+document.querySelectorAll('.nav-dropdown-trigger').forEach(trigger => {
+    trigger.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+            e.preventDefault();
+            this.closest('.nav-dropdown').classList.toggle('open');
+        }
+    });
 });
 
 // Hero video play overlay

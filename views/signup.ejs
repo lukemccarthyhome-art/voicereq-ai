@@ -153,7 +153,13 @@
     <a href="/" class="nav-brand">◆ Morti</a>
     <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
     <div class="nav-links">
-        <a href="/#products" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'products' ? ' active' : '' %>">What We Do</a>
+        <div class="nav-dropdown">
+            <a href="/#products" class="nav-text nav-dropdown-trigger<%= typeof currentPage !== 'undefined' && (currentPage === 'products' || currentPage === 'ai-readiness') ? ' active' : '' %>">Products <span class="nav-arrow">▾</span></a>
+            <div class="nav-dropdown-menu">
+                <a href="/#products" class="nav-dropdown-item">Morti — Talk, Automate</a>
+                <a href="/ai-readiness" class="nav-dropdown-item">AI Readiness Review</a>
+            </div>
+        </div>
         <a href="/about" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'about' ? ' active' : '' %>">About</a>
         <a href="/#pricing" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'pricing' ? ' active' : '' %>">Pricing</a>
         <a href="/contact" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'contact' ? ' active' : '' %>">Contact</a>

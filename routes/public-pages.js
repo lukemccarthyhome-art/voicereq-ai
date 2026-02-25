@@ -65,6 +65,11 @@ router.post('/signup', signupLimiter, async (req, res) => {
   }
 });
 
+// AI Readiness Review page
+router.get('/ai-readiness', (req, res) => {
+  res.render('ai-readiness', { currentPage: 'ai-readiness' });
+});
+
 // About page
 router.get('/about', (req, res) => {
   res.render('about');

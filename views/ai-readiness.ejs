@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Readiness Review — Morti</title>
+    <meta name="description" content="Find out exactly where AI agents can save your business time and money. Voice-first assessment, practical roadmap, results in 2 weeks. From $2,500 + GST.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #050d1a;
+            --bg-primary: #0a1628;
+            --bg-card: #0f1d32;
+            --bg-card-hover: #142640;
+            --bg-glass: rgba(15, 29, 50, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --accent: #1199fa;
+            --accent-glow: rgba(17, 153, 250, 0.4);
+            --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #009e7e;
+            --accent-secondary-glow: rgba(0, 158, 126, 0.3);
+            --text-primary: #f0f4f8;
+            --text-secondary: rgba(240, 244, 248, 0.7);
+            --text-muted: rgba(240, 244, 248, 0.4);
+            --radius: 16px;
+            --radius-sm: 12px;
+            --radius-pill: 100px;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-deep); color: var(--text-primary);
+            line-height: 1.6; -webkit-font-smoothing: antialiased;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.7s, transform 0.7s; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+        .fade-in-delay-1 { transition-delay: 0.15s; }
+        .fade-in-delay-2 { transition-delay: 0.3s; }
+        .fade-in-delay-3 { transition-delay: 0.45s; }
+
+        /* ========== NAV ========== */
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 40px;
+            background: rgba(5, 13, 26, 0.8);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass);
+            transition: all 0.3s;
+        }
+        nav.scrolled { background: rgba(5, 13, 26, 0.95); }
+        .nav-brand { font-size: 1.3rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a.nav-text {
+            font-size: 0.88rem; color: var(--text-muted); transition: color 0.2s;
+            font-weight: 500; letter-spacing: 0.01em;
+        }
+        .nav-links a.nav-text:hover { color: #fff; }
+        .nav-links a.nav-text.active { color: var(--accent); }
+        .nav-cta {
+            background: var(--accent); color: #fff; padding: 10px 28px;
+            border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600;
+            box-shadow: 0 0 16px var(--accent-glow); transition: all 0.3s;
+        }
+        .nav-cta:hover { background: #2aa8ff; box-shadow: 0 0 24px var(--accent-glow); transform: translateY(-1px); }
+        .nav-dropdown { position: relative; }
+        .nav-dropdown-trigger { cursor: pointer; }
+        .nav-arrow { font-size: 0.7em; margin-left: 2px; transition: transform 0.2s; display: inline-block; }
+        .nav-dropdown:hover .nav-arrow { transform: rotate(180deg); }
+        .nav-dropdown-menu {
+            position: absolute; top: calc(100% + 12px); left: 50%; transform: translateX(-50%);
+            min-width: 220px; padding: 8px;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-glass); border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s;
+            z-index: 200;
+        }
+        .nav-dropdown:hover .nav-dropdown-menu { opacity: 1; visibility: visible; }
+        .nav-dropdown-item {
+            display: block; padding: 10px 16px; font-size: 0.88rem; font-weight: 500;
+            color: var(--text-muted); border-radius: 8px; transition: all 0.2s;
+        }
+        .nav-dropdown-item:hover { color: #fff; background: rgba(255,255,255,0.06); }
+        .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #fff; }
+        @media (max-width: 768px) {
+            nav { padding: 12px 20px; }
+            .hamburger { display: block; }
+            .nav-links {
+                display: none; flex-direction: column; position: absolute; top: 100%;
+                left: 0; right: 0; background: rgba(10, 22, 40, 0.98);
+                backdrop-filter: blur(20px); padding: 16px 20px; gap: 4px;
+                border-bottom: 1px solid var(--border-glass);
+            }
+            .nav-links.open { display: flex; }
+            .nav-links a.nav-text { padding: 12px 0; font-size: 1rem; }
+            .nav-cta { text-align: center; margin-top: 8px; display: block; }
+            .nav-dropdown-menu {
+                position: static; transform: none; opacity: 1; visibility: visible;
+                background: transparent; border: none; box-shadow: none;
+                backdrop-filter: none; padding: 0 0 0 16px; display: none;
+            }
+            .nav-dropdown.open .nav-dropdown-menu { display: block; }
+            .nav-dropdown-trigger { padding: 12px 0; font-size: 1rem; }
+        }
+
+        /* ========== SHARED ========== */
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+        .section-label {
+            text-align: center; font-size: 0.88rem; text-transform: uppercase;
+            letter-spacing: 0.18em; color: var(--accent); font-weight: 600; margin-bottom: 18px;
+        }
+        .section-title {
+            text-align: center; font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 20px;
+        }
+        .section-sub {
+            text-align: center; font-size: 1.05rem; color: var(--text-secondary);
+            max-width: 640px; margin: 0 auto 56px; line-height: 1.8; font-weight: 300;
+        }
+        .btn {
+            display: inline-block; padding: 14px 36px; border-radius: var(--radius-pill);
+            font-size: 0.95rem; font-weight: 600; transition: all 0.3s; cursor: pointer; border: none;
+        }
+        .btn-primary {
+            background: var(--accent); color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .btn-primary:hover { background: #2aa8ff; box-shadow: 0 0 32px var(--accent-glow); transform: translateY(-2px); }
+        .btn-glass {
+            background: var(--bg-glass); color: var(--text-primary);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(20px);
+        }
+        .btn-glass:hover { border-color: var(--border-glass-hover); background: rgba(255,255,255,0.06); }
+        .btn-teal {
+            background: var(--accent-secondary); color: #fff;
+            box-shadow: 0 0 20px var(--accent-secondary-glow);
+        }
+        .btn-teal:hover { background: #00b890; box-shadow: 0 0 32px var(--accent-secondary-glow); transform: translateY(-2px); }
+        .btn-lg { padding: 16px 44px; font-size: 1.05rem; }
+
+        /* ========== HERO ========== */
+        .air-hero {
+            min-height: 90vh; display: flex; align-items: center; justify-content: center;
+            padding: 140px 24px 100px; text-align: center; position: relative; overflow: hidden;
+        }
+        .air-hero::after {
+            content: ''; position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
+            width: 900px; height: 900px; border-radius: 50%; pointer-events: none;
+            background: radial-gradient(circle, rgba(0, 158, 126, 0.08) 0%, rgba(17, 153, 250, 0.04) 40%, transparent 70%);
+        }
+        .air-hero-inner { position: relative; z-index: 1; max-width: 800px; }
+        .air-hero .badge {
+            display: inline-block; padding: 8px 20px; border-radius: var(--radius-pill);
+            font-size: 0.82rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+            background: rgba(0, 158, 126, 0.12); color: var(--accent-secondary);
+            border: 1px solid rgba(0, 158, 126, 0.2); margin-bottom: 28px;
+        }
+        .air-hero h1 {
+            font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 900;
+            letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 24px;
+        }
+        .air-hero h1 span { color: var(--accent-secondary); }
+        .air-hero p {
+            font-size: 1.15rem; color: var(--text-secondary); line-height: 1.8;
+            max-width: 620px; margin: 0 auto 40px; font-weight: 300;
+        }
+        .air-hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+        /* ========== PROCESS ========== */
+        .air-process { padding: 120px 24px; position: relative; }
+        .air-process::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .process-steps {
+            display: flex; align-items: flex-start; justify-content: center; gap: 0;
+            max-width: 1000px; margin: 0 auto;
+        }
+        .process-step {
+            flex: 1; max-width: 300px; text-align: center;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass); border-radius: var(--radius);
+            padding: 40px 28px; transition: all 0.3s;
+        }
+        .process-step:hover {
+            border-color: var(--border-glass-hover); transform: translateY(-6px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 158, 126, 0.08);
+        }
+        .process-step-num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; border-radius: 12px; font-size: 1rem; font-weight: 800;
+            background: rgba(0, 158, 126, 0.12); color: var(--accent-secondary);
+            border: 1px solid rgba(0, 158, 126, 0.25); margin-bottom: 20px;
+        }
+        .process-step-icon { font-size: 2.5rem; margin-bottom: 20px; }
+        .process-step h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; }
+        .process-step p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; font-weight: 300; }
+        .process-connector {
+            display: flex; align-items: center; justify-content: center;
+            padding-top: 90px; flex-shrink: 0; width: 48px;
+        }
+        @media (max-width: 768px) {
+            .process-steps { flex-direction: column; align-items: center; gap: 16px; }
+            .process-step { max-width: 100%; }
+            .process-connector { padding-top: 0; transform: rotate(90deg); width: auto; }
+        }
+
+        /* ========== PILLARS ========== */
+        .air-pillars { padding: 120px 24px; position: relative; }
+        .air-pillars::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .pillar-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
+            max-width: 1100px; margin: 0 auto;
+        }
+        .pillar-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass); border-radius: var(--radius);
+            padding: 40px 32px; transition: all 0.3s;
+        }
+        .pillar-card:hover {
+            border-color: var(--border-glass-hover); transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .pillar-icon { font-size: 2.4rem; margin-bottom: 20px; }
+        .pillar-card h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; }
+        .pillar-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8; font-weight: 300; }
+        .pillar-card ul { list-style: none; margin-top: 16px; }
+        .pillar-card ul li {
+            font-size: 0.88rem; color: var(--text-secondary); padding: 6px 0;
+            padding-left: 20px; position: relative;
+        }
+        .pillar-card ul li::before {
+            content: '✓'; position: absolute; left: 0; color: var(--accent-secondary); font-weight: 700;
+        }
+        @media (max-width: 768px) {
+            .pillar-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ========== STATS ========== */
+        .air-stats { padding: 100px 24px; position: relative; }
+        .air-stats::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+            max-width: 1000px; margin: 0 auto;
+        }
+        .stat-card {
+            text-align: center; padding: 36px 20px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);
+            border-radius: var(--radius); transition: all 0.3s;
+        }
+        .stat-card:hover { border-color: var(--border-glass-hover); }
+        .stat-num {
+            font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 8px;
+        }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 400; line-height: 1.5; }
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* ========== WHO IS THIS FOR ========== */
+        .air-audience { padding: 120px 24px; position: relative; }
+        .air-audience::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .audience-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;
+            max-width: 900px; margin: 0 auto;
+        }
+        .audience-card {
+            display: flex; align-items: flex-start; gap: 16px; padding: 28px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm); transition: all 0.3s;
+        }
+        .audience-card:hover { border-color: var(--border-glass-hover); background: rgba(255,255,255,0.06); }
+        .audience-icon { font-size: 1.6rem; flex-shrink: 0; margin-top: 2px; }
+        .audience-card h4 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+        .audience-card p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
+        @media (max-width: 768px) {
+            .audience-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ========== GETTING STARTED ========== */
+        .air-started { padding: 120px 24px; position: relative; }
+        .air-started::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .started-steps {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
+            max-width: 900px; margin: 0 auto;
+        }
+        .started-step { text-align: center; padding: 32px 24px; }
+        .started-num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 48px; height: 48px; border-radius: 50%; font-size: 1.1rem; font-weight: 800;
+            background: var(--accent-dim); color: var(--accent);
+            border: 1px solid rgba(17, 153, 250, 0.2); margin-bottom: 20px;
+        }
+        .started-step h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+        .started-step p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+        @media (max-width: 768px) {
+            .started-steps { grid-template-columns: 1fr; }
+        }
+
+        /* ========== CTA BANNER ========== */
+        .air-cta-banner {
+            padding: 100px 24px; text-align: center; position: relative;
+        }
+        .air-cta-banner::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .cta-box {
+            max-width: 700px; margin: 0 auto; padding: 56px 40px;
+            background: var(--bg-glass); border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        }
+        .cta-box h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 16px; }
+        .cta-box p { font-size: 1rem; color: var(--text-secondary); margin-bottom: 32px; line-height: 1.7; }
+        .cta-price {
+            font-size: 0.9rem; color: var(--text-muted); margin-top: 16px;
+        }
+
+        /* ========== FAQ ========== */
+        .air-faq { padding: 120px 24px; position: relative; }
+        .air-faq::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+        .faq-list { max-width: 720px; margin: 0 auto; }
+        .faq-item {
+            border-bottom: 1px solid var(--border-glass); padding: 24px 0;
+        }
+        .faq-q {
+            font-size: 1.05rem; font-weight: 600; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            color: var(--text-primary); transition: color 0.2s;
+        }
+        .faq-q:hover { color: var(--accent); }
+        .faq-q .faq-toggle { font-size: 1.2rem; transition: transform 0.3s; color: var(--text-muted); }
+        .faq-item.open .faq-toggle { transform: rotate(45deg); }
+        .faq-a {
+            max-height: 0; overflow: hidden; transition: max-height 0.3s, padding 0.3s;
+            font-size: 0.92rem; color: var(--text-secondary); line-height: 1.8;
+        }
+        .faq-item.open .faq-a { max-height: 300px; padding-top: 16px; }
+
+        /* ========== FOOTER ========== */
+        .site-footer {
+            padding: 64px 40px 32px; border-top: 1px solid var(--border-glass);
+        }
+        .footer-grid {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px;
+            max-width: 1100px; margin: 0 auto 40px;
+        }
+        .footer-brand { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 12px; }
+        .footer-brand-desc { font-size: 0.88rem; line-height: 1.8; color: var(--text-muted); max-width: 280px; }
+        .footer-col h4 {
+            font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.12em;
+            color: var(--text-muted); font-weight: 600; margin-bottom: 16px;
+        }
+        .footer-col a {
+            display: block; font-size: 0.88rem; color: var(--text-secondary);
+            padding: 5px 0; transition: color 0.2s;
+        }
+        .footer-col a:hover { color: #fff; }
+        .footer-bottom {
+            text-align: center; padding-top: 32px; border-top: 1px solid var(--border-glass);
+            font-size: 0.82rem; color: var(--text-muted);
+        }
+        @media (max-width: 900px) {
+            .site-footer { padding: 48px 24px 24px; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+        }
+        @media (max-width: 480px) {
+            .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+        }
+
+        /* Back to top */
+        .back-to-top {
+            position: fixed; bottom: 32px; right: 32px; width: 44px; height: 44px;
+            border-radius: 12px; border: 1px solid var(--border-glass);
+            background: rgba(15, 29, 50, 0.8); backdrop-filter: blur(20px);
+            color: var(--text-muted); font-size: 1.2rem; cursor: pointer;
+            opacity: 0; visibility: hidden; transition: all 0.3s; z-index: 90;
+        }
+        .back-to-top.show { opacity: 1; visibility: visible; }
+        .back-to-top:hover { border-color: var(--border-glass-hover); color: #fff; }
+    </style>
+</head>
+<body>
+
+<!-- ==================== NAV ==================== -->
+<nav>
+    <a href="/" class="nav-brand">◆ Morti</a>
+    <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
+    <div class="nav-links">
+        <div class="nav-dropdown">
+            <a href="/#products" class="nav-text nav-dropdown-trigger active">Products <span class="nav-arrow">▾</span></a>
+            <div class="nav-dropdown-menu">
+                <a href="/#products" class="nav-dropdown-item">Morti — Talk, Automate</a>
+                <a href="/ai-readiness" class="nav-dropdown-item">AI Readiness Review</a>
+            </div>
+        </div>
+        <a href="/about" class="nav-text">About</a>
+        <a href="/#pricing" class="nav-text">Pricing</a>
+        <a href="/contact" class="nav-text">Contact</a>
+        <a href="/login" class="nav-text">Login</a>
+        <a href="/signup" class="nav-cta">Get Started Free</a>
+    </div>
+</nav>
+
+<!-- ==================== HERO ==================== -->
+<section class="air-hero">
+    <div class="air-hero-inner">
+        <div class="badge fade-in">AI Readiness Review</div>
+        <h1 class="fade-in">Find Out Exactly Where <span>AI Can Save You Time &amp; Money</span></h1>
+        <p class="fade-in">No jargon. No 50-page report. Just a practical, voice-based assessment that tells you where AI agents will have the biggest impact on your business — and how much it's worth.</p>
+        <div class="air-hero-buttons fade-in">
+            <a href="/contact" class="btn btn-teal btn-lg">Book a Free Consultation</a>
+            <a href="#how-it-works" class="btn btn-glass">See How It Works</a>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== 3-STEP PROCESS ==================== -->
+<section id="how-it-works" class="air-process">
+    <div class="container">
+        <div class="section-label fade-in">How It Works</div>
+        <h2 class="section-title fade-in">Three steps. Two weeks. Total clarity.</h2>
+        <p class="section-sub fade-in">We've stripped the consulting fluff. You talk, we analyse, you get a roadmap you can actually use.</p>
+
+        <div class="process-steps">
+            <div class="process-step fade-in">
+                <div class="process-step-num">1</div>
+                <div class="process-step-icon">🎙️</div>
+                <h3>Voice Interview</h3>
+                <p>Just talk. Morti's AI conducts structured conversations with your team — no forms, no surveys. We capture how your business actually works.</p>
+            </div>
+            <div class="process-connector fade-in fade-in-delay-1">
+                <svg width="48" height="24" viewBox="0 0 48 24"><path d="M0 12h40m-8-8l8 8-8 8" stroke="var(--accent-secondary)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="process-step fade-in fade-in-delay-1">
+                <div class="process-step-num">2</div>
+                <div class="process-step-icon">🧠</div>
+                <h3>AI Analysis</h3>
+                <p>We map your workflows against automation benchmarks and identify the tasks where AI agents deliver the highest return — ranked by impact and effort.</p>
+            </div>
+            <div class="process-connector fade-in fade-in-delay-2">
+                <svg width="48" height="24" viewBox="0 0 48 24"><path d="M0 12h40m-8-8l8 8-8 8" stroke="var(--accent-secondary)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="process-step fade-in fade-in-delay-2">
+                <div class="process-step-num">3</div>
+                <div class="process-step-icon">🗺️</div>
+                <h3>Actionable Roadmap</h3>
+                <p>Receive a prioritised implementation plan with ROI estimates, timelines, and clear next steps. No theory — just what to do first and why.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== THREE PILLARS ==================== -->
+<section class="air-pillars">
+    <div class="container">
+        <div class="section-label fade-in">What You Get</div>
+        <h2 class="section-title fade-in">Every phase, explained</h2>
+        <p class="section-sub fade-in">Each stage is designed to get maximum insight with minimum disruption to your team.</p>
+
+        <div class="pillar-grid">
+            <div class="pillar-card fade-in">
+                <div class="pillar-icon">🎙️</div>
+                <h3>Voice-First Discovery</h3>
+                <p>Your team simply talks through their day-to-day. Our AI captures workflows, bottlenecks, and the repetitive tasks eating your time — in their own words.</p>
+                <ul>
+                    <li>15-30 min per team member</li>
+                    <li>No prep work needed</li>
+                    <li>Captures what documents miss</li>
+                    <li>Works for any role or department</li>
+                </ul>
+            </div>
+            <div class="pillar-card fade-in fade-in-delay-1">
+                <div class="pillar-icon">📊</div>
+                <h3>Deep-Dive Analysis</h3>
+                <p>We don't just list problems — we quantify them. Every opportunity is scored by time saved, cost impact, and implementation complexity.</p>
+                <ul>
+                    <li>Process mapping &amp; bottleneck ID</li>
+                    <li>Industry benchmark comparison</li>
+                    <li>Time &amp; cost impact modelling</li>
+                    <li>Risk and readiness scoring</li>
+                </ul>
+            </div>
+            <div class="pillar-card fade-in fade-in-delay-2">
+                <div class="pillar-icon">🗺️</div>
+                <h3>Your Roadmap</h3>
+                <p>A clear, prioritised plan your team can follow. No consultant-speak — just practical steps with projected returns.</p>
+                <ul>
+                    <li>Ranked automation opportunities</li>
+                    <li>ROI estimate per initiative</li>
+                    <li>Implementation timeline</li>
+                    <li>Quick wins vs. long-term plays</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== STATS ==================== -->
+<section class="air-stats">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card fade-in">
+                <div class="stat-num">47%</div>
+                <div class="stat-label">Average efficiency gains identified</div>
+            </div>
+            <div class="stat-card fade-in fade-in-delay-1">
+                <div class="stat-num">2 wks</div>
+                <div class="stat-label">From kickoff to finished roadmap</div>
+            </div>
+            <div class="stat-card fade-in fade-in-delay-1">
+                <div class="stat-num">0</div>
+                <div class="stat-label">Forms to fill out — just talk</div>
+            </div>
+            <div class="stat-card fade-in fade-in-delay-2">
+                <div class="stat-num">100%</div>
+                <div class="stat-label">Actionable — no fluff, no theory</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== MID CTA ==================== -->
+<section class="air-cta-banner">
+    <div class="cta-box fade-in">
+        <h2>Stop guessing. Start knowing.</h2>
+        <p>Most businesses waste months researching AI options. Get a clear answer in two weeks — what to automate, what it's worth, and where to start.</p>
+        <a href="/contact" class="btn btn-teal btn-lg">Book Your Free Consultation</a>
+        <div class="cta-price">From $2,500 + GST for the full assessment</div>
+    </div>
+</section>
+
+<!-- ==================== WHO IS THIS FOR ==================== -->
+<section class="air-audience">
+    <div class="container">
+        <div class="section-label fade-in">Who Is This For</div>
+        <h2 class="section-title fade-in">Built for Australian businesses ready to move</h2>
+        <p class="section-sub fade-in">If you're a small-to-medium business wondering where AI fits, this is your starting point.</p>
+
+        <div class="audience-grid">
+            <div class="audience-card fade-in">
+                <div class="audience-icon">🏗️</div>
+                <div>
+                    <h4>Trades &amp; Construction</h4>
+                    <p>Quoting, scheduling, compliance paperwork — the admin that keeps you off the tools.</p>
+                </div>
+            </div>
+            <div class="audience-card fade-in fade-in-delay-1">
+                <div class="audience-icon">🏢</div>
+                <div>
+                    <h4>Professional Services</h4>
+                    <p>Client onboarding, reporting, follow-ups — free your team from the repetitive stuff.</p>
+                </div>
+            </div>
+            <div class="audience-card fade-in fade-in-delay-1">
+                <div class="audience-icon">🛒</div>
+                <div>
+                    <h4>Retail &amp; E-commerce</h4>
+                    <p>Inventory, customer queries, order processing — the tasks that scale with you.</p>
+                </div>
+            </div>
+            <div class="audience-card fade-in fade-in-delay-2">
+                <div class="audience-icon">🏥</div>
+                <div>
+                    <h4>Healthcare &amp; Allied</h4>
+                    <p>Bookings, patient comms, admin workflows — spend more time with patients.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== GETTING STARTED ==================== -->
+<section class="air-started">
+    <div class="container">
+        <div class="section-label fade-in">Getting Started</div>
+        <h2 class="section-title fade-in">Ready? Here's how we begin.</h2>
+        <p class="section-sub fade-in">Three simple steps to get from "maybe" to "here's your plan."</p>
+
+        <div class="started-steps">
+            <div class="started-step fade-in">
+                <div class="started-num">1</div>
+                <h3>Free Consultation</h3>
+                <p>15-minute call. We learn about your business and confirm if the review is the right fit.</p>
+            </div>
+            <div class="started-step fade-in fade-in-delay-1">
+                <div class="started-num">2</div>
+                <h3>Voice Sessions</h3>
+                <p>Your team talks through their workflows with Morti's AI. Quick, easy, no prep required.</p>
+            </div>
+            <div class="started-step fade-in fade-in-delay-2">
+                <div class="started-num">3</div>
+                <h3>Your Roadmap</h3>
+                <p>Within 2 weeks, you receive a prioritised AI roadmap with ROI estimates and clear next steps.</p>
+            </div>
+        </div>
+
+        <div style="text-align:center;margin-top:48px;" class="fade-in">
+            <a href="/contact" class="btn btn-primary btn-lg">Book Your Free Consultation</a>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== FAQ ==================== -->
+<section class="air-faq">
+    <div class="container">
+        <div class="section-label fade-in">FAQ</div>
+        <h2 class="section-title fade-in">Common questions</h2>
+
+        <div class="faq-list">
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    How long does the whole process take?
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-a">From your first voice session to receiving your roadmap, it's typically 2 weeks. The voice interviews themselves take 15-30 minutes per person.</div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    Do my team need to prepare anything?
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-a">No. That's the point. They just talk through their typical day and the tasks they repeat most often. The AI handles the structure.</div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    What does the roadmap actually look like?
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-a">A clear document listing your top automation opportunities, ranked by impact. Each one includes estimated time savings, cost impact, implementation complexity, and recommended approach. No filler.</div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    How much does it cost?
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-a">The AI Readiness Review starts from $2,500 + GST. The exact price depends on your team size and complexity. Book a free consultation and we'll give you a firm quote.</div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    Will AI replace my team?
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-a">No — and that's not what we recommend. The goal is to free your team from repetitive, low-value tasks so they can focus on the work that actually needs a human. Think of it as giving everyone an extra set of hands.</div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    Do I have to use Morti to implement the recommendations?
+                    <span class="faq-toggle">+</span>
+                </div>
+                <div class="faq-a">Nope. The roadmap is yours. You can implement it yourself, use another provider, or work with us. Obviously we'd love to help, but there's no lock-in.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== FINAL CTA ==================== -->
+<section class="air-cta-banner" style="padding-bottom:120px;">
+    <div class="cta-box fade-in">
+        <h2>Let's find your quick wins</h2>
+        <p>Every business has hidden efficiency gains. A 15-minute call is all it takes to find out if the AI Readiness Review is right for you.</p>
+        <a href="/contact" class="btn btn-teal btn-lg">Book a Free Consultation</a>
+    </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="site-footer">
+    <div class="footer-grid">
+        <div>
+            <div class="footer-brand">◆ Morti</div>
+            <p class="footer-brand-desc">AI agents for Australian SMBs. Describe your process, we deploy an AI agent that handles it. No technical knowledge required.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Product</h4>
+            <a href="/#how-it-works">How It Works</a>
+            <a href="/#pricing">Pricing</a>
+            <a href="/ai-readiness">AI Readiness Review</a>
+        </div>
+        <div class="footer-col">
+            <h4>Company</h4>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+            <a href="/signup">Get Started</a>
+            <a href="/login">Customer Login</a>
+        </div>
+        <div class="footer-col">
+            <h4>Contact</h4>
+            <a href="mailto:info@morti.com.au">Email Us</a>
+            <span style="display:block;font-size:0.88rem;padding:5px 0;">Melbourne, Australia</span>
+            <a href="https://morti.com.au">morti.com.au</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        &copy; <%= new Date().getFullYear() %> Morti Pty Ltd · ABN 15 687 741 797 · Australia
+    </div>
+</footer>
+
+<button class="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑</button>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+const btt = document.querySelector('.back-to-top');
+window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    if (nav) nav.classList.toggle('scrolled', window.scrollY > 20);
+    btt.classList.toggle('show', window.scrollY > 600);
+});
+
+document.querySelectorAll('.nav-dropdown-trigger').forEach(trigger => {
+    trigger.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+            e.preventDefault();
+            this.closest('.nav-dropdown').classList.toggle('open');
+        }
+    });
+});
+</script>
+
+</body>
+</html>

@@ -255,8 +255,38 @@
             .overview-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .wizard-steps-preview { gap: 20px; }
             .wizard-welcome h1 { font-size: 2rem; }
+
+            /* Top bar: stack heading + actions */
             .top-bar { flex-direction: column; gap: 12px; align-items: flex-start !important; }
-            .top-bar-actions { width: 100%; justify-content: space-between; }
+            .top-bar h1 { font-size: 1.4rem; }
+            .top-bar-actions { width: 100%; display: flex; justify-content: stretch; gap: 8px; }
+            .top-bar-actions > * { flex: 1; text-align: center; }
+
+            /* Project rows: stack vertically */
+            .project-row { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+            .project-row > div:last-child {
+                display: flex; flex-wrap: wrap; gap: 8px; width: 100%;
+            }
+            .project-row > div:last-child .btn,
+            .project-row > div:last-child span { flex: 1; min-width: 0; text-align: center; }
+            .project-name { font-size: 0.92rem; }
+            .project-meta { font-size: 0.75rem; line-height: 1.5; }
+
+            /* Stage headers */
+            .stage-header h3 { font-size: 0.92rem; }
+
+            /* New project form */
+            .new-project-card { padding: 20px; }
+            .new-project-card h3 { font-size: 1rem; }
+
+            /* Billing warnings */
+            .billing-warning { flex-direction: column; gap: 8px; font-size: 0.85rem; }
+
+            /* Wizard tweaks */
+            .wizard-container { padding: 16px; min-height: calc(100vh - 80px); }
+            .wizard-inner { padding: 0 8px; }
+            .wizard-input { font-size: 1rem; padding: 14px 16px; }
+            .btn-lg { padding: 14px 32px; font-size: 1rem; width: 100%; }
         }
     </style>
 </head>

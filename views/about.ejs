@@ -66,6 +66,26 @@
             box-shadow: 0 0 16px var(--accent-glow); transition: all 0.3s;
         }
         .nav-cta:hover { background: #2aa8ff; box-shadow: 0 0 24px var(--accent-glow); transform: translateY(-1px); }
+        /* Nav dropdown */
+        .nav-dropdown { position: relative; }
+        .nav-dropdown-trigger { cursor: pointer; }
+        .nav-arrow { font-size: 0.7em; margin-left: 2px; transition: transform 0.2s; display: inline-block; }
+        .nav-dropdown:hover .nav-arrow { transform: rotate(180deg); }
+        .nav-dropdown-menu {
+            position: absolute; top: calc(100% + 12px); left: 50%; transform: translateX(-50%);
+            min-width: 220px; padding: 8px;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-glass); border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; z-index: 200;
+        }
+        .nav-dropdown:hover .nav-dropdown-menu { opacity: 1; visibility: visible; }
+        .nav-dropdown-item {
+            display: block; padding: 10px 16px; font-size: 0.88rem; font-weight: 500;
+            color: var(--text-muted); border-radius: 8px; transition: all 0.2s;
+        }
+        .nav-dropdown-item:hover { color: #fff; background: rgba(255,255,255,0.06); }
         .hamburger { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 4px 8px; color: #fff; }
         @media (max-width: 768px) {
             nav { padding: 12px 20px; }
@@ -79,6 +99,13 @@
             .nav-links.open { display: flex; }
             .nav-links a.nav-text { padding: 12px 0; font-size: 1rem; }
             .nav-cta { text-align: center; margin-top: 8px; display: block; }
+            .nav-dropdown-menu {
+                position: static; transform: none; opacity: 1; visibility: visible;
+                background: transparent; border: none; box-shadow: none;
+                backdrop-filter: none; padding: 0 0 0 16px; display: none;
+            }
+            .nav-dropdown.open .nav-dropdown-menu { display: block; }
+            .nav-dropdown-trigger { padding: 12px 0; font-size: 1rem; }
         }
 
         /* ========== BUTTONS ========== */
@@ -248,7 +275,13 @@
     <a href="/" class="nav-brand">◆ Morti</a>
     <button class="hamburger" onclick="this.nextElementSibling.classList.toggle('open')" aria-label="Menu">☰</button>
     <div class="nav-links">
-        <a href="/#products" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'products' ? ' active' : '' %>">What We Do</a>
+        <div class="nav-dropdown">
+            <a href="/#products" class="nav-text nav-dropdown-trigger<%= typeof currentPage !== 'undefined' && (currentPage === 'products' || currentPage === 'ai-readiness') ? ' active' : '' %>">Products <span class="nav-arrow">▾</span></a>
+            <div class="nav-dropdown-menu">
+                <a href="/#products" class="nav-dropdown-item">Morti — Talk, Automate</a>
+                <a href="/ai-readiness" class="nav-dropdown-item">AI Readiness Review</a>
+            </div>
+        </div>
         <a href="/about" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'about' ? ' active' : '' %>">About</a>
         <a href="/#pricing" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'pricing' ? ' active' : '' %>">Pricing</a>
         <a href="/contact" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'contact' ? ' active' : '' %>">Contact</a>
