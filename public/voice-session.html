@@ -874,6 +874,7 @@
         /* ===== MOBILE: desktop defaults ===== */
         .mobile-tabs { display: none; }
         .mobile-controls-panel { display: none; }
+        .mobile-header { display: none; }
 
         /* ===== MOBILE ===== */
         @media (max-width: 768px) {
@@ -889,7 +890,7 @@
                 display: flex;
                 position: fixed;
                 inset: 0;
-                top: 44px;
+                top: 48px;
                 bottom: 56px;
                 z-index: 50;
                 background: var(--bg-deep);
@@ -899,7 +900,7 @@
                 display: flex;
                 position: fixed;
                 inset: 0;
-                top: 44px;
+                top: 48px;
                 bottom: 56px;
                 z-index: 50;
                 background: var(--bg-deep);
@@ -907,15 +908,87 @@
             #heroArea { display: none; }
             #emptyState { display: none; }
 
-            /* Mobile controls panel — full screen overlay above toolbar */
+            /* ===== SHARED MOBILE HEADER ===== */
+            .mobile-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                position: fixed;
+                top: 0; left: 0; right: 0;
+                z-index: 60;
+                padding: 10px 12px;
+                background: rgba(5, 13, 26, 0.85);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-bottom: 1px solid var(--border-glass);
+                min-height: 48px;
+            }
+            .mobile-header-back {
+                color: var(--accent);
+                display: flex;
+                align-items: center;
+                padding: 4px;
+                text-decoration: none;
+            }
+            .mobile-header-center {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
+                flex: 1;
+                min-width: 0;
+            }
+            .mobile-header-project {
+                font-size: 0.85rem;
+                font-weight: 700;
+                color: var(--text-primary);
+                max-width: 200px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .mobile-header-status {
+                font-size: 0.65rem;
+                font-weight: 600;
+                color: var(--text-muted);
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .mobile-header-status.active { color: #ef4444; }
+            .mobile-status-dot {
+                width: 6px; height: 6px;
+                border-radius: 50%;
+                background: var(--text-muted);
+            }
+            .mobile-header-status.active .mobile-status-dot {
+                background: #ef4444;
+                animation: pulse-dot 2s infinite;
+            }
+            @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+            .mobile-header-done {
+                padding: 6px 16px;
+                border-radius: 50px;
+                border: none;
+                background: var(--accent-secondary);
+                color: #fff;
+                font-size: 0.78rem;
+                font-weight: 700;
+                cursor: pointer;
+                font-family: 'Inter', sans-serif;
+                box-shadow: 0 0 12px rgba(0,158,126,0.3);
+                transition: all 0.2s;
+            }
+            .mobile-header-done:active { transform: scale(0.95); }
+
+            /* ===== MOBILE CONTROLS PANEL ===== */
             .mobile-controls-panel {
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
+                top: 48px;
+                left: 0; right: 0;
                 bottom: 56px;
                 padding: 0 20px;
                 text-align: center;
@@ -926,114 +999,77 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 16px;
+                gap: 24px;
                 width: 100%;
                 max-width: 320px;
             }
-            .mobile-status {
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: var(--text-muted);
-                padding: 6px 16px;
-                border-radius: 50px;
-                background: rgba(255,255,255,0.04);
-                border: 1px solid var(--border-glass);
+
+            /* Mic button with animated ring */
+            .mobile-controls-ring {
+                position: relative;
+                width: 160px;
+                height: 160px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
-            .mobile-status.active { color: #ef4444; background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); animation: pulse-status 2s infinite; }
-            @keyframes pulse-status { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+            .mobile-controls-ring::before {
+                content: '';
+                position: absolute;
+                inset: -8px;
+                border-radius: 50%;
+                border: 2px solid rgba(255,255,255,0.04);
+            }
+            .mobile-controls-ring::after {
+                content: '';
+                position: absolute;
+                inset: -20px;
+                border-radius: 50%;
+                border: 1px solid rgba(255,255,255,0.02);
+            }
             .mobile-mic-btn {
                 width: 140px;
                 height: 140px;
                 border-radius: 50%;
-                border: 3px solid rgba(255,255,255,0.1);
-                background: var(--bg-card);
-                color: var(--text-secondary);
+                border: 3px solid rgba(255,255,255,0.08);
+                background: linear-gradient(145deg, rgba(20,38,64,0.9), rgba(10,22,40,0.9));
+                color: var(--text-muted);
                 cursor: pointer;
                 transition: all 0.3s;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
             }
-            .mobile-mic-btn svg { width: 56px; height: 56px; }
+            .mobile-mic-btn svg { width: 52px; height: 52px; }
             .mobile-mic-btn:active { transform: scale(0.95); }
             .mobile-mic-btn.active {
-                border-color: #ef4444;
-                background: rgba(239,68,68,0.15);
+                border-color: rgba(239,68,68,0.5);
+                background: linear-gradient(145deg, rgba(239,68,68,0.2), rgba(239,68,68,0.1));
                 color: #ef4444;
-                box-shadow: 0 0 40px rgba(239,68,68,0.3);
-                animation: pulse-mic 2s infinite;
+                box-shadow: 0 0 48px rgba(239,68,68,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
             }
-            @keyframes pulse-mic {
-                0%,100% { box-shadow: 0 0 40px rgba(239,68,68,0.3); }
-                50% { box-shadow: 0 0 60px rgba(239,68,68,0.5); }
+            .mobile-mic-btn.active ~ .mobile-controls-ring::before,
+            .mobile-controls-ring:has(.active)::before {
+                border-color: rgba(239,68,68,0.15);
+                animation: ring-pulse 2s ease-in-out infinite;
+            }
+            @keyframes ring-pulse {
+                0%,100% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.05); opacity: 0.5; }
             }
             .mobile-timer {
-                font-size: 1.8rem;
-                font-weight: 300;
+                font-size: 2rem;
+                font-weight: 200;
                 color: var(--text-muted);
                 font-variant-numeric: tabular-nums;
+                letter-spacing: 0.05em;
             }
-            .mobile-actions {
-                display: flex;
-                gap: 12px;
-                width: 100%;
-                justify-content: center;
-                flex-wrap: wrap;
-            }
-            .mobile-action-btn {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                padding: 10px 16px;
-                border-radius: 50px;
-                border: 1px solid var(--border-glass);
-                background: rgba(255,255,255,0.04);
-                color: var(--text-secondary);
-                font-size: 0.78rem;
-                font-weight: 600;
-                cursor: pointer;
-                font-family: 'Inter', sans-serif;
-                transition: all 0.2s;
-            }
-            .mobile-action-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-            .mobile-action-btn:active { background: rgba(255,255,255,0.08); }
-            .mobile-action-btn.complete { background: rgba(0,158,126,0.12); color: var(--accent-secondary); border-color: rgba(0,158,126,0.3); }
             .mobile-hint {
-                font-size: 0.8rem;
+                font-size: 0.82rem;
                 color: var(--text-muted);
                 font-weight: 300;
                 line-height: 1.5;
-                max-width: 100%;
-                padding: 0 16px;
-            }
-            .mobile-controls-topbar {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 12px 16px;
-                border-bottom: 1px solid var(--border-glass);
-                background: rgba(10, 22, 40, 0.8);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-            }
-            .mobile-back-btn {
-                color: var(--accent);
-                font-size: 0.85rem;
-                font-weight: 600;
-                text-decoration: none;
-            }
-            .mobile-project-name {
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: var(--text-primary);
-                max-width: 200px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
             }
             .mobile-tabs {
                 display: flex !important;
@@ -1066,17 +1102,8 @@
             .mobile-tab.active { color: var(--accent); }
             .mobile-tab svg { width: 20px; height: 20px; }
 
-            /* Toolbar: hidden by default on mobile (controls tab is default), shown for other tabs */
-            .toolbar {
-                padding: 6px 10px; gap: 6px;
-                min-height: 44px;
-                display: none !important;
-                overflow-x: auto;
-                overflow-y: hidden;
-                -webkit-overflow-scrolling: touch;
-                flex-wrap: nowrap;
-            }
-            .toolbar.mobile-visible { display: flex !important; }
+            /* Toolbar: always hidden on mobile — replaced by shared mobile header */
+            .toolbar { display: none !important; }
             .toolbar > * { flex-shrink: 0; }
             .toolbar-brand { display: none; }
             .toolbar-divider { display: none; }
@@ -1292,34 +1319,30 @@
                 </div>
             </div>
 
+            <!-- Shared mobile header (visible on all tabs) -->
+            <div class="mobile-header" id="mobileHeader">
+                <a href="/dashboard" class="mobile-header-back">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                </a>
+                <div class="mobile-header-center">
+                    <span class="mobile-header-project" id="mobileProjectName">Project</span>
+                    <span class="mobile-header-status" id="mobileHeaderStatus">
+                        <span class="mobile-status-dot"></span> Ready
+                    </span>
+                </div>
+                <button class="mobile-header-done" onclick="showCompleteModal()">Done</button>
+            </div>
+
             <!-- Mobile controls panel (visible only on mobile) -->
             <div class="mobile-controls-panel" id="mobileControlsPanel">
-                <div class="mobile-controls-topbar">
-                    <a href="/dashboard" class="mobile-back-btn">← Back</a>
-                    <span class="mobile-project-name" id="mobileProjectName"></span>
-                    <span style="width:48px"></span>
-                </div>
                 <div class="mobile-controls-inner">
-                    <div class="mobile-status" id="mobileStatus">Ready</div>
-                    <button class="mobile-mic-btn" id="mobileMicBtn" onclick="toggleCall()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-                    </button>
-                    <div class="mobile-timer" id="mobileTimer">00:00</div>
-                    <div class="mobile-actions">
-                        <button class="mobile-action-btn" onclick="refreshRequirements()" title="Refresh requirements">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
-                            Refresh Reqs
-                        </button>
-                        <button class="mobile-action-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                            Attach
-                        </button>
-                        <button class="mobile-action-btn complete" onclick="showCompleteModal()" title="Done">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
-                            Done
+                    <div class="mobile-controls-ring">
+                        <button class="mobile-mic-btn" id="mobileMicBtn" onclick="toggleCall()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
                         </button>
                     </div>
-                    <p class="mobile-hint" id="mobileHint">Tap the mic to start talking. The AI will guide you through requirements gathering.</p>
+                    <div class="mobile-timer" id="mobileTimer">00:00</div>
+                    <p class="mobile-hint" id="mobileHint">Tap to start talking</p>
                 </div>
             </div>
 
@@ -1546,7 +1569,9 @@
         const mobileHint = document.getElementById('mobileHint');
         if (mobileMic) mobileMic.classList.add('active');
         if (mobileStatus) { mobileStatus.textContent = '● Recording'; mobileStatus.classList.add('active'); }
-        if (mobileHint) mobileHint.style.display = 'none';
+        if (mobileHint) mobileHint.textContent = 'Listening...';
+        const headerStatus = document.getElementById('mobileHeaderStatus');
+        if (headerStatus) { headerStatus.innerHTML = '<span class="mobile-status-dot"></span> Recording'; headerStatus.classList.add('active'); }
     }
     function exitCallUI() {
         document.getElementById('tbStartBtn').style.display = 'inline-flex';
@@ -1564,7 +1589,9 @@
         const mobileHint2 = document.getElementById('mobileHint');
         if (mobileMic2) mobileMic2.classList.remove('active');
         if (mobileStatus2) { mobileStatus2.textContent = 'Ready'; mobileStatus2.classList.remove('active'); }
-        if (mobileHint2) mobileHint2.style.display = 'block';
+        if (mobileHint2) mobileHint2.textContent = 'Tap to start talking';
+        const headerStatus2 = document.getElementById('mobileHeaderStatus');
+        if (headerStatus2) { headerStatus2.innerHTML = '<span class="mobile-status-dot"></span> Ready'; headerStatus2.classList.remove('active'); }
     }
 
     // ── Call actions ──
@@ -1574,14 +1601,9 @@
         const controlsPanel = document.getElementById('mobileControlsPanel');
         const reqPanel = document.querySelector('.req-panel');
         const sidebar = document.querySelector('.sidebar');
-        const toolbar = document.querySelector('.toolbar');
         if (controlsPanel) controlsPanel.style.display = 'none';
         if (reqPanel) reqPanel.classList.remove('mobile-open');
         if (sidebar) sidebar.classList.remove('mobile-open');
-        // Show toolbar only on requirements/chat tabs
-        if (toolbar) {
-            toolbar.classList.toggle('mobile-visible', tab !== 'controls');
-        }
         if (tab === 'controls') {
             if (controlsPanel) controlsPanel.style.display = 'flex';
         } else if (tab === 'requirements') {
