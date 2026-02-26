@@ -1007,8 +1007,8 @@
             /* Mic button with animated ring */
             .mobile-controls-ring {
                 position: relative;
-                width: 160px;
-                height: 160px;
+                width: 180px;
+                height: 180px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1016,60 +1016,83 @@
             .mobile-controls-ring::before {
                 content: '';
                 position: absolute;
-                inset: -8px;
+                inset: -12px;
                 border-radius: 50%;
-                border: 2px solid rgba(255,255,255,0.04);
+                border: 2px solid rgba(17,153,250,0.08);
+                pointer-events: none;
+                transition: all 0.3s;
             }
             .mobile-controls-ring::after {
                 content: '';
                 position: absolute;
-                inset: -20px;
+                inset: -28px;
                 border-radius: 50%;
-                border: 1px solid rgba(255,255,255,0.02);
-            }
-            .mobile-mic-btn {
-                width: 140px;
-                height: 140px;
-                border-radius: 50%;
-                border: 3px solid rgba(255,255,255,0.08);
-                background: linear-gradient(145deg, rgba(20,38,64,0.9), rgba(10,22,40,0.9));
-                color: var(--text-muted);
-                cursor: pointer;
+                border: 1px solid rgba(17,153,250,0.04);
+                pointer-events: none;
                 transition: all 0.3s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
             }
-            .mobile-mic-btn svg { width: 52px; height: 52px; }
-            .mobile-mic-btn:active { transform: scale(0.95); }
-            .mobile-mic-btn.active {
-                border-color: rgba(239,68,68,0.5);
-                background: linear-gradient(145deg, rgba(239,68,68,0.2), rgba(239,68,68,0.1));
-                color: #ef4444;
-                box-shadow: 0 0 48px rgba(239,68,68,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
-            }
-            .mobile-mic-btn.active ~ .mobile-controls-ring::before,
-            .mobile-controls-ring:has(.active)::before {
+            .mobile-controls-ring.active::before {
                 border-color: rgba(239,68,68,0.15);
                 animation: ring-pulse 2s ease-in-out infinite;
             }
+            .mobile-controls-ring.active::after {
+                border-color: rgba(239,68,68,0.08);
+                animation: ring-pulse 2s ease-in-out infinite 0.3s;
+            }
+            .mobile-mic-btn {
+                width: 150px;
+                height: 150px;
+                border-radius: 50%;
+                border: none;
+                background: linear-gradient(145deg, #1a3a5c, #0d1f35);
+                color: var(--accent);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow:
+                    0 0 40px rgba(17,153,250,0.15),
+                    0 8px 32px rgba(0,0,0,0.4),
+                    inset 0 1px 0 rgba(255,255,255,0.08),
+                    inset 0 -2px 4px rgba(0,0,0,0.2);
+                position: relative;
+                z-index: 2;
+            }
+            .mobile-mic-btn svg { width: 56px; height: 56px; filter: drop-shadow(0 0 8px rgba(17,153,250,0.3)); }
+            .mobile-mic-btn:active { transform: scale(0.92); }
+            .mobile-mic-btn.active {
+                background: linear-gradient(145deg, #4a1a1a, #2d0f0f);
+                color: #ff6b6b;
+                box-shadow:
+                    0 0 60px rgba(239,68,68,0.3),
+                    0 0 120px rgba(239,68,68,0.1),
+                    0 8px 32px rgba(0,0,0,0.4),
+                    inset 0 1px 0 rgba(255,255,255,0.08);
+                animation: mic-breathe 2s ease-in-out infinite;
+            }
+            .mobile-mic-btn.active svg { filter: drop-shadow(0 0 12px rgba(239,68,68,0.5)); }
+            @keyframes mic-breathe {
+                0%,100% { box-shadow: 0 0 60px rgba(239,68,68,0.3), 0 0 120px rgba(239,68,68,0.1), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08); }
+                50% { box-shadow: 0 0 80px rgba(239,68,68,0.4), 0 0 160px rgba(239,68,68,0.15), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08); }
+            }
             @keyframes ring-pulse {
                 0%,100% { transform: scale(1); opacity: 1; }
-                50% { transform: scale(1.05); opacity: 0.5; }
+                50% { transform: scale(1.06); opacity: 0.4; }
             }
             .mobile-timer {
-                font-size: 2rem;
+                font-size: 2.2rem;
                 font-weight: 200;
-                color: var(--text-muted);
+                color: rgba(240,244,248,0.3);
                 font-variant-numeric: tabular-nums;
-                letter-spacing: 0.05em;
+                letter-spacing: 0.08em;
             }
             .mobile-hint {
-                font-size: 0.82rem;
-                color: var(--text-muted);
-                font-weight: 300;
+                font-size: 0.88rem;
+                color: rgba(240,244,248,0.35);
+                font-weight: 400;
                 line-height: 1.5;
+                letter-spacing: 0.02em;
             }
             .mobile-tabs {
                 display: flex !important;
@@ -1568,6 +1591,8 @@
         const mobileStatus = document.getElementById('mobileStatus');
         const mobileHint = document.getElementById('mobileHint');
         if (mobileMic) mobileMic.classList.add('active');
+        const mobileRing = document.querySelector('.mobile-controls-ring');
+        if (mobileRing) mobileRing.classList.add('active');
         if (mobileStatus) { mobileStatus.textContent = '● Recording'; mobileStatus.classList.add('active'); }
         if (mobileHint) mobileHint.textContent = 'Listening...';
         const headerStatus = document.getElementById('mobileHeaderStatus');
@@ -1588,6 +1613,8 @@
         const mobileStatus2 = document.getElementById('mobileStatus');
         const mobileHint2 = document.getElementById('mobileHint');
         if (mobileMic2) mobileMic2.classList.remove('active');
+        const mobileRing2 = document.querySelector('.mobile-controls-ring');
+        if (mobileRing2) mobileRing2.classList.remove('active');
         if (mobileStatus2) { mobileStatus2.textContent = 'Ready'; mobileStatus2.classList.remove('active'); }
         if (mobileHint2) mobileHint2.textContent = 'Tap to start talking';
         const headerStatus2 = document.getElementById('mobileHeaderStatus');
