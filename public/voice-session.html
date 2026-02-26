@@ -1071,19 +1071,24 @@
                 padding: 6px 10px; gap: 6px;
                 min-height: 44px;
                 display: none !important;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap;
             }
             .toolbar.mobile-visible { display: flex !important; }
+            .toolbar > * { flex-shrink: 0; }
             .toolbar-brand { display: none; }
-            .toolbar-brand + .toolbar-divider { display: none; }
+            .toolbar-divider { display: none; }
+            .toolbar-spacer { display: none; }
             .toolbar-status { font-size: 0.7rem; padding: 4px 10px; }
             .toolbar-timer { font-size: 0.75rem; }
-            .toolbar-divider { display: none; }
             .save-indicator { font-size: 0.72rem; }
             .save-indicator svg { width: 12px; height: 12px; }
-            .tb-text-btn { padding: 6px 12px; font-size: 0.75rem; }
-            .tb-text-btn span { display: none; }
-            .tb-text-btn svg { width: 14px; height: 14px; }
-            .tb-icon { width: 32px; height: 32px; }
+            /* Hide action buttons from toolbar — they're in Controls tab now */
+            .tb-text-btn { display: none; }
+            .tb-icon { display: none; }
+            #fileInput { display: none; }
 
             /* Requirements header: scrollable tabs */
             .req-header {
