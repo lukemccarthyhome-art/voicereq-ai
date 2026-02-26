@@ -58,8 +58,26 @@
     .design-item { padding:16px; border-radius:12px; background:var(--bg-card); border:1px solid var(--border-glass); }
     .design-item h4 { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent); margin-bottom:6px; font-weight:600; }
     .full-width { grid-column: 1 / -1; }
+
+    /* Tabs */
+    .tabs { display:flex; gap:0; border-bottom:1px solid var(--border-glass); margin-bottom:20px; }
+    .tab { padding:12px 24px; font-size:0.88rem; font-weight:600; color: var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all 0.2s; user-select:none; }
+    .tab:hover { color: var(--text-secondary); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    /* Engine/Build Spec sections */
+    .engine-section { background: var(--bg-card); border:1px solid var(--border-glass); border-radius:12px; padding:18px 22px; margin-bottom:14px; }
+    .engine-section h4 { font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; color: var(--accent); margin-bottom:10px; font-weight:700; }
+    .engine-section .section-body { font-size:0.85rem; color: var(--text-secondary); }
+
+    .empty-state { text-align:center; padding:24px; color: var(--text-muted); font-size:0.88rem; }
+
     @media (max-width:768px) {
       .design-grid { grid-template-columns:1fr; }
+      .tabs { overflow-x:auto; }
+      .tab { padding:10px 16px; font-size:0.82rem; white-space:nowrap; }
     }
   </style>
 </head>
@@ -109,40 +127,148 @@
       </div>
     </div>
 
-    <% if (hasNewFormat && customerDesign) { %>
+    <% if (hasNewFormat) { %>
       <%
-        const custSections = [
-          { key: 'ExecutiveSummary', label: 'Executive Summary', icon: '📋' },
-          { key: 'HowItWorks', label: 'How It Works', icon: '⚡' },
-          { key: 'WhatYouGet', label: 'What You Get', icon: '🎯' },
-          { key: 'WhatWeNeedFromYou', label: 'What We Need From You', icon: '🤝' },
-          { key: 'TimelineAndInvestment', label: 'Timeline & Investment', icon: '📅' },
-          { key: 'AutomatedVsManual', label: 'Automated vs Manual', icon: '🤖' }
-        ];
-        const custKeys = Object.keys(customerDesign);
-        const extraCustKeys = custKeys.filter(k => !custSections.find(s => s.key === k));
+        const engineDesign = design.engineDesign || null;
       %>
-      <% custSections.forEach(sec => { %>
-        <% if (customerDesign[sec.key]) { %>
-          <div class="section-card">
-            <h3><span class="icon"><%= sec.icon %></span> <%= sec.label %></h3>
-            <% if (sec.key === 'HowItWorks') { %>
-              <div class="step-flow" id="howItWorksFlow"></div>
-              <noscript><div class="section-body"><%- renderText(customerDesign[sec.key]) %></div></noscript>
-            <% } else { %>
-              <div class="section-body"><%- renderText(customerDesign[sec.key]) %></div>
+
+      <!-- Tabbed layout -->
+      <div class="tabs">
+        <div class="tab active" data-tab="overview">📋 Design Overview</div>
+        <div class="tab" data-tab="workflows">🔄 Workflows</div>
+        <div class="tab" data-tab="assets">📦 Assets</div>
+        <div class="tab" data-tab="engine">⚙️ Build Spec</div>
+      </div>
+
+      <!-- Design Overview Tab -->
+      <div class="tab-content active" id="tab-overview">
+        <% if (customerDesign) { %>
+          <%
+            const custSections = [
+              { key: 'ExecutiveSummary', label: 'Executive Summary', icon: '📋' },
+              { key: 'HowItWorks', label: 'How It Works', icon: '⚡' },
+              { key: 'WhatYouGet', label: 'What You Get', icon: '🎯' },
+              { key: 'WhatWeNeedFromYou', label: 'What We Need From You', icon: '🤝' },
+              { key: 'AutomatedVsManual', label: 'Automated vs Manual', icon: '🤖' }
+            ];
+            const custKeys = Object.keys(customerDesign);
+            const extraCustKeys = custKeys.filter(k => !custSections.find(s => s.key === k));
+          %>
+          <% custSections.forEach(sec => { %>
+            <% if (customerDesign[sec.key]) { %>
+              <div class="section-card">
+                <h3><span class="icon"><%= sec.icon %></span> <%= sec.label %></h3>
+                <% if (sec.key === 'HowItWorks') { %>
+                  <div class="step-flow" id="howItWorksFlow"></div>
+                  <noscript><div class="section-body"><%- renderText(customerDesign[sec.key]) %></div></noscript>
+                <% } else { %>
+                  <div class="section-body"><%- renderText(customerDesign[sec.key]) %></div>
+                <% } %>
+              </div>
             <% } %>
-          </div>
+          <% }) %>
+          <% extraCustKeys.forEach(key => { %>
+            <% if (customerDesign[key]) { %>
+              <div class="section-card">
+                <h3><%= key.replace(/([A-Z])/g, ' $1').trim() %></h3>
+                <div class="section-body"><%- renderText(customerDesign[key]) %></div>
+              </div>
+            <% } %>
+          <% }) %>
+        <% } else { %>
+          <div class="empty-state">No design overview sections generated yet.</div>
         <% } %>
-      <% }) %>
-      <% extraCustKeys.forEach(key => { %>
-        <% if (customerDesign[key]) { %>
-          <div class="section-card">
-            <h3><%= key.replace(/([A-Z])/g, ' $1').trim() %></h3>
-            <div class="section-body"><%- renderText(customerDesign[key]) %></div>
+      </div>
+
+      <!-- Workflows Tab -->
+      <div class="tab-content" id="tab-workflows">
+        <% const workflows = design.workflows || []; %>
+        <% if (workflows.length > 0) { %>
+          <div style="display:grid;gap:16px;">
+            <% workflows.forEach((wf, i) => { %>
+              <div style="padding:20px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-glass);border-left:4px solid var(--accent);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                  <span style="background:var(--accent);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;"><%- wf.id ? wf.id.replace('wf-','') : (i+1) %></span>
+                  <h4 style="margin:0;color:var(--text-primary);font-size:1rem;"><%= wf.name %></h4>
+                </div>
+                <div style="display:grid;gap:8px;font-size:0.88rem;">
+                  <div><strong style="color:var(--accent);">Trigger:</strong> <span style="color:var(--text-secondary);"><%= wf.trigger %></span></div>
+                  <div style="color:var(--text-secondary);"><%- renderText(wf.summary || '') %></div>
+                  <% if (wf.steps) { %><div style="margin-top:8px;"><%- renderText(wf.steps) %></div><% } %>
+                  <% if (wf.outputsTo) { %><div style="margin-top:4px;"><strong style="color:var(--accent-purple);">&#8594; Outputs to:</strong> <span style="color:var(--text-secondary);"><%= wf.outputsTo %></span></div><% } %>
+                </div>
+              </div>
+            <% }) %>
           </div>
+        <% } else { %>
+          <div class="empty-state">No workflows identified yet.</div>
         <% } %>
-      <% }) %>
+      </div>
+
+      <!-- Assets Tab -->
+      <div class="tab-content" id="tab-assets">
+        <% const assets = design.assets || []; %>
+        <% if (assets.length > 0) { %>
+          <div style="display:grid;gap:16px;">
+            <% assets.forEach(asset => { %>
+              <div style="padding:20px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-glass);border-left:4px solid <%= asset.buildOrIntegrate === 'question' ? '#f59e0b' : (asset.buildOrIntegrate === 'build' ? '#009e7e' : '#8b5cf6') %>;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                  <h4 style="margin:0;color:var(--text-primary);font-size:0.95rem;"><%= asset.name %></h4>
+                  <span style="font-size:0.72rem;padding:2px 10px;border-radius:20px;background:rgba(17,153,250,0.12);color:var(--accent);font-weight:600;"><%= asset.type %></span>
+                  <% if (asset.buildOrIntegrate === 'question') { %>
+                    <span style="font-size:0.72rem;padding:2px 10px;border-radius:20px;background:rgba(245,158,11,0.12);color:#f59e0b;font-weight:600;">Needs Clarification</span>
+                  <% } else if (asset.buildOrIntegrate === 'build') { %>
+                    <span style="font-size:0.72rem;padding:2px 10px;border-radius:20px;background:rgba(0,158,126,0.12);color:#009e7e;font-weight:600;">Build New</span>
+                  <% } else { %>
+                    <span style="font-size:0.72rem;padding:2px 10px;border-radius:20px;background:rgba(139,92,246,0.12);color:#8b5cf6;font-weight:600;">Integrate</span>
+                  <% } %>
+                </div>
+                <div style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:8px;"><%= asset.purpose %></div>
+                <% if (asset.buildNotes) { %><div style="font-size:0.82rem;color:var(--text-muted);padding:10px;background:rgba(5,13,26,0.4);border-radius:8px;margin-bottom:8px;"><%- renderText(asset.buildNotes) %></div><% } %>
+                <% if (asset.integrationNotes) { %><div style="font-size:0.82rem;color:#f59e0b;font-style:italic;"><%= asset.integrationNotes %></div><% } %>
+                <% if (asset.linkedToWorkflows && asset.linkedToWorkflows.length) { %><div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;">Linked to: <%= asset.linkedToWorkflows.join(', ') %></div><% } %>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <div class="empty-state">No assets identified yet.</div>
+        <% } %>
+      </div>
+
+      <!-- Build Spec Tab -->
+      <div class="tab-content" id="tab-engine">
+        <% if (engineDesign) { %>
+          <%
+            const engSections = [
+              { key: 'TechnicalArchitecture', label: 'Technical Architecture', icon: '&#127959;&#65039;' },
+              { key: 'DataModel', label: 'Data Model', icon: '&#128451;&#65039;' },
+              { key: 'IntegrationsAndAPIs', label: 'Integrations & APIs', icon: '&#128268;' },
+              { key: 'BuildSpecification', label: 'Build Specification', icon: '&#128208;' },
+              { key: 'RiskRegister', label: 'Risk Register', icon: '&#9888;&#65039;' }
+            ];
+            const engKeys = Object.keys(engineDesign);
+            const extraEngKeys = engKeys.filter(k => !engSections.find(s => s.key === k));
+          %>
+          <% engSections.forEach(sec => { %>
+            <% if (engineDesign[sec.key]) { %>
+              <div class="engine-section">
+                <h4><%- sec.icon %> <%= sec.label %></h4>
+                <div class="section-body"><%- renderText(engineDesign[sec.key]) %></div>
+              </div>
+            <% } %>
+          <% }) %>
+          <% extraEngKeys.forEach(key => { %>
+            <% if (engineDesign[key]) { %>
+              <div class="engine-section">
+                <h4><%= key.replace(/([A-Z])/g, ' $1').trim() %></h4>
+                <div class="section-body"><%- renderText(engineDesign[key]) %></div>
+              </div>
+            <% } %>
+          <% }) %>
+        <% } else { %>
+          <div class="empty-state">No build specification available yet.</div>
+        <% } %>
+      </div>
 
     <% } else if (designSections) { %>
       <% if (designSummary) { %>
@@ -152,8 +278,8 @@
       <% } %>
       <div class="design-grid">
         <%
-          const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate','CostBenefitAnalysis','TechnicalReadiness','TechnicalReference'];
-          const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate', CostBenefitAnalysis:'Cost / Benefit Analysis', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' };
+          const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','TechnicalReadiness','TechnicalReference'];
+          const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements', RisksAndMitigations:'Risks & Mitigations', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' };
           const fullWidthSections = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Phase2Enhancements','TechnicalReference'];
           const allKeys = Object.keys(designSections);
           const orderedKeys = sectionOrder.filter(k => designSections[k]);
@@ -222,6 +348,18 @@
       <% } %>
     </div>
   </main>
+
+  <!-- Tab switching -->
+  <script>
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+  </script>
 
   <% if (design.flowchart || (hasNewFormat && customerDesign && customerDesign.HowItWorks)) { %>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
