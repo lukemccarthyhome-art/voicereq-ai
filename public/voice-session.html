@@ -923,49 +923,51 @@
                 border-bottom: 1px solid var(--border-glass);
                 min-height: 48px;
             }
-            .mobile-header-back {
-                color: var(--accent);
+            .mobile-header-left {
                 display: flex;
                 align-items: center;
-                padding: 4px;
-                text-decoration: none;
+                gap: 6px;
+                min-width: 80px;
             }
-            .mobile-header-center {
+            .mobile-header-status-icon {
                 display: flex;
-                flex-direction: column;
                 align-items: center;
-                gap: 2px;
-                flex: 1;
-                min-width: 0;
+                justify-content: center;
+                width: 28px; height: 28px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.06);
+                border: 1px solid var(--border-glass);
+                color: var(--text-muted);
+                transition: all 0.3s;
             }
+            .mobile-header-status-icon.active {
+                background: rgba(239,68,68,0.15);
+                border-color: rgba(239,68,68,0.3);
+                color: #ef4444;
+                animation: status-icon-pulse 2s infinite;
+            }
+            @keyframes status-icon-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } 50% { box-shadow: 0 0 8px rgba(239,68,68,0.3); } }
+            .mobile-header-status-label {
+                font-size: 0.72rem;
+                font-weight: 700;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                transition: color 0.3s;
+            }
+            .mobile-header-status-label.active { color: #ef4444; }
             .mobile-header-project {
-                font-size: 0.85rem;
+                font-size: 0.82rem;
                 font-weight: 700;
                 color: var(--text-primary);
-                max-width: 200px;
+                max-width: 160px;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
             }
-            .mobile-header-status {
-                font-size: 0.65rem;
-                font-weight: 600;
-                color: var(--text-muted);
-                display: flex;
-                align-items: center;
-                gap: 4px;
-            }
-            .mobile-header-status.active { color: #ef4444; }
-            .mobile-status-dot {
-                width: 6px; height: 6px;
-                border-radius: 50%;
-                background: var(--text-muted);
-            }
-            .mobile-header-status.active .mobile-status-dot {
-                background: #ef4444;
-                animation: pulse-dot 2s infinite;
-            }
-            @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
             .mobile-header-done {
                 padding: 6px 16px;
                 border-radius: 50px;
@@ -1007,8 +1009,8 @@
             /* Mic button with animated ring */
             .mobile-controls-ring {
                 position: relative;
-                width: 180px;
-                height: 180px;
+                width: 200px;
+                height: 200px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1016,65 +1018,80 @@
             .mobile-controls-ring::before {
                 content: '';
                 position: absolute;
-                inset: -12px;
+                inset: -6px;
                 border-radius: 50%;
-                border: 2px solid rgba(17,153,250,0.08);
+                border: 1.5px solid rgba(17,153,250,0.1);
                 pointer-events: none;
-                transition: all 0.3s;
+                transition: all 0.4s;
             }
             .mobile-controls-ring::after {
                 content: '';
                 position: absolute;
-                inset: -28px;
+                inset: -18px;
                 border-radius: 50%;
-                border: 1px solid rgba(17,153,250,0.04);
+                border: 1px solid rgba(17,153,250,0.05);
                 pointer-events: none;
-                transition: all 0.3s;
+                transition: all 0.4s;
             }
             .mobile-controls-ring.active::before {
-                border-color: rgba(239,68,68,0.15);
-                animation: ring-pulse 2s ease-in-out infinite;
+                border-color: rgba(239,68,68,0.2);
+                animation: ring-pulse 2.5s ease-in-out infinite;
             }
             .mobile-controls-ring.active::after {
-                border-color: rgba(239,68,68,0.08);
-                animation: ring-pulse 2s ease-in-out infinite 0.3s;
+                border-color: rgba(239,68,68,0.1);
+                animation: ring-pulse 2.5s ease-in-out infinite 0.4s;
             }
             .mobile-mic-btn {
-                width: 150px;
-                height: 150px;
+                width: 160px;
+                height: 160px;
                 border-radius: 50%;
-                border: none;
-                background: linear-gradient(145deg, #1a3a5c, #0d1f35);
+                border: 2px solid rgba(17,153,250,0.2);
+                background: radial-gradient(circle at 40% 35%, rgba(30,60,100,0.9) 0%, rgba(10,22,40,0.95) 70%);
                 color: var(--accent);
                 cursor: pointer;
-                transition: all 0.3s ease;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 box-shadow:
-                    0 0 40px rgba(17,153,250,0.15),
-                    0 8px 32px rgba(0,0,0,0.4),
-                    inset 0 1px 0 rgba(255,255,255,0.08),
-                    inset 0 -2px 4px rgba(0,0,0,0.2);
+                    0 0 60px rgba(17,153,250,0.12),
+                    0 0 100px rgba(17,153,250,0.06),
+                    0 12px 40px rgba(0,0,0,0.5),
+                    inset 0 2px 0 rgba(255,255,255,0.1),
+                    inset 0 -4px 8px rgba(0,0,0,0.3);
                 position: relative;
                 z-index: 2;
             }
-            .mobile-mic-btn svg { width: 56px; height: 56px; filter: drop-shadow(0 0 8px rgba(17,153,250,0.3)); }
-            .mobile-mic-btn:active { transform: scale(0.92); }
+            .mobile-mic-btn svg {
+                width: 60px; height: 60px;
+                filter: drop-shadow(0 0 12px rgba(17,153,250,0.4));
+                transition: all 0.3s;
+            }
+            .mobile-mic-btn:active { transform: scale(0.9); transition-duration: 0.1s; }
             .mobile-mic-btn.active {
-                background: linear-gradient(145deg, #4a1a1a, #2d0f0f);
+                border-color: rgba(239,68,68,0.3);
+                background: radial-gradient(circle at 40% 35%, rgba(100,30,30,0.9) 0%, rgba(40,10,10,0.95) 70%);
                 color: #ff6b6b;
                 box-shadow:
-                    0 0 60px rgba(239,68,68,0.3),
-                    0 0 120px rgba(239,68,68,0.1),
-                    0 8px 32px rgba(0,0,0,0.4),
-                    inset 0 1px 0 rgba(255,255,255,0.08);
-                animation: mic-breathe 2s ease-in-out infinite;
+                    0 0 80px rgba(239,68,68,0.25),
+                    0 0 160px rgba(239,68,68,0.1),
+                    0 0 240px rgba(239,68,68,0.05),
+                    0 12px 40px rgba(0,0,0,0.5),
+                    inset 0 2px 0 rgba(255,255,255,0.08),
+                    inset 0 -4px 8px rgba(0,0,0,0.3);
+                animation: mic-breathe 2.5s ease-in-out infinite;
             }
-            .mobile-mic-btn.active svg { filter: drop-shadow(0 0 12px rgba(239,68,68,0.5)); }
+            .mobile-mic-btn.active svg {
+                filter: drop-shadow(0 0 16px rgba(239,68,68,0.6));
+                animation: icon-glow 2.5s ease-in-out infinite;
+            }
             @keyframes mic-breathe {
-                0%,100% { box-shadow: 0 0 60px rgba(239,68,68,0.3), 0 0 120px rgba(239,68,68,0.1), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08); }
-                50% { box-shadow: 0 0 80px rgba(239,68,68,0.4), 0 0 160px rgba(239,68,68,0.15), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08); }
+                0%,100% { box-shadow: 0 0 80px rgba(239,68,68,0.25), 0 0 160px rgba(239,68,68,0.1), 0 0 240px rgba(239,68,68,0.05), 0 12px 40px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -4px 8px rgba(0,0,0,0.3); transform: scale(1); }
+                50% { box-shadow: 0 0 100px rgba(239,68,68,0.35), 0 0 200px rgba(239,68,68,0.15), 0 0 300px rgba(239,68,68,0.08), 0 12px 40px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -4px 8px rgba(0,0,0,0.3); transform: scale(1.03); }
+            }
+            @keyframes icon-glow {
+                0%,100% { filter: drop-shadow(0 0 16px rgba(239,68,68,0.6)); }
+                50% { filter: drop-shadow(0 0 24px rgba(239,68,68,0.8)); }
             }
             @keyframes ring-pulse {
                 0%,100% { transform: scale(1); opacity: 1; }
@@ -1344,15 +1361,13 @@
 
             <!-- Shared mobile header (visible on all tabs) -->
             <div class="mobile-header" id="mobileHeader">
-                <a href="/dashboard" class="mobile-header-back">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                </a>
-                <div class="mobile-header-center">
-                    <span class="mobile-header-project" id="mobileProjectName">Project</span>
-                    <span class="mobile-header-status" id="mobileHeaderStatus">
-                        <span class="mobile-status-dot"></span> Ready
+                <div class="mobile-header-left" id="mobileHeaderLeft">
+                    <span class="mobile-header-status-icon" id="mobileHeaderStatusIcon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
                     </span>
+                    <span class="mobile-header-status-label" id="mobileHeaderStatusLabel">Ready</span>
                 </div>
+                <span class="mobile-header-project" id="mobileProjectName">Project</span>
                 <button class="mobile-header-done" onclick="showCompleteModal()">Done</button>
             </div>
 
@@ -1595,8 +1610,10 @@
         if (mobileRing) mobileRing.classList.add('active');
         if (mobileStatus) { mobileStatus.textContent = '● Recording'; mobileStatus.classList.add('active'); }
         if (mobileHint) mobileHint.textContent = 'Listening...';
-        const headerStatus = document.getElementById('mobileHeaderStatus');
-        if (headerStatus) { headerStatus.innerHTML = '<span class="mobile-status-dot"></span> Recording'; headerStatus.classList.add('active'); }
+        const headerIcon = document.getElementById('mobileHeaderStatusIcon');
+        const headerLabel = document.getElementById('mobileHeaderStatusLabel');
+        if (headerIcon) headerIcon.classList.add('active');
+        if (headerLabel) { headerLabel.textContent = 'Recording'; headerLabel.classList.add('active'); }
     }
     function exitCallUI() {
         document.getElementById('tbStartBtn').style.display = 'inline-flex';
@@ -1617,8 +1634,10 @@
         if (mobileRing2) mobileRing2.classList.remove('active');
         if (mobileStatus2) { mobileStatus2.textContent = 'Ready'; mobileStatus2.classList.remove('active'); }
         if (mobileHint2) mobileHint2.textContent = 'Tap to start talking';
-        const headerStatus2 = document.getElementById('mobileHeaderStatus');
-        if (headerStatus2) { headerStatus2.innerHTML = '<span class="mobile-status-dot"></span> Ready'; headerStatus2.classList.remove('active'); }
+        const headerIcon2 = document.getElementById('mobileHeaderStatusIcon');
+        const headerLabel2 = document.getElementById('mobileHeaderStatusLabel');
+        if (headerIcon2) headerIcon2.classList.remove('active');
+        if (headerLabel2) { headerLabel2.textContent = 'Ready'; headerLabel2.classList.remove('active'); }
     }
 
     // ── Call actions ──
