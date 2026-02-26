@@ -935,27 +935,29 @@
                 justify-content: center;
                 width: 28px; height: 28px;
                 border-radius: 50%;
-                background: rgba(255,255,255,0.06);
-                border: 1px solid var(--border-glass);
-                color: var(--text-muted);
+                background: rgba(0,220,160,0.15);
+                border: 1.5px solid rgba(0,220,160,0.4);
+                color: #00e6a0;
                 transition: all 0.3s;
+                box-shadow: 0 0 8px rgba(0,220,160,0.15);
             }
             .mobile-header-status-icon.active {
                 background: rgba(239,68,68,0.15);
-                border-color: rgba(239,68,68,0.3);
-                color: #ef4444;
+                border-color: rgba(239,68,68,0.4);
+                color: #ff5050;
+                box-shadow: 0 0 8px rgba(239,68,68,0.2);
                 animation: status-icon-pulse 2s infinite;
             }
-            @keyframes status-icon-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } 50% { box-shadow: 0 0 8px rgba(239,68,68,0.3); } }
+            @keyframes status-icon-pulse { 0%,100% { box-shadow: 0 0 8px rgba(239,68,68,0.2); } 50% { box-shadow: 0 0 14px rgba(239,68,68,0.4); } }
             .mobile-header-status-label {
                 font-size: 0.72rem;
                 font-weight: 700;
-                color: var(--text-muted);
+                color: #00e6a0;
                 text-transform: uppercase;
                 letter-spacing: 0.06em;
                 transition: color 0.3s;
             }
-            .mobile-header-status-label.active { color: #ef4444; }
+            .mobile-header-status-label.active { color: #ff5050; }
             .mobile-header-project {
                 font-size: 0.82rem;
                 font-weight: 700;
@@ -1365,7 +1367,7 @@
                     <span class="mobile-header-status-icon" id="mobileHeaderStatusIcon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
                     </span>
-                    <span class="mobile-header-status-label" id="mobileHeaderStatusLabel">Ready</span>
+                    <span class="mobile-header-status-label" id="mobileHeaderStatusLabel">Talk</span>
                 </div>
                 <span class="mobile-header-project" id="mobileProjectName">Project</span>
                 <button class="mobile-header-done" onclick="showCompleteModal()">Done</button>
@@ -1637,7 +1639,7 @@
         const headerIcon2 = document.getElementById('mobileHeaderStatusIcon');
         const headerLabel2 = document.getElementById('mobileHeaderStatusLabel');
         if (headerIcon2) headerIcon2.classList.remove('active');
-        if (headerLabel2) { headerLabel2.textContent = 'Ready'; headerLabel2.classList.remove('active'); }
+        if (headerLabel2) { headerLabel2.textContent = 'Talk'; headerLabel2.classList.remove('active'); }
     }
 
     // ── Call actions ──
@@ -1806,6 +1808,9 @@
         div.textContent = text;
         panel.appendChild(div);
         panel.scrollTop = panel.scrollHeight;
+        // Also scroll the sidebar-content container (for mobile overlay)
+        const sc = panel.closest('.sidebar-content');
+        if (sc) sc.scrollTop = sc.scrollHeight;
         return div;
     }
     function renderTranscript() {
@@ -1816,6 +1821,12 @@
             return;
         }
         messages.forEach(m => addTranscriptMsg(m.role, m.text));
+        // Ensure scrolled to bottom after full render
+        setTimeout(() => {
+            panel.scrollTop = panel.scrollHeight;
+            const sc = panel.closest('.sidebar-content');
+            if (sc) sc.scrollTop = sc.scrollHeight;
+        }, 50);
     }
 
     // ── Requirements rendering (v2 sections with badges) ──
@@ -2175,7 +2186,7 @@ async function submitFeedback(){
     <div class="mobile-tabs" id="mobileTabs">
         <button class="mobile-tab active" data-tab="controls" onclick="switchMobileTab('controls')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-            Controls
+            Talk
         </button>
         <button class="mobile-tab" data-tab="requirements" onclick="switchMobileTab('requirements')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
