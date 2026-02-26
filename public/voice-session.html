@@ -994,7 +994,7 @@
                 bottom: 56px;
                 padding: 0 20px;
                 text-align: center;
-                background: var(--bg-deep);
+                background: radial-gradient(ellipse at center 40%, rgba(0,30,25,0.3) 0%, #040b10 50%, #020608 100%);
                 z-index: 45;
             }
             .mobile-controls-inner {
@@ -1018,80 +1018,80 @@
             .mobile-controls-ring::before {
                 content: '';
                 position: absolute;
-                inset: -6px;
+                inset: -4px;
                 border-radius: 50%;
-                border: 1.5px solid rgba(17,153,250,0.1);
+                border: 1.5px solid rgba(0,200,160,0.12);
                 pointer-events: none;
                 transition: all 0.4s;
             }
             .mobile-controls-ring::after {
                 content: '';
                 position: absolute;
-                inset: -18px;
+                inset: -16px;
                 border-radius: 50%;
-                border: 1px solid rgba(17,153,250,0.05);
+                border: 1px solid rgba(0,200,160,0.06);
                 pointer-events: none;
                 transition: all 0.4s;
             }
             .mobile-controls-ring.active::before {
-                border-color: rgba(239,68,68,0.2);
+                border-color: rgba(255,80,80,0.2);
                 animation: ring-pulse 2.5s ease-in-out infinite;
             }
             .mobile-controls-ring.active::after {
-                border-color: rgba(239,68,68,0.1);
+                border-color: rgba(255,80,80,0.12);
                 animation: ring-pulse 2.5s ease-in-out infinite 0.4s;
             }
             .mobile-mic-btn {
                 width: 160px;
                 height: 160px;
                 border-radius: 50%;
-                border: 2px solid rgba(17,153,250,0.2);
-                background: radial-gradient(circle at 40% 35%, rgba(30,60,100,0.9) 0%, rgba(10,22,40,0.95) 70%);
-                color: var(--accent);
+                border: 3px solid rgba(0,200,160,0.4);
+                background: radial-gradient(circle at 45% 40%, #0d4a3a 0%, #05201a 60%, #020e0a 100%);
+                color: #00e6b8;
                 cursor: pointer;
                 transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 box-shadow:
-                    0 0 60px rgba(17,153,250,0.12),
-                    0 0 100px rgba(17,153,250,0.06),
-                    0 12px 40px rgba(0,0,0,0.5),
-                    inset 0 2px 0 rgba(255,255,255,0.1),
-                    inset 0 -4px 8px rgba(0,0,0,0.3);
+                    0 0 50px rgba(0,200,160,0.2),
+                    0 0 100px rgba(0,200,160,0.08),
+                    0 16px 48px rgba(0,0,0,0.6),
+                    inset 0 2px 0 rgba(255,255,255,0.08),
+                    inset 0 -4px 12px rgba(0,0,0,0.4);
                 position: relative;
                 z-index: 2;
             }
             .mobile-mic-btn svg {
-                width: 60px; height: 60px;
-                filter: drop-shadow(0 0 12px rgba(17,153,250,0.4));
+                width: 62px; height: 62px;
+                filter: drop-shadow(0 0 14px rgba(0,230,184,0.5));
                 transition: all 0.3s;
             }
-            .mobile-mic-btn:active { transform: scale(0.9); transition-duration: 0.1s; }
+            .mobile-mic-btn:active { transform: scale(0.88); transition-duration: 0.1s; }
             .mobile-mic-btn.active {
-                border-color: rgba(239,68,68,0.3);
-                background: radial-gradient(circle at 40% 35%, rgba(100,30,30,0.9) 0%, rgba(40,10,10,0.95) 70%);
+                border-color: rgba(255,80,80,0.5);
+                background: radial-gradient(circle at 45% 40%, #5a1515 0%, #2a0808 60%, #120303 100%);
                 color: #ff6b6b;
                 box-shadow:
-                    0 0 80px rgba(239,68,68,0.25),
-                    0 0 160px rgba(239,68,68,0.1),
-                    0 0 240px rgba(239,68,68,0.05),
-                    0 12px 40px rgba(0,0,0,0.5),
-                    inset 0 2px 0 rgba(255,255,255,0.08),
-                    inset 0 -4px 8px rgba(0,0,0,0.3);
+                    0 0 70px rgba(255,80,80,0.3),
+                    0 0 140px rgba(255,80,80,0.12),
+                    0 0 220px rgba(255,80,80,0.05),
+                    0 16px 48px rgba(0,0,0,0.6),
+                    inset 0 2px 0 rgba(255,255,255,0.06),
+                    inset 0 -4px 12px rgba(0,0,0,0.4);
                 animation: mic-breathe 2.5s ease-in-out infinite;
             }
             .mobile-mic-btn.active svg {
-                filter: drop-shadow(0 0 16px rgba(239,68,68,0.6));
+                filter: drop-shadow(0 0 18px rgba(255,80,80,0.7));
                 animation: icon-glow 2.5s ease-in-out infinite;
             }
             @keyframes mic-breathe {
-                0%,100% { box-shadow: 0 0 80px rgba(239,68,68,0.25), 0 0 160px rgba(239,68,68,0.1), 0 0 240px rgba(239,68,68,0.05), 0 12px 40px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -4px 8px rgba(0,0,0,0.3); transform: scale(1); }
-                50% { box-shadow: 0 0 100px rgba(239,68,68,0.35), 0 0 200px rgba(239,68,68,0.15), 0 0 300px rgba(239,68,68,0.08), 0 12px 40px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -4px 8px rgba(0,0,0,0.3); transform: scale(1.03); }
+                0%,100% { box-shadow: 0 0 70px rgba(255,80,80,0.3), 0 0 140px rgba(255,80,80,0.12), 0 0 220px rgba(255,80,80,0.05), 0 16px 48px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.06), inset 0 -4px 12px rgba(0,0,0,0.4); transform: scale(1); }
+                50% { box-shadow: 0 0 90px rgba(255,80,80,0.4), 0 0 180px rgba(255,80,80,0.18), 0 0 280px rgba(255,80,80,0.08), 0 16px 48px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.06), inset 0 -4px 12px rgba(0,0,0,0.4); transform: scale(1.03); }
             }
             @keyframes icon-glow {
-                0%,100% { filter: drop-shadow(0 0 16px rgba(239,68,68,0.6)); }
-                50% { filter: drop-shadow(0 0 24px rgba(239,68,68,0.8)); }
+                0%,100% { filter: drop-shadow(0 0 18px rgba(255,80,80,0.7)); }
+                50% { filter: drop-shadow(0 0 28px rgba(255,80,80,0.9)); }
             }
             @keyframes ring-pulse {
                 0%,100% { transform: scale(1); opacity: 1; }
@@ -1361,7 +1361,7 @@
 
             <!-- Shared mobile header (visible on all tabs) -->
             <div class="mobile-header" id="mobileHeader">
-                <div class="mobile-header-left" id="mobileHeaderLeft">
+                <div class="mobile-header-left" id="mobileHeaderLeft" onclick="switchMobileTab('controls')" style="cursor:pointer;">
                     <span class="mobile-header-status-icon" id="mobileHeaderStatusIcon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
                     </span>
