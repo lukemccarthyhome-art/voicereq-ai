@@ -160,6 +160,9 @@ app.use('/uploads', async (req, res, next) => {
 }, express.static(uploadsDir));
 fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
 
+// Redirect /favicon.ico to SVG favicon
+app.get('/favicon.ico', (req, res) => res.redirect(301, '/favicon.svg'));
+
 // Serve static files with no-cache
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
