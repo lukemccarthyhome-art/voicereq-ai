@@ -2127,12 +2127,10 @@
             try{
                 const res=await fetch('/api/projects/'+projectId+'/complete',{method:'POST',headers:{'Content-Type':'application/json'}});
                 if(!res.ok)throw new Error('Failed');
-                showToastMsg('✅ Project marked complete — sent for design review');
-                setTimeout(()=>{window.location.href='/projects';},1500);
+                window.location.replace('/dashboard');
             }catch(e){console.error(e);showToastMsg('⚠️ Failed: '+e.message);}
         } else {
-            showToastMsg('💾 Saved — pick up where you left off');
-            setTimeout(()=>{window.location.href='/projects';},1500);
+            window.location.replace('/dashboard');
         }
     }
 
