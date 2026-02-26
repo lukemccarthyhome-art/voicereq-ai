@@ -123,6 +123,13 @@ Upload via Multer (10MB limit) to `DATA_DIR/uploads`. Parsers: pdf-parse (PDF), 
 
 Hosted on Render.com (`render.yaml`). Build: `npm install`. Start: `node server.js`. Persistent disk at `/var/data` for uploads and SQLite data. PostgreSQL for production persistence.
 
+**IMPORTANT: Dual-branch push required.** Local development is on `master`, but Render auto-deploys from `main`. After every push, always push to both:
+```bash
+git push origin master        # push to master
+git push origin master:main   # push master to main for Render deploy
+```
+If you only push to `master`, changes will NOT go live on Render.
+
 ### Security Stack
 
 Helmet (HTTP headers), express-rate-limit (300 req/15min general, 10 login/15min, 20 uploads/hr), XSS sanitization on request bodies, audit logging to database, Telegram alerts for security events.
