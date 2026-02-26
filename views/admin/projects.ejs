@@ -35,8 +35,16 @@
         .btn-secondary:hover { background: rgba(255,255,255,0.15); }
         .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-glass); }
-        .table th { background: rgba(15,29,50,0.4); font-weight: 600; color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .table th { background: rgba(15,29,50,0.4); font-weight: 600; color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; user-select: none; white-space: nowrap; transition: color 0.2s; }
+        .table th:hover { color: var(--accent); }
+        .table th:last-child { cursor: default; }
+        .table th .sort-arrow { opacity: 0.3; margin-left: 4px; font-size: 0.7rem; }
+        .table th.sort-active .sort-arrow { opacity: 1; color: var(--accent); }
         .table tbody tr:hover { background: rgba(17,153,250,0.05); }
+        .table tbody tr.hidden-row { display: none; }
+        .search-bar { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); border-radius: var(--radius-pill); padding: 8px 16px; font-size: 0.85rem; color: var(--text-primary); outline: none; font-family: inherit; width: 260px; transition: border 0.2s; }
+        .search-bar:focus { border-color: var(--accent); }
+        .search-bar::placeholder { color: var(--text-muted); }
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
         .empty-state .emoji { font-size: 48px; margin-bottom: 16px; display: block; }
         .empty-state h3 { margin-bottom: 8px; color: var(--text-secondary); }
@@ -51,8 +59,9 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>📊 All Projects</h2>
         <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Search projects or customers..." oninput="filterTable()">
             <a href="/admin/projects/archived" style="color:var(--accent);text-decoration:none;font-size:14px;margin-right:8px;">📦 View Archived</a>
-            <span style="color: var(--text-muted); font-size: 14px; margin-right: 8px;"><%= projects.length %> total projects</span>
+            <span style="color: var(--text-muted); font-size: 14px; margin-right: 8px;" id="projectCount"><%= projects.length %> total projects</span>
             <button onclick="document.getElementById('importModal').style.display='flex'" class="btn btn-sm">📥 Import Project</button>
         </div>
     </div>
@@ -61,11 +70,11 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Project Details</th>
-                    <th>Customer</th>
-                    <th>Activity</th>
-                    <th>Status</th>
-                    <th>Last Updated</th>
+                    <th data-col="0" onclick="sortTable(0)">Project Details <span class="sort-arrow">▲</span></th>
+                    <th data-col="1" onclick="sortTable(1)">Customer <span class="sort-arrow">▲</span></th>
+                    <th data-col="2" onclick="sortTable(2)">Activity <span class="sort-arrow">▲</span></th>
+                    <th data-col="3" onclick="sortTable(3)">Status <span class="sort-arrow">▲</span></th>
+                    <th data-col="4" onclick="sortTable(4)">Last Updated <span class="sort-arrow">▲</span></th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -172,6 +181,75 @@ async function exportProject(projectId) {
         alert('Export failed: ' + e.message);
     }
 }
+
+// ── Search / Filter ──
+function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const table = document.querySelector('.table');
+    if (!table) return;
+    const rows = table.querySelectorAll('tbody tr');
+    let visible = 0;
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const match = !q || text.includes(q);
+        row.classList.toggle('hidden-row', !match);
+        if (match) visible++;
+    });
+    const countEl = document.getElementById('projectCount');
+    if (countEl) countEl.textContent = q ? visible + ' of <%= projects.length %> projects' : '<%= projects.length %> total projects';
+}
+
+// ── Sortable columns ──
+let currentSort = { col: -1, asc: true };
+function sortTable(colIdx) {
+    const table = document.querySelector('.table');
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const headers = table.querySelectorAll('th');
+
+    // Toggle direction
+    if (currentSort.col === colIdx) { currentSort.asc = !currentSort.asc; }
+    else { currentSort.col = colIdx; currentSort.asc = true; }
+
+    // Update header styling
+    headers.forEach(th => {
+        th.classList.remove('sort-active');
+        const arrow = th.querySelector('.sort-arrow');
+        if (arrow) arrow.textContent = '▲';
+    });
+    const activeHeader = headers[colIdx];
+    activeHeader.classList.add('sort-active');
+    const arrow = activeHeader.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = currentSort.asc ? '▲' : '▼';
+
+    rows.sort((a, b) => {
+        const aCell = a.cells[colIdx];
+        const bCell = b.cells[colIdx];
+        if (!aCell || !bCell) return 0;
+        let aVal = aCell.textContent.trim();
+        let bVal = bCell.textContent.trim();
+
+        // Try numeric (for activity column — extract first number)
+        const aNum = parseFloat(aVal.replace(/[^\d.-]/g, ''));
+        const bNum = parseFloat(bVal.replace(/[^\d.-]/g, ''));
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            return currentSort.asc ? aNum - bNum : bNum - aNum;
+        }
+        // Try date
+        const aDate = new Date(aVal);
+        const bDate = new Date(bVal);
+        if (!isNaN(aDate) && !isNaN(bDate) && aVal.includes('/')) {
+            return currentSort.asc ? aDate - bDate : bDate - aDate;
+        }
+        // String
+        return currentSort.asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+document.getElementById('searchInput') && document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Escape') { e.target.value = ''; filterTable(); } });
 </script>
     </main>
 

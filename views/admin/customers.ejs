@@ -24,8 +24,16 @@
         .btn-secondary { background: rgba(255,255,255,0.1); box-shadow: none; border: 1px solid var(--border-glass); }
         .table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         .table th, .table td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-glass); }
-        .table th { background: rgba(15,29,50,0.4); font-weight: 600; color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .table th { background: rgba(15,29,50,0.4); font-weight: 600; color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; user-select: none; white-space: nowrap; transition: color 0.2s; }
+        .table th:hover { color: var(--accent); }
+        .table th:last-child { cursor: default; }
+        .table th .sort-arrow { opacity: 0.3; margin-left: 4px; font-size: 0.7rem; }
+        .table th.sort-active .sort-arrow { opacity: 1; color: var(--accent); }
         .table tbody tr:hover { background: rgba(17,153,250,0.05); }
+        .table tbody tr.hidden-row { display: none; }
+        .search-bar { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); border-radius: var(--radius-pill); padding: 8px 16px; font-size: 0.85rem; color: var(--text-primary); outline: none; font-family: inherit; width: 260px; transition: border 0.2s; }
+        .search-bar:focus { border-color: var(--accent); }
+        .search-bar::placeholder { color: var(--text-muted); }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-secondary); font-size: 0.88rem; }
         .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border-glass); border-radius: 12px; font-size: 14px; transition: all 0.2s; background: rgba(5,13,26,0.6); color: var(--text-primary); }
@@ -43,7 +51,11 @@
         <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>👥 Customer Management</h2>
-        <button onclick="showCreateForm()" class="btn btn-success">➕ Add Customer</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Search customers..." oninput="filterTable()">
+            <span style="color: var(--text-muted); font-size: 14px;" id="customerCount"><%= customers.length %> customers</span>
+            <button onclick="showCreateForm()" class="btn btn-success btn-sm">➕ Add Customer</button>
+        </div>
     </div>
 
     <div id="createForm" class="card" style="display: none; background: rgba(17,153,250,0.05); border: 2px solid var(--accent);">
@@ -80,12 +92,12 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Customer Details</th>
-                    <th>Company</th>
-                    <th>Status</th>
-                    <th>Projects</th>
-                    <th>Last Login</th>
-                    <th>Joined</th>
+                    <th data-col="0" onclick="sortTable(0)">Customer Details <span class="sort-arrow">▲</span></th>
+                    <th data-col="1" onclick="sortTable(1)">Company <span class="sort-arrow">▲</span></th>
+                    <th data-col="2" onclick="sortTable(2)">Status <span class="sort-arrow">▲</span></th>
+                    <th data-col="3" onclick="sortTable(3)">Projects <span class="sort-arrow">▲</span></th>
+                    <th data-col="4" onclick="sortTable(4)">Last Login <span class="sort-arrow">▲</span></th>
+                    <th data-col="5" onclick="sortTable(5)">Joined <span class="sort-arrow">▲</span></th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -225,6 +237,71 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 if (window.location.search.includes('action=create')) { showCreateForm(); }
+
+// ── Search / Filter ──
+function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const table = document.querySelector('.table');
+    if (!table) return;
+    const rows = table.querySelectorAll('tbody tr');
+    let visible = 0;
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const match = !q || text.includes(q);
+        row.classList.toggle('hidden-row', !match);
+        if (match) visible++;
+    });
+    const countEl = document.getElementById('customerCount');
+    if (countEl) countEl.textContent = q ? visible + ' of <%= customers.length %> customers' : '<%= customers.length %> customers';
+}
+
+// ── Sortable columns ──
+let currentSort = { col: -1, asc: true };
+function sortTable(colIdx) {
+    const table = document.querySelector('.table');
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const headers = table.querySelectorAll('th');
+
+    if (currentSort.col === colIdx) { currentSort.asc = !currentSort.asc; }
+    else { currentSort.col = colIdx; currentSort.asc = true; }
+
+    headers.forEach(th => {
+        th.classList.remove('sort-active');
+        const arrow = th.querySelector('.sort-arrow');
+        if (arrow) arrow.textContent = '▲';
+    });
+    const activeHeader = headers[colIdx];
+    activeHeader.classList.add('sort-active');
+    const arrow = activeHeader.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = currentSort.asc ? '▲' : '▼';
+
+    rows.sort((a, b) => {
+        const aCell = a.cells[colIdx];
+        const bCell = b.cells[colIdx];
+        if (!aCell || !bCell) return 0;
+        let aVal = aCell.textContent.trim();
+        let bVal = bCell.textContent.trim();
+
+        const aNum = parseFloat(aVal.replace(/[^\d.-]/g, ''));
+        const bNum = parseFloat(bVal.replace(/[^\d.-]/g, ''));
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            return currentSort.asc ? aNum - bNum : bNum - aNum;
+        }
+        const aDate = new Date(aVal);
+        const bDate = new Date(bVal);
+        if (!isNaN(aDate) && !isNaN(bDate) && aVal.includes('/')) {
+            return currentSort.asc ? aDate - bDate : bDate - aDate;
+        }
+        return currentSort.asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+document.getElementById('searchInput') && document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Escape') { e.target.value = ''; filterTable(); } });
+
 document.getElementById('passwordForm').addEventListener('submit', function(e) {
     const newPassword = document.getElementById('newPasswordField').value;
     const confirmPassword = document.getElementById('confirmPasswordField').value;
