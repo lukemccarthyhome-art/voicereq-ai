@@ -181,6 +181,10 @@ router.post('/login', loginLimiter, async (req, res) => {
       maxAge: 2 * 60 * 60 * 1000
     });
 
+    if (!user.mfa_secret) {
+      return res.redirect('/profile/mfa/prompt');
+    }
+
     res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
   } catch (e) {
     console.error('Login error:', e);
@@ -194,6 +198,71 @@ router.get('/logout', async (req, res) => {
   res.redirect('/login');
 });
 
+// --- Shared OAuth login handler ---
+async function handleOAuthLogin(req, res, email, displayName, provider) {
+  if (!email) return res.redirect(`/login?error=No+email+from+${provider}`);
+
+  let user = await db.getUser(email);
+
+  if (user) {
+    if (user.approved === 0) {
+      return res.render('login', { error: 'Your account is pending approval. We\'ll be in touch soon.', email: '' });
+    }
+    sendSecurityAlert(`${provider} Login`, { email: user.email, ip: req.ip, userAgent: req.get('User-Agent') });
+    await db.logAction(user.id, 'login', { email: user.email, method: provider.toLowerCase() }, req.ip);
+
+    if (user.mfa_secret) {
+      const mfaToken = require('jsonwebtoken').sign(
+        { id: user.id, partial: true },
+        auth.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
+      res.cookie('mfaPending', mfaToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 300000 });
+      return res.redirect('/login/mfa');
+    }
+
+    const token = require('jsonwebtoken').sign(
+      { id: user.id, email: user.email, role: user.role, name: user.name },
+      auth.JWT_SECRET,
+      { expiresIn: '2h' }
+    );
+    res.cookie('authToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 2 * 60 * 60 * 1000
+    });
+
+    if (!user.mfa_secret) {
+      return res.redirect('/profile/mfa/prompt');
+    }
+
+    return res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
+  }
+
+  const bcrypt = require('bcryptjs');
+  const placeholderHash = bcrypt.hashSync(require('crypto').randomBytes(32).toString('hex'), 10);
+  await db.createPendingUser(email, displayName, '', '', placeholderHash);
+
+  const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+  const tgChat = process.env.TELEGRAM_CHAT_ID;
+  if (tgToken && tgChat) {
+    try {
+      const tgMsg = `🆕 New ${provider} signup!\n\nName: ${displayName}\nEmail: ${email}\n\nAccount is pending approval.`;
+      await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: tgChat, text: tgMsg })
+      });
+    } catch (err) { console.error('Telegram notify failed:', err.message); }
+  }
+
+  const welcome = emails.welcomeEmail(displayName);
+  sendMortiEmail(email, welcome.subject, welcome.html).catch(() => {});
+
+  res.render('login', { error: null, success: 'Account created! We\'ll review and approve it shortly.', email: '' });
+}
+
 // --- Google OAuth Routes ---
 router.get('/auth/google', (req, res, next) => {
   if (!process.env.GOOGLE_OAUTH_CLIENT_ID) return res.redirect('/login?error=Google+sign-in+not+configured');
@@ -206,69 +275,29 @@ router.get('/auth/google/callback', (req, res, next) => {
     try {
       const email = profile.emails && profile.emails[0] && profile.emails[0].value;
       const displayName = profile.displayName || (email ? email.split('@')[0] : 'Google User');
-      if (!email) return res.redirect('/login?error=No+email+from+Google');
-
-      let user = await db.getUser(email);
-
-      if (user) {
-        if (user.approved === 0) {
-          return res.render('login', { error: 'Your account is pending approval. We\'ll be in touch soon.', email: '' });
-        }
-        sendSecurityAlert('Google Login', { email: user.email, ip: req.ip, userAgent: req.get('User-Agent') });
-        await db.logAction(user.id, 'login', { email: user.email, method: 'google' }, req.ip);
-
-        if (user.mfa_secret) {
-          const mfaToken = require('jsonwebtoken').sign(
-            { id: user.id, partial: true },
-            auth.JWT_SECRET,
-            { expiresIn: '5m' }
-          );
-          res.cookie('mfaPending', mfaToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 300000 });
-          return res.redirect('/login/mfa');
-        }
-
-        const token = require('jsonwebtoken').sign(
-          { id: user.id, email: user.email, role: user.role, name: user.name },
-          auth.JWT_SECRET,
-          { expiresIn: '2h' }
-        );
-        res.cookie('authToken', token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 2 * 60 * 60 * 1000
-        });
-
-        if (!user.mfa_secret) {
-          return res.redirect('/profile/mfa/prompt');
-        }
-
-        return res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
-      }
-
-      const bcrypt = require('bcryptjs');
-      const placeholderHash = bcrypt.hashSync(require('crypto').randomBytes(32).toString('hex'), 10);
-      await db.createPendingUser(email, displayName, '', '', placeholderHash);
-
-      const tgToken = process.env.TELEGRAM_BOT_TOKEN;
-      const tgChat = process.env.TELEGRAM_CHAT_ID;
-      if (tgToken && tgChat) {
-        try {
-          const tgMsg = `🆕 New Google signup!\n\nName: ${displayName}\nEmail: ${email}\n\nAccount is pending approval.`;
-          await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: tgChat, text: tgMsg })
-          });
-        } catch (err) { console.error('Telegram notify failed:', err.message); }
-      }
-
-      const welcome = emails.welcomeEmail(displayName);
-      sendMortiEmail(email, welcome.subject, welcome.html).catch(() => {});
-
-      res.render('login', { error: null, success: 'Account created! We\'ll review and approve it shortly.', email: '' });
+      await handleOAuthLogin(req, res, email, displayName, 'Google');
     } catch (e) {
       console.error('Google OAuth error:', e);
+      res.redirect('/login?error=Something+went+wrong');
+    }
+  })(req, res, next);
+});
+
+// --- Microsoft OAuth Routes ---
+router.get('/auth/microsoft', (req, res, next) => {
+  if (!process.env.MICROSOFT_CLIENT_ID) return res.redirect('/login?error=Microsoft+sign-in+not+configured');
+  passport.authenticate('microsoft', { scope: ['user.read'], session: false })(req, res, next);
+});
+
+router.get('/auth/microsoft/callback', (req, res, next) => {
+  passport.authenticate('microsoft', { session: false, failureRedirect: '/login?error=Microsoft+sign-in+failed' }, async (err, profile) => {
+    if (err || !profile) return res.redirect('/login?error=Microsoft+sign-in+failed');
+    try {
+      const email = profile.emails && profile.emails[0] && profile.emails[0].value;
+      const displayName = profile.displayName || (email ? email.split('@')[0] : 'Microsoft User');
+      await handleOAuthLogin(req, res, email, displayName, 'Microsoft');
+    } catch (e) {
+      console.error('Microsoft OAuth error:', e);
       res.redirect('/login?error=Something+went+wrong');
     }
   })(req, res, next);

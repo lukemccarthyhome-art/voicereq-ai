@@ -139,15 +139,17 @@ router.post('/contact', contactLimiter, async (req, res) => {
 router.get('/', (req, res) => {
   let isLoggedIn = false;
   let dashboardUrl = '/dashboard';
+  let userName = '';
   if (req.cookies.authToken) {
     try {
       const jwt = require('jsonwebtoken');
       const decoded = jwt.verify(req.cookies.authToken, process.env.JWT_SECRET || 'your-secret-key');
       isLoggedIn = true;
       dashboardUrl = decoded.role === 'admin' ? '/admin' : '/dashboard';
+      userName = decoded.name || '';
     } catch {}
   }
-  res.render('landing', { isLoggedIn, dashboardUrl });
+  res.render('landing', { isLoggedIn, dashboardUrl, userName });
 });
 
 module.exports = router;

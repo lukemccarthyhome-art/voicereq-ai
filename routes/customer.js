@@ -108,7 +108,7 @@ router.get('/dashboard', auth.authenticate, auth.requireCustomer, async (req, re
     const proposalFiles = fs.existsSync(PROPOSALS_DIR) ? fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${p.id}-`)).sort().reverse() : [];
     let hasDesign = false, hasProposal = false, isApproved = false, questionCount = 0;
     if (designFiles.length > 0) {
-      try { const d = JSON.parse(fs.readFileSync(path.join(DESIGNS_DIR, designFiles[0]), 'utf8')); hasDesign = !!d.published; if (d.questions) questionCount = d.questions.filter(q => !q.answered).length; } catch {}
+      try { const d = JSON.parse(fs.readFileSync(path.join(DESIGNS_DIR, designFiles[0]), 'utf8')); hasDesign = !!d.published; if (d.questions) { const answered = new Set((d.customerAnswers || []).map(a => a.question)); questionCount = d.questions.filter(q => q.assignedTo === 'customer' && !answered.has(q.text)).length; } } catch {}
     }
     if (proposalFiles.length > 0) {
       try { const pr = JSON.parse(fs.readFileSync(path.join(PROPOSALS_DIR, proposalFiles[0]), 'utf8')); hasProposal = !!pr.published; isApproved = !!pr.approvedAt; } catch {}

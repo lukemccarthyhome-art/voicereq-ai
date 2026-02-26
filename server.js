@@ -6,6 +6,8 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+let MicrosoftStrategy;
+try { MicrosoftStrategy = require('passport-microsoft').Strategy; } catch (e) { /* passport-microsoft not installed */ }
 
 require('dotenv').config();
 
@@ -82,7 +84,10 @@ process.on('unhandledRejection', (err) => {
 app.use(cloudflareOnly);
 app.use(sanitizeInput);
 
-// --- Google OAuth (Passport) ---
+// --- OAuth (Passport) ---
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
+
 if (process.env.GOOGLE_OAUTH_CLIENT_ID && process.env.GOOGLE_OAUTH_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_OAUTH_CLIENT_ID,
@@ -91,10 +96,20 @@ if (process.env.GOOGLE_OAUTH_CLIENT_ID && process.env.GOOGLE_OAUTH_CLIENT_SECRET
   }, (accessToken, refreshToken, profile, done) => {
     done(null, profile);
   }));
-  passport.serializeUser((user, done) => done(null, user));
-  passport.deserializeUser((user, done) => done(null, user));
-  app.use(passport.initialize());
 }
+
+if (MicrosoftStrategy && process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
+  passport.use(new MicrosoftStrategy({
+    clientID: process.env.MICROSOFT_CLIENT_ID,
+    clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+    callbackURL: '/auth/microsoft/callback',
+    scope: ['user.read']
+  }, (accessToken, refreshToken, profile, done) => {
+    done(null, profile);
+  }));
+}
+
+app.use(passport.initialize());
 
 // View engine
 app.set('view engine', 'ejs');
@@ -106,6 +121,18 @@ app.use((req, res, next) => {
   res.locals.melbDate = melbDate;
   res.locals.encodeId = encodeProjectId;
   res.locals.renderText = renderText;
+  next();
+});
+
+// Inject user's projects into res.locals for nav dropdown
+app.use(async (req, res, next) => {
+  if (!req.cookies.authToken) return next();
+  try {
+    const decoded = require('jsonwebtoken').verify(req.cookies.authToken, auth.JWT_SECRET);
+    if (decoded.role === 'customer') {
+      res.locals.navProjects = await db.getProjectsByUser(decoded.id);
+    }
+  } catch {}
   next();
 });
 

@@ -161,7 +161,7 @@
 <body>
     <div class="header">
         <div class="header-container">
-            <a href="<%= user.role === 'admin' ? '/admin' : '/dashboard' %>" class="logo">
+            <a href="/" class="logo">
                 🎙️ Morti Projects
             </a>
 
@@ -176,9 +176,9 @@
                 <% } %>
 
                 <div class="user-menu">
-                    <div class="user-name">
+                    <a href="/profile" class="user-name" style="text-decoration:none;">
                         👤 <%= user.name %> ▼
-                    </div>
+                    </a>
                     <div class="user-dropdown">
                         <a href="#">📧 <%= user.email %></a>
                         <a href="#">🏢 <%= user.company || 'N/A' %></a>

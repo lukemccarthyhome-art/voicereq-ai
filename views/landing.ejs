@@ -757,8 +757,19 @@
         <a href="/about" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'about' ? ' active' : '' %>">About</a>
         <a href="/#pricing" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'pricing' ? ' active' : '' %>">Pricing</a>
         <a href="/contact" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'contact' ? ' active' : '' %>">Contact</a>
-        <a href="/login" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'login' ? ' active' : '' %>">Login</a>
-        <a href="/signup" class="nav-cta">Get Started Free</a>
+        <% if (isLoggedIn) { %>
+            <div class="nav-dropdown">
+                <a href="/profile" class="nav-cta nav-dropdown-trigger"><%= userName || 'My Account' %> <span class="nav-arrow">▾</span></a>
+                <div class="nav-dropdown-menu">
+                    <a href="<%= dashboardUrl %>" class="nav-dropdown-item">Dashboard</a>
+                    <a href="/profile" class="nav-dropdown-item">Profile</a>
+                    <a href="/logout" class="nav-dropdown-item">Logout</a>
+                </div>
+            </div>
+        <% } else { %>
+            <a href="/login" class="nav-text<%= typeof currentPage !== 'undefined' && currentPage === 'login' ? ' active' : '' %>">Login</a>
+            <a href="/signup" class="nav-cta">Get Started</a>
+        <% } %>
     </div>
 </nav>
 
@@ -1183,8 +1194,13 @@
             <h4>Company</h4>
             <a href="/about">About</a>
             <a href="/contact">Contact</a>
-            <a href="/signup">Get Started</a>
-            <a href="/login">Customer Login</a>
+            <% if (isLoggedIn) { %>
+                <a href="<%= dashboardUrl %>">Dashboard</a>
+                <a href="/profile">My Account</a>
+            <% } else { %>
+                <a href="/signup">Get Started</a>
+                <a href="/login">Customer Login</a>
+            <% } %>
         </div>
         <div class="footer-col">
             <h4>Contact</h4>
