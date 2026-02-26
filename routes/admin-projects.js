@@ -8,6 +8,7 @@ const { encodeProjectId, resolveProjectId } = require('../helpers/ids');
 const { apiAuth } = require('../middleware/auth-middleware');
 const { loadNewestDesign, saveDesign } = require('./design');
 const { loadNewestProposal } = require('./proposals');
+const { uploadsDir } = require('../helpers/paths');
 
 // Decode hashed IDs in :id route params
 router.param('id', (req, res, next, val) => {
@@ -39,6 +40,101 @@ router.post('/api/projects/:id/rename', apiAuth, async (req, res) => {
     res.json({ ok: true });
   } catch (e) { console.error('Rename error:', e); res.status(500).json({ error: 'Failed' }); }
 });
+
+// Background requirements refresh — called after project complete, non-blocking
+async function refreshRequirementsInBackground(projectId) {
+  const OPENAI_KEY = process.env.OPENAI_API_KEY;
+  if (!OPENAI_KEY) return;
+  const sessions = await db.getSessionsByProject(projectId);
+  if (!sessions || sessions.length === 0) return;
+  const session = sessions[0]; // most recent
+  let transcript, existingRequirements;
+  try { transcript = typeof session.transcript === 'string' ? JSON.parse(session.transcript) : session.transcript; } catch { transcript = []; }
+  try { existingRequirements = typeof session.requirements === 'string' ? JSON.parse(session.requirements) : session.requirements; } catch { existingRequirements = {}; }
+  if ((!transcript || transcript.length === 0) && (!existingRequirements || Object.keys(existingRequirements).length === 0)) return;
+
+  // Build analysis content (same logic as /api/analyze-session)
+  let analysisContent = '';
+  if (transcript && transcript.length > 0) {
+    analysisContent += '## CONVERSATION TRANSCRIPT\n\n';
+    transcript.forEach(msg => {
+      const speaker = msg.role === 'ai' ? 'Business Analyst' : 'Client';
+      analysisContent += `**${speaker}:** ${msg.text}\n\n`;
+    });
+  }
+  // Load files
+  let dbFiles = await db.getFilesBySession(session.id) || [];
+  if (dbFiles.length === 0) dbFiles = await db.getFilesByProject(projectId) || [];
+  const filesToAnalyze = {};
+  for (const file of dbFiles) {
+    const fname = file.original_name || file.filename;
+    const diskPath = path.join(uploadsDir, fname);
+    if (fs.existsSync(diskPath)) {
+      try {
+        const ext = path.extname(fname).toLowerCase();
+        let content = '';
+        if (['.txt','.md','.csv','.json','.xml','.yaml','.yml','.html','.css','.js','.ts','.py'].includes(ext)) {
+          content = fs.readFileSync(diskPath, 'utf8');
+        } else if (['.doc','.docx'].includes(ext)) {
+          try { const mammoth = require('mammoth'); const r = await mammoth.extractRawText({ path: diskPath }); content = r.value; } catch { content = file.extracted_text || ''; }
+        } else { content = file.extracted_text || ''; }
+        if (content) filesToAnalyze[fname] = content.length > 50000 ? content.substring(0, 50000) : content;
+      } catch { if (file.extracted_text) filesToAnalyze[fname] = file.extracted_text; }
+    } else if (file.extracted_text) { filesToAnalyze[fname] = file.extracted_text; }
+  }
+  if (Object.keys(filesToAnalyze).length > 0) {
+    analysisContent += '## UPLOADED DOCUMENTS\n\n';
+    for (const [filename, content] of Object.entries(filesToAnalyze)) {
+      analysisContent += `### ${filename}\n\n${content}\n\n---\n\n`;
+    }
+  }
+  if (existingRequirements && Object.keys(existingRequirements).length > 0) {
+    analysisContent += '## ALREADY CAPTURED REQUIREMENTS (DO NOT REPEAT THESE)\n\n';
+    for (const [cat, items] of Object.entries(existingRequirements)) {
+      if (Array.isArray(items) && items.length > 0) {
+        analysisContent += `### ${cat}\n`;
+        items.forEach(r => { analysisContent += `- ${typeof r === 'string' ? r : r.text || r}\n`; });
+        analysisContent += '\n';
+      }
+    }
+  }
+  if (!analysisContent.trim()) return;
+
+  console.log('🔄 Background requirements refresh for project', projectId);
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
+    body: JSON.stringify({
+      model: process.env.LLM_MODEL || 'gpt-4.1',
+      max_completion_tokens: 4096,
+      messages: [{
+        role: 'system',
+        content: `You are an expert business analyst. Analyze the conversation transcript and documents to extract NEW requirements not already captured. PRESERVE SPECIFICITY: include exact numbers, names, tools, platforms. Only return genuinely NEW requirements. Return valid JSON: {"requirements":{"Category":["requirement",...]}}`
+      }, { role: 'user', content: analysisContent }],
+      response_format: { type: 'json_object' }
+    })
+  });
+  if (!response.ok) { console.error('Background refresh OpenAI error:', await response.text()); return; }
+  const data = await response.json();
+  const analysis = JSON.parse(data.choices[0].message.content);
+  const newReqs = analysis.requirements || {};
+  // Merge new requirements into existing
+  let merged = { ...existingRequirements };
+  for (const [cat, items] of Object.entries(newReqs)) {
+    if (!Array.isArray(items) || items.length === 0) continue;
+    if (!merged[cat]) { merged[cat] = items; }
+    else {
+      const existing = new Set(merged[cat].map(r => (typeof r === 'string' ? r : r.text || '').toLowerCase().trim()));
+      const additions = items.filter(r => { const t = (typeof r === 'string' ? r : r.text || '').toLowerCase().trim(); return !existing.has(t); });
+      if (additions.length > 0) merged[cat] = [...merged[cat], ...additions];
+    }
+  }
+  // Save back to session
+  const context = typeof session.context === 'string' ? session.context : JSON.stringify(session.context || {});
+  await db.updateSession(session.id, JSON.stringify(transcript), JSON.stringify(merged), context, session.status || 'paused');
+  const totalNew = Object.values(newReqs).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
+  console.log('✅ Background refresh done for project', projectId, '—', totalNew, 'new requirements');
+}
 
 router.post('/api/projects/:id/complete', apiAuth, async (req, res) => {
   try {
@@ -73,6 +169,10 @@ router.post('/api/projects/:id/complete', apiAuth, async (req, res) => {
       }).catch(err => console.error('Telegram notify failed:', err.message));
     }
     res.json({ success: true });
+    // Background: refresh requirements via LLM analysis (non-blocking)
+    refreshRequirementsInBackground(projectId).catch(err =>
+      console.error('Background requirements refresh failed:', err.message)
+    );
   } catch (e) {
     console.error('Complete project error:', e);
     res.status(500).json({ error: 'Failed to complete project' });

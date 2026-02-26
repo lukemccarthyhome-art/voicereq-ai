@@ -2139,8 +2139,6 @@
         if(inCall)endCall();
         await saveSession();
         if(selectedCompleteAction==='complete'){
-            // Refresh requirements before submitting for design review
-            if(messages.length>0){ showToastMsg('⏳ Refreshing requirements before submission...'); await refreshRequirements(true); }
             try{
                 const res=await fetch('/api/projects/'+projectId+'/complete',{method:'POST',headers:{'Content-Type':'application/json'}});
                 if(!res.ok)throw new Error('Failed');
