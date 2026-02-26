@@ -326,4 +326,93 @@ router.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (r
   });
 });
 
+// === EXPORT API (for prod-to-test migration) ===
+// Protected by EXPORT_SECRET env var, no JWT needed
+
+function requireExportSecret(req, res, next) {
+  const secret = process.env.EXPORT_SECRET;
+  if (!secret) return res.status(503).json({ error: 'Export not configured' });
+  if (req.query.secret !== secret) return res.status(403).json({ error: 'Invalid secret' });
+  next();
+}
+
+// Export customer by email
+router.get('/api/export/customer', requireExportSecret, async (req, res) => {
+  try {
+    const email = (req.query.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const user = await db.getUser(email);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ type: 'customer', user });
+  } catch (e) {
+    console.error('Export customer error:', e);
+    res.status(500).json({ error: 'Export failed' });
+  }
+});
+
+// Export project list for a customer
+router.get('/api/export/projects', requireExportSecret, async (req, res) => {
+  try {
+    const email = (req.query.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const user = await db.getUser(email);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const projects = await db.getProjectsByUser(user.id);
+    res.json({
+      type: 'project_list',
+      projects: projects.map(p => ({ id: p.id, name: p.name, status: p.status, created_at: p.created_at }))
+    });
+  } catch (e) {
+    console.error('Export projects error:', e);
+    res.status(500).json({ error: 'Export failed' });
+  }
+});
+
+// Export full project bundle by ID
+router.get('/api/export/project/:id', requireExportSecret, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const project = await db.getProject(projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const user = await db.getUserById(project.user_id);
+    const sessions = await db.getSessionsByProject(projectId);
+    const files = await db.getFilesByProject(projectId);
+    const shares = await db.getProjectShares(projectId);
+
+    // Read design files from disk
+    const designs = [];
+    try {
+      if (fs.existsSync(DESIGNS_DIR)) {
+        const designFiles = fs.readdirSync(DESIGNS_DIR).filter(f => f.startsWith(`design-${projectId}-`));
+        for (const fn of designFiles) {
+          try {
+            const content = JSON.parse(fs.readFileSync(path.join(DESIGNS_DIR, fn), 'utf8'));
+            designs.push({ filename: fn, content });
+          } catch (e) { console.warn('Could not read design file:', fn, e.message); }
+        }
+      }
+    } catch (e) { console.warn('Design dir read error:', e.message); }
+
+    // Read proposal files from disk
+    const proposals = [];
+    try {
+      if (fs.existsSync(PROPOSALS_DIR)) {
+        const proposalFiles = fs.readdirSync(PROPOSALS_DIR).filter(f => f.startsWith(`proposal-${projectId}-`));
+        for (const fn of proposalFiles) {
+          try {
+            const content = JSON.parse(fs.readFileSync(path.join(PROPOSALS_DIR, fn), 'utf8'));
+            proposals.push({ filename: fn, content });
+          } catch (e) { console.warn('Could not read proposal file:', fn, e.message); }
+        }
+      }
+    } catch (e) { console.warn('Proposal dir read error:', e.message); }
+
+    res.json({ type: 'project', project, user, sessions, files, designs, proposals, shares });
+  } catch (e) {
+    console.error('Export project error:', e);
+    res.status(500).json({ error: 'Export failed' });
+  }
+});
+
 module.exports = router;
