@@ -917,10 +917,10 @@
                 top: 0; left: 0; right: 0;
                 z-index: 60;
                 padding: 10px 12px;
-                background: rgba(5, 13, 26, 0.85);
+                background: rgba(20, 35, 55, 0.95);
                 backdrop-filter: blur(20px);
                 -webkit-backdrop-filter: blur(20px);
-                border-bottom: 1px solid var(--border-glass);
+                border-bottom: 1px solid rgba(255,255,255,0.1);
                 min-height: 48px;
             }
             .mobile-header-left {
@@ -996,7 +996,7 @@
                 bottom: 56px;
                 padding: 0 20px;
                 text-align: center;
-                background: radial-gradient(ellipse at center 40%, rgba(0,30,25,0.3) 0%, #040b10 50%, #020608 100%);
+                background: radial-gradient(ellipse at center 40%, rgba(15,40,55,0.9) 0%, #0c1e30 50%, #0a1828 100%);
                 z-index: 45;
             }
             .mobile-controls-inner {
@@ -1022,7 +1022,7 @@
                 position: absolute;
                 inset: -4px;
                 border-radius: 50%;
-                border: 1.5px solid rgba(0,200,160,0.12);
+                border: 1.5px solid rgba(0,230,180,0.2);
                 pointer-events: none;
                 transition: all 0.4s;
             }
@@ -1031,7 +1031,7 @@
                 position: absolute;
                 inset: -16px;
                 border-radius: 50%;
-                border: 1px solid rgba(0,200,160,0.06);
+                border: 1px solid rgba(0,230,180,0.1);
                 pointer-events: none;
                 transition: all 0.4s;
             }
@@ -1047,26 +1047,27 @@
                 width: 160px;
                 height: 160px;
                 border-radius: 50%;
-                border: 3px solid rgba(0,200,160,0.4);
-                background: radial-gradient(circle at 45% 40%, #0d4a3a 0%, #05201a 60%, #020e0a 100%);
-                color: #00e6b8;
+                border: 3px solid rgba(0,230,180,0.6);
+                background: linear-gradient(145deg, #0a3d30 0%, #06281f 50%, #031510 100%);
+                color: #00ffcc;
                 cursor: pointer;
                 transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 box-shadow:
-                    0 0 50px rgba(0,200,160,0.2),
-                    0 0 100px rgba(0,200,160,0.08),
-                    0 16px 48px rgba(0,0,0,0.6),
-                    inset 0 2px 0 rgba(255,255,255,0.08),
-                    inset 0 -4px 12px rgba(0,0,0,0.4);
+                    0 0 40px rgba(0,230,180,0.25),
+                    0 0 80px rgba(0,230,180,0.12),
+                    0 0 120px rgba(0,230,180,0.06),
+                    0 12px 40px rgba(0,0,0,0.4),
+                    inset 0 2px 0 rgba(255,255,255,0.1),
+                    inset 0 -3px 8px rgba(0,0,0,0.3);
                 position: relative;
                 z-index: 2;
             }
             .mobile-mic-btn svg {
                 width: 62px; height: 62px;
-                filter: drop-shadow(0 0 14px rgba(0,230,184,0.5));
+                filter: drop-shadow(0 0 16px rgba(0,255,204,0.6));
                 transition: all 0.3s;
             }
             .mobile-mic-btn:active { transform: scale(0.88); transition-duration: 0.1s; }
@@ -1102,13 +1103,13 @@
             .mobile-timer {
                 font-size: 2.2rem;
                 font-weight: 200;
-                color: rgba(240,244,248,0.3);
+                color: rgba(255,255,255,0.5);
                 font-variant-numeric: tabular-nums;
                 letter-spacing: 0.08em;
             }
             .mobile-hint {
                 font-size: 0.88rem;
-                color: rgba(240,244,248,0.35);
+                color: rgba(255,255,255,0.5);
                 font-weight: 400;
                 line-height: 1.5;
                 letter-spacing: 0.02em;
@@ -1119,9 +1120,9 @@
                 bottom: 0;
                 left: 0;
                 right: 0;
-                background: var(--bg-primary);
+                background: rgba(20, 35, 55, 0.95);
                 backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                border-top: 1px solid var(--border-glass);
+                border-top: 1px solid rgba(255,255,255,0.1);
                 z-index: 40;
                 padding: 6px 0 env(safe-area-inset-bottom, 6px);
             }
@@ -1134,14 +1135,14 @@
                 padding: 8px 4px;
                 font-size: 0.65rem;
                 font-weight: 600;
-                color: var(--text-muted);
+                color: rgba(255,255,255,0.5);
                 cursor: pointer;
                 border: none;
                 background: none;
                 font-family: var(--font);
                 transition: color 0.2s;
             }
-            .mobile-tab.active { color: var(--accent); }
+            .mobile-tab.active { color: #fff; }
             .mobile-tab svg { width: 20px; height: 20px; }
 
             /* Toolbar: always hidden on mobile — replaced by shared mobile header */
