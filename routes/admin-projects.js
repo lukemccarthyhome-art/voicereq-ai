@@ -326,6 +326,229 @@ router.get('/admin/projects/:id', auth.authenticate, auth.requireAdmin, async (r
   });
 });
 
+// === MIGRATE WEB UI (admin) ===
+
+const PROD_URL = (process.env.PROD_URL || '').replace(/\/$/, '');
+const EXPORT_SECRET = process.env.EXPORT_SECRET || '';
+
+// Helper: fetch from prod export API
+async function prodFetch(endpoint) {
+  if (!PROD_URL || !EXPORT_SECRET) throw new Error('PROD_URL and EXPORT_SECRET must be set in .env');
+  const sep = endpoint.includes('?') ? '&' : '?';
+  const url = `${PROD_URL}${endpoint}${sep}secret=${EXPORT_SECRET}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`${res.status}: ${text}`);
+  }
+  return res.json();
+}
+
+// Helper: raw SQL query against local DB (preserves IDs)
+const isPg = !!process.env.DATABASE_URL;
+async function localQuery(sql, params = []) {
+  if (isPg) {
+    const pgSql = sql.replace(/\?/g, (() => { let i = 0; return () => `$${++i}`; })());
+    const result = await db.pool.query(pgSql, params);
+    return result.rows;
+  } else {
+    const raw = db.db || db.getDb();
+    const stmt = raw.prepare(sql);
+    if (sql.trim().toUpperCase().startsWith('SELECT')) return stmt.all(...params);
+    stmt.run(...params);
+    return [];
+  }
+}
+async function localGet(sql, params = []) {
+  const rows = await localQuery(sql, params);
+  return rows[0] || null;
+}
+
+// Page
+router.get('/admin/migrate', auth.authenticate, auth.requireAdmin, (req, res) => {
+  const configured = !!(PROD_URL && EXPORT_SECRET);
+  res.render('admin/migrate', { user: req.user, title: 'Migrate from Prod', currentPage: 'migrate', configured });
+});
+
+// Look up customer on prod
+router.post('/admin/migrate/customer', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const email = (req.body.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const data = await prodFetch(`/api/export/customer?email=${encodeURIComponent(email)}`);
+    res.json({ ok: true, user: data.user });
+  } catch (e) {
+    console.error('Migrate customer lookup error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Import customer into local DB
+router.post('/admin/migrate/customer/import', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const email = (req.body.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const data = await prodFetch(`/api/export/customer?email=${encodeURIComponent(email)}`);
+    const u = data.user;
+
+    // Check if already exists
+    const existing = await localGet('SELECT id, email FROM users WHERE email = ?', [u.email]);
+    if (existing) return res.json({ ok: true, message: 'User already exists locally', user: existing, alreadyExisted: true });
+
+    // Check ID conflict
+    const idConflict = await localGet('SELECT id, email FROM users WHERE id = ?', [u.id]);
+    if (idConflict) return res.status(409).json({ error: `Local user id=${u.id} is taken by ${idConflict.email}. Cannot preserve prod ID.` });
+
+    // Insert
+    const cols = ['id', 'email', 'password_hash', 'name', 'company', 'role'];
+    const vals = [u.id, u.email, u.password_hash, u.name || '', u.company || '', u.role || 'customer'];
+    if (u.phone !== undefined) { cols.push('phone'); vals.push(u.phone); }
+    if (u.approved !== undefined) { cols.push('approved'); vals.push(u.approved); }
+    if (u.created_at) { cols.push('created_at'); vals.push(u.created_at); }
+    const placeholders = cols.map(() => '?').join(', ');
+    await localQuery(`INSERT INTO users (${cols.join(', ')}) VALUES (${placeholders})`, vals);
+
+    res.json({ ok: true, message: `Imported user ${u.email} (id=${u.id})`, user: { id: u.id, email: u.email, name: u.name, company: u.company } });
+  } catch (e) {
+    console.error('Migrate customer import error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Fetch project list from prod
+router.post('/admin/migrate/projects', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const email = (req.body.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const data = await prodFetch(`/api/export/projects?email=${encodeURIComponent(email)}`);
+    res.json({ ok: true, projects: data.projects || [] });
+  } catch (e) {
+    console.error('Migrate projects list error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Import a single project into local DB
+router.post('/admin/migrate/project', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const projectId = req.body.projectId;
+    if (!projectId) return res.status(400).json({ error: 'projectId required' });
+
+    const bundle = await prodFetch(`/api/export/project/${projectId}`);
+    const p = bundle.project;
+    const stats = { sessions: 0, files: 0, designs: 0, proposals: 0, shares: 0, skipped: [] };
+
+    // Ensure customer exists locally
+    const localUser = await localGet('SELECT id FROM users WHERE id = ?', [p.user_id]);
+    if (!localUser && bundle.user) {
+      const u = bundle.user;
+      const idConflict = await localGet('SELECT id, email FROM users WHERE id = ?', [u.id]);
+      if (!idConflict) {
+        const cols = ['id', 'email', 'password_hash', 'name', 'company', 'role'];
+        const vals = [u.id, u.email, u.password_hash, u.name || '', u.company || '', u.role || 'customer'];
+        if (u.phone !== undefined) { cols.push('phone'); vals.push(u.phone); }
+        if (u.approved !== undefined) { cols.push('approved'); vals.push(u.approved); }
+        if (u.created_at) { cols.push('created_at'); vals.push(u.created_at); }
+        const ph = cols.map(() => '?').join(', ');
+        await localQuery(`INSERT INTO users (${cols.join(', ')}) VALUES (${ph})`, vals);
+        stats.skipped.push('auto-imported customer');
+      }
+    }
+
+    // Insert project
+    const existingProject = await localGet('SELECT id FROM projects WHERE id = ?', [p.id]);
+    if (existingProject) {
+      stats.skipped.push('project (already exists)');
+    } else {
+      const pCols = ['id', 'user_id', 'name', 'description', 'status'];
+      const pVals = [p.id, p.user_id, p.name, p.description || '', p.status || 'active'];
+      if (p.created_at) { pCols.push('created_at'); pVals.push(p.created_at); }
+      if (p.updated_at) { pCols.push('updated_at'); pVals.push(p.updated_at); }
+      if (p.design_questions) { pCols.push('design_questions'); pVals.push(p.design_questions); }
+      if (p.admin_notes) { pCols.push('admin_notes'); pVals.push(p.admin_notes); }
+      const ph = pCols.map(() => '?').join(', ');
+      await localQuery(`INSERT INTO projects (${pCols.join(', ')}) VALUES (${ph})`, pVals);
+    }
+
+    // Insert sessions
+    for (const s of (bundle.sessions || [])) {
+      const existing = await localGet('SELECT id FROM sessions WHERE id = ?', [s.id]);
+      if (existing) { stats.skipped.push(`session ${s.id}`); continue; }
+      const sCols = ['id', 'project_id', 'transcript', 'requirements', 'context', 'status'];
+      const sVals = [s.id, s.project_id, s.transcript || '[]', s.requirements || '{}', s.context || '{}', s.status || 'active'];
+      if (s.created_at) { sCols.push('created_at'); sVals.push(s.created_at); }
+      if (s.updated_at) { sCols.push('updated_at'); sVals.push(s.updated_at); }
+      const ph = sCols.map(() => '?').join(', ');
+      await localQuery(`INSERT INTO sessions (${sCols.join(', ')}) VALUES (${ph})`, sVals);
+      stats.sessions++;
+    }
+
+    // Insert files
+    for (const f of (bundle.files || [])) {
+      const existing = await localGet('SELECT id FROM files WHERE id = ?', [f.id]);
+      if (existing) { stats.skipped.push(`file ${f.id}`); continue; }
+      const fCols = ['id', 'project_id', 'session_id', 'filename', 'original_name', 'mime_type', 'size', 'extracted_text'];
+      const fVals = [f.id, f.project_id, f.session_id, f.filename || '', f.original_name || '', f.mime_type || '', f.size || 0, f.extracted_text || ''];
+      if (f.analysis) { fCols.push('analysis'); fVals.push(f.analysis); }
+      if (f.description) { fCols.push('description'); fVals.push(f.description); }
+      if (f.created_at) { fCols.push('created_at'); fVals.push(f.created_at); }
+      const ph = fCols.map(() => '?').join(', ');
+      await localQuery(`INSERT INTO files (${fCols.join(', ')}) VALUES (${ph})`, fVals);
+      stats.files++;
+    }
+
+    // Write design files
+    fs.mkdirSync(DESIGNS_DIR, { recursive: true });
+    for (const d of (bundle.designs || [])) {
+      fs.writeFileSync(path.join(DESIGNS_DIR, d.filename), JSON.stringify(d.content, null, 2));
+      stats.designs++;
+    }
+
+    // Write proposal files
+    fs.mkdirSync(PROPOSALS_DIR, { recursive: true });
+    for (const pr of (bundle.proposals || [])) {
+      fs.writeFileSync(path.join(PROPOSALS_DIR, pr.filename), JSON.stringify(pr.content, null, 2));
+      stats.proposals++;
+    }
+
+    // Insert shares
+    for (const sh of (bundle.shares || [])) {
+      try {
+        const existing = await localGet('SELECT id FROM project_shares WHERE id = ?', [sh.id]);
+        if (existing) { stats.skipped.push(`share ${sh.id}`); continue; }
+        const shCols = ['id', 'project_id', 'email', 'permission', 'invited_by'];
+        const shVals = [sh.id, sh.project_id, sh.email, sh.permission || 'readonly', sh.invited_by];
+        if (sh.user_id) { shCols.push('user_id'); shVals.push(sh.user_id); }
+        if (sh.invited_at) { shCols.push('invited_at'); shVals.push(sh.invited_at); }
+        if (sh.accepted_at) { shCols.push('accepted_at'); shVals.push(sh.accepted_at); }
+        if (sh.invite_token) { shCols.push('invite_token'); shVals.push(sh.invite_token); }
+        const ph = shCols.map(() => '?').join(', ');
+        await localQuery(`INSERT INTO project_shares (${shCols.join(', ')}) VALUES (${ph})`, shVals);
+        stats.shares++;
+      } catch (e) {
+        stats.skipped.push(`share ${sh.id} (${e.message})`);
+      }
+    }
+
+    res.json({
+      ok: true,
+      summary: {
+        project: p.name,
+        projectId: p.id,
+        sessions: stats.sessions,
+        files: stats.files,
+        designs: stats.designs,
+        proposals: stats.proposals,
+        shares: stats.shares,
+        skipped: stats.skipped
+      }
+    });
+  } catch (e) {
+    console.error('Migrate project import error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // === EXPORT API (for prod-to-test migration) ===
 // Protected by EXPORT_SECRET env var, no JWT needed
 
