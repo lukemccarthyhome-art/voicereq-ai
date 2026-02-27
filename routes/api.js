@@ -813,7 +813,7 @@ router.get('/api/health', (req, res) => {
 
 // Crash log endpoint
 router.get('/api/crash-log', (req, res) => {
-  const key = req.query.key;
+  const key = req.headers['x-backup-key'];
   if (!key || key !== (process.env.BACKUP_KEY || 'morti-backup-2026')) {
     return res.status(403).json({ error: 'Invalid key' });
   }
