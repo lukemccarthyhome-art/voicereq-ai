@@ -195,16 +195,34 @@ BUILD PLATFORM — MORTI ENGINE:
 - **Pipedream Connect**: Managed auth via OAuth — customer connects their accounts (Google, OpenAI, Slack, etc.) and the engine invokes actions on their behalf. 2700+ app integrations. No credential sharing needed.
 - Pipedream workflows are deployed as step-by-step pipelines. Each step is deployed, tested with real data, and advanced individually.
 - Each customer gets isolated multi-tenant deployment via Pipedream external_user_id.
+- If multiple workflows in a project use the same service (e.g. all use Gmail + Xero), note this — the engine can share Pipedream connections across builds under the same project/user.
 - For each automation workflow, the engineDesign.BuildSpecification should describe steps as a pipeline: inputs, processing, outputs, and which app/API each step uses.
 - The TechnicalArchitecture section should specify: (a) a Pipedream automation pipeline, (b) a web app with Pipedream automations supporting it, (c) an external/custom build with appropriate technology, or a combination.
+
+ENGINE INTEGRATION SPECIFICS:
+- CREDENTIAL NAMING: When listing required credentials/connections, use the exact Pipedream service slug: gmail, google_sheets, google_drive, xero_accounting_api, slack, openai, etc. Do NOT use generic names like "OAuth" or "Google". The engine maps these slugs to Pipedream Connect.
+- TRIGGER TYPES: Cron/schedule triggers are platform-level config, NOT workflow steps. Say "runs every hour" in the workflow trigger field. Do NOT design "Step 1: Check if it's time to run" — that is handled by the platform.
+- STATE PERSISTENCE: The engine uses filesystem JSON for state/dedup tracking, NOT Pipedream Data Store. Designs should specify what state needs persisting but not prescribe the storage mechanism.
+- PDF PROCESSING: The engine can extract text from PDFs via pdf-parse. Designs can assume text extraction from PDF attachments works and LLM can classify/extract fields from the text. However, OCR for scanned/image-only PDFs is NOT supported natively — flag this if relevant.
+- ONBOARDING QUESTIONS: Questions surfaced to the customer during onboarding should ONLY ask for things the customer provides (Gmail inbox address, Google Sheet ID, approval email, Xero org). Engine internals (API keys, public URL, token secrets) are injected automatically and must NEVER be onboarding questions.
 
 WORKFLOWS — CRITICAL:
 - A project typically contains MULTIPLE distinct workflows, not one monolithic pipeline. Your #1 job is to identify and separate them.
 - Each workflow has a distinct TRIGGER (what starts it) and a distinct OUTCOME (what it produces).
 - WEBHOOK RULE: If a workflow has a webhook trigger waiting midway through a process (e.g., "wait for approval callback", "wait for payment confirmation"), that webhook is the START of a NEW workflow. Split it there. The first workflow ends by sending/triggering whatever creates the webhook event. The second workflow starts when that webhook fires.
+- MULTI-WORKFLOW TRIGGER CONTRACTS: If a design has multiple workflows, explicitly state for EACH: (a) what triggers it (email poll, approval click, cron schedule, webhook), (b) what data flows between workflows (token payload, invoice fields, IDs), (c) what shared config they need (secrets, tenant IDs, auth email).
 - Examples of workflow boundaries: form submission → processing pipeline, scheduled report generation, webhook from payment provider, email received trigger, manual admin action.
 - Name each workflow clearly (e.g., "New Lead Intake", "Weekly Report Generation", "Payment Confirmation Handler").
 - Show how workflows connect to each other (outputsTo field).
+
+HUMAN APPROVAL FLOWS:
+- If a workflow includes a human approval step (e.g. "manager approves invoice", "admin reviews submission"), the design MUST specify:
+  - Who receives the approval request (which role, email, or distribution list)
+  - What information is included in the approval email/notification (summary only? full details? attachments?)
+  - What happens on approve vs deny (different downstream actions for each path)
+  - Token/link expiry time (how long the approval link stays valid)
+  - Email format: HTML with clickable approve/deny buttons, not plain text
+  - The approval callback is a WEBHOOK — this means approve/deny handling is a SEPARATE workflow (see webhook rule above)
 
 ASSETS — REQUIRED RESOURCES:
 - Identify any assets that need to exist BEFORE or ALONGSIDE the automation workflows. These are NOT automation steps — they are resources the workflows depend on.
@@ -219,10 +237,26 @@ ASSETS — REQUIRED RESOURCES:
 EMAIL INBOX MONITORING — MANDATORY PATTERN:
 - Any workflow that involves checking an inbox for incoming emails (e.g. "monitor for invoices", "watch for approvals", "process incoming orders") MUST follow this pattern:
 - TRIGGER: Timer/cron schedule (e.g. every 5 minutes, every hour). Never rely on push-based email triggers unless the provider supports native webhooks (e.g. Gmail push notifications). Default to polling.
-- DEDUPLICATION: Every processed email MUST be logged (message ID + timestamp) so it is not re-processed on the next poll. Use a Google Sheet, database row, or Pipedream data store as the dedup ledger. The first step after fetching emails is always: filter out already-seen message IDs.
+- DEDUPLICATION: Every processed email MUST be logged (message ID + timestamp) so it is not re-processed on the next poll. State persistence uses filesystem JSON (see engine specifics above). The first step after fetching emails is always: filter out already-seen message IDs.
 - LLM vs SCRIPTED: Determine whether email interpretation requires an LLM or can be handled with scripted rules. If emails follow a consistent structure (e.g. invoices from one system, notifications with fixed subject lines), use scripted parsing (regex, subject line matching, sender filtering). Only use an LLM when email content is unstructured, variable, or requires judgment (e.g. classifying support requests, extracting intent from free-text). State this decision explicitly in the BuildSpecification.
 - EXCEPTION MANAGEMENT: Design for emails that don't match expected patterns. Every email monitoring workflow MUST include: (a) a fallback path for unrecognised/malformed emails (log + flag for human review, don't silently drop), (b) error handling for API failures (retry logic, dead-letter logging), (c) a mechanism to surface exceptions to an admin (email alert, dashboard flag, or sheet row marked as "needs review").
 - In the customerDesign, explain the polling frequency, what happens to unexpected emails, and how the customer will be notified of exceptions.
+
+XERO INTEGRATION — BE SPECIFIC:
+- Never say "create the invoice in Xero" generically. Always specify:
+  - Is it a bill (ACCPAY — you owe someone) or a sales invoice (ACCREC — someone owes you)?
+  - Should it create/find the contact first?
+  - Should it attach the source PDF to the bill?
+  - What status should the bill be created with (DRAFT vs AUTHORISED)?
+  - Use the credential slug xero_accounting_api.
+  - If Xero tenant ID (org UUID) is needed, add it as an onboarding question for the customer.
+
+EMAIL SENDING — BE SPECIFIC:
+- When a workflow sends an email, the design MUST specify:
+  - Plain text or HTML? (HTML required for links, tables, styling, approval buttons)
+  - What links/buttons should be included? (approval URLs, view links, dashboard links)
+  - Attachments? (the engine can attach files from earlier pipeline steps)
+  - Recipient source (hardcoded email, from config, extracted from data)
 
 DESIGN PRINCIPLES:
 - Humans steer; systems automate repetition.
