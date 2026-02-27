@@ -37,8 +37,9 @@
         .btn-primary { background: var(--accent); box-shadow: 0 0 16px var(--accent-glow); }
         .btn-primary:hover { background: #2aa8ff; box-shadow: 0 0 24px var(--accent-glow); }
         .btn-sm { padding: 6px 14px; font-size: 12px; }
-        .breadcrumb { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
-        .breadcrumb a { color: var(--accent); text-decoration: none; }
+        .back-link { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+        .back-link a { color: var(--accent); text-decoration: none; display:inline-flex; align-items:center; gap:6px; }
+        .back-link a:hover { text-decoration:underline; }
 
         .fee-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
         .fee-card { background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; text-align: center; transition: border-color 0.3s; }
@@ -94,9 +95,8 @@
     <%- include('../partials/admin-nav', { currentPage: 'projects', user: user }) %>
 
 <div class="main">
-    <div class="breadcrumb">
-        <a href="/admin">Dashboard</a> → <a href="/admin/projects">Projects</a>
-                <a href="/admin/projects">Projects</a> → <a href="/admin/projects/<%= encodeId(project.id) %>"><%= project.name %></a> → Proposal
+    <div class="back-link">
+        <a href="/admin/projects/<%= encodeId(project.id) %>">← Back to project</a>
     </div>
 
     <% if (locals.query && locals.query.error) { %>

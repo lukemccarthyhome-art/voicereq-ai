@@ -97,10 +97,6 @@
                 <h2>👤 User Information</h2>
                 <div class="info-grid">
                     <div class="info-item">
-                        <div class="info-label">Full Name</div>
-                        <div class="info-value"><%= user.name %></div>
-                    </div>
-                    <div class="info-item">
                         <div class="info-label">Email Address</div>
                         <div class="info-value"><%= user.email %></div>
                     </div>
@@ -120,12 +116,13 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 20px; padding: 16px; background: var(--accent-dim); border: 1px solid rgba(17,153,250,0.2); border-radius: 12px;">
-                    <h4 style="color: var(--accent); margin-bottom: 8px;">💡 Profile Updates</h4>
-                    <p style="color: var(--text-secondary); font-size: 14px;">
-                        To update your name, email, or company information, please contact your administrator.
-                    </p>
-                </div>
+                <form method="POST" action="/profile/name" style="margin-top: 20px;">
+                    <div class="form-group">
+                        <label for="displayName">Display Name</label>
+                        <input type="text" id="displayName" name="displayName" class="form-control" value="<%= user.name %>" required maxlength="100">
+                    </div>
+                    <button type="submit" class="btn btn-success">Save Name</button>
+                </form>
             </div>
 
             <!-- Password Change -->

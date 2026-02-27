@@ -22,8 +22,9 @@
     a { text-decoration: none; color: inherit; }
 
     .main { max-width:900px; margin:0 auto; padding:32px 24px; }
-    .breadcrumb { font-size:0.82rem; color:var(--text-muted); margin-bottom:20px; }
-    .breadcrumb a { color:var(--accent); }
+    .back-link { font-size:0.82rem; color:var(--text-muted); margin-bottom:20px; }
+    .back-link a { color:var(--accent); display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
+    .back-link a:hover { text-decoration:underline; }
     .badge { display:inline-block; padding:4px 12px; border-radius:var(--radius-pill); font-size:0.72rem; font-weight:600; text-transform:uppercase; }
     .badge-final { background:rgba(0,158,126,0.12); color:var(--accent-secondary); border: 1px solid rgba(0,158,126,0.3); }
     .btn { display:inline-flex; align-items:center; gap:6px; padding:10px 24px; border:none; border-radius:var(--radius-pill); font-weight:600; font-size:0.88rem; cursor:pointer; transition:all 0.3s; color:#fff; font-family:'Inter',sans-serif; }
@@ -85,9 +86,8 @@
   <%- include('../partials/customer-nav', { currentPage: 'projects', user: user }) %>
 
   <main class="main">
-    <div class="breadcrumb">
-      <a href="/dashboard">Dashboard</a>
-                <a href="/help">Help</a> › <a href="/projects">Projects</a> › <a href="/projects/<%= encodeId(projectId) %>"><%= project.name %></a> › Design
+    <div class="back-link">
+      <a href="/projects/<%= encodeId(projectId) %>">← Back to project</a>
     </div>
 
     <%
@@ -129,7 +129,6 @@
 
     <% if (hasNewFormat) { %>
       <%
-        const engineDesign = design.engineDesign || null;
       %>
 
       <!-- Tabbed layout -->
@@ -137,7 +136,6 @@
         <div class="tab active" data-tab="overview">📋 Design Overview</div>
         <div class="tab" data-tab="workflows">🔄 Workflows</div>
         <div class="tab" data-tab="assets">📦 Assets</div>
-        <div class="tab" data-tab="engine">⚙️ Build Spec</div>
       </div>
 
       <!-- Design Overview Tab -->
@@ -235,40 +233,6 @@
         <% } %>
       </div>
 
-      <!-- Build Spec Tab -->
-      <div class="tab-content" id="tab-engine">
-        <% if (engineDesign) { %>
-          <%
-            const engSections = [
-              { key: 'TechnicalArchitecture', label: 'Technical Architecture', icon: '&#127959;&#65039;' },
-              { key: 'DataModel', label: 'Data Model', icon: '&#128451;&#65039;' },
-              { key: 'IntegrationsAndAPIs', label: 'Integrations & APIs', icon: '&#128268;' },
-              { key: 'BuildSpecification', label: 'Build Specification', icon: '&#128208;' },
-              { key: 'RiskRegister', label: 'Risk Register', icon: '&#9888;&#65039;' }
-            ];
-            const engKeys = Object.keys(engineDesign);
-            const extraEngKeys = engKeys.filter(k => !engSections.find(s => s.key === k));
-          %>
-          <% engSections.forEach(sec => { %>
-            <% if (engineDesign[sec.key]) { %>
-              <div class="engine-section">
-                <h4><%- sec.icon %> <%= sec.label %></h4>
-                <div class="section-body"><%- renderText(engineDesign[sec.key]) %></div>
-              </div>
-            <% } %>
-          <% }) %>
-          <% extraEngKeys.forEach(key => { %>
-            <% if (engineDesign[key]) { %>
-              <div class="engine-section">
-                <h4><%= key.replace(/([A-Z])/g, ' $1').trim() %></h4>
-                <div class="section-body"><%- renderText(engineDesign[key]) %></div>
-              </div>
-            <% } %>
-          <% }) %>
-        <% } else { %>
-          <div class="empty-state">No build specification available yet.</div>
-        <% } %>
-      </div>
 
     <% } else if (designSections) { %>
       <% if (designSummary) { %>
@@ -302,7 +266,10 @@
     <!-- Flowchart -->
     <% if (design.flowchart) { %>
     <div class="section-card">
-      <h3><span class="icon">🗺️</span> System Architecture</h3>
+      <h3><span class="icon">🗺️</span> User Journey</h3>
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <button onclick="popOutFlowchart()" style="padding:4px 12px;border:1px solid var(--border-glass);border-radius:8px;background:var(--bg-card);cursor:pointer;font-size:14px;color:var(--text-secondary);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-glass)';this.style.color='var(--text-secondary)'" title="Open in new window">⧉ Pop Out</button>
+      </div>
       <div id="flowchartRender" style="min-height:100px;display:flex;align-items:center;justify-content:center;"></div>
     </div>
     <% } %>
@@ -411,6 +378,16 @@
       } catch(e) { if (document.getElementById('flowchartRender')) document.getElementById('flowchartRender').textContent = 'Flowchart rendering failed'; }
     })();
     <% } %>
+
+    function popOutFlowchart() {
+      const svg = document.querySelector('#flowchartRender svg');
+      if (!svg) return;
+      const svgHtml = svg.outerHTML;
+      const projectName = document.title || 'Flowchart';
+      const win = window.open('', '_blank', 'width=1000,height=700');
+      win.document.write('<!DOCTYPE html><html><head><title>' + projectName + ' — User Journey</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0a1628;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;font-family:Inter,-apple-system,sans-serif}svg{max-width:100%;height:auto}</style></head><body>' + svgHtml + '</body></html>');
+      win.document.close();
+    }
   </script>
   <% } %>
 </body>

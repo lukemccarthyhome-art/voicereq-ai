@@ -30,9 +30,9 @@
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-deep); line-height:1.6; color: var(--text-primary); -webkit-font-smoothing: antialiased; }
     a { text-decoration: none; color: inherit; }
     .main { max-width:1100px; margin:0 auto; padding:24px 20px; }
-    .breadcrumb { font-size:13px; color: var(--text-muted); margin-bottom:16px; }
-    .breadcrumb a { color: var(--accent); text-decoration:none; }
-    .breadcrumb a:hover { text-decoration:underline; }
+    .back-link { font-size:13px; color: var(--text-muted); margin-bottom:16px; }
+    .back-link a { color: var(--accent); text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+    .back-link a:hover { text-decoration:underline; }
     .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding:24px; margin-bottom:20px; transition: border-color 0.3s; }
     .card:hover { border-color: var(--border-glass-hover); }
     .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:12px; }
@@ -119,8 +119,8 @@
   <%- include('../partials/admin-nav', { currentPage: 'projects', user: user }) %>
 
   <main class="main">
-    <div class="breadcrumb">
-      <a href="/admin">Dashboard</a> › <a href="/admin/projects">Projects</a> › <a href="/admin/projects/<%= encodeId(projectId) %>">Project <%= projectId %></a> › Design
+    <div class="back-link">
+      <a href="/admin/projects/<%= encodeId(projectId) %>">← Back to project</a>
     </div>
 
     <% if (locals.generating && !design) { %>
@@ -236,14 +236,15 @@
             </form>
           <% } %>
           <% if (design.approvedAt) { %>
-            <% if (design.sentToEngineAt) { %>
-              <span class="badge badge-final" style="font-size:10px;">✅ Sent to Engine <%= melbDate(design.sentToEngineAt) %></span>
-              <% if (design.enginePlanId) { %>
-                <a href="<%= (process.env.ENGINE_API_URL || 'http://localhost:3100') %>/builds/<%= design.enginePlanId %>" target="_blank" class="btn btn-sm" style="background:#06b6d4;color:white;font-size:11px;">🔗 View Build</a>
-              <% } %>
-            <% } else { %>
-              <button id="sendToEngineBtn" onclick="sendToEngine()" class="btn btn-sm" style="background: var(--accent-secondary);color:white;">🚀 Send to Engine</button>
+            <span class="badge badge-final" style="font-size:10px;">✅ Approved</span>
+          <% } %>
+          <% if (design.sentToEngineAt) { %>
+            <span class="badge badge-final" style="font-size:10px;">✅ Sent to Engine <%= melbDate(design.sentToEngineAt) %></span>
+            <% if (design.enginePlanId) { %>
+              <a href="<%= (process.env.ENGINE_API_URL || 'http://localhost:3100') %>/builds/<%= design.enginePlanId %>" target="_blank" class="btn btn-sm" style="background:#06b6d4;color:white;font-size:11px;">🔗 View Build</a>
             <% } %>
+          <% } else { %>
+            <button id="sendToEngineBtn" onclick="sendToEngine()" class="btn btn-sm" style="background: var(--accent-secondary);color:white;">🚀 Send to Engine</button>
           <% } %>
         </div>
       </div>
@@ -417,11 +418,12 @@
 
     <!-- Flowchart -->
     <div id="flowchartContainer" style="<%= design.flowchart ? '' : 'display:none;' %>" class="card">
-      <h3 style="margin-bottom:12px; color: var(--text-primary);">🗺️ Component Flowchart</h3>
+      <h3 style="margin-bottom:12px; color: var(--text-primary);">🗺️ User Journey</h3>
       <div class="flowchart-zoom">
         <button onclick="zoomFlowchart(0.2)" title="Zoom In">➕</button>
         <button onclick="zoomFlowchart(-0.2)" title="Zoom Out">➖</button>
         <button onclick="zoomFlowchart(0)" title="Reset Zoom">↺ Reset</button>
+        <button onclick="popOutFlowchart()" title="Open in new window">⧉ Pop Out</button>
       </div>
       <div id="flowchartRender"></div>
     </div>
@@ -583,6 +585,16 @@
       else flowchartZoom = Math.max(0.4, Math.min(3, flowchartZoom + delta));
       const svg = document.querySelector('#flowchartRender svg');
       if (svg) svg.style.transform = 'scale(' + flowchartZoom + ')';
+    }
+
+    function popOutFlowchart() {
+      const svg = document.querySelector('#flowchartRender svg');
+      if (!svg) return;
+      const svgHtml = svg.outerHTML;
+      const projectName = document.title || 'Flowchart';
+      const win = window.open('', '_blank', 'width=1000,height=700');
+      win.document.write('<!DOCTYPE html><html><head><title>' + projectName + ' — User Journey</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0a1628;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;font-family:Inter,-apple-system,sans-serif}svg{max-width:100%;height:auto}</style></head><body>' + svgHtml + '</body></html>');
+      win.document.close();
     }
 
     async function renderMermaidSafe(elementId, code, container) {

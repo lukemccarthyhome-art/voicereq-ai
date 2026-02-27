@@ -131,7 +131,6 @@ async function extractDesignAsync(projectId, user) {
       }
     } catch(e) {}
 
-    const OPENAI_KEY = process.env.OPENAI_API_KEY;
     let llmDesignMarkdown = '';
     let llmQuestions = generateFollowupQuestions(summarizeRequirements(reqText));
     let designVersion = 1;
@@ -192,13 +191,12 @@ LENGTH:
 - engineDesign sections have NO length limit. BuildSpecification in particular should be comprehensive — this is what the build team relies on most.
 
 BUILD PLATFORM — MORTI ENGINE:
-- The Morti Engine builds automations using **Pipedream Connect** (primary) or **n8n** (self-hosted, for complex cases) as the orchestration layer.
-- **Pipedream Connect** (preferred): Managed auth via OAuth — customer connects their accounts (Google, OpenAI, Slack, etc.) and the engine invokes actions on their behalf. 2700+ app integrations. No credential sharing needed.
+- If the project is a workflow automation, the Morti Engine uses **Pipedream Connect** as the orchestration layer. If the project is NOT a workflow automation (e.g. a web app, mobile app, data platform, AI tool), propose the appropriate external technology stack instead — do NOT force Pipedream where it doesn't fit.
+- **Pipedream Connect**: Managed auth via OAuth — customer connects their accounts (Google, OpenAI, Slack, etc.) and the engine invokes actions on their behalf. 2700+ app integrations. No credential sharing needed.
 - Pipedream workflows are deployed as step-by-step pipelines. Each step is deployed, tested with real data, and advanced individually.
-- **n8n** (alternative): Self-hosted on Railway for complex workflows needing custom code, self-hosted data, or integrations not on Pipedream. n8n Code nodes do NOT have fetch/require/import — HTTP calls must use HTTP Request node.
-- For each automation workflow, the engineDesign.BuildSpecification should describe steps as a pipeline: inputs, processing, outputs, and which app/API each step uses.
-- The TechnicalArchitecture section should specify: (a) primarily a Pipedream automation pipeline, (b) a web app with Pipedream automations supporting it, (c) an n8n workflow (self-hosted needs), or (d) a custom build.
 - Each customer gets isolated multi-tenant deployment via Pipedream external_user_id.
+- For each automation workflow, the engineDesign.BuildSpecification should describe steps as a pipeline: inputs, processing, outputs, and which app/API each step uses.
+- The TechnicalArchitecture section should specify: (a) a Pipedream automation pipeline, (b) a web app with Pipedream automations supporting it, (c) an external/custom build with appropriate technology, or a combination.
 
 WORKFLOWS — CRITICAL:
 - A project typically contains MULTIPLE distinct workflows, not one monolithic pipeline. Your #1 job is to identify and separate them.
@@ -332,58 +330,101 @@ ${context}`;
       promptContext = newInfo.join('\n\n---\n\n');
     }
 
-    const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
-    const LLM_KEY = ANTHROPIC_KEY || OPENAI_KEY;
-    if (LLM_KEY) {
+    const OPENAI_KEY = process.env.OPENAI_API_KEY;
+    let rawLlmOutput = '';
+    if (OPENAI_KEY) {
       try {
         const prompt = buildPrompt(promptContext, prevAnswersText, previousDesign);
         let content = '';
 
-        if (ANTHROPIC_KEY) {
-          const anthropicModel = process.env.LLM_MODEL || 'claude-sonnet-4-20250514';
-          const resp = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
-            body: JSON.stringify({ model: anthropicModel, max_tokens: 16000, system: 'You are a senior solutions architect and business analyst. You produce detailed, actionable solution designs. Output valid JSON only, no markdown wrapping.', messages: [{ role: 'user', content: prompt }] })
-          });
-          if (resp.ok) {
-            const data = await resp.json();
-            content = data.content && data.content[0] && data.content[0].text;
-          } else {
-            console.error('Anthropic call failed:', resp.status, await resp.text().catch(()=>''));
-          }
+        const model = process.env.LLM_MODEL || 'gpt-5.2';
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
+          body: JSON.stringify({ model, max_completion_tokens: 32000, messages: [
+            { role: 'system', content: 'You are a senior solutions architect and business analyst. You produce detailed, actionable solution designs. Output valid JSON only, no markdown wrapping.' },
+            { role: 'user', content: prompt }
+          ]})
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+          console.log('Design LLM response: model=' + model + ', length=' + (content || '').length);
         } else {
-          const model = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1';
-          const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-            body: JSON.stringify({ model: model, max_completion_tokens: 16000, messages: [{ role: 'system', content: 'You are a senior solutions architect and business analyst. You produce detailed, actionable solution designs. Output valid JSON only, no markdown wrapping.' }, { role: 'user', content: prompt }] })
-          });
-          if (resp.ok) {
-            const data = await resp.json();
-            content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-          } else {
-            console.error('OpenAI call failed:', resp.status);
-          }
+          const errText = await resp.text().catch(()=>'');
+          console.error('LLM call failed:', resp.status, errText);
+          throw new Error('LLM API error (' + resp.status + '): ' + (errText || 'Unknown error'));
         }
 
         if (content) {
-          try {
-            let cleanContent = content;
+          rawLlmOutput = content;
+
+          // Try to parse JSON, with recovery for truncated responses
+          const tryParseJSON = (text) => {
+            let cleanContent = text;
             if (cleanContent.includes('```json')) {
               cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```/g, '');
             }
             const jsonStart = cleanContent.indexOf('{');
-            const jsonText = jsonStart >=0 ? cleanContent.slice(jsonStart) : cleanContent;
-            const parsed = JSON.parse(jsonText);
+            const jsonText = jsonStart >= 0 ? cleanContent.slice(jsonStart) : cleanContent;
 
+            // First try direct parse
+            try { return JSON.parse(jsonText); } catch(e) { /* continue to recovery */ }
+
+            // Truncated JSON recovery: close open brackets/braces
+            let recovered = jsonText;
+            const stack = [];
+            let inString = false, escaped = false;
+            for (let i = 0; i < recovered.length; i++) {
+              const ch = recovered[i];
+              if (escaped) { escaped = false; continue; }
+              if (ch === '\\') { escaped = true; continue; }
+              if (ch === '"' && !escaped) { inString = !inString; continue; }
+              if (inString) continue;
+              if (ch === '{') stack.push('}');
+              else if (ch === '[') stack.push(']');
+              else if (ch === '}' || ch === ']') stack.pop();
+            }
+            // If we're inside a string, close it
+            if (inString) recovered += '"';
+            // Close any open brackets/braces
+            while (stack.length > 0) recovered += stack.pop();
+
+            try {
+              const result = JSON.parse(recovered);
+              console.warn('⚠️ Design JSON was truncated — recovered by closing ' + stack.length + ' open brackets');
+              return result;
+            } catch(e2) { throw e2; }
+          };
+
+          try {
+            const parsed = tryParseJSON(content);
+            console.log('Design LLM parsed keys:', Object.keys(parsed));
+            console.log('  customerDesign:', parsed.customerDesign ? Object.keys(parsed.customerDesign) : 'null');
+            console.log('  engineDesign:', parsed.engineDesign ? Object.keys(parsed.engineDesign) : 'null');
+            console.log('  workflows:', Array.isArray(parsed.workflows) ? parsed.workflows.length : 'null');
+            console.log('  assets:', Array.isArray(parsed.assets) ? parsed.assets.length : 'null');
+
+            // Flatten structured objects to markdown strings.
+            // Handles arrays of step-like objects (title+description) → "1. **Title** — desc" format
             const flattenObj = (obj, prefix = '') => {
               let out = '';
               if (Array.isArray(obj)) {
-                obj.forEach((item, i) => {
-                  if (typeof item === 'object') out += flattenObj(item, `${i+1}. `);
-                  else out += `- ${item}\n`;
-                });
+                // Check if items are step-like objects with title/name + description/desc
+                const isStepArray = obj.length > 0 && typeof obj[0] === 'object' && obj[0] !== null &&
+                  (obj[0].title || obj[0].name || obj[0].step_name || obj[0].stepName);
+                if (isStepArray) {
+                  obj.forEach((item, i) => {
+                    const title = item.title || item.name || item.step_name || item.stepName || `Step ${i+1}`;
+                    const desc = item.description || item.desc || item.details || '';
+                    out += `${i+1}. **${title}** — ${desc}\n`;
+                  });
+                } else {
+                  obj.forEach((item, i) => {
+                    if (typeof item === 'object') out += flattenObj(item, `${i+1}. `);
+                    else out += `- ${item}\n`;
+                  });
+                }
               } else if (typeof obj === 'object' && obj !== null) {
                 for (const [k, v] of Object.entries(obj)) {
                   if (typeof v === 'object') { out += `\n${prefix}${k}:\n${flattenObj(v, '  ')}`; }
@@ -439,7 +480,13 @@ ${context}`;
 
             if (parsed.summary) designSummary = parsed.summary;
             if (parsed.questions && Array.isArray(parsed.questions)) llmQuestions = parsed.questions;
-            if (parsed.workflows && Array.isArray(parsed.workflows)) designWorkflows = parsed.workflows;
+            if (parsed.workflows && Array.isArray(parsed.workflows)) {
+              // Ensure workflow steps are strings (LLM may return arrays/objects)
+              designWorkflows = parsed.workflows.map(wf => ({
+                ...wf,
+                steps: (typeof wf.steps === 'string') ? wf.steps : flattenSection(wf.steps)
+              }));
+            }
             if (parsed.assets && Array.isArray(parsed.assets)) designAssets = parsed.assets;
             if (parsedCustomerDesign) designParsedCustomerDesign = parsedCustomerDesign;
             if (parsedEngineDesign) designParsedEngineDesign = parsedEngineDesign;
@@ -448,9 +495,12 @@ ${context}`;
             llmDesignMarkdown = content || '';
           }
         }
-      } catch (e) { console.error('LLM call error:', e.message); }
+      } catch (e) {
+        console.error('LLM call error:', e.message);
+        throw new Error('Design extraction failed: ' + e.message);
+      }
     } else {
-      llmDesignMarkdown = `## Summary\n\n${summarizeRequirements(reqText)}\n\n## Architecture\n\n- Backend: Express\n- DB: SQLite/Postgres\n\n## Components\n\n- Proposal generator service\n\n## Data Flow\n\n- Input: project requirements -> generator -> proposal\n\n## APIs\n\n- /api/proposals/create\n\n## Security\n\n- JWT auth, HTTPS\n\n## Acceptance Criteria\n\n- Generates proposal, supports approval and signing.`;
+      throw new Error('OPENAI_API_KEY not configured — cannot extract design');
     }
 
     llmDesignMarkdown = llmDesignMarkdown.replace(/^ *(user|ai|assistant):.*$/gmi, '').trim();
@@ -505,7 +555,7 @@ ${context}`;
       chat: [],
       answers: [],
       customerAnswers: [],
-      raw_output: ''
+      raw_output: rawLlmOutput
     };
 
     try {
@@ -641,33 +691,34 @@ router.post('/admin/projects/:id/design/flowchart', auth.authenticate, auth.requ
     const sections = design.sections || {};
     const designContext = JSON.stringify({ summary: design.summary, customerDesign: design.customerDesign, engineDesign: design.engineDesign, sections }, null, 2);
 
-    const prompt = `You are a systems architect creating a HIGH-LEVEL COMPONENT DIAGRAM as a Mermaid flowchart.
+    const prompt = `You are creating a SIMPLE USER JOURNEY FLOWCHART that a non-technical client can look at and say "yes, that's how it should work".
+
+This is NOT a technical architecture diagram. It shows the logical flow from the user's perspective — what happens step by step when someone uses the system.
 
 STRICT MERMAID SYNTAX RULES — follow these exactly:
-1. First line MUST be: flowchart LR
+1. First line MUST be: flowchart TD
 2. EVERY node label MUST be wrapped in double quotes: A["My Label"]
 3. Arrows MUST use -->  (two dashes + angle bracket). For labeled arrows: A -->|"label"| B
-4. Node shapes: ["Rectangle"], (["Stadium"]), [("Cylinder/DB")], {{"Hexagon"}}
-5. Subgraphs: subgraph Title\\n ... end
-6. Node IDs must be simple alphanumeric: A, B, C1, DB1 — no spaces or special chars in IDs
-7. NO semicolons at end of lines
-8. NO markdown fences — return raw mermaid code only
+4. Node shapes: ["Rectangle"] for actions, {"Diamond"} for decisions, (["Stadium"]) for start/end
+5. Node IDs must be simple alphanumeric: A, B, C1 — no spaces or special chars in IDs
+6. NO semicolons at end of lines
+7. NO markdown fences — return raw mermaid code only
 
 VALID EXAMPLE:
-flowchart LR
-  subgraph Core["Our System"]
-    A["Web App"]
-    B["API Server"]
-    C[("PostgreSQL")]
-    A -->|"REST"| B
-    B -->|"queries"| C
-  end
-  subgraph Ext["External Services"]
-    D["Stripe API"]
-    E["SendGrid"]
-  end
-  B -->|"payments"| D
-  B -->|"emails"| E
+flowchart TD
+  A(["User visits website"])
+  B["Fills in project details"]
+  C{"Approved?"}
+  D["Receives confirmation email"]
+  E["Starts using dashboard"]
+  F["Admin reviews request"]
+  A --> B
+  B --> F
+  F --> C
+  C -->|"Yes"| D
+  D --> E
+  C -->|"No"| G["Notified of changes needed"]
+  G --> B
 
 INVALID (do NOT do these):
 - A[My Label]  ← missing quotes around label
@@ -675,10 +726,12 @@ INVALID (do NOT do these):
 - \`\`\`mermaid  ← no code fences
 
 Rules for content:
-- Show ONLY system components and their connections (not user journeys)
-- 8-15 nodes maximum
-- Group into subgraphs: "Our System" and "External Services"
-- Node shapes: ["Component"] for services, [("Database")] for data stores
+- Write labels in plain English from the user's perspective (e.g. "Customer uploads invoice" not "POST /api/invoices")
+- NO technical jargon — no APIs, databases, servers, endpoints, or system components
+- Show the logical workflow: what the user does, what happens next, and any decision points
+- 6-12 nodes maximum — keep it simple and readable
+- Use decision diamonds for yes/no branching points
+- The flow should tell a story a client can follow
 
 Design:
 ${designContext.substring(0, 12000)}`;
@@ -691,7 +744,7 @@ ${designContext.substring(0, 12000)}`;
           model: 'gpt-4.1',
           max_completion_tokens: 2000,
           messages: [
-            { role: 'system', content: 'You generate valid Mermaid flowchart syntax. Return ONLY raw mermaid code. No markdown, no explanation. Every node label must be in double quotes.' },
+            { role: 'system', content: 'You generate simple, non-technical user journey flowcharts in valid Mermaid syntax. Write labels in plain English a client can understand. Return ONLY raw mermaid code. No markdown, no explanation. Every node label must be in double quotes.' },
             { role: 'user', content: prompt + extraContext }
           ]
         })
@@ -798,7 +851,7 @@ router.post('/admin/projects/:id/design/answer', auth.authenticate, auth.require
 
     try { await db.appendSessionMessageSafe(projectId, { role: 'admin', text: `Answer: ${question} -> ${answer}` }); } catch (e) { console.warn('appendSessionMessageSafe failed:', e.message); }
 
-    res.redirect(`/admin/projects/${encodeProjectId(projectId)}?message=Answer+saved`);
+    res.redirect(`/admin/projects/${encodeProjectId(projectId)}/design?message=Answer+saved`);
   } catch (e) {
     console.error('Design answer error:', e);
     res.redirect(`/admin/projects/${encodeProjectId(req.params.id)}/design?error=Save+failed`);

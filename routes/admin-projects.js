@@ -129,9 +129,9 @@ async function refreshRequirementsInBackground(projectId) {
       if (additions.length > 0) merged[cat] = [...merged[cat], ...additions];
     }
   }
-  // Save back to session
-  const context = typeof session.context === 'string' ? session.context : JSON.stringify(session.context || {});
-  await db.updateSession(session.id, JSON.stringify(transcript), JSON.stringify(merged), context, session.status || 'paused');
+  // Save back to session — pass arrays/objects directly; updateSession handles JSON.stringify
+  const context = typeof session.context === 'string' ? JSON.parse(session.context || '{}') : (session.context || {});
+  await db.updateSession(session.id, transcript, merged, context, session.status || 'paused');
   const totalNew = Object.values(newReqs).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
   console.log('✅ Background refresh done for project', projectId, '—', totalNew, 'new requirements');
 }
@@ -455,10 +455,30 @@ router.post('/admin/migrate/project', auth.authenticate, auth.requireAdmin, asyn
       }
     }
 
-    // Insert project
-    const existingProject = await localGet('SELECT id FROM projects WHERE id = ?', [p.id]);
-    if (existingProject) {
-      stats.skipped.push('project (already exists)');
+    // Insert project — handle ID conflicts by letting DB auto-assign
+    let localProjectId = p.id;
+    const existingProject = await localGet('SELECT id, name, user_id FROM projects WHERE id = ?', [p.id]);
+    if (existingProject && existingProject.user_id === p.user_id && existingProject.name === p.name) {
+      stats.skipped.push('project (already migrated)');
+    } else if (existingProject) {
+      // ID conflict with a different project — insert without ID
+      const pCols = ['user_id', 'name', 'description', 'status'];
+      const pVals = [p.user_id, p.name, p.description || '', p.status || 'active'];
+      if (p.created_at) { pCols.push('created_at'); pVals.push(p.created_at); }
+      if (p.updated_at) { pCols.push('updated_at'); pVals.push(p.updated_at); }
+      if (p.design_questions) { pCols.push('design_questions'); pVals.push(p.design_questions); }
+      if (p.admin_notes) { pCols.push('admin_notes'); pVals.push(p.admin_notes); }
+      const ph = pCols.map(() => '?').join(', ');
+      if (isPg) {
+        const pgSql = `INSERT INTO projects (${pCols.join(', ')}) VALUES (${pCols.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING id`;
+        const result = await db.pool.query(pgSql, pVals);
+        localProjectId = result.rows[0].id;
+      } else {
+        const raw = db.db || db.getDb();
+        const info = raw.prepare(`INSERT INTO projects (${pCols.join(', ')}) VALUES (${ph})`).run(...pVals);
+        localProjectId = info.lastInsertRowid;
+      }
+      stats.skipped.push(`project ID ${p.id} taken, assigned new ID ${localProjectId}`);
     } else {
       const pCols = ['id', 'user_id', 'name', 'description', 'status'];
       const pVals = [p.id, p.user_id, p.name, p.description || '', p.status || 'active'];
@@ -470,54 +490,107 @@ router.post('/admin/migrate/project', auth.authenticate, auth.requireAdmin, asyn
       await localQuery(`INSERT INTO projects (${pCols.join(', ')}) VALUES (${ph})`, pVals);
     }
 
-    // Insert sessions
+    // Build session ID map (prod session id -> local session id)
+    const sessionIdMap = {};
+
+    // Insert sessions — handle ID conflicts
     for (const s of (bundle.sessions || [])) {
-      const existing = await localGet('SELECT id FROM sessions WHERE id = ?', [s.id]);
-      if (existing) { stats.skipped.push(`session ${s.id}`); continue; }
-      const sCols = ['id', 'project_id', 'transcript', 'requirements', 'context', 'status'];
-      const sVals = [s.id, s.project_id, s.transcript || '[]', s.requirements || '{}', s.context || '{}', s.status || 'active'];
-      if (s.created_at) { sCols.push('created_at'); sVals.push(s.created_at); }
-      if (s.updated_at) { sCols.push('updated_at'); sVals.push(s.updated_at); }
-      const ph = sCols.map(() => '?').join(', ');
-      await localQuery(`INSERT INTO sessions (${sCols.join(', ')}) VALUES (${ph})`, sVals);
+      const existing = await localGet('SELECT id, project_id FROM sessions WHERE id = ?', [s.id]);
+      if (existing && existing.project_id === localProjectId) {
+        stats.skipped.push(`session ${s.id} (already migrated)`);
+        sessionIdMap[s.id] = s.id;
+        continue;
+      }
+      const useLocalProjectId = localProjectId;
+      if (existing) {
+        // ID conflict — insert without id, let DB auto-assign
+        const sCols = ['project_id', 'transcript', 'requirements', 'context', 'status'];
+        const sVals = [useLocalProjectId, s.transcript || '[]', s.requirements || '{}', s.context || '{}', s.status || 'active'];
+        if (s.created_at) { sCols.push('created_at'); sVals.push(s.created_at); }
+        if (s.updated_at) { sCols.push('updated_at'); sVals.push(s.updated_at); }
+        const ph = sCols.map(() => '?').join(', ');
+        let newId;
+        if (isPg) {
+          const pgSql = `INSERT INTO sessions (${sCols.join(', ')}) VALUES (${sCols.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING id`;
+          const result = await db.pool.query(pgSql, sVals);
+          newId = result.rows[0].id;
+        } else {
+          const raw = db.db || db.getDb();
+          const info = raw.prepare(`INSERT INTO sessions (${sCols.join(', ')}) VALUES (${ph})`).run(...sVals);
+          newId = info.lastInsertRowid;
+        }
+        sessionIdMap[s.id] = newId;
+      } else {
+        const sCols = ['id', 'project_id', 'transcript', 'requirements', 'context', 'status'];
+        const sVals = [s.id, useLocalProjectId, s.transcript || '[]', s.requirements || '{}', s.context || '{}', s.status || 'active'];
+        if (s.created_at) { sCols.push('created_at'); sVals.push(s.created_at); }
+        if (s.updated_at) { sCols.push('updated_at'); sVals.push(s.updated_at); }
+        const ph = sCols.map(() => '?').join(', ');
+        await localQuery(`INSERT INTO sessions (${sCols.join(', ')}) VALUES (${ph})`, sVals);
+        sessionIdMap[s.id] = s.id;
+      }
       stats.sessions++;
     }
 
-    // Insert files
+    // Insert files — handle ID conflicts, remap project_id and session_id
     for (const f of (bundle.files || [])) {
       const existing = await localGet('SELECT id FROM files WHERE id = ?', [f.id]);
-      if (existing) { stats.skipped.push(`file ${f.id}`); continue; }
-      const fCols = ['id', 'project_id', 'session_id', 'filename', 'original_name', 'mime_type', 'size', 'extracted_text'];
-      const fVals = [f.id, f.project_id, f.session_id, f.filename || '', f.original_name || '', f.mime_type || '', f.size || 0, f.extracted_text || ''];
-      if (f.analysis) { fCols.push('analysis'); fVals.push(f.analysis); }
-      if (f.description) { fCols.push('description'); fVals.push(f.description); }
-      if (f.created_at) { fCols.push('created_at'); fVals.push(f.created_at); }
-      const ph = fCols.map(() => '?').join(', ');
-      await localQuery(`INSERT INTO files (${fCols.join(', ')}) VALUES (${ph})`, fVals);
+      if (existing) {
+        // ID conflict — insert without id
+        const fCols = ['project_id', 'session_id', 'filename', 'original_name', 'mime_type', 'size', 'extracted_text'];
+        const fVals = [localProjectId, sessionIdMap[f.session_id] || f.session_id, f.filename || '', f.original_name || '', f.mime_type || '', f.size || 0, f.extracted_text || ''];
+        if (f.analysis) { fCols.push('analysis'); fVals.push(f.analysis); }
+        if (f.description) { fCols.push('description'); fVals.push(f.description); }
+        if (f.created_at) { fCols.push('created_at'); fVals.push(f.created_at); }
+        const ph = fCols.map(() => '?').join(', ');
+        if (isPg) {
+          const pgSql = `INSERT INTO files (${fCols.join(', ')}) VALUES (${fCols.map((_, i) => `$${i + 1}`).join(', ')})`;
+          await db.pool.query(pgSql, fVals);
+        } else {
+          const raw = db.db || db.getDb();
+          raw.prepare(`INSERT INTO files (${fCols.join(', ')}) VALUES (${ph})`).run(...fVals);
+        }
+      } else {
+        const fCols = ['id', 'project_id', 'session_id', 'filename', 'original_name', 'mime_type', 'size', 'extracted_text'];
+        const fVals = [f.id, localProjectId, sessionIdMap[f.session_id] || f.session_id, f.filename || '', f.original_name || '', f.mime_type || '', f.size || 0, f.extracted_text || ''];
+        if (f.analysis) { fCols.push('analysis'); fVals.push(f.analysis); }
+        if (f.description) { fCols.push('description'); fVals.push(f.description); }
+        if (f.created_at) { fCols.push('created_at'); fVals.push(f.created_at); }
+        const ph = fCols.map(() => '?').join(', ');
+        await localQuery(`INSERT INTO files (${fCols.join(', ')}) VALUES (${ph})`, fVals);
+      }
       stats.files++;
     }
 
-    // Write design files
+    // Write design files (remap filename if project ID changed)
     fs.mkdirSync(DESIGNS_DIR, { recursive: true });
     for (const d of (bundle.designs || [])) {
-      fs.writeFileSync(path.join(DESIGNS_DIR, d.filename), JSON.stringify(d.content, null, 2));
+      let fn = d.filename;
+      if (localProjectId !== p.id) fn = fn.replace(`design-${p.id}-`, `design-${localProjectId}-`);
+      const content = d.content;
+      if (localProjectId !== p.id && content.projectId) content.projectId = localProjectId;
+      fs.writeFileSync(path.join(DESIGNS_DIR, fn), JSON.stringify(content, null, 2));
       stats.designs++;
     }
 
-    // Write proposal files
+    // Write proposal files (remap filename if project ID changed)
     fs.mkdirSync(PROPOSALS_DIR, { recursive: true });
     for (const pr of (bundle.proposals || [])) {
-      fs.writeFileSync(path.join(PROPOSALS_DIR, pr.filename), JSON.stringify(pr.content, null, 2));
+      let fn = pr.filename;
+      if (localProjectId !== p.id) fn = fn.replace(`proposal-${p.id}-`, `proposal-${localProjectId}-`);
+      const content = pr.content;
+      if (localProjectId !== p.id && content.projectId) content.projectId = localProjectId;
+      fs.writeFileSync(path.join(PROPOSALS_DIR, fn), JSON.stringify(content, null, 2));
       stats.proposals++;
     }
 
-    // Insert shares
+    // Insert shares (remap project_id)
     for (const sh of (bundle.shares || [])) {
       try {
         const existing = await localGet('SELECT id FROM project_shares WHERE id = ?', [sh.id]);
         if (existing) { stats.skipped.push(`share ${sh.id}`); continue; }
         const shCols = ['id', 'project_id', 'email', 'permission', 'invited_by'];
-        const shVals = [sh.id, sh.project_id, sh.email, sh.permission || 'readonly', sh.invited_by];
+        const shVals = [sh.id, localProjectId, sh.email, sh.permission || 'readonly', sh.invited_by];
         if (sh.user_id) { shCols.push('user_id'); shVals.push(sh.user_id); }
         if (sh.invited_at) { shCols.push('invited_at'); shVals.push(sh.invited_at); }
         if (sh.accepted_at) { shCols.push('accepted_at'); shVals.push(sh.accepted_at); }

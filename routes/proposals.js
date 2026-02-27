@@ -284,7 +284,6 @@ router.post('/admin/projects/:id/send-to-engine', auth.authenticate, auth.requir
 
     const result = loadNewestDesign(projectId);
     if (!result || !result.design) return res.status(400).json({ error: 'No design found for this project' });
-    if (!result.design.approvedAt) return res.status(400).json({ error: 'Design must be approved before sending to engine' });
 
     const engineUrl = process.env.ENGINE_API_URL;
     const engineSecret = process.env.ENGINE_API_SECRET;

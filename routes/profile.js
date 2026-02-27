@@ -22,6 +22,25 @@ router.get('/help', auth.authenticate, (req, res) => {
   res.render('customer/help', { user: req.user, title: 'Help & Support', currentPage: 'help' });
 });
 
+router.post('/profile/name', auth.authenticate, async (req, res) => {
+  try {
+    const { displayName } = req.body;
+    if (!displayName || !displayName.trim()) {
+      return res.redirect('/profile?error=Display name cannot be empty');
+    }
+    const name = displayName.trim();
+    if (name.length > 100) {
+      return res.redirect('/profile?error=Display name is too long');
+    }
+    const user = await db.getUserById(req.user.id);
+    await db.updateUser(req.user.id, user.email, name, user.company);
+    res.redirect('/profile?message=Display name updated');
+  } catch (e) {
+    console.error('Update name error:', e);
+    res.redirect('/profile?error=Failed to update display name');
+  }
+});
+
 router.post('/profile/password', auth.authenticate, async (req, res) => {
   try {
     const { currentPassword, newPassword, confirmPassword } = req.body;

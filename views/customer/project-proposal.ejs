@@ -25,8 +25,9 @@
         .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; transition: border-color 0.3s; }
         .card:hover { border-color: var(--border-glass-hover); }
         .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; border-radius: var(--radius-pill); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; color: #fff; font-family: 'Inter', sans-serif; }
-        .breadcrumb { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; }
-        .breadcrumb a { color: var(--accent); }
+        .back-link { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; }
+        .back-link a { color: var(--accent); display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
+        .back-link a:hover { text-decoration:underline; }
 
         .fee-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
         .fee-card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 2px solid var(--border-glass); border-radius: var(--radius); padding: 24px; text-align: center; transition: all 0.3s; }
@@ -105,9 +106,8 @@
 <%- include('../partials/customer-nav', { currentPage: 'projects', user: user }) %>
 
 <div class="main">
-    <div class="breadcrumb">
-        <a href="/dashboard">Dashboard</a>
-                <a href="/help">Help</a> → <a href="/projects">Projects</a> → <a href="/projects/<%= encodeId(project.id) %>"><%= project.name %></a> → Proposal
+    <div class="back-link">
+        <a href="/projects/<%= encodeId(project.id) %>">← Back to project</a>
     </div>
 
     <% if (proposal.approvedAt) { %>

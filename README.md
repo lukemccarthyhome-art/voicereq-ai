@@ -23,7 +23,7 @@ A web application that gathers software requirements through natural voice conve
 - **Voice**: Vapi.ai WebRTC SDK (loaded via CDN)
 - **Billing**: Stripe (subscriptions, webhooks, portal)
 - **Email**: Nodemailer (SMTP)
-- **Auth**: JWT cookies, Google OAuth, TOTP MFA
+- **Auth**: JWT cookies, Google OAuth, Microsoft OAuth, TOTP MFA
 
 ## Quick Start
 
@@ -57,6 +57,8 @@ JWT_SECRET=your_secret
 # SMTP_PASS=...
 # GOOGLE_OAUTH_CLIENT_ID=...
 # GOOGLE_OAUTH_CLIENT_SECRET=...
+# MICROSOFT_CLIENT_ID=...
+# MICROSOFT_CLIENT_SECRET=...
 # DATA_DIR=./data
 ```
 
@@ -93,10 +95,10 @@ middleware/
 
 routes/
   public-pages.js         # Signup, about, contact, landing
-  auth.js                 # Login/logout, MFA, Google OAuth
+  auth.js                 # Login/logout, MFA, Google/Microsoft OAuth
   profile.js              # Profile settings, password change
   admin-dashboard.js      # Admin dashboard, customer CRUD, feature requests
-  admin-projects.js       # Admin project detail, archive, requirements
+  admin-projects.js       # Admin project detail, archive, requirements, background LLM refresh
   design.js               # Design extraction, view, chat, publish, flowchart
   proposals.js            # Proposal generation, chat, publish, onboarding, engine
   sharing.js              # Project sharing (admin + customer)
