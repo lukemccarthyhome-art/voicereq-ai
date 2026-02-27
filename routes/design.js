@@ -216,6 +216,14 @@ ASSETS — REQUIRED RESOURCES:
 - If the project mentions spreadsheets, forms, dashboards, tracking, input pages, portals, or templates — these are assets.
 - Generate a QUESTION for each web asset where it's unclear whether the customer wants us to build it or integrate with their existing systems. E.g., "You mentioned needing an intake form — should we build a standalone web form, or do you have an existing website/portal where this should be embedded?"
 
+EMAIL INBOX MONITORING — MANDATORY PATTERN:
+- Any workflow that involves checking an inbox for incoming emails (e.g. "monitor for invoices", "watch for approvals", "process incoming orders") MUST follow this pattern:
+- TRIGGER: Timer/cron schedule (e.g. every 5 minutes, every hour). Never rely on push-based email triggers unless the provider supports native webhooks (e.g. Gmail push notifications). Default to polling.
+- DEDUPLICATION: Every processed email MUST be logged (message ID + timestamp) so it is not re-processed on the next poll. Use a Google Sheet, database row, or Pipedream data store as the dedup ledger. The first step after fetching emails is always: filter out already-seen message IDs.
+- LLM vs SCRIPTED: Determine whether email interpretation requires an LLM or can be handled with scripted rules. If emails follow a consistent structure (e.g. invoices from one system, notifications with fixed subject lines), use scripted parsing (regex, subject line matching, sender filtering). Only use an LLM when email content is unstructured, variable, or requires judgment (e.g. classifying support requests, extracting intent from free-text). State this decision explicitly in the BuildSpecification.
+- EXCEPTION MANAGEMENT: Design for emails that don't match expected patterns. Every email monitoring workflow MUST include: (a) a fallback path for unrecognised/malformed emails (log + flag for human review, don't silently drop), (b) error handling for API failures (retry logic, dead-letter logging), (c) a mechanism to surface exceptions to an admin (email alert, dashboard flag, or sheet row marked as "needs review").
+- In the customerDesign, explain the polling frequency, what happens to unexpected emails, and how the customer will be notified of exceptions.
+
 DESIGN PRINCIPLES:
 - Humans steer; systems automate repetition.
 - Prove the loop before scaling.
