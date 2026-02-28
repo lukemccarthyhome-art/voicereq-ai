@@ -98,18 +98,49 @@ function proposalReadyEmail(projectName, projectId) {
   };
 }
 
+function formatResponseHtml(text) {
+  // Escape HTML
+  let s = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Bold: **text** or __text__
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  // Split into lines for block-level formatting
+  const lines = s.split('\n');
+  const out = [];
+  let inList = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const bullet = trimmed.match(/^[-*•]\s+(.+)/);
+    if (bullet) {
+      if (!inList) { out.push('<ul style="margin:8px 0 8px 4px;padding-left:20px;color:#475569;font-size:15px;line-height:1.8;">'); inList = true; }
+      out.push(`<li style="margin-bottom:4px;">${bullet[1]}</li>`);
+    } else {
+      if (inList) { out.push('</ul>'); inList = false; }
+      if (trimmed === '') {
+        out.push('<br>');
+      } else {
+        out.push(`<p style="margin:0 0 10px;color:#475569;font-size:15px;line-height:1.7;">${trimmed}</p>`);
+      }
+    }
+  }
+  if (inList) out.push('</ul>');
+  return out.join('\n');
+}
+
 function featureRequestResponseEmail(userName, requestText, responseText) {
   const escapedRequest = requestText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const escapedResponse = responseText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const formattedResponse = formatResponseHtml(responseText);
   return {
     subject: 'Re: Your Feature Request — Morti Projects',
     html: wrap(`
       <h2 ${S.h}>Thanks for your feedback${userName ? ', ' + userName : ''}!</h2>
       <p ${S.p}>We've reviewed your feature request and wanted to follow up.</p>
-      <p ${S.p}><strong>Your request:</strong></p>
-      <blockquote style="margin:0 0 20px;padding:12px 16px;background:#f1f5f9;border-left:4px solid #4f46e5;border-radius:0 8px 8px 0;color:#475569;font-size:14px;line-height:1.7;white-space:pre-wrap;">${escapedRequest}</blockquote>
-      <p ${S.p}><strong>Our response:</strong></p>
-      <p ${S.p} style="white-space:pre-wrap;">${escapedResponse}</p>
+      <p style="margin:0 0 8px;color:#94a3b8;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Your request</p>
+      <blockquote style="margin:0 0 24px;padding:12px 16px;background:#f1f5f9;border-left:4px solid #4f46e5;border-radius:0 8px 8px 0;color:#475569;font-size:14px;line-height:1.7;white-space:pre-wrap;">${escapedRequest}</blockquote>
+      <p style="margin:0 0 8px;color:#94a3b8;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Our response</p>
+      <div style="margin:0 0 24px;padding:16px 20px;background:#f0fdf4;border-left:4px solid #22c55e;border-radius:0 8px 8px 0;">
+        ${formattedResponse}
+      </div>
       ${btn('Visit Morti Projects', BASE_URL + '/login')}
       <p ${S.p}>Have more ideas? Share them anytime from within the app.</p>
     `)
