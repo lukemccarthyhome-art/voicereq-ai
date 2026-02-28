@@ -244,8 +244,24 @@
               <a href="<%= (process.env.ENGINE_API_URL || 'http://localhost:3100') %>/builds/<%= design.enginePlanId %>" target="_blank" class="btn btn-sm" style="background:#06b6d4;color:white;font-size:11px;">🔗 View Build</a>
             <% } %>
           <% } else { %>
-            <button id="sendToEngineBtn" onclick="sendToEngine()" class="btn btn-sm" style="background: var(--accent-secondary);color:white;">🚀 Send to Engine</button>
+            <button id="sendToEngineBtn" onclick="toggleEnginePanel()" class="btn btn-sm" style="background: var(--accent-secondary);color:white;">🚀 Send to Engine</button>
           <% } %>
+        </div>
+      </div>
+
+      <!-- Send to Engine panel (hidden until button clicked) -->
+      <div id="enginePanel" style="display:none;margin-bottom:16px;">
+        <div class="card" style="border-color:rgba(0,158,126,0.3);">
+          <h4 style="font-size:0.9rem;font-weight:700;margin-bottom:8px;">🚀 Send to Morti Engine</h4>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;">Optional: add build guidance for the engine planner. Admin notes from the project are included automatically.</p>
+          <textarea id="engineGuidance" rows="3" placeholder="e.g. Use Gemini not OpenAI for cost reasons, Customer is on Xero free tier..." style="width:100%;padding:10px 12px;background:rgba(5,13,26,0.6);border:1px solid var(--border-glass);border-radius:8px;color:var(--text-primary);font-family:inherit;font-size:0.85rem;line-height:1.6;resize:vertical;margin-bottom:10px;"></textarea>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button id="engineSendBtn" onclick="sendToEngine()" class="btn btn-sm" style="background:var(--accent-secondary);color:white;">🚀 Confirm & Send</button>
+            <button onclick="document.getElementById('enginePanel').style.display='none'" class="btn btn-sm" style="background:transparent;border:1px solid var(--border-glass);color:var(--text-secondary);">Cancel</button>
+            <% if (!design.dataStore) { %>
+              <span style="font-size:0.78rem;color:#f5c542;">⚠️ No dataStore in design — engine will use defaults</span>
+            <% } %>
+          </div>
         </div>
       </div>
 
@@ -1168,20 +1184,29 @@
     });
 
     // Send to Engine
+    function toggleEnginePanel() {
+      const panel = document.getElementById('enginePanel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      if (panel.style.display === 'block') panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
     async function sendToEngine() {
-      const btn = document.getElementById('sendToEngineBtn');
+      const btn = document.getElementById('engineSendBtn');
       if (!btn) return;
-      if (!confirm('Send this approved design to Morti Engine for build planning?')) return;
+      const guidance = (document.getElementById('engineGuidance') || {}).value || '';
       btn.disabled = true; btn.textContent = '⏳ Sending to Engine...';
       try {
-        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/send-to-engine', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const res = await fetch('/admin/projects/<%= encodeId(projectId) %>/send-to-engine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminGuidance: guidance })
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed');
         btn.textContent = '✅ Sent to Engine';
         btn.style.background = 'var(--accent-secondary)';
         setTimeout(() => window.location.reload(), 2000);
       } catch (e) {
-        btn.disabled = false; btn.textContent = '🚀 Send to Engine';
+        btn.disabled = false; btn.textContent = '🚀 Confirm & Send';
         alert('Failed to send to engine: ' + e.message);
       }
     }

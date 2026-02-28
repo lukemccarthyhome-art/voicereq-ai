@@ -291,11 +291,40 @@ router.post('/admin/projects/:id/send-to-engine', auth.authenticate, auth.requir
 
     // --- Gather full project data ---
     const design = result.design;
-    const designPayload = design.sections || {};
+
+    // Build optimized design payload — only send sections the engine planner uses
+    const keepSections = ['ExecutiveSummary', 'HowItWorks', 'TechnicalArchitecture', 'DataModel', 'IntegrationsAndAPIs', 'BuildSpecification', 'CoreWorkflow'];
+    const stripSections = ['WhatYouGet', 'AutomatedVsManual', 'TimelineAndInvestment', 'RiskRegister', 'WhatWeNeedFromYou'];
+    const designPayload = {};
+
+    // Pull from customerDesign + engineDesign (new format) or sections (old format)
+    const cd = design.customerDesign || {};
+    const ed = design.engineDesign || {};
+    const sections = design.sections || {};
+    for (const key of keepSections) {
+      const val = cd[key] || ed[key] || sections[key];
+      if (val) designPayload[key] = val;
+    }
     if (design.summary) designPayload.summary = design.summary;
-    if (design.designMarkdown) designPayload.designMarkdown = design.designMarkdown;
-    if (design.customerDesign) designPayload.customerDesign = design.customerDesign;
-    if (design.engineDesign) designPayload.engineDesign = design.engineDesign;
+
+    // Workflows and assets — structured data the engine uses directly
+    if (design.workflows) designPayload.workflows = design.workflows;
+    if (design.assets) designPayload.assets = design.assets;
+
+    // dataStore — biggest gap, planner injects this as a directive to every agent
+    if (design.dataStore) designPayload.dataStore = design.dataStore;
+
+    // adminGuidance — concatenate project admin_notes into a single string
+    let adminGuidance = (req.body.adminGuidance || '').trim();
+    if (!adminGuidance) {
+      try {
+        const notes = JSON.parse(project.admin_notes || '[]');
+        if (notes.length > 0) {
+          adminGuidance = notes.map(n => n.text).join('\n');
+        }
+      } catch (e) { /* empty */ }
+    }
+    if (adminGuidance) designPayload.adminGuidance = adminGuidance;
 
     // Requirements from project record
     let requirements = {};
@@ -350,6 +379,7 @@ router.post('/admin/projects/:id/send-to-engine', auth.authenticate, auth.requir
       projectName: project.name,
       projectDescription: project.description || '',
       projectId: projectId,
+      customerId: project.user_id,
       designId: design.id
     };
 
