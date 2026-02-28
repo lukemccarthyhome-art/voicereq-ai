@@ -279,17 +279,34 @@
           <% if (customerDesign) { %>
             <%
               const custSections = [
-                { key: 'ExecutiveSummary', label: 'Executive Summary', icon: '📋' },
                 { key: 'HowItWorks', label: 'How It Works', icon: '⚡' },
                 { key: 'WhatYouGet', label: 'What You Get', icon: '🎯' },
                 { key: 'WhatWeNeedFromYou', label: 'What We Need From You', icon: '🤝' },
                 { key: 'TimelineAndInvestment', label: 'Timeline & Investment', icon: '📅' },
                 { key: 'AutomatedVsManual', label: 'Automated vs Manual', icon: '🤖' }
               ];
-              // Also pick up any extra keys
               const custKeys = Object.keys(customerDesign);
-              const extraCustKeys = custKeys.filter(k => !custSections.find(s => s.key === k));
+              const extraCustKeys = custKeys.filter(k => k !== 'ExecutiveSummary' && !custSections.find(s => s.key === k));
             %>
+            <!-- Executive Summary first -->
+            <% if (customerDesign.ExecutiveSummary) { %>
+              <div class="section-card">
+                <h3><span class="icon">📋</span> Executive Summary</h3>
+                <div class="section-body"><%- renderText(customerDesign.ExecutiveSummary) %></div>
+              </div>
+            <% } %>
+            <!-- Flowchart right after Executive Summary -->
+            <div id="flowchartContainer" style="<%= design.flowchart ? '' : 'display:none;' %>" class="card">
+              <h3 style="margin-bottom:12px; color: var(--text-primary);">🗺️ User Journey</h3>
+              <div class="flowchart-zoom">
+                <button onclick="zoomFlowchart(0.2)" title="Zoom In">➕</button>
+                <button onclick="zoomFlowchart(-0.2)" title="Zoom Out">➖</button>
+                <button onclick="zoomFlowchart(0)" title="Reset Zoom">↺ Reset</button>
+                <button onclick="popOutFlowchart()" title="Open in new window">⧉ Pop Out</button>
+              </div>
+              <div id="flowchartRender"></div>
+            </div>
+            <!-- Remaining sections -->
             <% custSections.forEach(sec => { %>
               <% if (customerDesign[sec.key]) { %>
                 <div class="section-card">
@@ -408,17 +425,38 @@
 
       <% } else if (designSections) { %>
         <!-- OLD FORMAT: Flat sections (backward compat) -->
+        <%
+          const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate','CostBenefitAnalysis','TechnicalReadiness','TechnicalReference'];
+          const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements (Out of Scope)', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate', CostBenefitAnalysis:'Cost / Benefit Analysis', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' };
+          const fullWidthSections = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Phase2Enhancements','TechnicalReference'];
+          const allKeys = Object.keys(designSections);
+          const orderedKeys = sectionOrder.filter(k => designSections[k]);
+          const extraKeys = allKeys.filter(k => !sectionOrder.includes(k));
+          const renderKeys = orderedKeys.concat(extraKeys);
+        %>
+        <!-- Executive Summary first -->
+        <% if (designSections.ExecutiveSummary) { %>
+          <div style="padding:16px;border-radius:10px;background: var(--bg-card);border:1px solid var(--border-glass);margin-top:12px;">
+            <h4 style="font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color: var(--accent);margin-bottom:6px;">Executive Summary</h4>
+            <div class="section-body"><%- renderText(designSections.ExecutiveSummary) %></div>
+          </div>
+        <% } %>
+        <!-- Flowchart after Executive Summary (old format) -->
+        <% if (!hasNewFormat) { %>
+          <div id="flowchartContainer" style="<%= design.flowchart ? '' : 'display:none;' %>" class="card">
+            <h3 style="margin-bottom:12px; color: var(--text-primary);">🗺️ User Journey</h3>
+            <div class="flowchart-zoom">
+              <button onclick="zoomFlowchart(0.2)" title="Zoom In">➕</button>
+              <button onclick="zoomFlowchart(-0.2)" title="Zoom Out">➖</button>
+              <button onclick="zoomFlowchart(0)" title="Reset Zoom">↺ Reset</button>
+              <button onclick="popOutFlowchart()" title="Open in new window">⧉ Pop Out</button>
+            </div>
+            <div id="flowchartRender"></div>
+          </div>
+        <% } %>
+        <!-- Remaining sections -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
-          <%
-            const sectionOrder = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Assumptions','Dependencies','Phase2Enhancements','RisksAndMitigations','BuildEffortEstimate','CostBenefitAnalysis','TechnicalReadiness','TechnicalReference'];
-            const sectionLabels = { ExecutiveSummary:'Executive Summary', CoreWorkflow:'Core Workflow', SimplifiedArchitecture:'Simplified Architecture', MinimalDataModel:'Minimal Data Model', ManualVsAutomated:'Manual vs Automated', Assumptions:'Assumptions', Dependencies:'Dependencies', Phase2Enhancements:'Phase 2 Enhancements (Out of Scope)', RisksAndMitigations:'Risks & Mitigations', BuildEffortEstimate:'Build Effort Estimate', CostBenefitAnalysis:'Cost / Benefit Analysis', TechnicalReadiness:'Technical Readiness', TechnicalReference:'Technical Reference' };
-            const fullWidthSections = ['ExecutiveSummary','CoreWorkflow','SimplifiedArchitecture','MinimalDataModel','ManualVsAutomated','Phase2Enhancements','TechnicalReference'];
-            const allKeys = Object.keys(designSections);
-            const orderedKeys = sectionOrder.filter(k => designSections[k]);
-            const extraKeys = allKeys.filter(k => !sectionOrder.includes(k));
-            const renderKeys = orderedKeys.concat(extraKeys);
-          %>
-          <% renderKeys.forEach(key => { %>
+          <% renderKeys.filter(k => k !== 'ExecutiveSummary').forEach(key => { %>
             <% if (designSections[key]) { %>
               <div style="padding:16px;border-radius:10px;background: var(--bg-card);border:1px solid var(--border-glass);<%= fullWidthSections.includes(key) ? 'grid-column:1/-1;' : '' %>">
                 <h4 style="font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color: var(--accent);margin-bottom:6px;"><%= sectionLabels[key] || key.replace(/([A-Z])/g, ' $1').trim() %></h4>
@@ -430,18 +468,6 @@
       <% } else { %>
         <div class="empty-state">No design content generated yet. Click Refresh to generate.</div>
       <% } %>
-    </div>
-
-    <!-- Flowchart -->
-    <div id="flowchartContainer" style="<%= design.flowchart ? '' : 'display:none;' %>" class="card">
-      <h3 style="margin-bottom:12px; color: var(--text-primary);">🗺️ User Journey</h3>
-      <div class="flowchart-zoom">
-        <button onclick="zoomFlowchart(0.2)" title="Zoom In">➕</button>
-        <button onclick="zoomFlowchart(-0.2)" title="Zoom Out">➖</button>
-        <button onclick="zoomFlowchart(0)" title="Reset Zoom">↺ Reset</button>
-        <button onclick="popOutFlowchart()" title="Open in new window">⧉ Pop Out</button>
-      </div>
-      <div id="flowchartRender"></div>
     </div>
 
     <!-- Questions -->
