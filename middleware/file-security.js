@@ -96,65 +96,65 @@ async function validateFileType(req, res, next) {
   }
 }
 
-// --- ClamAV malware scanning ---
+// --- Cloudmersive virus scanning ---
 
-let clamScanner = null;
-let clamInitAttempted = false;
-let clamAvailable = false;
-
-async function initClam() {
-  if (clamInitAttempted) return clamAvailable;
-  clamInitAttempted = true;
-
-  try {
-    const NodeClam = require('clamscan');
-    clamScanner = await new NodeClam().init({
-      removeInfected: false,
-      quarantineInfected: false,
-      debugMode: false,
-      clamdscan: {
-        socket: null,
-        host: '127.0.0.1',
-        port: 3310,
-        localFallback: true,
-      },
-      preference: 'clamdscan',
-    });
-    clamAvailable = true;
-    console.log('ClamAV: scanner initialized successfully');
-  } catch (err) {
-    clamAvailable = false;
-    console.warn('ClamAV: not available — uploads will proceed without virus scanning.', err.message);
-  }
-
-  return clamAvailable;
-}
+const CLOUDMERSIVE_API_KEY = process.env.CLOUDMERSIVE_API_KEY;
 
 /**
- * Scans uploaded file for malware using ClamAV.
- * Gracefully skips if ClamAV is not installed.
+ * Scans uploaded file for malware using Cloudmersive Virus Scan API.
+ * Gracefully skips if API key is not configured.
  * Must run AFTER validateFileType.
  */
 async function scanForMalware(req, res, next) {
   if (!req.file) return next();
 
-  const available = await initClam();
-  if (!available) return next();
+  if (!CLOUDMERSIVE_API_KEY) {
+    console.warn('Cloudmersive: CLOUDMERSIVE_API_KEY not set — skipping virus scan.');
+    return next();
+  }
 
   try {
-    const { isInfected, viruses } = await clamScanner.isInfected(req.file.path);
+    const fileBuffer = fs.readFileSync(req.file.path);
+    const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
 
-    if (isInfected) {
-      console.warn(`ClamAV: INFECTED file detected — ${req.file.originalname} — viruses: ${viruses.join(', ')}`);
-      cleanupFile(req.file.path);
-      return res.status(400).json({ error: 'File rejected: potential security threat detected' });
+    const bodyParts = [
+      `--${boundary}\r\n`,
+      `Content-Disposition: form-data; name="inputFile"; filename="${req.file.originalname}"\r\n`,
+      `Content-Type: ${req.file.mimetype || 'application/octet-stream'}\r\n\r\n`,
+    ];
+
+    const bodyStart = Buffer.from(bodyParts.join(''));
+    const bodyEnd = Buffer.from(`\r\n--${boundary}--\r\n`);
+    const body = Buffer.concat([bodyStart, fileBuffer, bodyEnd]);
+
+    const response = await fetch('https://api.cloudmersive.com/virus/scan/file', {
+      method: 'POST',
+      headers: {
+        'Apikey': CLOUDMERSIVE_API_KEY,
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      console.error('Cloudmersive: API error', response.status, response.statusText);
+      return next(); // Don't block uploads on API errors
     }
 
+    const result = await response.json();
+
+    if (result.CleanResult === false) {
+      const virusNames = (result.FoundViruses || []).map(v => v.VirusName).join(', ');
+      console.warn(`Cloudmersive: INFECTED — ${req.file.originalname} — ${virusNames}`);
+      cleanupFile(req.file.path);
+      return res.status(400).json({ error: 'File rejected: potential security threat detected.' });
+    }
+
+    console.log(`Cloudmersive: clean — ${req.file.originalname}`);
     next();
   } catch (err) {
-    // Scan failure should not block uploads — log and continue
-    console.error('ClamAV: scan error:', err.message);
-    next();
+    console.error('Cloudmersive: scan error:', err.message);
+    next(); // Don't block uploads on network errors
   }
 }
 
