@@ -102,7 +102,8 @@ router.post('/api/upload', optionalAuth, uploadLimiter, upload.single('file'), v
     }
 
     // Save to database if project/session provided
-    const { projectId, sessionId } = req.body;
+    const { projectId: rawProjectId, sessionId } = req.body;
+    const projectId = rawProjectId ? resolveProjectId(rawProjectId) : null;
     let fileId = null;
     let description = '';
 
