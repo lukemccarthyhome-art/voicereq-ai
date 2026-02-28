@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { sendSecurityAlert } = require('../helpers/email-sender');
 
 // --- File type allowlist ---
 
@@ -53,6 +54,10 @@ async function validateFileType(req, res, next) {
 
   // Check extension against allowlist
   if (!ALL_ALLOWED_EXTENSIONS.has(ext)) {
+    sendSecurityAlert('Blocked File Upload — Disallowed Extension', {
+      filename: req.file.originalname, extension: ext,
+      ip: req.ip, user: req.user ? req.user.email : 'anonymous'
+    });
     cleanupFile(req.file.path);
     return res.status(400).json({
       error: `File type '${ext}' is not allowed. Accepted types: documents, text/code files, and images.`
@@ -82,6 +87,10 @@ async function validateFileType(req, res, next) {
 
     const expectedMimes = BINARY_ALLOWLIST[ext];
     if (!expectedMimes.includes(detected.mime)) {
+      sendSecurityAlert('Blocked File Upload — MIME Mismatch', {
+        filename: req.file.originalname, extension: ext, detectedMime: detected.mime,
+        ip: req.ip, user: req.user ? req.user.email : 'anonymous'
+      });
       cleanupFile(req.file.path);
       return res.status(400).json({
         error: `File content does not match its extension. Expected ${ext} but detected ${detected.mime}.`
@@ -174,7 +183,12 @@ async function scanForMalware(req, res, next) {
     const verdict = result.scan_results && result.scan_results.scan_all_result_a;
 
     if (detected) {
-      console.warn(`MetaDefender: THREAT — ${req.file.originalname} — ${verdict} (${result.scan_results.total_detected_avs}/${result.scan_results.total_avs} engines)`);
+      const threatMsg = `${verdict} (${result.scan_results.total_detected_avs}/${result.scan_results.total_avs} engines)`;
+      console.warn(`MetaDefender: THREAT — ${req.file.originalname} — ${threatMsg}`);
+      sendSecurityAlert('Blocked File Upload — Malware Detected', {
+        filename: req.file.originalname, threat: threatMsg,
+        ip: req.ip, user: req.user ? req.user.email : 'anonymous'
+      });
       cleanupFile(req.file.path);
       return res.status(400).json({ error: 'File rejected: potential security threat detected.' });
     }
