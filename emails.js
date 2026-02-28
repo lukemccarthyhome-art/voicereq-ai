@@ -98,4 +98,22 @@ function proposalReadyEmail(projectName, projectId) {
   };
 }
 
-module.exports = { welcomeEmail, accountApprovedEmail, designReadyEmail, proposalReadyEmail };
+function featureRequestResponseEmail(userName, requestText, responseText) {
+  const escapedRequest = requestText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const escapedResponse = responseText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return {
+    subject: 'Re: Your Feature Request — Morti Projects',
+    html: wrap(`
+      <h2 ${S.h}>Thanks for your feedback${userName ? ', ' + userName : ''}!</h2>
+      <p ${S.p}>We've reviewed your feature request and wanted to follow up.</p>
+      <p ${S.p}><strong>Your request:</strong></p>
+      <blockquote style="margin:0 0 20px;padding:12px 16px;background:#f1f5f9;border-left:4px solid #4f46e5;border-radius:0 8px 8px 0;color:#475569;font-size:14px;line-height:1.7;white-space:pre-wrap;">${escapedRequest}</blockquote>
+      <p ${S.p}><strong>Our response:</strong></p>
+      <p ${S.p} style="white-space:pre-wrap;">${escapedResponse}</p>
+      ${btn('Visit Morti Projects', BASE_URL + '/login')}
+      <p ${S.p}>Have more ideas? Share them anytime from within the app.</p>
+    `)
+  };
+}
+
+module.exports = { welcomeEmail, accountApprovedEmail, designReadyEmail, proposalReadyEmail, featureRequestResponseEmail };

@@ -114,6 +114,12 @@ const initDB = () => {
     )
   `);
 
+  // Feature request migrations
+  try { db.exec(`ALTER TABLE feature_requests ADD COLUMN status TEXT DEFAULT 'new'`); } catch (e) {}
+  try { db.exec(`ALTER TABLE feature_requests ADD COLUMN admin_response TEXT`); } catch (e) {}
+  try { db.exec(`ALTER TABLE feature_requests ADD COLUMN responded_at DATETIME`); } catch (e) {}
+  try { db.exec(`ALTER TABLE feature_requests ADD COLUMN responded_by TEXT`); } catch (e) {}
+
   // Create seed admin user
   createSeedUser();
 
@@ -576,6 +582,23 @@ module.exports = {
   },
   getAllFeatureRequests: () => {
     return Promise.resolve(db.prepare('SELECT * FROM feature_requests ORDER BY created_at DESC').all());
+  },
+  getFeatureRequestById: (id) => {
+    return Promise.resolve(db.prepare('SELECT * FROM feature_requests WHERE id = ?').get(id));
+  },
+  getActiveFeatureRequests: () => {
+    return Promise.resolve(db.prepare("SELECT * FROM feature_requests WHERE status IS NULL OR status != 'archived' ORDER BY created_at DESC").all());
+  },
+  getArchivedFeatureRequests: () => {
+    return Promise.resolve(db.prepare("SELECT * FROM feature_requests WHERE status = 'archived' ORDER BY created_at DESC").all());
+  },
+  updateFeatureRequestResponse: (id, response, respondedBy) => {
+    db.prepare("UPDATE feature_requests SET admin_response = ?, responded_at = CURRENT_TIMESTAMP, responded_by = ?, status = 'responded' WHERE id = ?").run(response, respondedBy, id);
+    return Promise.resolve();
+  },
+  updateFeatureRequestStatus: (id, status) => {
+    db.prepare('UPDATE feature_requests SET status = ? WHERE id = ?').run(status, id);
+    return Promise.resolve();
   },
   queryOne: (sql, params) => {
     // Convert $1, $2 style to ? for SQLite

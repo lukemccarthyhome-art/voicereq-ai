@@ -13,38 +13,187 @@
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
         .main { max-width: 1200px; margin: 0 auto; padding: 24px; }
         .card { background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
-        .card h2 { margin-bottom: 16px; color: var(--text-primary); font-size: 1.3rem; font-weight: 700; }
         .request-item { border: 1px solid var(--border-glass); border-radius: 12px; padding: 16px; margin-bottom: 12px; background: rgba(5,13,26,0.4); transition: border-color 0.3s; }
         .request-item:hover { border-color: var(--border-glass-hover); }
-        .request-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+        .request-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .request-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; }
-        .badge { display: inline-block; background: var(--accent-dim); color: var(--accent); padding: 2px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; }
+        .badge-page { background: var(--accent-dim); color: var(--accent); }
+        .badge-new { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .badge-responded { background: rgba(34,197,94,0.15); color: #4ade80; }
+        .badge-archived { background: rgba(148,163,184,0.15); color: #94a3b8; }
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+        .tab { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-secondary); text-decoration: none; transition: all 0.2s; border: 1px solid transparent; }
+        .tab:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+        .tab.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(17,153,250,0.2); }
+
+        /* Response area */
+        .response-section { margin-top: 12px; }
+        .response-toggle { font-size: 13px; color: var(--accent); cursor: pointer; font-weight: 500; background: none; border: none; padding: 0; }
+        .response-toggle:hover { text-decoration: underline; }
+        .response-form { margin-top: 10px; display: none; }
+        .response-form.open { display: block; }
+        .response-textarea { width: 100%; min-height: 80px; padding: 10px 12px; background: rgba(5,13,26,0.6); border: 1px solid var(--border-glass); border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 13px; line-height: 1.6; resize: vertical; }
+        .response-textarea:focus { outline: none; border-color: var(--accent); }
+        .response-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+        .btn-send { padding: 6px 16px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+        .btn-send:hover { opacity: 0.9; }
+        .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-archive { padding: 6px 12px; background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .btn-archive:hover { background: rgba(148,163,184,0.2); color: var(--text-primary); }
+
+        /* Previous response */
+        .previous-response { margin-top: 12px; padding: 12px; background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.15); border-radius: 8px; }
+        .previous-response-label { font-size: 11px; font-weight: 600; color: #4ade80; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .previous-response-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; }
+        .previous-response-meta { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+        /* Header row */
+        .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+
+        /* Toast notification */
+        .toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; z-index: 999; transform: translateY(-20px); opacity: 0; transition: all 0.3s; pointer-events: none; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast-success { background: rgba(34,197,94,0.9); color: #fff; }
+        .toast-error { background: rgba(239,68,68,0.9); color: #fff; }
     </style>
 </head>
 <body>
     <%- include('../partials/admin-nav', { currentPage: 'feature-requests', user: user }) %>
+    <div id="toast" class="toast"></div>
     <main class="main">
-        <h1 style="margin-bottom: 24px; font-size: 1.5rem; font-weight: 800;">💡 Feature Requests</h1>
+        <div class="header-row">
+            <h1 style="font-size: 1.5rem; font-weight: 800;">Feature Requests</h1>
+            <div class="tabs">
+                <a href="/admin/feature-requests" class="tab <%= !showArchived ? 'active' : '' %>">Active (<%= !showArchived ? requests.length : (typeof activeCount !== 'undefined' ? activeCount : '...') %>)</a>
+                <a href="/admin/feature-requests/archived" class="tab <%= showArchived ? 'active' : '' %>">Archived (<%= showArchived ? requests.length : archivedCount %>)</a>
+            </div>
+        </div>
+
         <div class="card">
-            <h2>All Requests (<%= requests.length %>)</h2>
             <% if (requests.length > 0) { %>
                 <% requests.forEach(r => { %>
-                    <div class="request-item">
+                    <div class="request-item" id="request-<%= r.id %>">
                         <div class="request-meta">
-                            <strong style="color: var(--text-primary);"><%= r.user_name %></strong> (<%= r.user_email %>) · 
-                            <span class="badge"><%= r.page %></span> · 
-                            <%= melb(r.created_at) %>
+                            <strong style="color: var(--text-primary);"><%= r.user_name %></strong>
+                            (<%= r.user_email %>)
+                            <span class="badge badge-page"><%= r.page %></span>
+                            <% if (!r.status || r.status === 'new') { %>
+                                <span class="badge badge-new">New</span>
+                            <% } else if (r.status === 'responded') { %>
+                                <span class="badge badge-responded">Responded</span>
+                            <% } else if (r.status === 'archived') { %>
+                                <span class="badge badge-archived">Archived</span>
+                            <% } %>
+                            <span><%= melb(r.created_at) %></span>
                         </div>
                         <div class="request-text"><%= r.text %></div>
+
+                        <% if (r.admin_response) { %>
+                            <div class="previous-response">
+                                <div class="previous-response-label">Admin Response</div>
+                                <div class="previous-response-text"><%= r.admin_response %></div>
+                                <div class="previous-response-meta">by <%= r.responded_by %> · <%= melb(r.responded_at) %></div>
+                            </div>
+                        <% } %>
+
+                        <% if (!showArchived) { %>
+                            <div class="response-section">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button class="response-toggle" onclick="toggleResponse(<%= r.id %>)">
+                                        <%= r.admin_response ? 'Update Response' : 'Respond' %>
+                                    </button>
+                                    <button class="btn-archive" onclick="archiveRequest(<%= r.id %>)">Archive</button>
+                                </div>
+                                <div class="response-form" id="response-form-<%= r.id %>">
+                                    <textarea class="response-textarea" id="response-text-<%= r.id %>" placeholder="Type your response... This will be emailed to <%= r.user_name %>."><%= r.admin_response || '' %></textarea>
+                                    <div class="response-actions">
+                                        <button class="btn-send" id="send-btn-<%= r.id %>" onclick="sendResponse(<%= r.id %>)">Send Response</button>
+                                        <span style="font-size: 12px; color: var(--text-muted);">Email will be sent to <%= r.user_email %></span>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
                     </div>
                 <% }) %>
             <% } else { %>
                 <div class="empty-state">
-                    <p>No feature requests yet.</p>
+                    <p><%= showArchived ? 'No archived feature requests.' : 'No active feature requests.' %></p>
                 </div>
             <% } %>
         </div>
     </main>
+    <script>
+        function toggleResponse(id) {
+            const form = document.getElementById('response-form-' + id);
+            form.classList.toggle('open');
+            if (form.classList.contains('open')) {
+                form.querySelector('textarea').focus();
+            }
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast toast-' + type + ' show';
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        async function sendResponse(id) {
+            const text = document.getElementById('response-text-' + id).value.trim();
+            if (!text) return;
+
+            const btn = document.getElementById('send-btn-' + id);
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const res = await fetch('/admin/feature-requests/' + id + '/respond', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ response: text })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Response sent successfully', 'success');
+                    // Update UI: show badge, collapse form
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error || 'Failed to send response', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Send Response';
+                }
+            } catch (e) {
+                showToast('Failed to send response', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Send Response';
+            }
+        }
+
+        async function archiveRequest(id) {
+            try {
+                const res = await fetch('/admin/feature-requests/' + id + '/archive', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const item = document.getElementById('request-' + id);
+                    item.style.transition = 'opacity 0.3s, transform 0.3s';
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateX(20px)';
+                    setTimeout(() => item.remove(), 300);
+                    showToast('Request archived', 'success');
+                } else {
+                    showToast(data.error || 'Failed to archive', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to archive request', 'error');
+            }
+        }
+    </script>
 </body>
 </html>

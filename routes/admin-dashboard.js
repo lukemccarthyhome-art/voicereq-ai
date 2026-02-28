@@ -192,14 +192,64 @@ router.post('/api/feature-request', apiAuth, async (req, res) => {
   }
 });
 
-// Admin: Feature Requests list
+// Admin: Feature Requests list (active)
 router.get('/admin/feature-requests', auth.authenticate, auth.requireAdmin, async (req, res) => {
   try {
-    const requests = await db.getAllFeatureRequests();
-    res.render('admin/feature-requests', { user: req.user, requests, currentPage: 'admin-feature-requests' });
+    const requests = await db.getActiveFeatureRequests();
+    const archived = await db.getArchivedFeatureRequests();
+    res.render('admin/feature-requests', { user: req.user, requests, archivedCount: archived.length, showArchived: false, currentPage: 'admin-feature-requests' });
   } catch (e) {
     console.error('Feature requests page error:', e);
     res.status(500).send('Error loading feature requests');
+  }
+});
+
+// Admin: Feature Requests list (archived)
+router.get('/admin/feature-requests/archived', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const requests = await db.getArchivedFeatureRequests();
+    const active = await db.getActiveFeatureRequests();
+    res.render('admin/feature-requests', { user: req.user, requests, archivedCount: requests.length, activeCount: active.length, showArchived: true, currentPage: 'admin-feature-requests' });
+  } catch (e) {
+    console.error('Feature requests page error:', e);
+    res.status(500).send('Error loading feature requests');
+  }
+});
+
+// Admin: Respond to feature request
+router.post('/admin/feature-requests/:id/respond', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    const { response } = req.body;
+    if (!response || !response.trim()) return res.status(400).json({ error: 'Response text is required' });
+
+    const request = await db.getFeatureRequestById(req.params.id);
+    if (!request) return res.status(404).json({ error: 'Feature request not found' });
+
+    await db.updateFeatureRequestResponse(req.params.id, response.trim(), req.user.name);
+
+    // Send email to the user
+    if (request.user_email) {
+      const email = emails.featureRequestResponseEmail(request.user_name, request.text, response.trim());
+      sendMortiEmail(request.user_email, email.subject, email.html).catch(err => {
+        console.error('Failed to send feature request response email:', err.message);
+      });
+    }
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Respond to feature request error:', e);
+    res.status(500).json({ error: 'Failed to send response' });
+  }
+});
+
+// Admin: Archive feature request
+router.post('/admin/feature-requests/:id/archive', auth.authenticate, auth.requireAdmin, async (req, res) => {
+  try {
+    await db.updateFeatureRequestStatus(req.params.id, 'archived');
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Archive feature request error:', e);
+    res.status(500).json({ error: 'Failed to archive request' });
   }
 });
 

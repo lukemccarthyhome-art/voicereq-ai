@@ -180,6 +180,11 @@ const initDB = async (retries = 3) => {
     try { await client.query('ALTER TABLE projects ADD COLUMN IF NOT EXISTS admin_notes TEXT DEFAULT \'[]\''); } catch (e) {}
     try { await client.query('ALTER TABLE projects ADD COLUMN IF NOT EXISTS design_review_requested TIMESTAMP'); } catch (e) {}
 
+    // Feature request response columns
+    try { await client.query('ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS admin_response TEXT'); } catch (e) {}
+    try { await client.query('ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS responded_at TIMESTAMP'); } catch (e) {}
+    try { await client.query('ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS responded_by TEXT'); } catch (e) {}
+
     // Create seed admin user
     await createSeedUser();
 
@@ -637,6 +642,32 @@ const getAllFeatureRequests = async () => {
   return result.rows;
 };
 
+const getFeatureRequestById = async (id) => {
+  const result = await pool.query('SELECT * FROM feature_requests WHERE id = $1', [id]);
+  return result.rows[0];
+};
+
+const getActiveFeatureRequests = async () => {
+  const result = await pool.query("SELECT * FROM feature_requests WHERE status IS NULL OR status != 'archived' ORDER BY created_at DESC");
+  return result.rows;
+};
+
+const getArchivedFeatureRequests = async () => {
+  const result = await pool.query("SELECT * FROM feature_requests WHERE status = 'archived' ORDER BY created_at DESC");
+  return result.rows;
+};
+
+const updateFeatureRequestResponse = async (id, response, respondedBy) => {
+  await pool.query(
+    "UPDATE feature_requests SET admin_response = $1, responded_at = NOW(), responded_by = $2, status = 'responded' WHERE id = $3",
+    [response, respondedBy, id]
+  );
+};
+
+const updateFeatureRequestStatus = async (id, status) => {
+  await pool.query('UPDATE feature_requests SET status = $1 WHERE id = $2', [status, id]);
+};
+
 // ==================== Query helper ====================
 
 const queryOne = async (sql, params) => {
@@ -801,6 +832,11 @@ module.exports = {
   // Feature requests
   createFeatureRequest,
   getAllFeatureRequests,
+  getFeatureRequestById,
+  getActiveFeatureRequests,
+  getArchivedFeatureRequests,
+  updateFeatureRequestResponse,
+  updateFeatureRequestStatus,
   // Query helper
   queryOne,
   // All sessions (admin)
