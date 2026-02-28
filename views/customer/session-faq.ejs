@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session FAQ - Morti Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0a1628; --bg-primary: #0f1d32; --bg-card: #142640;
+            --bg-glass: rgba(15, 29, 50, 0.6); --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(255, 255, 255, 0.15);
+            --accent: #1199fa; --accent-dim: rgba(17, 153, 250, 0.12);
+            --accent-secondary: #009e7e; --accent-purple: #8b5cf6;
+            --text-primary: #f0f4f8; --text-secondary: rgba(240, 244, 248, 0.7);
+            --text-muted: rgba(240, 244, 248, 0.4);
+            --radius: 16px; --radius-sm: 10px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-deep); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        .main { max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.85rem; font-weight: 500; margin-bottom: 24px; text-decoration: none; transition: color 0.2s; }
+        .back-link:hover { color: var(--accent); }
+        .page-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
+        .page-sub { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 36px; }
+        .section { margin-bottom: 32px; }
+        .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; color: var(--accent); }
+        .card { background: var(--bg-glass); backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+        .faq-item { border-bottom: 1px solid var(--border-glass); }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-q { padding: 16px 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.95rem; gap: 12px; }
+        .faq-q:hover { color: var(--accent); }
+        .faq-arrow { transition: transform 0.2s; font-size: 0.8rem; color: var(--text-muted); flex-shrink: 0; }
+        .faq-item.open .faq-arrow { transform: rotate(180deg); }
+        .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
+        .faq-item.open .faq-a { max-height: 600px; padding-bottom: 16px; }
+        .faq-a p { color: var(--text-secondary); font-size: 0.88rem; line-height: 1.7; margin-bottom: 8px; }
+        .faq-a p:last-child { margin-bottom: 0; }
+        .faq-a ul { color: var(--text-secondary); font-size: 0.88rem; line-height: 1.7; margin: 8px 0; padding-left: 20px; }
+        .faq-a li { margin-bottom: 4px; }
+        .tip { background: rgba(17,153,250,0.08); border: 1px solid rgba(17,153,250,0.15); border-radius: var(--radius-sm); padding: 16px 20px; margin-bottom: 16px; font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; }
+        .tip strong { color: var(--accent); }
+        .kbd { display: inline-block; padding: 2px 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; font-size: 0.78rem; font-family: monospace; color: var(--text-primary); }
+        .help-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 24px; padding: 10px 20px; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: all 0.2s; }
+        .help-link:hover { border-color: var(--accent); color: var(--accent); }
+        @media (max-width: 768px) { .main { padding: 24px 16px 60px; } .page-title { font-size: 1.4rem; } }
+    </style>
+</head>
+<body>
+    <main class="main">
+        <a href="javascript:history.back()" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            Back to session
+        </a>
+
+        <h1 class="page-title">Session FAQ</h1>
+        <p class="page-sub">Quick answers for your voice session with Morti.</p>
+
+        <!-- Getting Started -->
+        <div class="section">
+            <h2 class="section-title">Getting Started</h2>
+            <div class="card">
+                <div class="faq-item open">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        How do I start a voice session?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Click the green <strong>Start</strong> button in the toolbar. Your microphone will connect and you can start speaking naturally. The AI analyst will listen and respond, guiding you through your requirements.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        What should I talk about?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Describe your business problem in plain language. You don't need any technical knowledge. Good things to cover:</p>
+                        <ul>
+                            <li>What process or task you want to automate</li>
+                            <li>How you currently do it manually</li>
+                            <li>What systems or tools you use today</li>
+                            <li>Who's involved and what their roles are</li>
+                            <li>What a successful outcome looks like</li>
+                        </ul>
+                        <p>The AI will ask follow-up questions to fill in the gaps.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        Can I type instead of speaking?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Yes. Use the chat input at the bottom of the conversation panel to type messages. You can mix voice and text freely within the same session.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- During the Session -->
+        <div class="section">
+            <h2 class="section-title">During the Session</h2>
+            <div class="card">
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        How do I pause or hold the conversation?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Click <strong>Hold AI</strong> to pause the AI. It will stop listening while you collect your thoughts, check a document, or talk to a colleague. Click again to resume. You can also press <span class="kbd">H</span> as a shortcut.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        Can I mute my microphone?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Yes. Click the microphone icon or press <span class="kbd">M</span> to mute. The AI will keep talking but won't hear you. Useful if there's background noise.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        How do I upload files?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Click the paperclip icon in the toolbar, or simply drag and drop files onto the session screen. Supported formats include PDF, Word, Excel, PowerPoint, images, and text files. The AI will analyse uploaded documents and use them as context for your requirements.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        Is my session saved automatically?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Yes. Your conversation and requirements are saved automatically every few seconds. You'll see a "Saved" indicator in the toolbar. You can close the browser and come back later without losing anything.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        What are the requirements on the right side?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>As you talk, the AI extracts structured requirements from your conversation and organises them into categories like Functional Requirements, Constraints, and Success Criteria. These are what our team uses to create your solution design.</p>
+                        <p>You can edit, delete, or add requirements directly by clicking on them. Use the refresh button to re-analyse the conversation if needed.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Finishing Up -->
+        <div class="section">
+            <h2 class="section-title">Finishing Up</h2>
+            <div class="card">
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        What does "Finish Session" do?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>It opens a menu with two options:</p>
+                        <ul>
+                            <li><strong>Submit for Design Review</strong> — sends your requirements to our team to create a solution design. Your project status changes to "Submitted for Review".</li>
+                            <li><strong>Keep Session Open</strong> — saves everything and returns to your project. You can come back and continue the conversation later.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        How do I know when I've said enough?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>There's no minimum or maximum. When the requirements panel on the right has captured the key points of your process, you're likely ready. The AI will also let you know if it thinks it has enough information.</p>
+                        <p>Don't worry about being perfect. You can always start another session to add more detail later.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        Can I have multiple sessions for the same project?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Yes. Each session picks up the context from previous ones. This is useful if you want to cover different aspects of your project across separate conversations, or if you think of something new after your first session.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        What happens after I submit for design review?
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Our team reviews your conversation and requirements, then creates a solution design written in plain language. This usually takes 2-5 business days. You'll receive an email when it's ready, and can review it on your project page.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="section">
+            <h2 class="section-title">Troubleshooting</h2>
+            <div class="card">
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        The AI can't hear me
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Check that your browser has microphone permission. You should see a microphone icon in the address bar. Also check:</p>
+                        <ul>
+                            <li>Your microphone isn't muted (check the mute button in the toolbar)</li>
+                            <li>The correct microphone is selected in your browser settings</li>
+                            <li>No other app is using your microphone</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        The call disconnected
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Don't worry. Your conversation is saved automatically. Just click <strong>Start</strong> again to reconnect. The AI will have the full context from your previous conversation.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        My file upload failed
+                        <span class="faq-arrow">&#9660;</span>
+                    </div>
+                    <div class="faq-a">
+                        <p>Files must be under 10MB. Supported formats are PDF, Word (.docx), Excel (.xlsx), PowerPoint (.pptx), images, and common text formats. If your file is too large, try compressing it or splitting it into smaller parts.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tip">
+            <strong>Tip:</strong> You don't need to get everything right in one session. Start with the big picture, submit for design, then refine in follow-up sessions. Our team will work with whatever you provide.
+        </div>
+
+        <a href="/help" class="help-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+            View full Help & Support
+        </a>
+    </main>
+</body>
+</html>

@@ -22,6 +22,10 @@ router.get('/help', auth.authenticate, (req, res) => {
   res.render('customer/help', { user: req.user, title: 'Help & Support', currentPage: 'help' });
 });
 
+router.get('/session-faq', auth.authenticate, (req, res) => {
+  res.render('customer/session-faq', { user: req.user, title: 'Session FAQ', currentPage: 'help' });
+});
+
 router.post('/profile/name', auth.authenticate, async (req, res) => {
   try {
     const { displayName } = req.body;
