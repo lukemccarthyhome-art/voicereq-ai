@@ -1322,7 +1322,7 @@
             <div class="toolbar-divider"></div>
 
             <button class="tb-text-btn complete" onclick="showCompleteModal()" title="Save and choose next step">
-                Done
+                Finish Session
             </button>
         </div>
 
@@ -1387,7 +1387,7 @@
                     <span class="mobile-header-status-label" id="mobileHeaderStatusLabel">Talk</span>
                 </div>
                 <span class="mobile-header-project" id="mobileProjectName">Project</span>
-                <button class="mobile-header-done" onclick="showCompleteModal()">Done</button>
+                <button class="mobile-header-done" onclick="showCompleteModal()">Finish</button>
             </div>
 
             <!-- Mobile controls panel (visible only on mobile) -->
@@ -1926,6 +1926,15 @@
             section.appendChild(itemsDiv);
             container.appendChild(section);
         }
+
+        // Add "Finish Session" button at bottom of requirements
+        const finishBtn = document.createElement('button');
+        finishBtn.textContent = 'Finish Session';
+        finishBtn.style.cssText = 'display:block;width:100%;margin-top:16px;padding:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;';
+        finishBtn.onmouseenter = () => { finishBtn.style.opacity = '0.9'; };
+        finishBtn.onmouseleave = () => { finishBtn.style.opacity = '1'; };
+        finishBtn.onclick = () => showCompleteModal();
+        container.appendChild(finishBtn);
     }
 
     // ── Refresh requirements (real API) ──

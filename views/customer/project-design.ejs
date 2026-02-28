@@ -143,15 +143,34 @@
         <% if (customerDesign) { %>
           <%
             const custSections = [
-              { key: 'ExecutiveSummary', label: 'Executive Summary', icon: '📋' },
               { key: 'HowItWorks', label: 'How It Works', icon: '⚡' },
               { key: 'WhatYouGet', label: 'What You Get', icon: '🎯' },
               { key: 'WhatWeNeedFromYou', label: 'What We Need From You', icon: '🤝' },
               { key: 'AutomatedVsManual', label: 'Automated vs Manual', icon: '🤖' }
             ];
             const custKeys = Object.keys(customerDesign);
-            const extraCustKeys = custKeys.filter(k => !custSections.find(s => s.key === k));
+            const extraCustKeys = custKeys.filter(k => k !== 'ExecutiveSummary' && !custSections.find(s => s.key === k));
           %>
+          <% if (customerDesign.ExecutiveSummary) { %>
+            <div class="section-card">
+              <h3><span class="icon">📋</span> Executive Summary</h3>
+              <div class="section-body"><%- renderText(customerDesign.ExecutiveSummary) %></div>
+            </div>
+          <% } %>
+
+          <% if (design.flowchart) { %>
+          <div class="section-card">
+            <h3><span class="icon">🗺️</span> User Journey</h3>
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+              <button onclick="zoomFlowchart(0.2)" style="padding:4px 12px;border:1px solid var(--border-glass);border-radius:8px;background:var(--bg-card);cursor:pointer;font-size:14px;color:var(--text-secondary);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-glass)';this.style.color='var(--text-secondary)'" title="Zoom In">➕</button>
+              <button onclick="zoomFlowchart(-0.2)" style="padding:4px 12px;border:1px solid var(--border-glass);border-radius:8px;background:var(--bg-card);cursor:pointer;font-size:14px;color:var(--text-secondary);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-glass)';this.style.color='var(--text-secondary)'" title="Zoom Out">➖</button>
+              <button onclick="zoomFlowchart(0)" style="padding:4px 12px;border:1px solid var(--border-glass);border-radius:8px;background:var(--bg-card);cursor:pointer;font-size:14px;color:var(--text-secondary);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-glass)';this.style.color='var(--text-secondary)'" title="Reset Zoom">↺ Reset</button>
+              <button onclick="popOutFlowchart()" style="padding:4px 12px;border:1px solid var(--border-glass);border-radius:8px;background:var(--bg-card);cursor:pointer;font-size:14px;color:var(--text-secondary);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-glass)';this.style.color='var(--text-secondary)'" title="Open in new window">⧉ Pop Out</button>
+            </div>
+            <div id="flowchartRender" style="height:50vh;overflow:auto;padding:16px;border:1px solid var(--border-glass);border-radius:10px;background:#1a2d47;position:relative;display:flex;"></div>
+          </div>
+          <% } %>
+
           <% custSections.forEach(sec => { %>
             <% if (customerDesign[sec.key]) { %>
               <div class="section-card">
@@ -263,8 +282,8 @@
       <div style="text-align:center;padding:40px;color:var(--text-muted);"><%- design.designHtml || '<p>No design content available.</p>' %></div>
     <% } %>
 
-    <!-- Flowchart -->
-    <% if (design.flowchart) { %>
+    <!-- Flowchart (old format only — new format renders it in overview tab) -->
+    <% if (design.flowchart && !hasNewFormat) { %>
     <div class="section-card">
       <h3><span class="icon">🗺️</span> User Journey</h3>
       <div style="display:flex;gap:6px;margin-bottom:12px;">
