@@ -50,9 +50,9 @@
 </head>
 <body>
     <main class="main">
-        <a href="javascript:history.back()" class="back-link">
+        <a href="#" onclick="if(window.history.length>1){history.back()}else{window.close()};return false;" class="back-link">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-            Back to session
+            Close
         </a>
 
         <h1 class="page-title">Session FAQ</h1>
