@@ -98,7 +98,7 @@
 <div class="modal-overlay" id="featureModal">
   <div class="modal-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="color:var(--text-primary);font-weight:700;" id="featureModalTitle">💡 Request a Feature</h3>
+      <h3 style="color:var(--text-primary);font-weight:700;" id="featureModalTitle">💡 Feedback</h3>
       <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);">&times;</button>
     </div>
     <!-- Type toggle -->
@@ -139,7 +139,7 @@ function setFeatureType(type) {
   } else {
     fBtn.style.background = 'var(--accent)'; fBtn.style.color = '#fff';
     bBtn.style.background = 'transparent'; bBtn.style.color = 'var(--text-secondary)';
-    title.textContent = '💡 Request a Feature';
+    title.textContent = '💡 Feedback';
     textarea.placeholder = "Tell us what you'd like to see, or what could be better...";
   }
 }
