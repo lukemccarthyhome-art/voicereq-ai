@@ -268,9 +268,12 @@
     <div class="section-card">
       <h3><span class="icon">🗺️</span> User Journey</h3>
       <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <button onclick="zoomFlowchart(0.2)" style="padding:4px 12px;border:1px solid var(--border-glass);border-radius:8px;background:var(--bg-card);cursor:pointer;font-size:14px;color:var(--text-secondary);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-glass)';this.style.color='var(--text-secondary)'" title="Zoom In">➕</button>
+        <button onclick="zoomFlowchart(-0.2)" style="padding:4px 12px;border:1px solid var(--border-glass);border-radius:8px;background:var(--bg-card);cursor:pointer;font-size:14px;color:var(--text-secondary);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-glass)';this.style.color='var(--text-secondary)'" title="Zoom Out">➖</button>
+        <button onclick="zoomFlowchart(0)" style="padding:4px 12px;border:1px solid var(--border-glass);border-radius:8px;background:var(--bg-card);cursor:pointer;font-size:14px;color:var(--text-secondary);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-glass)';this.style.color='var(--text-secondary)'" title="Reset Zoom">↺ Reset</button>
         <button onclick="popOutFlowchart()" style="padding:4px 12px;border:1px solid var(--border-glass);border-radius:8px;background:var(--bg-card);cursor:pointer;font-size:14px;color:var(--text-secondary);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-glass)';this.style.color='var(--text-secondary)'" title="Open in new window">⧉ Pop Out</button>
       </div>
-      <div id="flowchartRender" style="min-height:100px;display:flex;align-items:center;justify-content:center;"></div>
+      <div id="flowchartRender" style="height:50vh;overflow:auto;padding:16px;border:1px solid var(--border-glass);border-radius:10px;background:#1a2d47;position:relative;display:flex;"></div>
     </div>
     <% } %>
 
@@ -331,7 +334,18 @@
   <% if (design.flowchart || (hasNewFormat && customerDesign && customerDesign.HowItWorks)) { %>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>
-    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#1e3a5f', primaryTextColor: '#f0f4f8', primaryBorderColor: '#3399ff',
+        lineColor: '#3399ff', secondaryColor: '#1a3352', tertiaryColor: '#1e3a5f',
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif', fontSize: '14px',
+        nodeBorder: '#3399ff', mainBkg: '#1e3a5f', clusterBkg: '#142640',
+        clusterBorder: 'rgba(255,255,255,0.15)', edgeLabelBackground: '#1a3352',
+        nodeTextColor: '#f0f4f8'
+      }
+    });
 
     <% if (hasNewFormat && customerDesign && customerDesign.HowItWorks) { %>
     (function() {
@@ -370,11 +384,468 @@
     })();
     <% } %>
 
+    // Flowchart viewer — native scroll with SVG resize
+    let fcNaturalW = 0, fcNaturalH = 0, fcScale = 1, fcFitScale = 1;
+
+    function fcApplyScale(newScale, clientX, clientY) {
+      const el = document.getElementById('flowchartRender');
+      const svg = el && el.querySelector('svg');
+      if (!svg || !el) return;
+      const oldScale = fcScale;
+      fcScale = Math.max(0.1, Math.min(10, newScale));
+      let svgX, svgY;
+      if (clientX !== undefined) {
+        const svgRect = svg.getBoundingClientRect();
+        svgX = (clientX - svgRect.left) / oldScale;
+        svgY = (clientY - svgRect.top) / oldScale;
+      }
+      svg.style.width = (fcNaturalW * fcScale) + 'px';
+      svg.style.height = (fcNaturalH * fcScale) + 'px';
+      if (clientX !== undefined) {
+        const newSvgRect = svg.getBoundingClientRect();
+        el.scrollLeft += (newSvgRect.left + svgX * fcScale) - clientX;
+        el.scrollTop += (newSvgRect.top + svgY * fcScale) - clientY;
+      }
+    }
+
+    function fitFlowchartToContainer() {
+      const el = document.getElementById('flowchartRender');
+      const svg = el && el.querySelector('svg');
+      if (!svg || !el || !fcNaturalW) return;
+      const pad = 32;
+      if (svg.getAttribute('data-snake-reflow')) {
+        // Snake-reflowed: viewBox AR matches container, so Math.min fills nearly 100%
+        const sPad = 4;
+        fcFitScale = Math.min((el.clientWidth - sPad) / fcNaturalW, (el.clientHeight - sPad) / fcNaturalH, 2);
+        fcScale = fcFitScale;
+        const renderedH = fcNaturalH * fcScale;
+        svg.style.width = (fcNaturalW * fcScale) + 'px';
+        svg.style.height = renderedH + 'px';
+        // Center vertically if shorter than container
+        if (renderedH < el.clientHeight - pad) {
+          svg.style.marginTop = ((el.clientHeight - renderedH) / 2) + 'px';
+          svg.style.marginLeft = 'auto';
+          svg.style.marginRight = 'auto';
+          svg.style.marginBottom = '0';
+        } else {
+          svg.style.margin = 'auto';
+        }
+      } else {
+        fcFitScale = Math.min((el.clientWidth - pad) / fcNaturalW, (el.clientHeight - pad) / fcNaturalH, 2);
+        fcScale = fcFitScale;
+        svg.style.width = (fcNaturalW * fcScale) + 'px';
+        svg.style.height = (fcNaturalH * fcScale) + 'px';
+        svg.style.margin = 'auto';
+      }
+      el.scrollLeft = 0;
+      el.scrollTop = 0;
+    }
+
+    function zoomFlowchart(delta) {
+      if (delta === 0) { fitFlowchartToContainer(); return; }
+      const el = document.getElementById('flowchartRender');
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      fcApplyScale(fcScale * (delta > 0 ? 1.25 : 0.8), rect.left + rect.width / 2, rect.top + rect.height / 2);
+    }
+
+    function initFlowchartSvg() {
+      const el = document.getElementById('flowchartRender');
+      const svg = el && el.querySelector('svg');
+      if (!svg) return;
+      const vb = svg.getAttribute('viewBox');
+      if (vb) {
+        const parts = vb.split(/[\s,]+/).map(Number);
+        fcNaturalW = parts[2] || 800;
+        fcNaturalH = parts[3] || 600;
+      } else {
+        const w = svg.getAttribute('width'), h = svg.getAttribute('height');
+        if (w && !String(w).includes('%')) fcNaturalW = parseFloat(w);
+        if (h && !String(h).includes('%')) fcNaturalH = parseFloat(h);
+        if (!fcNaturalW || !fcNaturalH) {
+          const r = svg.getBoundingClientRect();
+          fcNaturalW = fcNaturalW || r.width || 800;
+          fcNaturalH = fcNaturalH || r.height || 600;
+        }
+      }
+      svg.removeAttribute('width');
+      svg.removeAttribute('height');
+      svg.style.maxWidth = 'none';
+      svg.style.display = 'block';
+      svg.style.margin = 'auto';
+      svg.style.flexShrink = '0';
+      fitFlowchartToContainer();
+    }
+
+    function reflowFlowchartToSnake(code) {
+      try {
+        const el = document.getElementById('flowchartRender');
+        const svg = el && el.querySelector('svg');
+        if (!svg || !code || !/^(flowchart|graph)\s+LR/im.test(code.trim())) return;
+
+        const palette = {
+          action:   { fill: '#234b73', stroke: '#5cb3ff', text: '#e8f0fe' },
+          decision: { fill: '#3b2466', stroke: '#b49aff', text: '#ede4ff' },
+          terminal: { fill: '#1e5a3a', stroke: '#4ade80', text: '#dcfce7' },
+        };
+        const ns = 'http://www.w3.org/2000/svg';
+        const FONT = 15, LINE_H = 20, PAD_H = 22, PAD_V = 16;
+
+        // --- Text measurement via canvas ---
+        const measureCanvas = document.createElement('canvas').getContext('2d');
+        measureCanvas.font = '600 ' + FONT + 'px Inter, system-ui, sans-serif';
+        function measureText(str) { return measureCanvas.measureText(str).width; }
+
+        // --- Word-wrap into lines that fit maxW ---
+        function wrapText(str, maxW) {
+          const words = str.split(' ');
+          const lines = []; let line = '';
+          for (const w of words) {
+            const test = line ? line + ' ' + w : w;
+            if (measureText(test) > maxW && line) { lines.push(line); line = w; }
+            else line = test;
+          }
+          if (line) lines.push(line);
+          return lines;
+        }
+
+        // --- Parse edges + node shape hints from mermaid code ---
+        const mLines = code.trim().split('\n');
+        const edgeList = [], nodeShapeHint = {};
+        for (let i = 1; i < mLines.length; i++) {
+          const t = mLines[i].trim();
+          if (!t || t.startsWith('%%')) continue;
+          const defMatch = t.match(/^([A-Za-z]\w*)\s*(\{|(\(\[)|\[|\(\(|\()/);
+          if (defMatch) {
+            const nid = defMatch[1], opener = defMatch[2];
+            if (opener === '{') nodeShapeHint[nid] = 'decision';
+            else if (opener === '([') nodeShapeHint[nid] = 'terminal';
+            else if (opener === '((' || opener === '(') nodeShapeHint[nid] = 'terminal';
+            else nodeShapeHint[nid] = 'action';
+          }
+          if (!t.includes('-->')) continue;
+          const segs = t.split(/(-->(?:\|[^|]*\|)?)/);
+          const nds = [], arrs = [];
+          for (let j = 0; j < segs.length; j++) {
+            const s = segs[j].trim();
+            if (!s) continue;
+            if (s.startsWith('-->')) { arrs.push(s); continue; }
+            const m = s.match(/^([A-Za-z]\w*)/);
+            if (m) nds.push(m[1]);
+          }
+          for (let j = 0; j < arrs.length; j++) {
+            if (nds[j] && nds[j+1]) {
+              const lm = arrs[j].match(/\|([^|]*)\|/);
+              edgeList.push({ from: nds[j], to: nds[j+1], label: lm ? lm[1].replace(/"/g, '') : '' });
+            }
+          }
+        }
+        if (edgeList.length < 4) return;
+
+        // --- Build adjacency + ordered chain ---
+        const adj = {}, inDeg = {}, allIds = [], seen = {};
+        edgeList.forEach(e => {
+          [e.from, e.to].forEach(id => { if (!seen[id]) { allIds.push(id); seen[id] = true; } });
+          if (!adj[e.from]) adj[e.from] = [];
+          adj[e.from].push(e);
+          inDeg[e.to] = (inDeg[e.to] || 0) + 1;
+          if (!(e.from in inDeg)) inDeg[e.from] = 0;
+        });
+        const start = allIds.find(id => !inDeg[id]) || allIds[0];
+        const chain = [], vis = {};
+        let cur = start;
+        while (cur && !vis[cur]) { vis[cur] = true; chain.push(cur); cur = adj[cur]?.[0]?.to; }
+        allIds.forEach(id => { if (!vis[id]) chain.push(id); });
+        if (chain.length <= 4) return;
+
+        // --- Extract labels + types from mermaid rendered SVG ---
+        const nodeEls = {};
+        svg.querySelectorAll('g[id]').forEach(g => {
+          const m = g.id.match(/^flowchart-(\w+)-\d+$/);
+          if (m) nodeEls[m[1]] = g;
+        });
+        if (chain.filter(id => nodeEls[id]).length < chain.length * 0.5) return;
+
+        const nodeType = {}, nodeLabel = {};
+        chain.forEach(id => {
+          if (nodeShapeHint[id]) nodeType[id] = nodeShapeHint[id];
+          else if (nodeEls[id] && nodeEls[id].querySelector('polygon')) nodeType[id] = 'decision';
+          else if (nodeEls[id] && nodeEls[id].querySelector('circle')) nodeType[id] = 'terminal';
+          else {
+            const r = nodeEls[id] && nodeEls[id].querySelector('rect');
+            nodeType[id] = (r && parseFloat(r.getAttribute('rx') || 0) > 15) ? 'terminal' : 'action';
+          }
+          if (nodeEls[id]) {
+            const fo = nodeEls[id].querySelector('foreignObject');
+            nodeLabel[id] = fo ? fo.textContent.trim() : (nodeEls[id].querySelector('text') || {}).textContent || id;
+          } else { nodeLabel[id] = id; }
+        });
+
+        // --- Layout: compute cell sizes, pick perRow ---
+        const containerW = el.clientWidth || 800;
+        const containerH = el.clientHeight || 400;
+        const containerAR = containerW / containerH;
+        const gapX = 48, gapY = 60;
+        const maxTextW = (containerW / 4.5) - PAD_H * 2 - gapX;
+
+        const nodeDim = {};
+        let maxNodeW = 0, maxNodeH = 0;
+        chain.forEach(id => {
+          const lines = wrapText(nodeLabel[id], maxTextW);
+          const textBlockW = Math.max(...lines.map(l => measureText(l)));
+          const textBlockH = lines.length * LINE_H;
+          let w, h;
+          if (nodeType[id] === 'decision') {
+            w = (textBlockW + PAD_H * 2) * 1.35;
+            h = (textBlockH + PAD_V * 2) * 1.35;
+          } else {
+            w = textBlockW + PAD_H * 2;
+            h = textBlockH + PAD_V * 2;
+          }
+          nodeDim[id] = { w, h, lines };
+          maxNodeW = Math.max(maxNodeW, w);
+          maxNodeH = Math.max(maxNodeH, h);
+        });
+
+        const cellW = maxNodeW + gapX, cellH = maxNodeH + gapY;
+        let perRow = 4, bestDiff = Infinity;
+        for (let pr = 3; pr <= 8; pr++) {
+          const nr = Math.ceil(chain.length / pr);
+          const gridAR = (pr * cellW) / (nr * cellH);
+          if (Math.abs(gridAR - containerAR) < bestDiff) { bestDiff = Math.abs(gridAR - containerAR); perRow = pr; }
+        }
+
+        const rows = [];
+        for (let i = 0; i < chain.length; i += perRow) rows.push(chain.slice(i, i + perRow));
+        const numRows = rows.length;
+        const padX = maxNodeW / 2 + 30, padY = maxNodeH / 2 + 30;
+        const gridW = perRow * cellW + padX * 2;
+        const naturalH = numRows * cellH + padY * 2;
+        const targetH = gridW / containerAR;
+        const finalCellH = (targetH > naturalH && numRows > 1)
+          ? cellH + (targetH - naturalH) / numRows : cellH;
+        const vbW = gridW, vbH = numRows * finalCellH + padY * 2;
+
+        const nodeHW = {}, nodeHH = {};
+        chain.forEach(id => {
+          nodeHW[id] = (nodeDim[id] ? nodeDim[id].w : maxNodeW) / 2 + 2;
+          nodeHH[id] = (nodeDim[id] ? nodeDim[id].h : maxNodeH) / 2 + 2;
+        });
+
+        const pos = {};
+        rows.forEach((row, ri) => {
+          const isLastPartial = (ri === rows.length - 1 && row.length < perRow);
+          row.forEach((id, ci) => {
+            const col = (ri % 2 === 0 || isLastPartial) ? ci : (perRow - 1 - ci);
+            pos[id] = { x: padX + col * cellW, y: padY + ri * finalCellH };
+          });
+        });
+
+        // --- Build SVG ---
+        const newSvg = document.createElementNS(ns, 'svg');
+        newSvg.setAttribute('xmlns', ns);
+        const defs = document.createElementNS(ns, 'defs');
+        const arrowColors = { blue: '#3399ff', green: '#4ade80', red: '#ff7b72' };
+        Object.keys(arrowColors).forEach(name => {
+          const m = document.createElementNS(ns, 'marker');
+          m.id = 'snake-arrow-' + name;
+          m.setAttribute('viewBox', '0 0 10 10');
+          m.setAttribute('refX', '9'); m.setAttribute('refY', '5');
+          m.setAttribute('markerWidth', '8'); m.setAttribute('markerHeight', '8');
+          m.setAttribute('orient', 'auto');
+          const p = document.createElementNS(ns, 'path');
+          p.setAttribute('d', 'M0 1 L8 5 L0 9z'); p.setAttribute('fill', arrowColors[name]);
+          m.appendChild(p); defs.appendChild(m);
+        });
+        newSvg.appendChild(defs);
+        const mainG = document.createElementNS(ns, 'g');
+        newSvg.appendChild(mainG);
+
+        const gridCenterX = chain.reduce((s, id) => s + (pos[id] ? pos[id].x : 0), 0) / chain.length;
+
+        const edgeInfo = edgeList.map(e => {
+          const f = pos[e.from], t = pos[e.to];
+          if (!f || !t) return null;
+          const sameRow = Math.abs(f.y - t.y) < 5, sameCol = Math.abs(f.x - t.x) < 5;
+          let exitSide, enterSide;
+          if (sameRow) {
+            exitSide = f.x < t.x ? 'right' : 'left';
+            enterSide = f.x < t.x ? 'left' : 'right';
+          } else {
+            exitSide = f.y < t.y ? 'bottom' : 'top';
+            enterSide = f.y < t.y ? 'top' : 'bottom';
+          }
+          let color = 'blue', colorHex = '#3399ff';
+          if (e.label && nodeType[e.from] === 'decision') {
+            const ll = e.label.toLowerCase().trim();
+            if (/^(yes|true|approv)/.test(ll)) { color = 'green'; colorHex = '#4ade80'; }
+            else if (/^(no|false|reject)/.test(ll)) { color = 'red'; colorHex = '#ff7b72'; }
+          }
+          return { from: e.from, to: e.to, label: e.label, sameRow, sameCol, exitSide, enterSide, color, colorHex };
+        });
+
+        const outGroups = {};
+        edgeInfo.forEach((ei, i) => { if (!ei) return; const k = ei.from+'-'+ei.exitSide; if (!outGroups[k]) outGroups[k] = []; outGroups[k].push(i); });
+        const outOff = {};
+        Object.values(outGroups).forEach(g => { if (g.length <= 1) return; g.forEach((idx, i) => { outOff[idx] = (i - (g.length-1)/2) * 20; }); });
+
+        const inGroups = {};
+        edgeInfo.forEach((ei, i) => { if (!ei) return; const k = ei.to+'-'+ei.enterSide; if (!inGroups[k]) inGroups[k] = []; inGroups[k].push(i); });
+        const inOff = {};
+        Object.values(inGroups).forEach(g => { if (g.length <= 1) return; g.forEach((idx, i) => { inOff[idx] = (i - (g.length-1)/2) * 20; }); });
+
+        // --- Draw edges ---
+        edgeInfo.forEach((ei, idx) => {
+          if (!ei) return;
+          const f = pos[ei.from], t = pos[ei.to];
+          const fhw = nodeHW[ei.from] || maxNodeW/2, fhh = nodeHH[ei.from] || maxNodeH/2;
+          const thw = nodeHW[ei.to] || maxNodeW/2, thh = nodeHH[ei.to] || maxNodeH/2;
+          const oOff = outOff[idx] || 0, iOff = inOff[idx] || 0;
+          const path = document.createElementNS(ns, 'path');
+          path.setAttribute('stroke', ei.colorHex); path.setAttribute('stroke-width', '2');
+          path.setAttribute('stroke-opacity', '0.6'); path.setAttribute('fill', 'none');
+          path.setAttribute('marker-end', 'url(#snake-arrow-'+ei.color+')');
+          let d, lx, ly;
+          if (ei.sameRow) {
+            const goR = f.x < t.x;
+            const x1 = f.x + (goR ? fhw : -fhw), x2 = t.x + (goR ? -thw : thw);
+            const fy = f.y + oOff, ty = t.y + iOff;
+            d = 'M'+x1+','+fy+' L'+x2+','+ty;
+            const lineLen = Math.abs(x2 - x1);
+            if (ei.label && measureText(ei.label) + 20 > lineLen * 0.8) {
+              lx = f.x; ly = f.y - fhh - 12;
+            } else {
+              lx = (x1 + x2) / 2; ly = Math.min(fy, ty) - 12;
+            }
+          } else if (ei.sameCol) {
+            const goD = f.y < t.y;
+            const y1 = f.y + (goD ? fhh : -fhh), y2 = t.y + (goD ? -thh : thh);
+            const fx = f.x + oOff;
+            d = 'M'+fx+','+y1+' L'+fx+','+y2;
+            const labelLeft = f.x > gridCenterX;
+            lx = f.x + (labelLeft ? -(fhw + 8) : (fhw + 8));
+            ly = (y1 + y2) / 2;
+          } else {
+            const goD = f.y < t.y;
+            const exitY = f.y + (goD ? fhh : -fhh), enterY = t.y + (goD ? -thh : thh);
+            const srcRi = rows.findIndex(row => row.includes(ei.from));
+            const tgtRi = rows.findIndex(row => row.includes(ei.to));
+            let midY;
+            if (Math.abs(tgtRi - srcRi) <= 1 || srcRi < 0 || tgtRi < 0) {
+              midY = (f.y + t.y) / 2 + oOff;
+            } else {
+              const nextRi = goD ? srcRi + 1 : srcRi - 1;
+              const nextRowY = padY + nextRi * finalCellH;
+              midY = (f.y + nextRowY) / 2 + oOff;
+            }
+            const dirX = t.x > f.x ? 1 : -1, dirY = goD ? 1 : -1;
+            const fx = f.x + oOff, tx = t.x + iOff;
+            const r = Math.min(14, Math.abs(midY - exitY)/2, Math.abs(midY - enterY)/2);
+            d = 'M'+fx+','+exitY+' L'+fx+','+(midY-dirY*r)
+              +' Q'+fx+','+midY+' '+(fx+dirX*r)+','+midY
+              +' L'+(tx-dirX*r)+','+midY
+              +' Q'+tx+','+midY+' '+tx+','+(midY+dirY*r)
+              +' L'+tx+','+enterY;
+            lx = (f.x + t.x) / 2; ly = midY - 14;
+          }
+          path.setAttribute('d', d); mainG.appendChild(path);
+          if (ei.label) {
+            const LFONT = 14;
+            measureCanvas.font = '600 '+LFONT+'px Inter, system-ui, sans-serif';
+            const tw = measureText(ei.label) + 16;
+            measureCanvas.font = '600 '+FONT+'px Inter, system-ui, sans-serif';
+            const lh = 20;
+            const bg = document.createElementNS(ns, 'rect');
+            bg.setAttribute('x', lx-tw/2); bg.setAttribute('y', ly-lh/2);
+            bg.setAttribute('width', tw); bg.setAttribute('height', lh);
+            bg.setAttribute('rx', '4'); bg.setAttribute('fill', '#152a45');
+            bg.setAttribute('fill-opacity', '0.95');
+            bg.setAttribute('stroke', ei.colorHex); bg.setAttribute('stroke-width', '0.7');
+            bg.setAttribute('stroke-opacity', '0.5');
+            mainG.appendChild(bg);
+            const txt = document.createElementNS(ns, 'text');
+            txt.setAttribute('x', lx); txt.setAttribute('y', ly + 5);
+            txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('font-size', LFONT);
+            txt.setAttribute('font-weight', '600');
+            txt.setAttribute('font-family', 'Inter,-apple-system,sans-serif');
+            txt.setAttribute('fill', ei.color === 'blue' ? '#e0ecff' : ei.colorHex);
+            txt.textContent = ei.label; mainG.appendChild(txt);
+          }
+        });
+
+        // --- Draw custom nodes (no cloning) ---
+        chain.forEach(id => {
+          if (!pos[id] || !nodeDim[id]) return;
+          const { w, h, lines } = nodeDim[id];
+          const type = nodeType[id] || 'action';
+          const pal = palette[type];
+          const g = document.createElementNS(ns, 'g');
+          g.setAttribute('transform', 'translate('+pos[id].x+','+pos[id].y+')');
+
+          if (type === 'decision') {
+            const poly = document.createElementNS(ns, 'polygon');
+            poly.setAttribute('points', '0,'+(-h/2)+' '+(w/2)+',0 0,'+(h/2)+' '+(-w/2)+',0');
+            poly.setAttribute('fill', pal.fill); poly.setAttribute('stroke', pal.stroke);
+            poly.setAttribute('stroke-width', '2.5'); g.appendChild(poly);
+          } else {
+            const rect = document.createElementNS(ns, 'rect');
+            rect.setAttribute('x', -w/2); rect.setAttribute('y', -h/2);
+            rect.setAttribute('width', w); rect.setAttribute('height', h);
+            rect.setAttribute('rx', type === 'terminal' ? h/2 : 8);
+            rect.setAttribute('fill', pal.fill); rect.setAttribute('stroke', pal.stroke);
+            rect.setAttribute('stroke-width', '2.5'); g.appendChild(rect);
+          }
+
+          const blockH = lines.length * LINE_H;
+          lines.forEach((line, i) => {
+            const txt = document.createElementNS(ns, 'text');
+            txt.setAttribute('x', '0');
+            txt.setAttribute('y', -blockH/2 + (i + 0.75) * LINE_H);
+            txt.setAttribute('text-anchor', 'middle');
+            txt.setAttribute('font-size', FONT + 'px');
+            txt.setAttribute('font-weight', '600');
+            txt.setAttribute('font-family', 'Inter,-apple-system,sans-serif');
+            txt.setAttribute('fill', pal.text);
+            txt.textContent = line; g.appendChild(txt);
+          });
+          mainG.appendChild(g);
+        });
+
+        // Tight viewBox matching container AR so it fills the box exactly
+        let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+        chain.forEach(id => {
+          if (!pos[id] || !nodeDim[id]) return;
+          const hw = nodeDim[id].w / 2, hh = nodeDim[id].h / 2;
+          bx0 = Math.min(bx0, pos[id].x - hw); bx1 = Math.max(bx1, pos[id].x + hw);
+          by0 = Math.min(by0, pos[id].y - hh); by1 = Math.max(by1, pos[id].y + hh);
+        });
+        const cp = 50;
+        let vbX = bx0 - cp, vbY = by0 - cp;
+        let vbFW = bx1 - bx0 + cp * 2, vbFH = by1 - by0 + cp * 2;
+        // Expand shorter dimension to match container AR (centers content)
+        const contentAR = vbFW / vbFH;
+        if (contentAR > containerAR) {
+          const newH = vbFW / containerAR;
+          vbY -= (newH - vbFH) / 2; vbFH = newH;
+        } else {
+          const newW = vbFH * containerAR;
+          vbX -= (newW - vbFW) / 2; vbFW = newW;
+        }
+        newSvg.setAttribute('viewBox', vbX+' '+vbY+' '+vbFW+' '+vbFH);
+        newSvg.setAttribute('data-snake-reflow', '1');
+        el.innerHTML = '';
+        el.appendChild(newSvg);
+      } catch(e) { console.warn('Snake reflow failed:', e); }
+    }
+
     <% if (design.flowchart) { %>
     (async () => {
       try {
-        const { svg } = await mermaid.render('flowchart-svg', `<%- design.flowchart.replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`);
+        const fcCode = `<%- design.flowchart.replace(/`/g, '\\`').replace(/\\/g, '\\\\') %>`;
+        const { svg } = await mermaid.render('flowchart-svg', fcCode);
         document.getElementById('flowchartRender').innerHTML = svg;
+        reflowFlowchartToSnake(fcCode);
+        requestAnimationFrame(() => initFlowchartSvg());
       } catch(e) { if (document.getElementById('flowchartRender')) document.getElementById('flowchartRender').textContent = 'Flowchart rendering failed'; }
     })();
     <% } %>
@@ -382,12 +853,57 @@
     function popOutFlowchart() {
       const svg = document.querySelector('#flowchartRender svg');
       if (!svg) return;
-      const svgHtml = svg.outerHTML;
+      const clone = svg.cloneNode(true);
+      clone.style.width = '';
+      clone.style.height = '';
+      clone.style.margin = '';
+      clone.style.maxWidth = '100%';
+      clone.style.flexShrink = '';
+      const svgHtml = clone.outerHTML;
       const projectName = document.title || 'Flowchart';
-      const win = window.open('', '_blank', 'width=1000,height=700');
+      const win = window.open('', '_blank', 'width=1200,height=700');
       win.document.write('<!DOCTYPE html><html><head><title>' + projectName + ' — User Journey</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0a1628;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;font-family:Inter,-apple-system,sans-serif}svg{max-width:100%;height:auto}</style></head><body>' + svgHtml + '</body></html>');
       win.document.close();
     }
+
+    // Wheel zoom, pinch-to-zoom, double-click toggle
+    (function() {
+      const el = document.getElementById('flowchartRender');
+      if (!el) return;
+
+      el.addEventListener('wheel', function(e) {
+        if (!el.querySelector('svg')) return;
+        if (!e.ctrlKey) return; // Let normal 2-finger scroll pan natively; only intercept pinch-zoom
+        e.preventDefault();
+        fcApplyScale(fcScale * (e.deltaY > 0 ? 0.9 : 1.1), e.clientX, e.clientY);
+      }, { passive: false });
+
+      let lastPinchDist = 0;
+      el.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) {
+          lastPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        }
+      });
+      el.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          fcApplyScale(fcScale * (dist / lastPinchDist), midX, midY);
+          lastPinchDist = dist;
+        }
+      }, { passive: false });
+
+      el.addEventListener('dblclick', function() {
+        if (Math.abs(fcScale - fcFitScale) < 0.01) {
+          const rect = el.getBoundingClientRect();
+          fcApplyScale(1, rect.left + rect.width / 2, rect.top + rect.height / 2);
+        } else {
+          fitFlowchartToContainer();
+        }
+      });
+    })();
   </script>
   <% } %>
 </body>
