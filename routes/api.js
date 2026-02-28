@@ -12,6 +12,7 @@ const { apiAuth, verifySessionOwnership, verifyFileOwnership } = require('../mid
 const { optionalAuth } = require('../middleware/auth-middleware');
 const { upload, importUpload } = require('../middleware/uploads');
 const { uploadLimiter } = require('../middleware/rate-limiters');
+const { validateFileType, scanForMalware } = require('../middleware/file-security');
 
 // Decode hashed IDs in :id route params
 router.param('id', (req, res, next, val) => {
@@ -20,7 +21,7 @@ router.param('id', (req, res, next, val) => {
 });
 
 // File upload and text extraction endpoint
-router.post('/api/upload', optionalAuth, uploadLimiter, upload.single('file'), async (req, res) => {
+router.post('/api/upload', optionalAuth, uploadLimiter, upload.single('file'), validateFileType, scanForMalware, async (req, res) => {
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded' });

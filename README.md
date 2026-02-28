@@ -116,6 +116,24 @@ public/                   # Static assets (JS, CSS, images)
 emails.js                 # Email template functions
 ```
 
+## Prod-to-Test Migration
+
+Admin tool at `/admin/migrate` to pull customers and projects from production into a local dev environment.
+
+**Env vars required:** `PROD_URL` (production base URL), `EXPORT_SECRET` (shared secret)
+
+**Export endpoints** (on production, protected by `EXPORT_SECRET`):
+- `GET /api/export/customer?email=...&secret=...` — returns customer record
+- `GET /api/export/projects?email=...&secret=...` — returns project list
+- `GET /api/export/project?id=...&secret=...` — returns full project with sessions/files
+
+**Import endpoints** (on local, admin-only):
+- `POST /admin/migrate/customer` — look up customer on prod
+- `POST /admin/migrate/customer/import` — import customer to local DB
+- `POST /admin/migrate/project` — import a specific project with all data
+
+⚠️ **Security note:** Export secret is currently passed as a query parameter (logged in access logs). The export customer endpoint returns the full user object including password hash — filter sensitive fields before returning.
+
 ## Deployment
 
 Hosted on Render.com (`render.yaml`). PostgreSQL for production, persistent disk at `/var/data` for uploads and file-based designs/proposals.

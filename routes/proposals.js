@@ -386,6 +386,19 @@ router.post('/admin/projects/:id/send-to-engine', auth.authenticate, auth.requir
           if (statusRes.ok) {
             const statusData = await statusRes.json();
             if (statusData.status === 'done') { buildId = statusData.buildId; break; }
+            if (statusData.status === 'pending_review') {
+              // Terminal success — queued for admin review, stop polling
+              design.sentToEngineAt = new Date().toISOString();
+              design.enginePlanId = planId;
+              design.engineStatus = 'pending_review';
+              saveDesign(design);
+              return res.json({
+                success: true,
+                status: 'pending_review',
+                planId,
+                sentAt: design.sentToEngineAt
+              });
+            }
             if (statusData.status === 'error') throw new Error(statusData.error || 'Engine build failed');
           }
         } catch (pollErr) {

@@ -141,6 +141,7 @@ async function extractDesignAsync(projectId, user) {
     let designSummary = '';
     let designWorkflows = [];
     let designAssets = [];
+    let designDataStore = null;
 
     const DESIGN_SECTIONS_SCHEMA = `{
   "summary": "3-5 sentence executive summary: what this system actually is, the core operating loop, what problem it solves, and what it is NOT.",
@@ -165,6 +166,14 @@ async function extractDesignAsync(projectId, user) {
   "assets": [
     {"id": "asset-1", "name": "Descriptive name", "type": "google-sheet | google-script | web-app | web-form | static-page | google-doc | dashboard", "purpose": "What this asset is for and how it connects to the automation", "buildNotes": "Specific instructions for building — columns/structure for sheets, functionality for apps, content for docs, fields for forms", "linkedToWorkflows": ["wf-1"], "buildOrIntegrate": "build | integrate | question", "integrationNotes": "If 'question' — what we need to ask the customer about their existing infrastructure"}
   ],
+  "dataStore": {
+    "provider": "google_sheets | microsoft_excel | airtable | postgres | mysql | supabase | none",
+    "reason": "Why this provider was chosen (customer preference, existing stack, etc.)",
+    "existingResource": "URL or ID of existing spreadsheet/database if reusing one, or null",
+    "tables": [
+      {"name": "dedup_log", "purpose": "Track processed invoice IDs to prevent duplicates", "columns": ["invoice_id", "processed_at", "status"]}
+    ]
+  },
   "questions": [
     {"id": 1, "text": "Specific question about a gap or ambiguity", "assumption": "What we'll assume if unanswered"}
   ]
@@ -257,6 +266,16 @@ EMAIL SENDING — BE SPECIFIC:
   - What links/buttons should be included? (approval URLs, view links, dashboard links)
   - Attachments? (the engine can attach files from earlier pipeline steps)
   - Recipient source (hardcoded email, from config, extracted from data)
+
+DATA STORE — MANDATORY FOR STATEFUL WORKFLOWS:
+- When the design includes ANY workflow that needs state between runs (deduplication, history, caches, tracking, audit logs), you MUST include a dataStore section.
+- Ask the customer what they use for data/spreadsheets (Google Workspace, Microsoft 365, Airtable, a database, etc.) — if this was discussed in the conversation, use that preference.
+- If the customer already has a spreadsheet in the workflow (e.g. logging to Google Sheets), prefer adding tabs to that same sheet — note it in existingResource.
+- If no preference was stated, default to google_sheets (best engine support, auditable, customer-visible).
+- Set provider to "none" ONLY when the workflow is purely stateless (no dedup, no history, no tracking).
+- The engine planner will NOT pick a backing store — it uses whatever Projects specifies in dataStore.
+- Each table entry should describe: name (snake_case), purpose (why it exists), and columns (the fields it needs).
+- Common tables: dedup_log (processed item tracking), audit_trail (action history), config (runtime settings), error_log (exception tracking).
 
 DESIGN PRINCIPLES:
 - Humans steer; systems automate repetition.
@@ -446,6 +465,7 @@ ${context}`;
             console.log('  engineDesign:', parsed.engineDesign ? Object.keys(parsed.engineDesign) : 'null');
             console.log('  workflows:', Array.isArray(parsed.workflows) ? parsed.workflows.length : 'null');
             console.log('  assets:', Array.isArray(parsed.assets) ? parsed.assets.length : 'null');
+            console.log('  dataStore:', parsed.dataStore ? parsed.dataStore.provider : 'null');
 
             // Flatten structured objects to markdown strings.
             // Handles arrays of step-like objects (title+description) → "1. **Title** — desc" format
@@ -530,6 +550,7 @@ ${context}`;
               }));
             }
             if (parsed.assets && Array.isArray(parsed.assets)) designAssets = parsed.assets;
+            if (parsed.dataStore && typeof parsed.dataStore === 'object') designDataStore = parsed.dataStore;
             if (parsedCustomerDesign) designParsedCustomerDesign = parsedCustomerDesign;
             if (parsedEngineDesign) designParsedEngineDesign = parsedEngineDesign;
           } catch (e) {
@@ -593,6 +614,7 @@ ${context}`;
       engineDesign: designParsedEngineDesign,
       workflows: designWorkflows,
       assets: designAssets,
+      dataStore: designDataStore,
       questions: llmQuestions,
       chat: [],
       answers: [],
@@ -738,7 +760,7 @@ router.post('/admin/projects/:id/design/flowchart', auth.authenticate, auth.requ
 This is NOT a technical architecture diagram. It shows the logical flow from the user's perspective — what happens step by step when someone uses the system.
 
 STRICT MERMAID SYNTAX RULES — follow these exactly:
-1. First line MUST be: flowchart TD
+1. First line MUST be: flowchart LR
 2. EVERY node label MUST be wrapped in double quotes: A["My Label"]
 3. Arrows MUST use -->  (two dashes + angle bracket). For labeled arrows: A -->|"label"| B
 4. Node shapes: ["Rectangle"] for actions, {"Diamond"} for decisions, (["Stadium"]) for start/end
@@ -747,7 +769,7 @@ STRICT MERMAID SYNTAX RULES — follow these exactly:
 7. NO markdown fences — return raw mermaid code only
 
 VALID EXAMPLE:
-flowchart TD
+flowchart LR
   A(["User visits website"])
   B["Fills in project details"]
   C{"Approved?"}
