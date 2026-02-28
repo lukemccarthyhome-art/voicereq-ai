@@ -96,65 +96,95 @@ async function validateFileType(req, res, next) {
   }
 }
 
-// --- Cloudmersive virus scanning ---
+// --- MetaDefender Cloud (OPSWAT) virus scanning ---
 
-const CLOUDMERSIVE_API_KEY = process.env.CLOUDMERSIVE_API_KEY;
+const METADEFENDER_API_KEY = process.env.METADEFENDER_API_KEY;
+const SCAN_POLL_INTERVAL = 1000; // 1s between polls
+const SCAN_TIMEOUT = 30000;      // 30s max wait
 
 /**
- * Scans uploaded file for malware using Cloudmersive Virus Scan API.
- * Gracefully skips if API key is not configured.
+ * Scans uploaded file for malware using MetaDefender Cloud API (30+ AV engines).
+ * Blocks upload if API key is missing or scan fails — no silent skipping.
  * Must run AFTER validateFileType.
  */
 async function scanForMalware(req, res, next) {
   if (!req.file) return next();
 
-  if (!CLOUDMERSIVE_API_KEY) {
-    console.warn('Cloudmersive: CLOUDMERSIVE_API_KEY not set — skipping virus scan.');
-    return next();
+  if (!METADEFENDER_API_KEY) {
+    console.error('MetaDefender: METADEFENDER_API_KEY not set — blocking upload.');
+    cleanupFile(req.file.path);
+    return res.status(503).json({ error: 'File uploads are temporarily unavailable (virus scanning not configured).' });
   }
 
   try {
     const fileBuffer = fs.readFileSync(req.file.path);
-    const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
 
-    const bodyParts = [
-      `--${boundary}\r\n`,
-      `Content-Disposition: form-data; name="inputFile"; filename="${req.file.originalname}"\r\n`,
-      `Content-Type: ${req.file.mimetype || 'application/octet-stream'}\r\n\r\n`,
-    ];
-
-    const bodyStart = Buffer.from(bodyParts.join(''));
-    const bodyEnd = Buffer.from(`\r\n--${boundary}--\r\n`);
-    const body = Buffer.concat([bodyStart, fileBuffer, bodyEnd]);
-
-    const response = await fetch('https://api.cloudmersive.com/virus/scan/file', {
+    // Submit file for scanning
+    const submitRes = await fetch('https://api.metadefender.com/v4/file', {
       method: 'POST',
       headers: {
-        'Apikey': CLOUDMERSIVE_API_KEY,
-        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        'apikey': METADEFENDER_API_KEY,
+        'Content-Type': 'application/octet-stream',
+        'filename': req.file.originalname,
       },
-      body,
+      body: fileBuffer,
     });
 
-    if (!response.ok) {
-      console.error('Cloudmersive: API error', response.status, response.statusText);
-      return next(); // Don't block uploads on API errors
+    if (!submitRes.ok) {
+      const errBody = await submitRes.text();
+      console.error('MetaDefender: submit error', submitRes.status, errBody);
+      cleanupFile(req.file.path);
+      return res.status(503).json({ error: 'File upload failed: virus scan service unavailable.' });
     }
 
-    const result = await response.json();
+    const { data_id } = await submitRes.json();
+    if (!data_id) {
+      console.error('MetaDefender: no data_id returned');
+      cleanupFile(req.file.path);
+      return res.status(503).json({ error: 'File upload failed: virus scan service error.' });
+    }
 
-    if (result.CleanResult === false) {
-      const virusNames = (result.FoundViruses || []).map(v => v.VirusName).join(', ');
-      console.warn(`Cloudmersive: INFECTED — ${req.file.originalname} — ${virusNames}`);
+    // Poll for results
+    const started = Date.now();
+    let result;
+    while (Date.now() - started < SCAN_TIMEOUT) {
+      await new Promise(r => setTimeout(r, SCAN_POLL_INTERVAL));
+
+      const pollRes = await fetch(`https://api.metadefender.com/v4/file/${data_id}`, {
+        headers: { 'apikey': METADEFENDER_API_KEY },
+      });
+
+      if (!pollRes.ok) {
+        console.error('MetaDefender: poll error', pollRes.status);
+        continue;
+      }
+
+      result = await pollRes.json();
+      if (result.process_info && result.process_info.progress_percentage === 100) break;
+    }
+
+    if (!result || !result.process_info || result.process_info.progress_percentage !== 100) {
+      console.error('MetaDefender: scan timed out for', req.file.originalname);
+      cleanupFile(req.file.path);
+      return res.status(503).json({ error: 'File upload failed: virus scan timed out.' });
+    }
+
+    // Check result
+    const detected = result.scan_results && result.scan_results.total_detected_avs > 0;
+    const verdict = result.scan_results && result.scan_results.scan_all_result_a;
+
+    if (detected) {
+      console.warn(`MetaDefender: THREAT — ${req.file.originalname} — ${verdict} (${result.scan_results.total_detected_avs}/${result.scan_results.total_avs} engines)`);
       cleanupFile(req.file.path);
       return res.status(400).json({ error: 'File rejected: potential security threat detected.' });
     }
 
-    console.log(`Cloudmersive: clean — ${req.file.originalname}`);
+    console.log(`MetaDefender: clean — ${req.file.originalname} (${result.scan_results.total_avs} engines, ${result.scan_results.total_time}ms)`);
     next();
   } catch (err) {
-    console.error('Cloudmersive: scan error:', err.message);
-    next(); // Don't block uploads on network errors
+    console.error('MetaDefender: scan error:', err.message);
+    cleanupFile(req.file.path);
+    return res.status(503).json({ error: 'File upload failed: virus scan error.' });
   }
 }
 
