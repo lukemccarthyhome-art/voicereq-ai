@@ -80,7 +80,7 @@
                 </div>
             </div>
             <a href="/help"<%- currentPage === 'help' ? ' class="active"' : '' %>>Help</a>
-            <a href="#" class="feature-link" onclick="document.getElementById('featureModal').style.display='flex';return false;">💡 Request a Feature</a>
+            <a href="#" class="feature-link" onclick="document.getElementById('featureModal').style.display='flex';setFeatureType('feature');return false;">💡 Feedback</a>
             <div class="user-dropdown">
                 <span class="user-name">👤 <%= user.name %> ▾</span>
                 <div class="user-dropdown-menu">
@@ -98,29 +98,74 @@
 <div class="modal-overlay" id="featureModal">
   <div class="modal-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="color:var(--text-primary);font-weight:700;">💡 Request a Feature</h3>
+      <h3 style="color:var(--text-primary);font-weight:700;" id="featureModalTitle">💡 Request a Feature</h3>
       <button onclick="document.getElementById('featureModal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text-muted);">&times;</button>
     </div>
+    <!-- Type toggle -->
+    <div style="display:flex;gap:4px;margin-bottom:14px;background:rgba(5,13,26,0.6);border-radius:var(--radius-pill);padding:3px;border:1px solid var(--border-glass);">
+      <button id="typeFeatureBtn" onclick="setFeatureType('feature')" style="flex:1;padding:8px 16px;border:none;border-radius:var(--radius-pill);font-size:0.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;background:var(--accent);color:#fff;">💡 Feature</button>
+      <button id="typeBugBtn" onclick="setFeatureType('bug')" style="flex:1;padding:8px 16px;border:none;border-radius:var(--radius-pill);font-size:0.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;background:transparent;color:var(--text-secondary);">🐛 Bug / Error</button>
+    </div>
     <textarea id="featureText" rows="5" placeholder="Tell us what you'd like to see, or what could be better..." style="width:100%;padding:12px;border:1px solid var(--border-glass);border-radius:12px;font-size:0.88rem;font-family:'Inter',sans-serif;resize:vertical;background:rgba(5,13,26,0.6);color:var(--text-primary);"></textarea>
+    <!-- Screenshot upload -->
+    <div style="margin-top:10px;">
+      <label for="featureScreenshot" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:1px dashed var(--border-glass);border-radius:8px;cursor:pointer;font-size:0.82rem;color:var(--text-muted);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border-glass)';this.style.color='var(--text-muted)'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        Attach screenshot
+      </label>
+      <input type="file" id="featureScreenshot" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.doc,.docx" style="display:none" onchange="updateScreenshotLabel(this)">
+      <span id="screenshotName" style="font-size:0.78rem;color:var(--text-muted);margin-left:8px;"></span>
+    </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
       <button onclick="document.getElementById('featureModal').style.display='none'" style="padding:10px 24px;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:transparent;cursor:pointer;font-size:0.88rem;color:var(--text-secondary);font-family:'Inter',sans-serif;">Cancel</button>
-      <button onclick="submitFeature()" style="padding:10px 24px;border:none;border-radius:var(--radius-pill);background:var(--accent);color:white;cursor:pointer;font-weight:600;font-size:0.88rem;box-shadow:0 0 16px var(--accent-glow);font-family:'Inter',sans-serif;">Submit</button>
+      <button id="featureSubmitBtn" onclick="submitFeature()" style="padding:10px 24px;border:none;border-radius:var(--radius-pill);background:var(--accent);color:white;cursor:pointer;font-weight:600;font-size:0.88rem;box-shadow:0 0 16px var(--accent-glow);font-family:'Inter',sans-serif;">Submit</button>
     </div>
     <div id="featureStatus" style="margin-top:8px;font-size:0.82rem;"></div>
   </div>
 </div>
 <script>
+let featureType = 'feature';
+function setFeatureType(type) {
+  featureType = type;
+  const fBtn = document.getElementById('typeFeatureBtn');
+  const bBtn = document.getElementById('typeBugBtn');
+  const title = document.getElementById('featureModalTitle');
+  const textarea = document.getElementById('featureText');
+  if (type === 'bug') {
+    bBtn.style.background = '#ef4444'; bBtn.style.color = '#fff';
+    fBtn.style.background = 'transparent'; fBtn.style.color = 'var(--text-secondary)';
+    title.textContent = '🐛 Report a Bug';
+    textarea.placeholder = 'Describe the issue: what happened, what you expected, and any steps to reproduce...';
+  } else {
+    fBtn.style.background = 'var(--accent)'; fBtn.style.color = '#fff';
+    bBtn.style.background = 'transparent'; bBtn.style.color = 'var(--text-secondary)';
+    title.textContent = '💡 Request a Feature';
+    textarea.placeholder = "Tell us what you'd like to see, or what could be better...";
+  }
+}
+function updateScreenshotLabel(input) {
+  const name = input.files[0] ? input.files[0].name : '';
+  document.getElementById('screenshotName').textContent = name;
+}
 async function submitFeature(){
   const text=document.getElementById('featureText').value.trim();
   if(!text)return;
   const st=document.getElementById('featureStatus');
   st.innerHTML='Submitting...';st.style.color='var(--text-muted)';
   try{
-    const r=await fetch('/api/feature-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,page:location.pathname})});
-    if(!r.ok)throw new Error('Failed');
+    const fd = new FormData();
+    fd.append('text', text);
+    fd.append('page', location.pathname);
+    fd.append('type', featureType);
+    const file = document.getElementById('featureScreenshot').files[0];
+    if (file) fd.append('screenshot', file);
+    const r=await fetch('/api/feature-request',{method:'POST',body:fd});
+    if(!r.ok){ const err=await r.json(); throw new Error(err.error||'Failed'); }
     st.innerHTML='✅ Thank you! Your feedback has been submitted.';st.style.color='#009e7e';
     document.getElementById('featureText').value='';
+    document.getElementById('featureScreenshot').value='';
+    document.getElementById('screenshotName').textContent='';
     setTimeout(()=>{document.getElementById('featureModal').style.display='none';st.innerHTML='';},2000);
-  }catch(e){st.innerHTML='❌ Failed to submit. Please try again.';st.style.color='#ef4444';}
+  }catch(e){st.innerHTML='❌ '+(e.message||'Failed to submit. Please try again.');st.style.color='#ef4444';}
 }
 </script>

@@ -119,6 +119,8 @@ const initDB = () => {
   try { db.exec(`ALTER TABLE feature_requests ADD COLUMN admin_response TEXT`); } catch (e) {}
   try { db.exec(`ALTER TABLE feature_requests ADD COLUMN responded_at DATETIME`); } catch (e) {}
   try { db.exec(`ALTER TABLE feature_requests ADD COLUMN responded_by TEXT`); } catch (e) {}
+  try { db.exec(`ALTER TABLE feature_requests ADD COLUMN type TEXT DEFAULT 'feature'`); } catch (e) {}
+  try { db.exec(`ALTER TABLE feature_requests ADD COLUMN screenshot TEXT`); } catch (e) {}
 
   // Create seed admin user
   createSeedUser();
@@ -576,8 +578,8 @@ module.exports = {
     return Promise.resolve();
   },
   // Feature requests
-  createFeatureRequest: (userId, userName, userEmail, text, page) => {
-    db.prepare('INSERT INTO feature_requests (user_id, user_name, user_email, text, page) VALUES (?, ?, ?, ?, ?)').run(userId, userName, userEmail, text, page);
+  createFeatureRequest: (userId, userName, userEmail, text, page, type, screenshot) => {
+    db.prepare('INSERT INTO feature_requests (user_id, user_name, user_email, text, page, type, screenshot) VALUES (?, ?, ?, ?, ?, ?, ?)').run(userId, userName, userEmail, text, page, type || 'feature', screenshot || null);
     return Promise.resolve();
   },
   getAllFeatureRequests: () => {

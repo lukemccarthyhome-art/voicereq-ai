@@ -184,6 +184,8 @@ const initDB = async (retries = 3) => {
     try { await client.query('ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS admin_response TEXT'); } catch (e) {}
     try { await client.query('ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS responded_at TIMESTAMP'); } catch (e) {}
     try { await client.query('ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS responded_by TEXT'); } catch (e) {}
+    try { await client.query("ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'feature'"); } catch (e) {}
+    try { await client.query('ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS screenshot TEXT'); } catch (e) {}
 
     // Create seed admin user
     await createSeedUser();
@@ -630,10 +632,10 @@ const approveUser = async (id) => {
 
 // ==================== Feature requests ====================
 
-const createFeatureRequest = async (userId, userName, userEmail, text, page) => {
+const createFeatureRequest = async (userId, userName, userEmail, text, page, type, screenshot) => {
   await pool.query(
-    'INSERT INTO feature_requests (user_id, user_name, user_email, text, page) VALUES ($1, $2, $3, $4, $5)',
-    [userId, userName, userEmail, text, page]
+    'INSERT INTO feature_requests (user_id, user_name, user_email, text, page, type, screenshot) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+    [userId, userName, userEmail, text, page, type || 'feature', screenshot || null]
   );
 };
 

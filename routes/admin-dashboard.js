@@ -8,6 +8,8 @@ const { apiAuth, verifyFileOwnership } = require('../middleware/auth-middleware'
 const { uploadsDir } = require('../helpers/paths');
 const { encodeProjectId, resolveProjectId } = require('../helpers/ids');
 const { sendSecurityAlert, sendMortiEmail } = require('../helpers/email-sender');
+const { upload } = require('../middleware/uploads');
+const { validateFileType, scanForMalware } = require('../middleware/file-security');
 
 // Decode hashed IDs in :id route params
 router.param('id', (req, res, next, val) => {
@@ -169,17 +171,31 @@ router.post('/projects/:id/delete', auth.authenticate, auth.requireCustomer, asy
 
 // === FEATURE REQUESTS ===
 
-// Feature Request API
-router.post('/api/feature-request', apiAuth, async (req, res) => {
+// Feature Request API (supports optional screenshot upload)
+router.post('/api/feature-request', apiAuth, upload.single('screenshot'), validateFileType, scanForMalware, async (req, res) => {
   try {
-    const { text, page } = req.body;
+    const { text, page, type } = req.body;
     if (!text || !text.trim()) return res.status(400).json({ error: 'Text is required' });
-    await db.createFeatureRequest(req.user.id, req.user.name, req.user.email, text.trim(), page || 'unknown');
+
+    // If a file was uploaded, rename to a unique name in uploads dir
+    let screenshotFilename = null;
+    if (req.file) {
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      screenshotFilename = `fr-${Date.now()}${ext}`;
+      const dest = path.join(uploadsDir, screenshotFilename);
+      fs.renameSync(req.file.path, dest);
+    }
+
+    const reqType = (type === 'bug') ? 'bug' : 'feature';
+    await db.createFeatureRequest(req.user.id, req.user.name, req.user.email, text.trim(), page || 'unknown', reqType, screenshotFilename);
+
     // Telegram notification
     const tgToken = process.env.TELEGRAM_BOT_TOKEN;
     const tgChat = process.env.TELEGRAM_CHAT_ID;
     if (tgToken && tgChat) {
-      const msg = `\u{1F4A1} Feature Request\nFrom: ${req.user.name} (${req.user.email})\nPage: ${page || 'unknown'}\n\n${text.trim()}`;
+      const emoji = reqType === 'bug' ? '\u{1F41B}' : '\u{1F4A1}';
+      const label = reqType === 'bug' ? 'Bug Report' : 'Feature Request';
+      const msg = `${emoji} ${label}\nFrom: ${req.user.name} (${req.user.email})\nPage: ${page || 'unknown'}${screenshotFilename ? '\nScreenshot: attached' : ''}\n\n${text.trim()}`;
       fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: tgChat, text: msg })
